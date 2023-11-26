@@ -1,0 +1,33 @@
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
+
+const schema = new mongoose.Schema({
+  userOrderId: {
+    type: Schema.Types.ObjectId,
+    ref: "Order",
+    required: true,
+  },
+  Seller: {
+    type: Schema.Types.ObjectId,
+    ref: "Seller",
+    required: true,
+  },
+  Service: {
+    type: Schema.Types.ObjectId,
+    ref: "Service",
+    required: true,
+  },
+
+  totalPrice: {
+    type: String,
+    required: true,
+  },
+  orderStatus: {
+    type: String,
+    default: "placed",
+  },
+});
+
+const model = new mongoose.model("SellerOrder", schema);
+
+module.exports = model;
