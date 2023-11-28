@@ -14,7 +14,7 @@ const orderSchema = new Schema(
     },
     products: [
       {
-        type: {
+        sercvice: {
           type: String,
           required: true,
         },

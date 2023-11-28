@@ -12,12 +12,18 @@ const schema = new mongoose.Schema({
     ref: "Seller",
     required: true,
   },
-  Service: {
-    type: Schema.Types.ObjectId,
-    ref: "Service",
+  sercvice: {
+    type: String,
     required: true,
   },
-
+  product: {
+    type: Object,
+    required: true,
+  },
+  quantity: {
+    type: Number,
+    required: true,
+  },
   totalPrice: {
     type: String,
     required: true,

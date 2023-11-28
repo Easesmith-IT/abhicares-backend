@@ -1,33 +1,35 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const reviewSchema = new mongoose.Schema({
-    type:{
-        type:String,
-        required:[true,'Please provide a type']
+const reviewSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      required: [true, "Please provide a type"],
     },
-    title:{
-        type:String,
-        required: [true, 'Please provide title'],
+    title: {
+      type: String,
+      required: [true, "Please provide title"],
     },
-    content:{
-        type:String,
+    content: {
+      type: String,
     },
-    rating:{
-        type:Number,
+    rating: {
+      type: Number,
     },
-    image:{
-        type:String
+    image: {
+      type: String,
     },
-    productId:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref:'Product'
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
     },
-    userId:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref:'User'
-    }
-}, {timestamps:true});
-
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  },
+  { timestamps: true }
+);
 
 const review = new mongoose.model("Review", reviewSchema);
 
