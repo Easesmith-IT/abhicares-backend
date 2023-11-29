@@ -4,6 +4,7 @@ const User = require("../models/user");
 
 const router = express.Router();
 
+const img_upload=require("../middleware/imageMiddleware")
 
 const category_controller = require("../controllers/categoryController");
 const service_controller=require("../controllers/servicesController")
@@ -21,7 +22,7 @@ router.delete("/delete-category/:id", category_controller.deleteCategory); // pa
 
 //  Services Routes
 
-router.post("/create-service",service_controller.createService);
+router.post("/create-service",img_upload,service_controller.createService);
 router.get("/get-all-service", service_controller.getAllService);
 router.get("/get-category-service/:id", service_controller.getCategoryService); // passing category id
 router.patch("/update-service/:id", service_controller.updateService); // passing object id
@@ -41,6 +42,7 @@ router.post("/create-seller",seller_controller.createSeller)
 router.get("/get-all-seller",seller_controller.getAllSeller)
 router.patch("/update-seller/:id",seller_controller.updateSeller) // passing object id
 router.delete("/delete-seller/:id",seller_controller.deleteSeller) // passing object id
+router.get("/search-seller",seller_controller.searchSeller)
 
 
 

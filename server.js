@@ -10,38 +10,38 @@ const cookieParser = require("cookie-parser");
 
 const server = express();
 
-const fileStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "images");
-  },
-  filename: (req, file, cb) => {
-    cb(
-      null,
-      new Date().getMonth().toString() +
-        "-" +
-        new Date().getDate().toString() +
-        "-" +
-        Math.random() +
-        "-" +
-        crypto.randomBytes(16).toString("hex") +
-        "-" +
-        file.originalname.replaceAll(/\s/g, "")
-    );
-  },
-});
+// const fileStorage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, "images");
+//   },
+//   filename: (req, file, cb) => {
+//     cb(
+//       null,
+//       new Date().getMonth().toString() +
+//         "-" +
+//         new Date().getDate().toString() +
+//         "-" +
+//         Math.random() +
+//         "-" +
+//         crypto.randomBytes(16).toString("hex") +
+//         "-" +
+//         file.originalname.replaceAll(/\s/g, "")
+//     );
+//   },
+// });
 
 
-const fileFilter = (req, file, cb) => {
-  if (
-    file.mimetype === "images/png" ||
-    file.mimetype === "images/jpg" ||
-    file.mimetype === "images/jpeg"
-  ) {
-    cb(null, false);
-  } else {
-    cb(null, true);
-  }
-};
+// const fileFilter = (req, file, cb) => {
+//   if (
+//     file.mimetype === "images/png" ||
+//     file.mimetype === "images/jpg" ||
+//     file.mimetype === "images/jpeg"
+//   ) {
+//     cb(null, false);
+//   } else {
+//     cb(null, true);
+//   }
+// };
 
 server.use(bodyParser.json({ limit: "50mb" }));
 server.use(express.urlencoded({ extended: true }));
@@ -49,10 +49,10 @@ server.use(express.static(path.join(__dirname, "build")));
 server.use(express.static(path.join(__dirname, "admin")));
 server.use(cookieParser());
 
-server.use(
-  multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
-);
-server.use("/images", express.static(path.join(__dirname, "images")));
+// server.use(
+//   multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
+// );
+server.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // express.static(path.join(__dirname, "..));
 
 server.use(
@@ -62,31 +62,25 @@ server.use(
   })
 );
 
-server.use((req, res, next) => {
-  console.log(
-    "Server received a request\n with method:",
-    req.method,
-    "\nUrl:",
-    req.url,
-    "\nbody:",
-    req.method,
-    "\nparams:",
-    req.param,
-    "\nquerry:",
-    req.query,
-    "\nPath",
-    req.path
-  );
-  next();
-});
+// server.use((req, res, next) => {
+//   console.log(
+//     "Server received a request\n with method:",
+//     req.method,
+//     "\nUrl:",
+//     req.url,
+//     "\nbody:",
+//     req.method,
+//     "\nparams:",
+//     req.param,
+//     "\nquerry:",
+//     req.query,
+//     "\nPath",
+//     req.path
+//   );
+//   next();
+// });
 
-// server.use((err, req, res, next)=>{
-//     if(err){
-//         const statusCode = err.statusCode || 500;
-//         return res.status(statusCode).json({error: err.message})
-//     }
-//     next();
-// })
+
 
 const mongoose_url = process.env.TEST_MONGO_CONNECTION;
 
@@ -99,12 +93,6 @@ mongoose
     console.log(err);
   });
 
-
-
-// server.get("/", (req, res) => {
-//   res.send("Server is running");
-// });
-// serverInstance = server.listen(process.env.PORT || 3001);
 const port = process.env.PORT || 5000;
 
 

@@ -1,16 +1,18 @@
 const sellerModel = require('../models/seller')
+var bcrypt = require('bcryptjs')
 
 exports.createSeller = async (req, res, next) => {
   try {
-    const {
+    var {
       name,
       legalName,
       gstNumber,
       phone,
+      status,
       address,
       password,
       contactPerson,
-      category,
+      categoryId,
       services
     } = req.body
     // const {state,city,addressLine,pincode,location}=address
@@ -24,17 +26,28 @@ exports.createSeller = async (req, res, next) => {
       !address ||
       !password ||
       !contactPerson ||
-      !category ||
-      !services
+      !categoryId
     ) {
       res
         .status(400)
         .json({ success: false, message: 'All the fields are required' })
     } else {
-      await sellerModel.create(req.body)
-      res
-        .status(201)
-        .json({ success: true, message: 'product created successful' })
+      bcrypt.genSalt(10, function (err, salt) {
+        bcrypt.hash(password, salt,async function (err, hash) {
+          if (err) {
+            res
+              .status(400)
+              .json({ success: false, message: 'password enctyption error' })
+          } else {
+            req.body.password = hash
+            await sellerModel.create(req.body)
+            res
+              .status(201)
+              .json({ success: true, message: 'Seller created successful' })
+          }
+        })
+      })
+     
     }
   } catch (err) {
     const error = new Error(err)
@@ -46,13 +59,11 @@ exports.createSeller = async (req, res, next) => {
 exports.getAllSeller = async (req, res, next) => {
   try {
     const result = await sellerModel.find()
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: 'This is all the seller list',
-        data: result
-      })
+    res.status(200).json({
+      success: true,
+      message: 'This is all the seller list',
+      data: result
+    })
   } catch (err) {
     const error = new Error(err)
     error.httpStatusCode = 500
@@ -68,8 +79,8 @@ exports.updateSeller = async (req, res, next) => {
       legalName,
       gstNumber,
       phone,
+      status,
       address,
-      password,
       contactPerson
     } = req.body
     // const {state,city,addressLine,pincode,location}=address
@@ -80,8 +91,8 @@ exports.updateSeller = async (req, res, next) => {
       !legalName ||
       !gstNumber ||
       !phone ||
+      !status ||
       !address ||
-      !password ||
       !contactPerson
     ) {
       res
@@ -93,12 +104,12 @@ exports.updateSeller = async (req, res, next) => {
       result.legalName = legalName
       result.gstNumber = gstNumber
       result.phone = phone
+      result.status = status
       result.address.state = address.state
       result.address.city = address.city
       result.address.addressLine = address.addressLine
       result.address.pincode = address.pincode
       result.address.location = address.location
-      result.password = password
       result.contactPerson.name = contactPerson.name
       result.contactPerson.phone = contactPerson.phone
       result.contactPerson.email = contactPerson.email
@@ -122,6 +133,47 @@ exports.deleteSeller = async (req, res, next) => {
     res
       .status(200)
       .json({ success: true, message: 'Seller deleted successful' })
+  } catch (err) {
+    const error = new Error(err)
+    error.httpStatusCode = 500
+    return next(err)
+  }
+}
+
+exports.searchSeller = async (req, res, next) => {
+  try {
+    var search=""
+    var page = 1
+    if(req.query.search){
+       search=req.query.search
+       page = req.query.page
+    }
+    
+    var limit = 20
+    const allSeller = await sellerModel.count()
+                 var num=allSeller/limit
+                 var fixedNum=num.toFixed()
+                 var totalPage=fixedNum;
+                 if(num>fixedNum){
+                  totalPage++
+                 }
+
+
+    const userData=await sellerModel.find(
+      {
+       $or:[
+           {"address.city":{$regex:".*"+search+".*",$options:"i"}},
+           {name:{$regex:".*"+search+".*",$options:"i"}}
+       ]
+    }
+    ) .limit(limit * 1)
+    .skip((page - 1) * limit)
+    .exec()
+
+
+    res
+      .status(200)
+      .json({ success: true, message: 'Seller data',data:userData,totalPage:totalPage })
   } catch (err) {
     const error = new Error(err)
     error.httpStatusCode = 500

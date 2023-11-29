@@ -19,7 +19,10 @@ const sellerSchema = new Schema(
       type: String,
       required: true
     },
-
+    status:{
+          type:Boolean,
+          default:true 
+    },
     address: {
       state: {
         type: String,
@@ -40,12 +43,12 @@ const sellerSchema = new Schema(
       location: {
         type: {
           type: String,
-          enum: ['Point'],  // Only "Point" is allowed for type
-          required: true
+          enum: ['Point'], // Only "Point" is allowed for type
+          default: 'Point',
         },
         coordinates: {
-          type: [Number],  // Array of [longitude, latitude]
-          required: true
+          type: [Number], // Array of [longitude, latitude]
+          default: [0, 0]
         }
       }
     },
@@ -69,20 +72,24 @@ const sellerSchema = new Schema(
     },
     categoryId: {
       type: mongoose.Types.ObjectId,
-         ref: "Category"
+      ref: 'Category'
     },
-    servicesId: {
-      type: mongoose.Types.ObjectId,
-      ref:"Service"
-    }
+    services:[
+     {
+      serviceId: {
+        type: mongoose.Types.ObjectId,
+        ref: 'Service'
+      }
+     }
+    ]
+    
   },
   { timestamps: true }
 )
 
-sellerSchema.index({ location: '2dsphere' });
+sellerSchema.index({ location: '2dsphere' })
 
 module.exports = mongoose.model('Seller', sellerSchema)
-
 
 // sellerSchema.methods.addPlants = function () {
 //   let newQuantity = 1

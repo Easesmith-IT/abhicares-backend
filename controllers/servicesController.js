@@ -2,7 +2,7 @@ const serviceModel = require('../models/service')
 
 exports.createService = async (req, res, next) => {
   try {
-    const {
+    var {
       name,
       startingPrice,
       description,
@@ -11,6 +11,8 @@ exports.createService = async (req, res, next) => {
       categoryId,
       totalProducts
     } = req.body
+    imageUrl=req.imageUrl
+    req.body.imageUrl=req.imageUrl
     if (
       !name ||
       !startingPrice ||
@@ -74,6 +76,9 @@ exports.updateService = async (req, res, next) => {
         appHomepage,
         totalProducts
       } = req.body
+      imageUrl=req.imageUrl
+      req.body.imageUrl=req.imageUrl
+
       if (
         !name ||
         !startingPrice ||
@@ -93,7 +98,7 @@ exports.updateService = async (req, res, next) => {
        result.imageUrl=imageUrl
        result.appHomepage=appHomepage
        result.totalProducts=totalProducts
-       result.save()
+      await result.save()
         res
           .status(201)
           .json({ success: true, message: 'Service updated successful' })
