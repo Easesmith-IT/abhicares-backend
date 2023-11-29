@@ -10,6 +10,7 @@ const category_controller = require("../controllers/categoryController");
 const service_controller=require("../controllers/servicesController")
 const product_controller=require("../controllers/productController")
 const seller_controller=require("../controllers/sellerController")
+const user_controller=require("../controllers/userController")
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,6 +45,14 @@ router.patch("/update-seller/:id",seller_controller.updateSeller) // passing obj
 router.delete("/delete-seller/:id",seller_controller.deleteSeller) // passing object id
 router.get("/search-seller",seller_controller.searchSeller)
 
+
+// User Routes
+
+router.post("/create-user",user_controller.createUser)
+router.get("/get-all-user",user_controller.getAllUser)
+router.patch("/update-user/:id",user_controller.updateUserByAdmin) // passing object id
+router.delete("/delete-user/:id",user_controller.deleteUser) // passing object id
+router.get("/search-user",user_controller.searchUser)
 
 
 

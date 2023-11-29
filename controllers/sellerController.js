@@ -58,16 +58,30 @@ exports.createSeller = async (req, res, next) => {
 
 exports.getAllSeller = async (req, res, next) => {
   try {
-    const result = await sellerModel.find()
+    var page=1
+    if(req.query.page){
+      page=req.query.page
+    }
+    var limit = 20
+    const allSeller = await userModel.count()
+    var num = allSeller / limit
+    var fixedNum = num.toFixed()
+    var totalPage = fixedNum
+    if (num > fixedNum) {
+      totalPage++
+    }
+
+    const result = await sellerModel.find().limit(limit * 1)
+    .skip((page - 1) * limit)
+    .exec()
     res.status(200).json({
       success: true,
       message: 'This is all the seller list',
-      data: result
+      data: result,
+      totalPage:totalPage
     })
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+    next(err)
   }
 }
 
