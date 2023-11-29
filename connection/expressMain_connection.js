@@ -2,6 +2,7 @@ const server = require("../server");
 ///Importing Routes
 
 const adminRoute = require("../routes/admin");
+const errorHandler = require("../middleware/globalErrorHandler")
 
 // const appRoute = require("../routes/app-route.js");
 // const authRoute = require("../routes/auth");
@@ -52,16 +53,7 @@ server.get("*", (req, res) => {
 //   res.status(500).json({ error: error, errorCode: 500 });
 // });
 
-server.use((err, req, res, next) => {
-  console.log("error handler");
-  if (err) {
-    const statusCode = err.statusCode || 500;
-    console.log("error == ", err);
-    console.log("error message== ", err.message);
-    return res.status(statusCode).json({ error: err.message });
-  }
-  next();
-});
+server.use(errorHandler);
 
 
 

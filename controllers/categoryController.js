@@ -13,21 +13,24 @@ const Product = require("../models/product");
 const Order = require("../models/order");
 const Payments = require("../models/payments");
 
+const AppError = require('../controllers/errorController')
+
 
 exports.postCreateCategory = async (req, res, next) => {
   try {
     const {name,totalServices}=req.body
     if(!name || !totalServices){
-      res.status(400).json({success:false,message:"All the fields are required"})
+      // res.status(400).json({success:false,message:"All the fields are required"})
+
+      throw new AppError(400, 'All the fields are required')
+
     }else{
       await Category.create(req.body)
       res.status(200).json({ success: true, message: "Category created successful" });
     }
   
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+    next(err)
   }
 };
 
