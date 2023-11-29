@@ -33,7 +33,7 @@ exports.createSeller = async (req, res, next) => {
         .json({ success: false, message: 'All the fields are required' })
     } else {
       bcrypt.genSalt(10, function (err, salt) {
-        bcrypt.hash(password, salt,async function (err, hash) {
+        bcrypt.hash(password, salt, async function (err, hash) {
           if (err) {
             res
               .status(400)
@@ -47,7 +47,6 @@ exports.createSeller = async (req, res, next) => {
           }
         })
       })
-     
     }
   } catch (err) {
     const error = new Error(err)
@@ -58,9 +57,9 @@ exports.createSeller = async (req, res, next) => {
 
 exports.getAllSeller = async (req, res, next) => {
   try {
-    var page=1
-    if(req.query.page){
-      page=req.query.page
+    var page = 1
+    if (req.query.page) {
+      page = req.query.page
     }
     var limit = 20
     const allSeller = await userModel.count()
@@ -71,14 +70,16 @@ exports.getAllSeller = async (req, res, next) => {
       totalPage++
     }
 
-    const result = await sellerModel.find().limit(limit * 1)
-    .skip((page - 1) * limit)
-    .exec()
+    const result = await sellerModel
+      .find()
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec()
     res.status(200).json({
       success: true,
       message: 'This is all the seller list',
       data: result,
-      totalPage:totalPage
+      totalPage: totalPage
     })
   } catch (err) {
     next(err)
@@ -156,39 +157,59 @@ exports.deleteSeller = async (req, res, next) => {
 
 exports.searchSeller = async (req, res, next) => {
   try {
-    var search=""
+    var search = ''
     var page = 1
-    if(req.query.search){
-       search=req.query.search
-       page = req.query.page
+    if (req.query.search) {
+      search = req.query.search
+      page = req.query.page
     }
-    
+
     var limit = 20
     const allSeller = await sellerModel.count()
-                 var num=allSeller/limit
-                 var fixedNum=num.toFixed()
-                 var totalPage=fixedNum;
-                 if(num>fixedNum){
-                  totalPage++
-                 }
-
-
-    const userData=await sellerModel.find(
-      {
-       $or:[
-           {"address.city":{$regex:".*"+search+".*",$options:"i"}},
-           {name:{$regex:".*"+search+".*",$options:"i"}}
-       ]
+    var num = allSeller / limit
+    var fixedNum = num.toFixed()
+    var totalPage = fixedNum
+    if (num > fixedNum) {
+      totalPage++
     }
-    ) .limit(limit * 1)
-    .skip((page - 1) * limit)
-    .exec()
 
+    const userData = await sellerModel
+      .find({
+        $or: [
+          { 'address.city': { $regex: '.*' + search + '.*', $options: 'i' } },
+          { name: { $regex: '.*' + search + '.*', $options: 'i' } }
+        ]
+      })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec()
 
     res
       .status(200)
-      .json({ success: true, message: 'Seller data',data:userData,totalPage:totalPage })
+      .json({
+        success: true,
+        message: 'Seller data',
+        data: userData,
+        totalPage: totalPage
+      })
   } catch (err) {
+    const error = new Error(err)
+    error.httpStatusCode = 500
+    return next(err)
+  }
+}
+
+exports.changeSellerStatus=async(req,res,next)=>{
+  try{
+       const id=req.params.id
+          const {status}=req.body
+  
+          var result=await sellerModel.findOne({_id:id})
+          result.status=status
+          result.save()
+          res.status(200).json({success:true,message:"Data updated successful"})
+
+  }catch(err){
     const error = new Error(err)
     error.httpStatusCode = 500
     return next(err)

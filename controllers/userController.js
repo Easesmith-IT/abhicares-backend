@@ -159,4 +159,19 @@ exports.searchUser = async (req, res, next) => {
   }
 }
 
+exports.changeUserStatus=async(req,res,next)=>{
+  try{
+       const id=req.params.id
+          const {status}=req.body
+  
+          var result=await userModel.findOne({_id:id})
+          result.status=status
+          result.save()
+          res.status(200).json({success:true,message:"Data updated successful"})
 
+  }catch(err){
+    const error = new Error(err)
+    error.httpStatusCode = 500
+    return next(err)
+  }
+}

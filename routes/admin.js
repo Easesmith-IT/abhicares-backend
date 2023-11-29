@@ -44,6 +44,7 @@ router.get("/get-all-seller",seller_controller.getAllSeller)
 router.patch("/update-seller/:id",seller_controller.updateSeller) // passing object id
 router.delete("/delete-seller/:id",seller_controller.deleteSeller) // passing object id
 router.get("/search-seller",seller_controller.searchSeller)
+router.patch("/update-seller-status/:id",seller_controller.changeSellerStatus) // passing object id
 
 
 // User Routes
@@ -53,8 +54,7 @@ router.get("/get-all-user",user_controller.getAllUser)
 router.patch("/update-user/:id",user_controller.updateUserByAdmin) // passing object id
 router.delete("/delete-user/:id",user_controller.deleteUser) // passing object id
 router.get("/search-user",user_controller.searchUser)
-
-
+router.patch("/update-user-status/:id",user_controller.changeUserStatus) // passing object id
 
 
 //Nursery Routes
