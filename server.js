@@ -30,6 +30,7 @@ const fileStorage = multer.diskStorage({
   },
 });
 
+
 const fileFilter = (req, file, cb) => {
   if (
     file.mimetype === "images/png" ||
@@ -98,11 +99,14 @@ mongoose
     console.log(err);
   });
 
-server.get("/", (req, res) => {
-  res.send("Server is running");
-});
+
+
+// server.get("/", (req, res) => {
+//   res.send("Server is running");
+// });
 // serverInstance = server.listen(process.env.PORT || 3001);
 const port = process.env.PORT || 5000;
+
 
 server.listen(port, function () {
   console.log(`Server is running on port http://localhost:${port}`);

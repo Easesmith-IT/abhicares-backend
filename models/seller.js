@@ -1,100 +1,108 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose')
 
-const Schema = mongoose.Schema;
+const Schema = mongoose.Schema
 
 const sellerSchema = new Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: true
     },
     legalName: {
       type: String,
-      required: true,
+      required: true
     },
     gstNumber: {
-      type: String,
+      type: String
     },
     phone: {
       type: String,
-      required: true,
+      required: true
     },
 
     address: {
       state: {
         type: String,
-        required: true,
+        required: true
       },
       city: {
         type: String,
-        required: true,
+        required: true
       },
       addressLine: {
         type: String,
-        required: true,
+        required: true
       },
       pincode: {
         type: String,
-        required: true,
+        required: true
       },
       location: {
-        lat: Number,
-        lng: Number,
-        required: true,
-      },
+        type: {
+          type: String,
+          enum: ['Point'],  // Only "Point" is allowed for type
+          required: true
+        },
+        coordinates: {
+          type: [Number],  // Array of [longitude, latitude]
+          required: true
+        }
+      }
     },
     password: {
-      type: String,
+      type: String
       // required: true,
     },
     contactPerson: {
       name: {
         type: String,
-        required: true,
+        required: true
       },
       phone: {
         type: String,
-        required: true,
+        required: true
       },
       email: {
         type: String,
-        required: true,
-      },
+        required: true
+      }
     },
-    Category: {
-      type: Number,
-      required: true,
+    categoryId: {
+      type: mongoose.Types.ObjectId,
+         ref: "Category"
     },
-    Services: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
+    servicesId: {
+      type: mongoose.Types.ObjectId,
+      ref:"Service"
+    }
   },
   { timestamps: true }
-);
+)
 
-sellerSchema.methods.addPlants = function () {
-  let newQuantity = 1;
-  const totalplant = this.totalListedPlants;
-  if (totalplant > 0) {
-    newQuantity = totalplant + 1;
-  }
-  this.totalListedPlants = newQuantity;
-  this.save();
-};
+sellerSchema.index({ location: '2dsphere' });
 
-sellerSchema.methods.removePlant = function () {
-  let newQuantity = 0;
-  const totalplant = this.totalListedPlants;
-  if (totalplant > 1) {
-    newQuantity = totalplant - 1;
-  }
-  this.totalListedPlants = newQuantity;
-  this.save();
-};
+module.exports = mongoose.model('Seller', sellerSchema)
 
-module.exports = mongoose.model("Seller", sellerSchema);
+
+// sellerSchema.methods.addPlants = function () {
+//   let newQuantity = 1
+//   const totalplant = this.totalListedPlants
+//   if (totalplant > 0) {
+//     newQuantity = totalplant + 1
+//   }
+//   this.totalListedPlants = newQuantity
+//   this.save()
+// }
+
+// sellerSchema.methods.removePlant = function () {
+//   let newQuantity = 0
+//   const totalplant = this.totalListedPlants
+//   if (totalplant > 1) {
+//     newQuantity = totalplant - 1
+//   }
+//   this.totalListedPlants = newQuantity
+//   this.save()
+// }
 
 // const mongodb = require("mongodb");
 
