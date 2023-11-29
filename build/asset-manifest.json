@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/static/css/main.440b8077.css",
+    "main.js": "/static/js/main.db086dc3.js",
+    "static/media/banner-3.jpg": "/static/media/banner-3.62c67d8a1a96512dd3ba.jpg",
+    "static/media/banner-2.jpg": "/static/media/banner-2.d0050e31fdca3d6119f1.jpg",
+    "static/media/banner-1.jpg": "/static/media/banner-1.f664060121543ae711c1.jpg",
+    "static/media/plant-day-care.png": "/static/media/plant-day-care.e89bbdcffbce9dcce786.png",
+    "static/media/maali.png": "/static/media/maali.c639a4aca013ad2fcca1.png",
+    "static/media/rent-plant.png": "/static/media/rent-plant.31ca53f0fa490a88aaf8.png",
+    "static/media/logo.png": "/static/media/logo.a3ddd0f6f6d0f92126ff.png",
+    "static/media/footer-logo.png": "/static/media/footer-logo.0cc53d4a45c210ba9b82.png",
+    "static/media/cancelled.png": "/static/media/cancelled.003b8147487edb47a8e2.png",
+    "index.html": "/index.html",
+    "main.440b8077.css.map": "/static/css/main.440b8077.css.map",
+    "main.db086dc3.js.map": "/static/js/main.db086dc3.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.440b8077.css",
+    "static/js/main.db086dc3.js"
+  ]
+}
