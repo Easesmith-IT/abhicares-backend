@@ -8,6 +8,7 @@ exports.createService = async (req, res, next) => {
       description,
       imageUrl,
       appHomepage,
+      webHomepage,
       categoryId,
       totalProducts
     } = req.body
@@ -18,6 +19,8 @@ exports.createService = async (req, res, next) => {
       !startingPrice ||
       !description ||
       !imageUrl ||
+      !appHomepage || 
+      !webHomepage ||
       !categoryId ||
       !totalProducts
     ) {

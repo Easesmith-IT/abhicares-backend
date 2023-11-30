@@ -6,8 +6,8 @@ const { v4: uuidv4 } = require('uuid');
       cb(null, 'uploads')
     },
     filename: function (req, file, cb) {
-        const uniqueId = uuidv4();
-         let fileName =uniqueId+"-"+Date.now()+"-"+'.jpg'
+      console.log(file)
+         let fileName =file.fieldname+"_"+Date.now()+'.jpg'
         req.imageUrl=fileName
       cb(null, fileName)  
     }

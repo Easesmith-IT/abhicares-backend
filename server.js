@@ -87,7 +87,7 @@ const mongoose_url = process.env.TEST_MONGO_CONNECTION;
 mongoose
   .connect(mongoose_url)
   .then((result) => {
-    console.log("Chaperone database is connected");
+    console.log("Abhicares database is connected");
   })
   .catch((err) => {
     console.log(err);

@@ -22,7 +22,10 @@ const ServiceSchema = new Schema(
     },
     appHomepage: {
       type: Boolean,
-      required: true,
+      default: true,
+    },
+    webHomepage: {
+      type: Boolean,
       default: true,
     },
     categoryId: {
@@ -33,7 +36,6 @@ const ServiceSchema = new Schema(
     totalProducts: {
       type: Number,
       default: 0,
-      required: true,
     },
   },
   { timestamps: true }
