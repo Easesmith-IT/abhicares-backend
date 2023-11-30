@@ -62,7 +62,7 @@ exports.getAllSeller = async (req, res, next) => {
       page = req.query.page
     }
     var limit = 20
-    const allSeller = await userModel.count()
+    const allSeller = await sellerModel.count()
     var num = allSeller / limit
     var fixedNum = num.toFixed()
     var totalPage = fixedNum
