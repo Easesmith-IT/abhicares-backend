@@ -8,8 +8,7 @@ exports.createProduct = async (req, res, next) => {
     req.files.find(data => {
       imageUrl.push(data.filename)
     })
-    req.body.imageUrl = imageUrl
-   
+
     if (
       !name ||
       !price ||
@@ -22,7 +21,14 @@ exports.createProduct = async (req, res, next) => {
         .status(400)
         .json({ success: false, message: 'All the fields are required' })
     } else {
-      await productModel.create(req.body)
+      await productModel.create({
+        name: name,
+        price: price,
+        offerPrice: offerPrice,
+        description: description,
+        imageUrl: imageUrl,
+        serviceId: serviceId
+      })
       res
         .status(201)
         .json({ success: true, message: 'product created successful' })
@@ -106,13 +112,12 @@ exports.getServiceProduct = async (req, res, next) => {
 exports.updateProduct = async (req, res, next) => {
   try {
     const id = req.params.id // object id
-    const { name, price, offerPrice, description,serviceId } =
-      req.body
-      let imageUrl = []
-      req.files.find(data => {
-        imageUrl.push(data.filename)
-      })
-    
+    const { name, price, offerPrice, description, serviceId } = req.body
+    let imageUrl = []
+    req.files.find(data => {
+      imageUrl.push(data.filename)
+    })
+
     if (
       !name ||
       !price ||

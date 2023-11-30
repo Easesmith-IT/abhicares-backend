@@ -6,20 +6,19 @@ exports.createService = async (req, res, next) => {
       name,
       startingPrice,
       description,
-      imageUrl,
       appHomepage,
       webHomepage,
       categoryId,
       totalProducts
     } = req.body
-    imageUrl=req.imageUrl
-    req.body.imageUrl=req.imageUrl
+    var imageUrl = ''
+    imageUrl = req.files[0].filename
     if (
       !name ||
       !startingPrice ||
       !description ||
       !imageUrl ||
-      !appHomepage || 
+      !appHomepage ||
       !webHomepage ||
       !categoryId ||
       !totalProducts
@@ -28,7 +27,16 @@ exports.createService = async (req, res, next) => {
         .status(400)
         .json({ success: false, message: 'All the fields are required' })
     } else {
-      await serviceModel.create(req.body)
+      await serviceModel.create({
+        name: name,
+        startingPrice: startingPrice,
+        description: description,
+        imageUrl: imageUrl,
+        appHomepage: appHomepage,
+        webHomepage: webHomepage,
+        categoryId: categoryId,
+        totalProducts: totalProducts
+      })
       res
         .status(201)
         .json({ success: true, message: 'Service created successful' })
@@ -67,63 +75,61 @@ exports.getCategoryService = async (req, res, next) => {
   }
 }
 
-
 exports.updateService = async (req, res, next) => {
-    try {
-        const id=req.params.id
-      const {
-        name,
-        startingPrice,
-        description,
-        imageUrl,
-        appHomepage,
-        webHomepage,
-        totalProducts
-      } = req.body
-      imageUrl=req.imageUrl
-
-      if (
-        !name ||
-        !startingPrice ||
-        !description ||
-        !imageUrl ||
-        !appHomepage ||
-        !webHomepage ||
-        !totalProducts
-      ) {
-        res
-          .status(400)
-          .json({ success: false, message: 'All the fields are required' })
-      } else {
-       var result=await serviceModel.findOne({_id:id})
-       result.name=name
-       result.startingPrice=startingPrice
-       result.description=description
-       result.imageUrl=imageUrl
-       result.appHomepage=appHomepage
-       result.totalProducts=totalProducts
-      await result.save()
-        res
-          .status(201)
-          .json({ success: true, message: 'Service updated successful' })
-      }
-    } catch (err) {
-      const error = new Error(err)
-      error.httpStatusCode = 500
-      return next(err)
-    }
-  }
-
-  exports.deleteCategoryService = async (req, res, next) => {
-    try {
-      const id = req.params.id
-      await serviceModel.findByIdAndDelete({_id:id})
+  try {
+    const id = req.params.id
+    const {
+      name,
+      startingPrice,
+      description,
+      appHomepage,
+      webHomepage,
+      totalProducts
+    } = req.body
+    var imageUrl = ''
+    imageUrl = req.files[0].filename
+    if (
+      !name ||
+      !startingPrice ||
+      !description ||
+      !imageUrl ||
+      !appHomepage ||
+      !webHomepage ||
+      !totalProducts
+    ) {
       res
-        .status(200)
-        .json({ success: true, message: 'service deleted successful' })
-    } catch (err) {
-      const error = new Error(err)
-      error.httpStatusCode = 500
-      return next(err)
+        .status(400)
+        .json({ success: false, message: 'All the fields are required' })
+    } else {
+      var result = await serviceModel.findOne({ _id: id })
+      result.name = name
+      result.startingPrice = startingPrice
+      result.description = description
+      result.imageUrl = imageUrl
+      result.appHomepage = appHomepage
+      result.totalProducts = totalProducts
+      await result.save()
+      res
+        .status(201)
+        .json({ success: true, message: 'Service updated successful' })
     }
+  } catch (err) {
+    const error = new Error(err)
+    error.httpStatusCode = 500
+    return next(err)
   }
+}
+
+exports.deleteCategoryService = async (req, res, next) => {
+  try {
+    const id = req.params.id
+    await serviceModel.findByIdAndDelete({ _id: id })
+    res
+      .status(200)
+      .json({ success: true, message: 'service deleted successful' })
+  } catch (err) {
+    const error = new Error(err)
+    error.httpStatusCode = 500
+    return next(err)
+  }
+}
