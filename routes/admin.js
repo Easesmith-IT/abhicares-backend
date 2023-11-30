@@ -26,16 +26,17 @@ router.delete("/delete-category/:id", category_controller.deleteCategory); // pa
 router.post("/create-service",img_upload,service_controller.createService);
 router.get("/get-all-service", service_controller.getAllService);
 router.get("/get-category-service/:id", service_controller.getCategoryService); // passing category id
-router.patch("/update-service/:id", service_controller.updateService); // passing object id
+router.patch("/update-service/:id",img_upload, service_controller.updateService); // passing object id
 router.delete("/delete-service/:id",service_controller.deleteCategoryService); // passing object id
 
 // Product Routes
 
-router.post("/create-product",product_controller.createProduct);
+router.post("/create-product",img_upload,product_controller.createProduct);
 router.get("/get-all-product", product_controller.getAllProduct);
 router.get("/get-service-product/:id", product_controller.getServiceProduct); // passing service id
-router.patch("/update-product/:id", product_controller.updateProduct); // passing object id
+router.patch("/update-product/:id",img_upload,product_controller.updateProduct); // passing object id
 router.delete("/delete-product/:id",product_controller.deleteServiceProduct); // passing object id
+
 
 // Seller Routes
 

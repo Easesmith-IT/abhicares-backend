@@ -77,10 +77,10 @@ exports.updateService = async (req, res, next) => {
         description,
         imageUrl,
         appHomepage,
+        webHomepage,
         totalProducts
       } = req.body
       imageUrl=req.imageUrl
-      req.body.imageUrl=req.imageUrl
 
       if (
         !name ||
@@ -88,6 +88,7 @@ exports.updateService = async (req, res, next) => {
         !description ||
         !imageUrl ||
         !appHomepage ||
+        !webHomepage ||
         !totalProducts
       ) {
         res

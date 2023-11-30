@@ -2,8 +2,14 @@ const productModel = require('../models/product')
 
 exports.createProduct = async (req, res, next) => {
   try {
-    const { name, price, offerPrice, description, imageUrl, serviceId } =
-      req.body
+    var { name, price, offerPrice, description, serviceId } = req.body
+
+    let imageUrl = []
+    req.files.find(data => {
+      imageUrl.push(data.filename)
+    })
+    req.body.imageUrl = imageUrl
+   
     if (
       !name ||
       !price ||
@@ -48,14 +54,12 @@ exports.getAllProduct = async (req, res, next) => {
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec()
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: 'These are all product',
-        data: result,
-        totalPages: totalPage
-      })
+    res.status(200).json({
+      success: true,
+      message: 'These are all product',
+      data: result,
+      totalPages: totalPage
+    })
   } catch (err) {
     const error = new Error(err)
     error.httpStatusCode = 500
@@ -86,14 +90,12 @@ exports.getServiceProduct = async (req, res, next) => {
       .exec()
 
     //  const result=await productModel.find({serviceId:id})
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: 'These are service product',
-        data: result,
-        totalPage: totalPage
-      })
+    res.status(200).json({
+      success: true,
+      message: 'These are service product',
+      data: result,
+      totalPage: totalPage
+    })
   } catch (err) {
     const error = new Error(err)
     error.httpStatusCode = 500
@@ -104,8 +106,13 @@ exports.getServiceProduct = async (req, res, next) => {
 exports.updateProduct = async (req, res, next) => {
   try {
     const id = req.params.id // object id
-    const { name, price, offerPrice, description, imageUrl, serviceId } =
+    const { name, price, offerPrice, description,serviceId } =
       req.body
+      let imageUrl = []
+      req.files.find(data => {
+        imageUrl.push(data.filename)
+      })
+    
     if (
       !name ||
       !price ||

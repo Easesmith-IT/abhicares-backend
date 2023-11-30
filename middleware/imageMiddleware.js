@@ -12,6 +12,6 @@ const { v4: uuidv4 } = require('uuid');
       cb(null, fileName)  
     }
   })
-  const upload = multer({ storage: storage }).array("img")
+  const upload = multer({ storage: storage }).array("img",5)
 
 module.exports = upload
