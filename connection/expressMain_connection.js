@@ -2,6 +2,7 @@ const server = require("../server");
 ///Importing Routes
 
 const adminRoute = require("../routes/admin");
+const shoppingRoute=require("../routes/shoppingRoutes")
 const errorHandler = require("../middleware/globalErrorHandler")
 
 // const appRoute = require("../routes/app-route.js");
@@ -25,11 +26,21 @@ server.use((req, res, next) => {
   next();
 });
 
+
+
+// Admin Routes
+server.use("/api/website", adminRoute);
+
+// shopping routes 
+server.use("/api/shopping",shoppingRoute)
+
+
+
 //IMPORTING ROUTES
 // server.use("/auth", authRoute);
 
 // server.use("/api/app", appRoute);
-server.use("/api/website", adminRoute);
+
 // server.use("/api/admin", adminRoute);
 // server.use("/api/auth", authRoute);
 // server.use("/api/payments", paymentRoute);
