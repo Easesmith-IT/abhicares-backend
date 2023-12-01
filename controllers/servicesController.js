@@ -133,3 +133,44 @@ exports.deleteCategoryService = async (req, res, next) => {
     return next(err)
   }
 }
+
+exports.searchService = async (req, res, next) => {
+  try {
+    var search = ''
+    var page = 1
+    if (req.query.search) {
+      search = req.query.search
+      page = req.query.page
+    }
+
+    var limit = 20
+    const allServices = await serviceModel.count()
+    var num = allServices / limit
+    var fixedNum = num.toFixed()
+    var totalPage = fixedNum
+    if (num > fixedNum) {
+      totalPage++
+    }
+
+    const result = await serviceModel
+      .find({
+        $or: [{ name: { $regex: '.*' + search + '.*', $options: 'i' } }]
+      })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec()
+
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: 'These are all services',
+        data: result,
+        totalPage: totalPage
+      })
+  } catch (err) {
+    const error = new Error(err)
+    error.httpStatusCode = 500
+    return next(err)
+  }
+}

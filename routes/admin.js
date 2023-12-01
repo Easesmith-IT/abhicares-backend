@@ -11,6 +11,8 @@ const service_controller=require("../controllers/servicesController")
 const product_controller=require("../controllers/productController")
 const seller_controller=require("../controllers/sellerController")
 const user_controller=require("../controllers/userController")
+const enquiry_controller=require("../controllers/enquiryController")
+const package_controller=require("../controllers/packageController")
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28,7 +30,7 @@ router.get("/get-all-service", service_controller.getAllService);
 router.get("/get-category-service/:id", service_controller.getCategoryService); // passing category id
 router.patch("/update-service/:id",img_upload, service_controller.updateService); // passing object id
 router.delete("/delete-service/:id",service_controller.deleteCategoryService); // passing object id
-
+router.get("/search-service",service_controller.searchService)
 // Product Routes
 
 router.post("/create-product",img_upload,product_controller.createProduct);
@@ -56,6 +58,17 @@ router.patch("/update-user/:id",user_controller.updateUserByAdmin) // passing ob
 router.delete("/delete-user/:id",user_controller.deleteUser) // passing object id
 router.get("/search-user",user_controller.searchUser)
 router.patch("/update-user-status/:id",user_controller.changeUserStatus) // passing object id
+
+// Enquiry Routes
+router.get("/get-all-enquiry",enquiry_controller.getAllEnquiry)
+router.delete("/delete-enquiry/:id",enquiry_controller.deleteEnquiry)
+
+
+// Package Routes
+  router.post("/create-package",img_upload,package_controller.createPackage)
+  router.get("/get-service-package/:id",package_controller.getServicePackage) //passing service id
+  router.delete("/delete-package",package_controller.deletePackage) //passing object id
+
 
 
 //Nursery Routes
