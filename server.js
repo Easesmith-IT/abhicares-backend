@@ -30,7 +30,6 @@ const server = express();
 //   },
 // });
 
-
 // const fileFilter = (req, file, cb) => {
 //   if (
 //     file.mimetype === "images/png" ||
@@ -62,25 +61,23 @@ server.use(
   })
 );
 
-// server.use((req, res, next) => {
-//   console.log(
-//     "Server received a request\n with method:",
-//     req.method,
-//     "\nUrl:",
-//     req.url,
-//     "\nbody:",
-//     req.method,
-//     "\nparams:",
-//     req.param,
-//     "\nquerry:",
-//     req.query,
-//     "\nPath",
-//     req.path
-//   );
-//   next();
-// });
-
-
+server.use((req, res, next) => {
+  console.log(
+    "Server received a request\n with method:",
+    req.method,
+    "\nUrl:",
+    req.url,
+    "\nbody:",
+    req.method,
+    "\nparams:",
+    req.param,
+    "\nquerry:",
+    req.query,
+    "\nPath",
+    req.path
+  );
+  next();
+});
 
 const mongoose_url = process.env.TEST_MONGO_CONNECTION;
 
@@ -94,7 +91,6 @@ mongoose
   });
 
 const port = process.env.PORT || 5000;
-
 
 server.listen(port, function () {
   console.log(`Server is running on port http://localhost:${port}`);

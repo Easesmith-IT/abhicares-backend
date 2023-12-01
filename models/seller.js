@@ -1,95 +1,94 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
-const Schema = mongoose.Schema
+const Schema = mongoose.Schema;
 
 const sellerSchema = new Schema(
   {
     name: {
       type: String,
-      required: true
+      required: true,
     },
     legalName: {
       type: String,
-      required: true
+      required: true,
     },
     gstNumber: {
-      type: String
+      type: String,
     },
     phone: {
       type: String,
-      required: true
+      required: true,
     },
-    status:{
-          type:Boolean,
-          default:true 
+    status: {
+      type: Boolean,
+      default: true,
     },
     address: {
       state: {
         type: String,
-        required: true
+        required: true,
       },
       city: {
         type: String,
-        required: true
+        required: true,
       },
       addressLine: {
         type: String,
-        required: true
+        required: true,
       },
       pincode: {
         type: String,
-        required: true
+        required: true,
       },
       location: {
         type: {
           type: String,
-          enum: ['Point'], // Only "Point" is allowed for type
-          default: 'Point',
+          enum: ["Point"], // Only "Point" is allowed for type
+          default: "Point",
         },
         coordinates: {
           type: [Number], // Array of [longitude, latitude]
-          default: [0, 0]
-        }
-      }
+          default: [0, 0],
+        },
+      },
     },
     password: {
-      type: String
+      type: String,
       // required: true,
     },
     contactPerson: {
       name: {
         type: String,
-        required: true
+        required: true,
       },
       phone: {
         type: String,
-        required: true
+        required: true,
       },
       email: {
         type: String,
-        required: true
-      }
+        required: true,
+      },
     },
     categoryId: {
       type: mongoose.Types.ObjectId,
-      ref: 'Category'
+      ref: "Category",
     },
-    services:[
-     {
-      serviceId: {
-        type: mongoose.Types.ObjectId,
-        ref: 'Service'
-      }
-     }
-    ]
-    
+    services: [
+      {
+        serviceId: {
+          type: mongoose.Types.ObjectId,
+          ref: "Service",
+        },
+      },
+    ],
   },
   { timestamps: true }
-)
+);
 
-sellerSchema.index({ location: '2dsphere' })
+sellerSchema.index({ location: "2dsphere" });
 
-module.exports = mongoose.model('Seller', sellerSchema)
+module.exports = mongoose.model("Seller", sellerSchema);
 
 // sellerSchema.methods.addPlants = function () {
 //   let newQuantity = 1

@@ -10,9 +10,9 @@ const cartSchema = new Schema(
     },
     items: [
       {
-        skuId: {
+        productId: {
           type: Schema.Types.ObjectId,
-          ref: "Sku", // Replace with the actual name of your Plant model
+          ref: "Product", // Replace with the actual name of your Product model
           required: true,
         },
         quantity: {
@@ -31,17 +31,15 @@ const cartSchema = new Schema(
   { timestamps: true }
 );
 
-cartSchema.methods.addProduct = function (sku) {
-// console.log("sku", sku);
+cartSchema.methods.addProduct = function (prod) {
+  // console.log("sku", sku);
 
-  const cartProductIndex = this.items.findIndex(
-    (cp) => {
-      // console.log(" cart skuId",cp.skuId.toString());
-      // console.log("prod skuId", sku._id.toString());
-      // console.log(cp.skuId.toString() === sku._id.toString());
-      return cp.skuId.toString() === sku._id.toString()
-    }
-  );
+  const cartProductIndex = this.items.findIndex((cp) => {
+    // console.log(" cart skuId",cp.skuId.toString());
+    // console.log("prod skuId", sku._id.toString());
+    // console.log(cp.skuId.toString() === sku._id.toString());
+    return cp.productId.toString() === prod._id.toString();
+  });
   let newQuantity = 1;
   const updatedCartItems = [...this.items];
   // console.log(cartProductIndex);
@@ -50,18 +48,18 @@ cartSchema.methods.addProduct = function (sku) {
     updatedCartItems[cartProductIndex].quantity = newQuantity;
   } else {
     updatedCartItems.push({
-      skuId: sku._id,
+      productId: prod._id,
       quantity: newQuantity,
     });
   }
-  this.totalValue += sku.price;
+  this.totalValue += prod.price;
   this.items = updatedCartItems;
   return this.save();
 };
 
-cartSchema.methods.deleteProduct = function (sku) {
+cartSchema.methods.deleteProduct = function (prod) {
   const cartProductIndex = this.items.findIndex(
-    (cp) => cp.skuId.toString() === sku._id.toString()
+    (cp) => cp.productId.toString() === prod._id.toString()
   );
   let updatedCartItems = [...this.items];
   let quantity = updatedCartItems[cartProductIndex].quantity;
@@ -71,10 +69,10 @@ cartSchema.methods.deleteProduct = function (sku) {
     updatedCartItems[cartProductIndex].quantity = quantity;
   } else {
     updatedCartItems = this.items.filter(
-      (item) => item.skuId.toString() !== sku._id.toString()
+      (item) => item.productId.toString() !== prod._id.toString()
     );
   }
-  this.totalValue -= sku.price;
+  this.totalValue -= prod.price;
   this.items = updatedCartItems;
   return this.save();
 };
