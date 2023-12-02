@@ -32,7 +32,7 @@ exports.getAllEnquiry=async(req,res,next)=>{
            .limit(limit * 1)
            .skip((page - 1) * limit)
            .exec()
-        req.status(200).json({success:true,message:"These are all the enquiry list",data:result,totalPage:totalPage})      
+        res.status(200).json({success:true,message:"These are all the enquiry list",data:result,totalPage:totalPage})      
     }catch(err){
         next(err)
     }
