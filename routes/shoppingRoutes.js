@@ -5,6 +5,7 @@ const product_controller=require("../controllers/productController")
 const service_controller=require("../controllers/servicesController")
 const enquiry_controller=require("../controllers/enquiryController")
 const package_controller=require("../controllers/packageController")
+const cart_controller=require("../controllers/cartController")
 
 
 // Category routes
@@ -25,6 +26,13 @@ router.post("/create-enquiry",enquiry_controller.createEnquiry)
 
 router.get("/get-service-package/:id",package_controller.getServicePackage)
 router.get("/get-package-product/:id",package_controller.getPackageProduct) //passing service id
+
+//Cart Routes
+router.post("/create-cart",cart_controller.createCart)
+router.get("/cart-details/:id",cart_controller.getCart) //passing user id
+router.post("/remove-cart-item/:id",cart_controller.removeItemFromCart) // passing cart id
+router.post("/add-item-cart/:id",cart_controller.addItemToCart) //passing user id
+
 
 
 module.exports=router

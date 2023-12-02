@@ -22,7 +22,7 @@ const cartSchema = new Schema(
         },
       },
     ],
-    totalValue: {
+    totalPrice: {
       type: Number,
       required: true,
       default: 0,
@@ -31,50 +31,50 @@ const cartSchema = new Schema(
   { timestamps: true }
 );
 
-cartSchema.methods.addProduct = function (prod) {
-  // console.log("sku", sku);
+// cartSchema.methods.addProduct = function (prod) {
+//   // console.log("sku", sku);
 
-  const cartProductIndex = this.items.findIndex((cp) => {
-    // console.log(" cart skuId",cp.skuId.toString());
-    // console.log("prod skuId", sku._id.toString());
-    // console.log(cp.skuId.toString() === sku._id.toString());
-    return cp.productId.toString() === prod._id.toString();
-  });
-  let newQuantity = 1;
-  const updatedCartItems = [...this.items];
-  // console.log(cartProductIndex);
-  if (cartProductIndex >= 0) {
-    newQuantity = updatedCartItems[cartProductIndex].quantity + 1;
-    updatedCartItems[cartProductIndex].quantity = newQuantity;
-  } else {
-    updatedCartItems.push({
-      productId: prod._id,
-      quantity: newQuantity,
-    });
-  }
-  this.totalValue += prod.price;
-  this.items = updatedCartItems;
-  return this.save();
-};
+//   const cartProductIndex = this.items.findIndex((cp) => {
+//     // console.log(" cart skuId",cp.skuId.toString());
+//     // console.log("prod skuId", sku._id.toString());
+//     // console.log(cp.skuId.toString() === sku._id.toString());
+//     return cp.productId.toString() === prod._id.toString();
+//   });
+//   let newQuantity = 1;
+//   const updatedCartItems = [...this.items];
+//   // console.log(cartProductIndex);
+//   if (cartProductIndex >= 0) {
+//     newQuantity = updatedCartItems[cartProductIndex].quantity + 1;
+//     updatedCartItems[cartProductIndex].quantity = newQuantity;
+//   } else {
+//     updatedCartItems.push({
+//       productId: prod._id,
+//       quantity: newQuantity,
+//     });
+//   }
+//   this.totalValue += prod.price;
+//   this.items = updatedCartItems;
+//   return this.save();
+// };
 
-cartSchema.methods.deleteProduct = function (prod) {
-  const cartProductIndex = this.items.findIndex(
-    (cp) => cp.productId.toString() === prod._id.toString()
-  );
-  let updatedCartItems = [...this.items];
-  let quantity = updatedCartItems[cartProductIndex].quantity;
+// cartSchema.methods.deleteProduct = function (prod) {
+//   const cartProductIndex = this.items.findIndex(
+//     (cp) => cp.productId.toString() === prod._id.toString()
+//   );
+//   let updatedCartItems = [...this.items];
+//   let quantity = updatedCartItems[cartProductIndex].quantity;
 
-  if (quantity > 1) {
-    quantity = updatedCartItems[cartProductIndex].quantity - 1;
-    updatedCartItems[cartProductIndex].quantity = quantity;
-  } else {
-    updatedCartItems = this.items.filter(
-      (item) => item.productId.toString() !== prod._id.toString()
-    );
-  }
-  this.totalValue -= prod.price;
-  this.items = updatedCartItems;
-  return this.save();
-};
+//   if (quantity > 1) {
+//     quantity = updatedCartItems[cartProductIndex].quantity - 1;
+//     updatedCartItems[cartProductIndex].quantity = quantity;
+//   } else {
+//     updatedCartItems = this.items.filter(
+//       (item) => item.productId.toString() !== prod._id.toString()
+//     );
+//   }
+//   this.totalValue -= prod.price;
+//   this.items = updatedCartItems;
+//   return this.save();
+// };
 
 module.exports = mongoose.model("Cart", cartSchema);
