@@ -43,7 +43,7 @@ exports.deleteEnquiry=async(req,res,next)=>{
     try{
         const id=req.params.id
         await enquiryModel.findByIdAndDelete({_id:id})
-        req.status(200).json({success:true,message:"data deleted successful"})      
+        res.status(200).json({success:true,message:"data deleted successful"})      
     }catch(err){
         next(err)
     }

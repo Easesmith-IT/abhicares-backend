@@ -24,6 +24,7 @@ router.post("/create-enquiry",enquiry_controller.createEnquiry)
 // Package Routes
 
 router.get("/get-service-package/:id",package_controller.getServicePackage)
+router.get("/get-package-product/:id",package_controller.getPackageProduct)
 
 
 module.exports=router

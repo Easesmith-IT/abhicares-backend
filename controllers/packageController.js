@@ -1,4 +1,5 @@
 const packageModel = require('../models/packages')
+const productModel=require("../models/product")
 
 exports.createPackage = async (req, res, next) => {
   try {
@@ -17,7 +18,7 @@ exports.createPackage = async (req, res, next) => {
         price: price,
         offerPrice: offerPrice,
         imageUrl: imageUrl,
-        products: products,
+        products:JSON.parse(products),
         serviceId: serviceId
       })
       res
@@ -40,6 +41,27 @@ exports.getServicePackage = async (req, res, next) => {
     next(err)
   }
 }
+
+
+exports.getPackageProduct = async (req, res, next) => {
+  try {
+   
+  const result= await packageModel.findById('_id')
+    .populate('products')
+    .exec((err, user) => {
+      if (err) throw err;
+      console.log(user);
+    });
+    res
+      .status(200)
+      .json({ success: true, message: 'package list', data: result })
+  } catch (err) {
+    next(err)
+  }
+}
+
+
+
 
 exports.deletePackage = async (req, res, next) => {
   try {

@@ -67,7 +67,7 @@ router.delete("/delete-enquiry/:id",enquiry_controller.deleteEnquiry)
 // Package Routes
   router.post("/create-package",img_upload,package_controller.createPackage)
   router.get("/get-service-package/:id",package_controller.getServicePackage) //passing service id
-  router.delete("/delete-package",package_controller.deletePackage) //passing object id
+  router.delete("/delete-package/:id",package_controller.deletePackage) //passing object id
 
 
 
