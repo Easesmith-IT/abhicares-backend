@@ -1,5 +1,6 @@
+const { default: mongoose } = require('mongoose')
 const packageModel = require('../models/packages')
-const productModel=require("../models/product")
+const productModel = require('../models/product')
 
 exports.createPackage = async (req, res, next) => {
   try {
@@ -18,7 +19,7 @@ exports.createPackage = async (req, res, next) => {
         price: price,
         offerPrice: offerPrice,
         imageUrl: imageUrl,
-        products:JSON.parse(products),
+        products: JSON.parse(products),
         serviceId: serviceId
       })
       res
@@ -42,26 +43,35 @@ exports.getServicePackage = async (req, res, next) => {
   }
 }
 
-
 exports.getPackageProduct = async (req, res, next) => {
   try {
-   
-  const result= await packageModel.findById('_id')
-    .populate('products')
-    .exec((err, user) => {
-      if (err) throw err;
-      console.log(user);
-    });
+    const id = req.params.id
+
+    const result = await packageModel.aggregate([
+     {
+      $match:{_id: new mongoose.Types.ObjectId(id)}
+     },
+      {
+        $lookup: {
+          from: 'products',
+          let: { pid: '$products.productId' },
+          pipeline: [
+            { $match: { $expr: { $in: ['$_id', '$$pid'] } } }
+            // Add additional stages here
+          ],
+          as: 'productObjects'
+        }
+      }
+    ])
+
     res
       .status(200)
       .json({ success: true, message: 'package list', data: result })
   } catch (err) {
+    console.log(err)
     next(err)
   }
 }
-
-
-
 
 exports.deletePackage = async (req, res, next) => {
   try {
