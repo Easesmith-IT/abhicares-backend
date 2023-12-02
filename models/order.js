@@ -14,10 +14,6 @@ const orderSchema = new Schema(
     },
     products: [
       {
-        sercvice: {
-          type: String,
-          required: true,
-        },
         product: {
           type: Object,
           required: true,
@@ -43,19 +39,15 @@ const orderSchema = new Schema(
         required: true,
       },
       address: {
-        state: {
-          type: String,
-          required: true,
-        },
-        city: {
-          type: String,
-          required: true,
-        },
-        addressLine: {
+        address_line1: {
           type: String,
           // required: true,
         },
         pincode: {
+          type: Number,
+          // required: true,
+        },
+        mobile: {
           type: String,
           required: true,
         },

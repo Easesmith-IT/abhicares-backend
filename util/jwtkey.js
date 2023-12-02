@@ -1,0 +1,2 @@
+exports.secretJwtKey =
+  "abhicares@#$&*!%/9Nvo9CqU5iTaYQp2yMGlQ7I7vFCWl6sSTVJGAZisxhIOFbYsv+Q4GTwMzFKb9e7BqPOpN1daNbiXBSDKdLzxGXRY0diFxAPDrM7WKtTe82Ohrek5Mmdz9MCom1pkJsO3jzSGvnoglScpItW922SXwotWdpFbPutQnxVQz59pLc=";
