@@ -1,5 +1,98 @@
 const userModel = require('../models/user')
 const bcrypt = require('bcryptjs')
+const session = require('express-session')
+const otpGenerator = require('otp-generator')
+const nodemailer = require('nodemailer')
+const jwt = require('jsonwebtoken')
+const otpStore = {}
+exports.generateOtpUser = async (req, res, next) => {
+  try {
+    const { phoneNumber } = req.body
+
+    // Generate a 6-digit OTP
+    const otp = otpGenerator.generate(6, {
+      digits: true,
+      alphabets: false,
+      upperCase: false,
+      specialChars: false
+    })
+
+    // Store the OTP in the session
+    // req.session.otp = otp
+    var myOtp = 'otp'
+    var phone = 'phoneNumber'
+    // For demonstration purposes, store the OTP in memory
+    otpStore[myOtp] = otp
+    otpStore[phone] = phoneNumber
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'generaluser2003@gmail.com',
+        pass: 'aevm hfgp mizf aypu'
+      }
+    })
+
+    // Define the email message
+    const mailOptions = {
+      from: 'generaluser2003@gmail.com',
+      to: 'lifegameraryan@gmail.com',
+      subject: 'Test Email',
+      text: `this is otp for testing abhicares ${otp}`
+    }
+
+    // Send the email
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error:', error)
+      } else {
+        console.log('Email sent:', info.response)
+
+        console.log(`Sending OTP ${otp} to ${phoneNumber}`)
+
+        res.status(200).json({ message: 'OTP sent successfully' })
+      }
+    })
+
+    // Send the OTP (you would typically send it via SMS, email, etc.)
+  } catch (err) {
+    next(err)
+  }
+}
+
+exports.verifyUserOtp = async (req, res, next) => {
+  try {
+    const { enteredOTP } = req.body
+
+    // Retrieve the stored OTP
+
+    var myOtp = 'otp'
+    var phone = 'phoneNumber'
+    const storedOTP = otpStore[myOtp]
+    const phoneNumber = otpStore[phone]
+
+    // Check if the entered OTP matches the stored OTP
+    if (enteredOTP === storedOTP) {
+      jwt.sign({ phone: phoneNumber }, 'secretkey', {}, function (err, token) {
+        if (err) {
+          res
+            .status(400)
+            .json({ success: false, message: 'token generating error' })
+        } else {
+          res.cookie('id', token).json({
+            success: true,
+            message: 'user login successful'
+          })
+        }
+      })
+    } else {
+      // Authentication failed
+      res.status(401).json({ message: 'Invalid OTP' })
+    }
+  } catch (err) {
+    next(err)
+  }
+}
 
 exports.createUser = async (req, res, next) => {
   try {
@@ -34,9 +127,9 @@ exports.createUser = async (req, res, next) => {
 
 exports.getAllUser = async (req, res, next) => {
   try {
-    var page=1
-    if(req.query.page){
-      page=req.query.page
+    var page = 1
+    if (req.query.page) {
+      page = req.query.page
     }
     var limit = 20
     const allUser = await userModel.count()
@@ -144,14 +237,12 @@ exports.searchUser = async (req, res, next) => {
       .skip((page - 1) * limit)
       .exec()
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: 'user data',
-        data: userData,
-        totalPage: totalPage
-      })
+    res.status(200).json({
+      success: true,
+      message: 'user data',
+      data: userData,
+      totalPage: totalPage
+    })
   } catch (err) {
     const error = new Error(err)
     error.httpStatusCode = 500
@@ -159,17 +250,16 @@ exports.searchUser = async (req, res, next) => {
   }
 }
 
-exports.changeUserStatus=async(req,res,next)=>{
-  try{
-       const id=req.params.id
-          const {status}=req.body
-  
-          var result=await userModel.findOne({_id:id})
-          result.status=status
-          result.save()
-          res.status(200).json({success:true,message:"Data updated successful"})
+exports.changeUserStatus = async (req, res, next) => {
+  try {
+    const id = req.params.id
+    const { status } = req.body
 
-  }catch(err){
+    var result = await userModel.findOne({ _id: id })
+    result.status = status
+    result.save()
+    res.status(200).json({ success: true, message: 'Data updated successful' })
+  } catch (err) {
     const error = new Error(err)
     error.httpStatusCode = 500
     return next(err)

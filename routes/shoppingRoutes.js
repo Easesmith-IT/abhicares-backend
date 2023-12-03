@@ -1,11 +1,16 @@
 const express=require("express")
 const router=express.Router()
+// middleware
+const user_auth=require("../middleware/userAuth")
+
+// controllers
 const category_controller=require("../controllers/categoryController")
 const product_controller=require("../controllers/productController")
 const service_controller=require("../controllers/servicesController")
 const enquiry_controller=require("../controllers/enquiryController")
 const package_controller=require("../controllers/packageController")
 const cart_controller=require("../controllers/cartController")
+const user_controller=require("../controllers/userController")
 
 
 // Category routes
@@ -29,10 +34,13 @@ router.get("/get-package-product/:id",package_controller.getPackageProduct) //pa
 
 //Cart Routes
 router.post("/create-cart",cart_controller.createCart)
-router.get("/cart-details/:id",cart_controller.getCart) //passing user id
+router.get("/cart-details/:id",user_auth.verify,cart_controller.getCart) //passing user id
 router.post("/remove-cart-item/:id",cart_controller.removeItemFromCart) // passing cart id
 router.post("/add-item-cart/:id",cart_controller.addItemToCart) //passing user id
 
+// User Routes
 
+router.post("/generate-otp",user_controller.generateOtpUser)
+router.post("/verify-otp",user_controller.verifyUserOtp)
 
 module.exports=router
