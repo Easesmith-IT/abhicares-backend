@@ -2,13 +2,17 @@ const mongoose = require("mongoose");
 
 const schema = new mongoose.Schema(
   {
-    address_line1: {
+    addressLine: {
       type: String,
       required: true,
     },
     pincode: {
       type: Number,
       // required: true,
+    },
+    landmark: {
+      type: String,
+      required: true,
     },
     mobile: {
       type: String,

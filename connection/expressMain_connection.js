@@ -2,9 +2,9 @@ const server = require("../server");
 ///Importing Routes
 
 const adminRoute = require("../routes/admin");
-const shoppingRoute=require("../routes/shoppingRoutes")
-const errorHandler = require("../middleware/globalErrorHandler")
-
+const shoppingRoute = require("../routes/shoppingRoutes");
+const errorHandler = require("../middleware/globalErrorHandler");
+const appRoute = require("../routes/app-route");
 // const appRoute = require("../routes/app-route.js");
 // const authRoute = require("../routes/auth");
 // const paymentRoute = require("../routes/payment");
@@ -16,7 +16,6 @@ const errorHandler = require("../middleware/globalErrorHandler")
 // const contentRoute = require("../routes/content.js");
 // const favoriteRoute = require("../routes/favorite.js");
 
-
 //////
 const path = require("path");
 server.use((req, res, next) => {
@@ -26,15 +25,11 @@ server.use((req, res, next) => {
   next();
 });
 
-
-
 // Admin Routes
 server.use("/api/website", adminRoute);
-
-// shopping routes 
-server.use("/api/shopping",shoppingRoute)
-
-
+server.use("/api/app", appRoute);
+// shopping routes
+server.use("/api/shopping", shoppingRoute);
 
 //IMPORTING ROUTES
 // server.use("/auth", authRoute);
@@ -65,8 +60,6 @@ server.get("*", (req, res) => {
 // });
 
 server.use(errorHandler);
-
-
 
 // server.use((req, res, next) => {
 //     console.log(req.url);

@@ -4,9 +4,14 @@ const Schema = mongoose.Schema;
 
 const orderSchema = new Schema(
   {
+    orderPlatform: {
+      type: String,
+      required: true,
+      default: "app",
+    },
     orderValue: {
       type: String,
-      // required: true,
+      required: true,
     },
     paymentType: {
       type: String,
@@ -14,14 +19,8 @@ const orderSchema = new Schema(
     },
     products: [
       {
-        product: {
-          type: Object,
-          required: true,
-        },
-        quantity: {
-          type: Number,
-          required: true,
-        },
+        type: Object,
+        required: true,
       },
     ],
     user: {
@@ -39,13 +38,17 @@ const orderSchema = new Schema(
         required: true,
       },
       address: {
-        address_line1: {
+        addressLine: {
           type: String,
           // required: true,
         },
         pincode: {
           type: Number,
           // required: true,
+        },
+        landmark: {
+          type: String,
+          required: true,
         },
         mobile: {
           type: String,
