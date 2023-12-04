@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const schema = new mongoose.Schema(
+const addressSchema = new mongoose.Schema(
   {
     addressLine: {
       type: String,
@@ -8,7 +8,7 @@ const schema = new mongoose.Schema(
     },
     pincode: {
       type: Number,
-      // required: true,
+      required: true,
     },
     landmark: {
       type: String,
@@ -23,8 +23,9 @@ const schema = new mongoose.Schema(
       default: false,
     },
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Types.ObjectId,
       ref: "User",
+      required: true,
     },
   },
   {
@@ -32,6 +33,4 @@ const schema = new mongoose.Schema(
   }
 );
 
-const model = new mongoose.model("userAddress", schema);
-
-module.exports = model;
+module.exports = mongoose.model("userAddress", addressSchema);

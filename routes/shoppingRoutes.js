@@ -1,11 +1,17 @@
 const express=require("express")
 const router=express.Router()
+// middleware
+const user_auth=require("../middleware/userAuth")
+
+// controllers
 const category_controller=require("../controllers/categoryController")
 const product_controller=require("../controllers/productController")
 const service_controller=require("../controllers/servicesController")
 const enquiry_controller=require("../controllers/enquiryController")
 const package_controller=require("../controllers/packageController")
 const cart_controller=require("../controllers/cartController")
+const user_controller=require("../controllers/userController")
+const userAddress_controller=require("../controllers/useraddress")
 
 
 // Category routes
@@ -28,11 +34,20 @@ router.get("/get-service-package/:id",package_controller.getServicePackage)
 router.get("/get-package-product/:id",package_controller.getPackageProduct) //passing service id
 
 //Cart Routes
-router.post("/create-cart",cart_controller.createCart)
-router.get("/cart-details/:id",cart_controller.getCart) //passing user id
-router.post("/remove-cart-item/:id",cart_controller.removeItemFromCart) // passing cart id
-router.post("/add-item-cart/:id",cart_controller.addItemToCart) //passing user id
+router.get("/cart-details",user_auth.verify,cart_controller.getCart) //passing user id
+router.post("/remove-cart-item",cart_controller.removeItemFromCart) // passing cart id
+router.post("/add-item-cart",cart_controller.addItemToCart) //passing user id
 
+// User Routes
 
+router.post("/generate-otp",user_controller.generateOtpUser)
+router.post("/verify-otp",user_controller.verifyUserOtp)
+router.post("/create-user",user_controller.createUser)
+
+// User address routes
+router.post("/create-user-address",userAddress_controller.addUserAddress)
+router.get("/get-user-address/:id",userAddress_controller.getAllAddresses) //passing user id
+router.delete("/delete-user-address/:id",userAddress_controller.deleteAddress) // passing address id
+router.patch("/update-user-address/:id",userAddress_controller.updateUserAddress) // passing address id
 
 module.exports=router
