@@ -4,7 +4,9 @@ const session = require('express-session')
 const otpGenerator = require('otp-generator')
 const nodemailer = require('nodemailer')
 const jwt = require('jsonwebtoken')
+const cartModel = require('../models/cart')
 const otpStore = {}
+const myData = {}
 exports.generateOtpUser = async (req, res, next) => {
   try {
     const { phoneNumber } = req.body
@@ -21,38 +23,46 @@ exports.generateOtpUser = async (req, res, next) => {
     // req.session.otp = otp
     var myOtp = 'otp'
     var phone = 'phoneNumber'
+    var mdata = 'mdata'
     // For demonstration purposes, store the OTP in memory
     otpStore[myOtp] = otp
     otpStore[phone] = phoneNumber
+    const result = await userModel
+      .findOne({ phone: phoneNumber })
+      .select('-password')
+    if (!result) {
+      res.status(400).json({ success: false, message: 'User does not exist' })
+    } else {
+      myData[mdata] = result
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: 'generaluser2003@gmail.com',
+          pass: 'aevm hfgp mizf aypu'
+        }
+      })
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'generaluser2003@gmail.com',
-        pass: 'aevm hfgp mizf aypu'
+      // Define the email message
+      const mailOptions = {
+        from: 'generaluser2003@gmail.com',
+        to: 'lifegameraryan@gmail.com',
+        subject: 'Test Email',
+        text: `this is otp for testing abhicares ${otp}`
       }
-    })
 
-    // Define the email message
-    const mailOptions = {
-      from: 'generaluser2003@gmail.com',
-      to: 'lifegameraryan@gmail.com',
-      subject: 'Test Email',
-      text: `this is otp for testing abhicares ${otp}`
+      // Send the email
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error('Error:', error)
+        } else {
+          console.log('Email sent:', info.response)
+
+          console.log(`Sending OTP ${otp} to ${phoneNumber}`)
+
+          res.status(200).json({ message: 'OTP sent successfully' })
+        }
+      })
     }
-
-    // Send the email
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error('Error:', error)
-      } else {
-        console.log('Email sent:', info.response)
-
-        console.log(`Sending OTP ${otp} to ${phoneNumber}`)
-
-        res.status(200).json({ message: 'OTP sent successfully' })
-      }
-    })
 
     // Send the OTP (you would typically send it via SMS, email, etc.)
   } catch (err) {
@@ -68,25 +78,33 @@ exports.verifyUserOtp = async (req, res, next) => {
 
     var myOtp = 'otp'
     var phone = 'phoneNumber'
+    var mdata = 'mdata'
     const storedOTP = otpStore[myOtp]
     const phoneNumber = otpStore[phone]
+    const userData = myData[mdata]
 
     // Check if the entered OTP matches the stored OTP
-    if (enteredOTP === storedOTP) {
-      jwt.sign({ phone: phoneNumber }, 'secretkey', {}, function (err, token) {
-        if (err) {
-          res
-            .status(400)
-            .json({ success: false, message: 'token generating error' })
-        } else {
-          res.cookie('id', token).json({
-            success: true,
-            message: 'user login successful'
-          })
+    if (storedOTP === enteredOTP) {
+      jwt.sign(
+        { phone: phoneNumber },
+        'secretkey',
+        {},
+        async function (err, token) {
+          if (err) {
+            res
+              .status(400)
+              .json({ success: false, message: 'token generating error' })
+          } else {
+           res.session.userId=userData._id
+            res.cookie('id', token).json({
+              success: true,
+              message: 'user login successful',
+              data: userData
+            })
+          }
         }
-      })
+      )
     } else {
-      // Authentication failed
       res.status(401).json({ message: 'Invalid OTP' })
     }
   } catch (err) {
@@ -109,11 +127,39 @@ exports.createUser = async (req, res, next) => {
               .status(400)
               .json({ success: false, message: 'password encryption error' })
           } else {
-            req.body.password = hash
-            await userModel.create(req.body)
-            res
-              .status(201)
-              .json({ success: true, message: 'user created successful' })
+            const result = await userModel.create({
+              name: name,
+              phone: phone,
+              password: hash,
+              gender: gender,
+              status: status
+            })
+            if (!result) {
+              res
+                .status(400)
+                .json({
+                  success: false,
+                  message: 'getting error while creating user'
+                })
+            } else {
+              const cartCreated = await cartModel.create({
+                userId: result._id,
+                items: [],
+                totalPrice: 0
+              })
+              if (cartCreated) {
+                res
+                  .status(201)
+                  .json({ success: true, message: 'user created successful' })
+              } else {
+                res
+                  .status(400)
+                  .json({
+                    success: false,
+                    message: 'getting error while creating cart'
+                  })
+              }
+            }
           }
         })
       })

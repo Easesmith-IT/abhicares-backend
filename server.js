@@ -46,11 +46,11 @@ const server = express();
 // };
 
 // Use session middleware
-// server.use(session({
-//   secret: 'secretyKey',
-//   resave: false,
-//   saveUninitialized: true
-// }));
+server.use(session({
+  secret: 'secretyKey',
+  resave: false,
+  saveUninitialized: true
+}));
 
 
 

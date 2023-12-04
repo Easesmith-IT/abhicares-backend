@@ -8,7 +8,6 @@ exports.verify = (req, res, next) => {
       req.token = token
       jwt.verify(req.token, 'secretkey', async (err, authData) => {
         if (err) {
-          console.log('authdata---->', authData)
           req.phoneNumber = authData.phone
           res.status(400).json({
             success: false,
