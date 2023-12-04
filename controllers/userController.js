@@ -10,7 +10,6 @@ const myData = {}
 exports.generateOtpUser = async (req, res, next) => {
   try {
     const { phoneNumber } = req.body
-
     // Generate a 6-digit OTP
     const otp = otpGenerator.generate(6, {
       digits: true,
@@ -33,7 +32,10 @@ exports.generateOtpUser = async (req, res, next) => {
     if (!result) {
       res.status(400).json({ success: false, message: 'User does not exist' })
     } else {
-      myData[mdata] = result
+      const id=result._id.toString()
+     req.session.id=id
+     console.log(req.session.id)
+     console.log(id)
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -66,6 +68,7 @@ exports.generateOtpUser = async (req, res, next) => {
 
     // Send the OTP (you would typically send it via SMS, email, etc.)
   } catch (err) {
+    console.log(err)
     next(err)
   }
 }
@@ -95,12 +98,17 @@ exports.verifyUserOtp = async (req, res, next) => {
               .status(400)
               .json({ success: false, message: 'token generating error' })
           } else {
-           res.session.userId=userData._id
-            res.cookie('id', token).json({
-              success: true,
-              message: 'user login successful',
-              data: userData
-            })
+             if(req.session.id){
+              req.session.userId=req.session.id
+              res.cookie('id', token).json({
+                success: true,
+                message: 'user login successful',
+                data: req.session.id
+              })
+             }else{
+             next()
+             }
+            
           }
         }
       )

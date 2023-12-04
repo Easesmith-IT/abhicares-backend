@@ -16,8 +16,8 @@ module.exports = upload
 
 
 
-/*
 
+/*
 
 const multer = require('multer')
 const { Storage } = require('@google-cloud/storage')
@@ -75,8 +75,8 @@ exports.myFun =async (req, res, next) => {
      
 }
 
-*/
 
+*/
 
 
 

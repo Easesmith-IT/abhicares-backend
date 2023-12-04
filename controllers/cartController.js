@@ -25,7 +25,7 @@ const session = require('express-session')
 
 exports.addItemToCart = async (req, res, next) => {
   try {
-    const userId = req.params.id //user id
+    // const userId = req.params.id //user id
     const { itemId, quantity } = req.body // item id
     var newObj = {
       productId: itemId,
@@ -98,8 +98,10 @@ exports.getCart = async (req, res, next) => {
         .status(200)
         .json({ success: true, message: 'user cart details', data: result })
     }else{
-      const cartItems = req.session.cart || [];
-      res.send(`Cart Items: ${cartItems.join(', ')}`);    
+     
+      const cartItems = req.session.cart
+      res.status(200).json({success:true,message:"cart items",data:cartItems})
+      // res.send(`Cart Items: ${cartItems.join(', ')}`);    
     }
   } catch (err) {
     next(err)

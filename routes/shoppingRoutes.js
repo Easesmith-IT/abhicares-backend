@@ -34,9 +34,9 @@ router.get("/get-service-package/:id",package_controller.getServicePackage)
 router.get("/get-package-product/:id",package_controller.getPackageProduct) //passing service id
 
 //Cart Routes
-router.get("/cart-details",user_auth.verify,cart_controller.getCart) //passing user id
-router.post("/remove-cart-item",cart_controller.removeItemFromCart) // passing cart id
-router.post("/add-item-cart",cart_controller.addItemToCart) //passing user id
+router.get("/cart-details",cart_controller.getCart) 
+router.post("/remove-cart-item",cart_controller.removeItemFromCart)
+router.post("/add-item-cart",cart_controller.addItemToCart)
 
 // User Routes
 

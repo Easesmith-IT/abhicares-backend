@@ -46,7 +46,7 @@ router.delete(
 router.post(
   "/create-service",
   isAdminAuth,
-  img_upload,
+img_upload,
   service_controller.createService
 );
 router.get("/get-all-service", isAdminAuth, service_controller.getAllService);
