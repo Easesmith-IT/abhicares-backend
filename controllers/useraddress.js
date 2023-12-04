@@ -1,194 +1,83 @@
-const UserAddress = require('../models/useraddress');
+const userAddressModel = require('../models/useraddress')
 const mongoose = require('mongoose')
-exports.addUserAddress = async (req, res) => {
-    try {
-        const {
-            address_line1,
-            address_line2,
-            state,
-            city,
-            pincode,
-            country,
-            mobile,
-        } = req.body;
-
-        // const userId = req.query.userId;
-        const userId = req.user.id;
-
-        const address = {
-            address_line1: address_line1,
-            address_line2: address_line2,
-            state: state,
-            city: city,
-            pincode: pincode,
-            country: country,
-            mobile: mobile,
-        }
-
-        const useraddress = await UserAddress.findOneAndUpdate(
-            { userId: userId },
-            { $push: { addresses: address } },
-            { upsert: true, new: true }
-        );
-
-        if (!useraddress) {
-            return res.status(400).json({
-                message: "Could not create user address please try again!"
-            })
-        }
-
-        res.status(200).json({
-            message: "User address added successfully",
-        })
+exports.addUserAddress = async (req, res, next) => {
+  try {
+    const { addressLine1, pincode, mobile, defaultAddress, userId } = req.body
+    if (!addressLine1 || !pincode || !mobile || !defaultAddress || !userId) {
+      res
+        .status(400)
+        .json({ success: false, message: 'All the fields are required' })
+    } else {
+      await userAddressModel.create({
+        addressLine1: addressLine1,
+        pincode: pincode,
+        mobile: mobile,
+        defaultAddress: defaultAddress,
+        userId: userId
+      })
+      res
+        .status(201)
+        .json({ success: true, message: 'user address created successful' })
     }
-    catch (err) {
-        return res.status(500).json({
-            message: "Error while adding user address",
-            error: err.message
-        })
-    }
+  } catch (err) {
+    next(err)
+  }
 }
 
 exports.updateUserAddress = async (req, res) => {
-    try {
+  try {
+    const id = req.params.id // address id
+    const { addressLine1, pincode, mobile, defaultAddress } = req.body
+    if (!addressLine1 || !pincode || !mobile || !defaultAddress) {
+      res
+        .status(400)
+        .json({ success: false, message: 'All the fields are required' })
+    } else {
+      const result = await userAddressModel.findOne({ _id: id })
+      result.addressLine1 = addressLine1
+      result.pincode = pincode
+      result.mobile = mobile
+      result.defaultAddress = defaultAddress
+      await result.save()
 
-        const addressId = req.params.id;
-        // const userId = req.query.userId;
-        const userId = req.user.id;
-        const userAddress = await UserAddress.aggregate([
-            {
-                $unwind: { path: "$addresses" }
-            },
-            {
-                $match: {
-                    userId: new mongoose.Types.ObjectId(userId),
-                    "addresses._id": new mongoose.Types.ObjectId(addressId)
-                }
-            },
-        ]);
-        if (userAddress.length == 0) {
-            return res.status(404).json({
-                message: "User address not found"
-            })
-        }
-
-
-        const {
-            address_line1,
-            address_line2,
-            country,
-            state,
-            city,
-            pincode,
-            mobile,
-            defaultAddress
-        } = req.body;
-
-        const update = await UserAddress.findOneAndUpdate(
-            {
-                userId: userId,
-                "addresses._id": addressId  // Use the _id of the address you want to update
-            },
-            {
-                $set: {
-                    "addresses.$.address_line1": address_line1,
-                    "addresses.$.address_line2": address_line2,
-                    "addresses.$.country": country,
-                    "addresses.$.state": state,
-                    "addresses.$.city": city,
-                    "addresses.$.pincode": pincode,
-                    "addresses.$.mobile": mobile,
-                    "addresses.$.defaultAddress": defaultAddress
-                }
-            },
-            { new: true }
-        );
-
-        if (!update) {
-            return res.status(400).json({
-                message: "Could not update user address"
-            })
-        }
-
-        res.status(200).json({
-            message: "updated successfully",
-        })
+      res
+        .status(200)
+        .json({ success: true, message: 'user address updated successful' })
     }
-    catch (err) {
-        return res.status(500).json({
-            message: "Error while updating user address",
-            error: err.message
-        })
-    }
+  } catch (err) {
+    next(err)
+  }
 }
 
-exports.getAllAddresses = async (req, res) => {
-    try {
-        // const userId = req.query.userId;
-        const userId = req.user.id;
-        const addresses = await UserAddress.find({ userId: userId })
+exports.getAllAddresses = async (req, res, next) => {
+  try {
+    const id = req.params.id //this is user id
+    const addresses = await userAddressModel.find({ userId: id })
 
-        if (!addresses) {
-            return res.status(400).json({
-                message: 'No Address found',
-            })
-        }
-
-        res.status(200).json({
-            addresses: addresses
-        })
+    if (addresses.length === 0) {
+      return res.status(400).json({
+        success: true,
+        message: 'No Address found'
+      })
+    } else {
+      res.status(200).json({
+        success: true,
+        data: addresses
+      })
     }
-    catch (err) {
-        return res.status(500).json({
-            message: "Error fetching addresses",
-            error: err.message
-        })
-    }
+  } catch (err) {
+    next(err)
+  }
 }
 
-
-exports.deleteAddress = async (req, res) => {
-    try {
-        const addressId = req.params.id;
-        // const userId = req.query.userId;
-        const userId = req.user.id;
-        const userAddress = await UserAddress.aggregate([
-            {
-                $unwind: { path: "$addresses" }
-            },
-            {
-                $match: {
-                    userId: new mongoose.Types.ObjectId(userId),
-                    "addresses._id": new mongoose.Types.ObjectId(addressId)
-                }
-            },
-        ]);
-        if (userAddress.length == 0) {
-            return res.status(404).json({
-                message: "User address not found"
-            })
-        }
-
-        const deleteUserAddress = await UserAddress.updateOne(
-            {
-                userId: new mongoose.Types.ObjectId(userId)
-            },
-            { $pull: { "addresses": { _id: new mongoose.Types.ObjectId(addressId) } } });
-
-        if (!deleteUserAddress) {
-            return res.status(400).json({
-                message: "Failed to delete the address"
-            })
-        }
-
-        res.status(200).json({
-            message: "Address is deleted"
-        })
-    }
-    catch (err) {
-        return res.status(500).json({
-            message: "Error deleting address",
-            error: err.message
-        })
-    }
+exports.deleteAddress = async (req, res, next) => {
+  try {
+    const id = req.params.id //object id
+    await userAddressModel.findByIdAndDelete({ _id: id })
+    res
+      .status(200)
+      .json({ success: true, message: 'address deleted successful' })
+  } catch (err) {
+    next(err)
+  }
 }

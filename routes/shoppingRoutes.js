@@ -11,6 +11,7 @@ const enquiry_controller=require("../controllers/enquiryController")
 const package_controller=require("../controllers/packageController")
 const cart_controller=require("../controllers/cartController")
 const user_controller=require("../controllers/userController")
+const userAddress_controller=require("../controllers/useraddress")
 
 
 // Category routes
@@ -42,5 +43,11 @@ router.post("/add-item-cart/:id",cart_controller.addItemToCart) //passing user i
 
 router.post("/generate-otp",user_controller.generateOtpUser)
 router.post("/verify-otp",user_controller.verifyUserOtp)
+
+// User address routes
+router.post("/create-user-address",userAddress_controller.addUserAddress)
+router.get("/get-user-address/:id",userAddress_controller.getAllAddresses) //passing user id
+router.delete("/delete-user-address/:id",userAddress_controller.deleteAddress) // passing address id
+router.patch("/update-user-address/:id",userAddress_controller.updateUserAddress) // passing address id
 
 module.exports=router
