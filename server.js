@@ -47,9 +47,12 @@ const server = express();
 
 // Use session middleware
 server.use(session({
-  secret: 'secretyKey',
+  secret: 'your-secret-key',
   resave: false,
-  saveUninitialized: true
+  saveUninitialized: true,
+  cookie: {
+    secure: false
+  }
 }));
 
 
