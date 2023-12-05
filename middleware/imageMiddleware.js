@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
       cb(null, 'uploads')
     },
     filename: function (req, file, cb) {
-         let fileName =file.fieldname+"_"+Date.now()+'.jpg'
+         let fileName = file.fieldname+"_"+Date.now()+'.jpg'
       cb(null, fileName)  
     }
   })
