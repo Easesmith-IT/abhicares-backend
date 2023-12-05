@@ -58,8 +58,7 @@ router.get(
 router.patch(
   "/update-service/:id",
   isAdminAuth,
-  img_upload.upload,
-  img_upload.myFun,
+  img_upload,
   service_controller.updateService
 ); // passing object id
 router.delete(
