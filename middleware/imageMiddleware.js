@@ -37,6 +37,7 @@ exports.myFun =async (req, res, next) => {
        const bucket = storageClient.bucket('abhicares-backend-bucket')
         var temp=0
        const uploadPromises = files.map(async file => {
+        console.log(file)
         const fileName = `${Date.now()}-${file.originalname}`
         req.files[temp].originalname=fileName
         temp++
@@ -69,9 +70,7 @@ exports.myFun =async (req, res, next) => {
       } catch (error) {
         console.error('Error uploading files:', error)
         res.status(500).json({ success: false, error: 'Internal Server Error' })
-      }
-
-    
+      } 
      
 }
 
