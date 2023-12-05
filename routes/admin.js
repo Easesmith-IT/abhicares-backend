@@ -74,8 +74,7 @@ router.get("/search-service", isAdminAuth, service_controller.searchService);
 router.post(
   "/create-product",
   isAdminAuth,
-  img_upload.upload,
-  img_upload.myFun,
+  img_upload,
   product_controller.createProduct
 );
 router.get("/get-all-product", isAdminAuth, product_controller.getAllProduct);
@@ -87,8 +86,7 @@ router.get(
 router.patch(
   "/update-product/:id",
   isAdminAuth,
-  img_upload.upload,
-  img_upload.myFun,
+  img_upload,
   product_controller.updateProduct
 ); // passing object id
 router.delete(
@@ -144,8 +142,7 @@ router.delete(
 router.post(
   "/create-package",
   isAdminAuth,
-  img_upload.upload,
-  img_upload.myFun,
+  img_upload,
   package_controller.createPackage
 );
 router.get(

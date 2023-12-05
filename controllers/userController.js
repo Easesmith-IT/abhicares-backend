@@ -33,9 +33,7 @@ exports.generateOtpUser = async (req, res, next) => {
       res.status(400).json({ success: false, message: 'User does not exist' })
     } else {
       const id=result._id.toString()
-     req.session.id=id
-     console.log(req.session.id)
-     console.log(id)
+      req.session.myId = id;
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -99,11 +97,11 @@ exports.verifyUserOtp = async (req, res, next) => {
               .json({ success: false, message: 'token generating error' })
           } else {
              if(req.session.id){
-              req.session.userId=req.session.id
+              req.session.userId=req.session.myId
               res.cookie('id', token).json({
                 success: true,
                 message: 'user login successful',
-                data: req.session.id
+                data: req.session.myId
               })
              }else{
              next()
