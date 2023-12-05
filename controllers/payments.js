@@ -7,14 +7,13 @@ configDotenv({ path: "../config/config.env" });
 const fs = require("fs");
 
 //Importing Models
-const UserAddress = require('../models/useraddress')
-const Nursery = require("../models/nursery");
-const Sku = require("../models/sku");
+const UserAddress = require("../models/useraddress");
 const User = require("../models/user");
 const Order = require("../models/order");
 const Payment = require("../models/payments");
+const Products = require("../models/product");
 const Cart = require("../models/cart");
-const { trackUserOrder } = require("../controllers/nursery");
+// const { trackUserOrder } = require("../controllers/nursery");
 const {
   getInvoiceData,
   getCurrentDate,
@@ -37,77 +36,68 @@ async function CartToOrder(
   razorpay_signature
 ) {
   try {
-    // Find the user by their user ID
-    const user = await User.findOne({
-      razorPayOrderId: razorpay_order_id,
-    }).populate("cart"); // Populate the 'cart' field
-    const cart = await Cart.findOne({ userId: user._id }).populate("items"); // Populate the 'cart' field
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-
-    // Extract cart data from the user's cart
-    const items = cart.items;
-
-    // Create an array to store order items
-    const orderItems = [];
-
-    // Process and add plant items to the order
-    for (const productItem of items) {
-      const sku = await Sku.findById(productItem.skuId).populate("productId");
-
-      if (sku) {
-        let item = { ...sku.productId };
-        item["price"] = sku.price;
-        item["colour"] = productItem.quantity;
-        item["size"] = sku.size;
-        item["availableIn"] = sku.availableIn;
-        orderItems.push({
-          type: item.type,
-          product: item,
-          quantity: productItem.quantity,
-        });
-      }
-    }
-    const userAddress = await UserAddress.aggregate([
-      { $unwind: "addresses"},
-      { $match: { userId: user._id, "addresses.defaultAddress": true } },
-      { $limit: 1 }
-    ])
-    // Create a new order instance
-    const order = new Order({
-      paymentType: "Online payment",
-      orderValue: cart.totalValue,
-      products: orderItems,
-      user: {
-        userId: user._id,
-        phone: user.phone,
-        name: user.name,
-        address: userAddress[0],
-      },
-    });
-
-    // Save the order to the database
-
-    await order.save();
-
-    // Clear the user's cart after creating the order
-    cart.items = [];
-    cart.totalValue = 0;
-    await cart.save();
-
-    const paymentData = new Payment({
-      user: user._id,
-      order: order._id,
-      razorpay_order_id: razorpay_order_id,
-      razorpay_payment_id: razorpay_payment_id,
-      razorpay_signature: razorpay_signature,
-      amount: order.orderValue,
-    });
-
-    await paymentData.save();
-    // Send a success response
-    return { message: "Order created successfully." };
+    // // Find the user by their user ID
+    // const user = await User.findOne({
+    //   razorPayOrderId: razorpay_order_id,
+    // }).populate("cart"); // Populate the 'cart' field
+    // const cart = await Cart.findOne({ userId: user._id }).populate("items"); // Populate the 'cart' field
+    // if (!user) {
+    //   return res.status(404).json({ message: "User not found." });
+    // }
+    // // Extract cart data from the user's cart
+    // const items = cart.items;
+    // // Create an array to store order items
+    // const orderItems = [];
+    // // Process and add plant items to the order
+    // for (const productItem of items) {
+    //   const sku = await Sku.findById(productItem.skuId).populate("productId");
+    //   if (sku) {
+    //     let item = { ...sku.productId };
+    //     item["price"] = sku.price;
+    //     item["colour"] = productItem.quantity;
+    //     item["size"] = sku.size;
+    //     item["availableIn"] = sku.availableIn;
+    //     orderItems.push({
+    //       type: item.type,
+    //       product: item,
+    //       quantity: productItem.quantity,
+    //     });
+    //   }
+    // }
+    // const userAddress = await UserAddress.aggregate([
+    //   { $unwind: "addresses"},
+    //   { $match: { userId: user._id, "addresses.defaultAddress": true } },
+    //   { $limit: 1 }
+    // ])
+    // // Create a new order instance
+    // const order = new Order({
+    //   paymentType: "Online payment",
+    //   orderValue: cart.totalValue,
+    //   products: orderItems,
+    //   user: {
+    //     userId: user._id,
+    //     phone: user.phone,
+    //     name: user.name,
+    //     address: userAddress[0],
+    //   },
+    // });
+    // // Save the order to the database
+    // await order.save();
+    // // Clear the user's cart after creating the order
+    // cart.items = [];
+    // cart.totalValue = 0;
+    // await cart.save();
+    // const paymentData = new Payment({
+    //   user: user._id,
+    //   order: order._id,
+    //   razorpay_order_id: razorpay_order_id,
+    //   razorpay_payment_id: razorpay_payment_id,
+    //   razorpay_signature: razorpay_signature,
+    //   amount: order.orderValue,
+    // });
+    // await paymentData.save();
+    // // Send a success response
+    // return { message: "Order created successfully." };
   } catch (err) {
     console.log(err);
     return { message: "error", error: err };
@@ -166,120 +156,235 @@ exports.paymentCheckout = async (req, res, next) => {
   }
 };
 
-exports.codOrder = async (req, res, next) => {
+// exports.codOrder = async (req, res, next) => {
+//   try {
+//     const userId = req.params.userId;
+//     const user = await User.findById(userId);
+//     const cart = await Cart.findOne({ userId: userId }).populate("items"); // Populate the 'cart' field
+//     // console.log(cart)
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found." });
+//     }
+
+//     // Extract cart data from the user's cart
+//     const items = cart.items;
+//     // Create an array to store order items
+//     const orderItems = [];
+//     // Process and add plant items to the order
+//     for (const productItem of items) {
+//       const sku = await Sku.findById(productItem.skuId).populate("productId");
+
+//       if (sku) {
+//         let item = { ...sku.productId };
+//         item["price"] = sku.price;
+//         item["colour"] = productItem.quantity;
+//         item["size"] = sku.size;
+//         item["availableIn"] = sku.availableIn;
+//         orderItems.push({
+//           type: item.type,
+//           product: item,
+//           quantity: productItem.quantity,
+//         });
+//       }
+//     }
+
+//     const userAddress = await UserAddress.aggregate([
+//       { $unwind: "addresses" },
+//       { $match: { userId: user._id, "addresses.defaultAddress": true } },
+//       { $limit: 1 },
+//     ]);
+//     // Create a new order instance
+
+//     const order = new Order({
+//       paymentType: "COD",
+//       orderValue: cart.totalValue,
+//       products: orderItems,
+//       user: {
+//         userId: user._id,
+//         phone: user.phone,
+//         name: user.name,
+//         address: userAddress[0],
+//       },
+//     });
+
+//     // // Save the order to the database
+
+//     await order.save();
+//     const newNurseryIds = [
+//       ...new Set(orderItems.map((item) => item.product.nurseryId.toString())),
+//     ];
+//     console.log(
+//       "nurseryIds ==== ",
+//       newNurseryIds,
+//       "count -- ",
+//       newNurseryIds.length
+//     );
+//     const productItems = orderItems
+//       // .filter((item) => item.type === "Plant")
+//       .map((item) => ({
+//         type: item.type,
+//         product: item.product,
+//         quantity: item.quantity,
+//       }));
+
+//     // console.log("productItems ====== ", productItems);
+
+//     for (const id of newNurseryIds) {
+//       let productDetails = [];
+//       const orderedProduct = productItems.filter(
+//         (ele) => ele.product.nurseryId.toString() === id
+//       );
+//       console.log("orderedProduct === ", orderedProduct);
+//       const totalPrice = orderedProduct.reduce(
+//         (total, item) => total + item.product.price * item.quantity,
+//         0
+//       );
+//       // console.log("totalPrice ===== ", totalPrice);
+//       const newValue1 = orderedProduct.map((item) => ({
+//         type: item.type,
+//         plantId: item.product._id,
+//         quantity: item.quantity,
+//       }));
+//       // console.log(newValue1);
+//       productDetails = {
+//         orderId: order._id,
+//         products: newValue1,
+//         nurseryId: new mongoose.Types.ObjectId(id),
+//         totalPrice: totalPrice,
+//       };
+//       trackUserOrder(productDetails);
+//       console.log("seller order == ", productDetails);
+//     }
+
+//     // retrieving quantity price and name of he product
+
+//     const pdf = await getUserInvoice(order);
+//     // console.log(pdf)
+//     // Clear the user's cart after creating the order
+//     cart.items = [];
+//     cart.totalValue = 0;
+//     await cart.save();
+
+//     return res.status(200).json({
+//       success: true,
+//       order: order,
+//       invoice: pdf,
+//     });
+//   } catch (err) {
+//     console.log(err);
+//     return { message: "error", error: err };
+//   }
+// };
+
+exports.AppcodOrder = async (req, res, next) => {
   try {
-    const userId = req.params.userId;
+    const userId = req.body.userId;
+    const userAddressId = req.body.userAddressId;
     const user = await User.findById(userId);
-    const cart = await Cart.findOne({ userId: userId }).populate("items"); // Populate the 'cart' field
+    const cart = req.body.cart;
+    cart["products"].forEach((value, index, array) => {
+      console.log(cart["products"][index]);
+    });
+    console.log(req.body);
     // console.log(cart)
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
 
     // Extract cart data from the user's cart
-    const items = cart.items;
-    // Create an array to store order items
+    const products = cart["products"];
+    // // Create an array to store order items
     const orderItems = [];
-    // Process and add plant items to the order
-    for (const productItem of items) {
-      const sku = await Sku.findById(productItem.skuId).populate("productId");
-
-      if (sku) {
-        let item = { ...sku.productId };
-        item["price"] = sku.price;
-        item["colour"] = productItem.quantity;
-        item["size"] = sku.size;
-        item["availableIn"] = sku.availableIn;
-        orderItems.push({
-          type: item.type,
-          product: item,
-          quantity: productItem.quantity,
-        });
-      }
+    for (const productItem of products) {
+      orderItems.push(productItem["prod"]);
     }
+    console.log(orderItems);
 
-    const userAddress = await UserAddress.aggregate([
-      { $unwind: "addresses"},
-      { $match: { userId: user._id, "addresses.defaultAddress": true } },
-      { $limit: 1 }
-    ])
+    const userAddress = await UserAddress.findById(userAddressId);
     // Create a new order instance
-    
+
     const order = new Order({
-      paymentType: "COD",
-      orderValue: cart.totalValue,
+      paymentType: cart["paymentType"],
+      orderValue: cart["totalAmount"],
       products: orderItems,
+      orderPlatform: "app",
       user: {
         userId: user._id,
         phone: user.phone,
         name: user.name,
-        address: userAddress[0],
+        address: {
+          addressLine: userAddress.addressLine,
+          pincode: userAddress.pincode,
+          mobile: userAddress.mobile,
+          landmark: userAddress.landmark,
+        },
       },
     });
 
-    // // Save the order to the database
+    // // // Save the order to the database
 
     await order.save();
-    const newNurseryIds = [
-      ...new Set(orderItems.map((item) => item.product.nurseryId.toString())),
-    ];
-    console.log(
-      "nurseryIds ==== ",
-      newNurseryIds,
-      "count -- ",
-      newNurseryIds.length
-    );
-    const productItems = orderItems
-      // .filter((item) => item.type === "Plant")
-      .map((item) => ({
-        type: item.type,
-        product: item.product,
-        quantity: item.quantity,
-      }));
+    return res.status(200).json(order);
+    // const newNurseryIds = [
+    //   ...new Set(orderItems.map((item) => item.product.nurseryId.toString())),
+    // ];
+    // console.log(
+    //   "nurseryIds ==== ",
+    //   newNurseryIds,
+    //   "count -- ",
+    //   newNurseryIds.length
+    // );
+    // const productItems = orderItems
+    //   // .filter((item) => item.type === "Plant")
+    //   .map((item) => ({
+    //     type: item.type,
+    //     product: item.product,
+    //     quantity: item.quantity,
+    //   }));
 
-    // console.log("productItems ====== ", productItems);
+    // // console.log("productItems ====== ", productItems);
 
-    for (const id of newNurseryIds) {
-      let productDetails = [];
-      const orderedProduct = productItems.filter(
-        (ele) => ele.product.nurseryId.toString() === id
-      );
-      console.log("orderedProduct === ", orderedProduct);
-      const totalPrice = orderedProduct.reduce(
-        (total, item) => total + item.product.price * item.quantity,
-        0
-      );
-      // console.log("totalPrice ===== ", totalPrice);
-      const newValue1 = orderedProduct.map((item) => ({
-        type: item.type,
-        plantId: item.product._id,
-        quantity: item.quantity,
-      }));
-      // console.log(newValue1);
-      productDetails = {
-        orderId: order._id,
-        products: newValue1,
-        nurseryId: new mongoose.Types.ObjectId(id),
-        totalPrice: totalPrice,
-      };
-      trackUserOrder(productDetails);
-      console.log("seller order == ", productDetails);
-    }
+    // for (const id of newNurseryIds) {
+    //   let productDetails = [];
+    //   const orderedProduct = productItems.filter(
+    //     (ele) => ele.product.nurseryId.toString() === id
+    //   );
+    //   console.log("orderedProduct === ", orderedProduct);
+    //   const totalPrice = orderedProduct.reduce(
+    //     (total, item) => total + item.product.price * item.quantity,
+    //     0
+    //   );
+    //   // console.log("totalPrice ===== ", totalPrice);
+    //   const newValue1 = orderedProduct.map((item) => ({
+    //     type: item.type,
+    //     plantId: item.product._id,
+    //     quantity: item.quantity,
+    //   }));
+    //   // console.log(newValue1);
+    //   productDetails = {
+    //     orderId: order._id,
+    //     products: newValue1,
+    //     nurseryId: new mongoose.Types.ObjectId(id),
+    //     totalPrice: totalPrice,
+    //   };
+    //   trackUserOrder(productDetails);
+    //   console.log("seller order == ", productDetails);
+    // }
 
-    // retrieving quantity price and name of he product
+    // // retrieving quantity price and name of he product
 
-    const pdf = await getUserInvoice(order);
-    // console.log(pdf)
-    // Clear the user's cart after creating the order
-    cart.items = [];
-    cart.totalValue = 0;
-    await cart.save();
+    // const pdf = await getUserInvoice(order);
+    // // console.log(pdf)
+    // // Clear the user's cart after creating the order
+    // cart.items = [];
+    // cart.totalValue = 0;
+    // await cart.save();
 
-    return res.status(200).json({
-      success: true,
-      order: order,
-      invoice: pdf,
-    });
+    // return res.status(200).json({
+    //   success: true,
+    //   order: order,
+    //   invoice: pdf,
+    // });
   } catch (err) {
     console.log(err);
     return { message: "error", error: err };
@@ -288,18 +393,17 @@ exports.codOrder = async (req, res, next) => {
 
 async function getUserInvoice(order) {
   try {
-    
     const userInfo = {
       orderId: order._id.toString(),
       company: order.user.name,
-      address: order.user.address.addressLine || '',
+      address: order.user.address.addressLine || "",
       pincode: order.user.address.pincode,
       city: order.user.address.city,
       products: order.products.map(({ product, quantity }) => ({
         quantity: `${quantity}`,
         description: `${product.name}`,
         price: `${product.price}`,
-        'tax-rate': '2'
+        "tax-rate": "2",
       })),
       currentDate: getCurrentDate(new Date()),
       deliveryDate: getDeliveryDate(),

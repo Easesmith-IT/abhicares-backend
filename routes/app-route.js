@@ -5,56 +5,36 @@ const { userAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
-const appCountroller = require("../controllers/app-controller");
-const authContrroller = require("../controllers/auth");
+const appController = require("../controllers/app-controller");
+const paymentController = require("../controllers/payments");
+
+const authController = require("../controllers/auth");
 // const orderController = require("../controllers/order");
 //////////////////////////////////////////////////////////////////
 
 //homepage route
-router.get("/get-homepage-hero-banners", appCountroller.getHomePageHeroBanners);
-router.get("/get-homepage-banners", appCountroller.getHomePageBanners);
-router.get("/get-homepage-contents", appCountroller.getHomePageContents);
+router.get("/get-homepage-hero-banners", appController.getHomePageHeroBanners);
+router.get("/get-homepage-banners", appController.getHomePageBanners);
+router.get("/get-homepage-contents", appController.getHomePageContents);
 router.get(
   "/get-homepage-speciality-services",
-  appCountroller.getHomepageSpeciality
+  appController.getHomepageSpeciality
 );
-router.get("/get-categories", appCountroller.getCategories);
-router.get("/get-services/categoryId", appCountroller.getServiceScreen);
-router.get("/get-products/serviceId", appCountroller.getProducts);
-router.get("/get-Package-details/packageId", appCountroller.getPackageDetails);
-router.get("/get-product/:productId", appCountroller.getProductDetails);
+router.get("/get-categories", appController.getCategories);
+router.get("/get-services/:categoryId", appController.getServiceScreen);
+router.get("/get-products/:serviceId", appController.getProducts);
+router.get("/get-Package-details/:packageId", appController.getPackageDetails);
+// router.get("/get-product/:productId", appController.getProductDetails);
 
+router.get("/get-user/:userId", appController.getUser);
+router.post("/login", appController.login);
+router.post("/create-user", appController.createUser);
+
+router.post("/add-address", appController.AddUserAddress);
+router.post("/get-address", appController.getUserAddress);
 ////
-//Sku routes
-router.get("/get-skus/:productId", appCountroller.getSkus);
-
-// Cart routes
-router.get("/get-user-cart", appCountroller.getUserCart);
-// router.get("/get-cart-by-id/:cartId", appCountroller.getCart);
-router.post("/get-cart-length", appCountroller.getCartItemsLength);
-
-router.post("/add-product-to-cart", appCountroller.postAddProductToCart);
-router.post(
-  "/clear-product-from-cart",
-  appCountroller.postDeleteProductFromCart
-);
-
-//Order routes
-router.get("/get-orders/:userId", userAuth, appCountroller.getOrders);
-router.get(
-  "/get-order-details/:orderId",
-  userAuth,
-  appCountroller.getOrderDetails
-);
-router.get("/get-all-orders", userAuth, appCountroller.getAllOrders);
-
-router.get("/get-user/:userId", authContrroller.getUser);
-
-// router.post("/post-order", appCountroller.postOrder);
-
-/////////////////////////////////////////////
-// router.get("/get-set", appCountroller.setType);
-// router.get("/get-set", appCountroller.setSku);
-router.get("/get-set", appCountroller.setfields);
+router.post("/create-order", paymentController.AppcodOrder);
+router.get("/get-upcoming-order/:userId", appController.geUpcomingOrders);
+router.get("/get-complete-order", appController.getCompletedOrders);
 
 module.exports = router;

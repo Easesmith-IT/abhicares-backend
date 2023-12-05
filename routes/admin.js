@@ -1,5 +1,5 @@
 const express = require("express");
-const { check, body } = require("express-validator");
+// const { check, isAdminAuth, body } = require("express-validator");
 const User = require("../models/user");
 const { isAdminAuth } = require("../middleware/auth");
 
@@ -46,7 +46,7 @@ router.delete(
 router.post(
   "/create-service",
   isAdminAuth,
-img_upload,
+  img_upload,
   service_controller.createService
 );
 router.get("/get-all-service", isAdminAuth, service_controller.getAllService);
@@ -58,7 +58,8 @@ router.get(
 router.patch(
   "/update-service/:id",
   isAdminAuth,
-  img_upload,
+  img_upload.upload,
+  img_upload.myFun,
   service_controller.updateService
 ); // passing object id
 router.delete(
@@ -74,7 +75,8 @@ router.get("/search-service", isAdminAuth, service_controller.searchService);
 router.post(
   "/create-product",
   isAdminAuth,
-  img_upload,
+  img_upload.upload,
+  img_upload.myFun,
   product_controller.createProduct
 );
 router.get("/get-all-product", isAdminAuth, product_controller.getAllProduct);
@@ -86,7 +88,8 @@ router.get(
 router.patch(
   "/update-product/:id",
   isAdminAuth,
-  img_upload,
+  img_upload.upload,
+  img_upload.myFun,
   product_controller.updateProduct
 ); // passing object id
 router.delete(
@@ -142,7 +145,8 @@ router.delete(
 router.post(
   "/create-package",
   isAdminAuth,
-  img_upload,
+  img_upload.upload,
+  img_upload.myFun,
   package_controller.createPackage
 );
 router.get(
