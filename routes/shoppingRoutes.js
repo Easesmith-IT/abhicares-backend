@@ -12,6 +12,8 @@ const package_controller=require("../controllers/packageController")
 const cart_controller=require("../controllers/cartController")
 const user_controller=require("../controllers/userController")
 const userAddress_controller=require("../controllers/useraddress")
+const cmsHome_controller=require("../controllers/cmsHomeController")
+const review_controller=require("../controllers/reviewController")
 
 
 // Category routes
@@ -35,20 +37,32 @@ router.get("/get-package-product/:id",package_controller.getPackageProduct) //pa
 
 //Cart Routes
 router.get("/cart-details",cart_controller.getCart) 
-router.post("/remove-cart-item/:id",cart_controller.removeItemFromCart)
+router.post("/remove-cart-item/:id",cart_controller.removeItemFromCart) //product id
 router.post("/add-item-cart",cart_controller.addItemToCart)
-router.post("/update-item-quantity/:id",cart_controller.updateItemQuantity)
+router.post("/update-item-quantity/:id",cart_controller.updateItemQuantity) //product id
 
 // User Routes
 
 router.post("/generate-otp",user_controller.generateOtpUser)
 router.post("/verify-otp",user_controller.verifyUserOtp)
 router.post("/create-user",user_controller.createUser)
+router.get("/logout-user",user_controller.logoutUser)
 
-// User address routes
+// User Address Routes
 router.post("/create-user-address",userAddress_controller.addUserAddress)
 router.get("/get-user-address/:id",userAddress_controller.getAllAddresses) //passing user id
 router.delete("/delete-user-address/:id",userAddress_controller.deleteAddress) // passing address id
 router.patch("/update-user-address/:id",userAddress_controller.updateUserAddress) // passing address id
+
+// CMS Routes
+router.get("/get-cms-data/:id",cmsHome_controller.getCmsProduct)
+
+// Review Routes
+router.post("/add-product-review/:id",review_controller.addProductReview) //passing product id
+router.delete("/delete-product-review/:id",review_controller.deleteProductReview) //passing review id
+router.patch("/update-product-review/:id",review_controller.updateProductReview) // review id
+router.get("/get-product-review/:id",review_controller.getProductReview) // find product review by product id
+router.get("/get-user-product-review/:id",review_controller.getUserProductReview)
+
 
 module.exports=router
