@@ -102,39 +102,51 @@ exports.getCart = async (req, res, next) => {
 
     if (req.session.userId) {
       const result = await cartModel.findOne({ userId: req.session.userId })
-      var cartItems = result.items
+      let cartItems = result.items
       if (cartItems.length > 0) {
         const valuesToMatch = cartItems.map(obj => obj.productId)
         const found = await productModel.find({ _id: { $in: valuesToMatch } })
 
         if (found.length > 0) {
-          var obj = []
-          var totalOfferPrice = 0
-          var totalProductPrice = 0
-          var temp = found.length
-          var i = 0
-          while (temp > 0) {
-            let itemPrice = 0
-            if (cartItems[i].productId.toString() === found[i]._id.toString()) {
-              itemPrice = itemPrice + found[i].price * cartItems[i].quantity
-              obj.push({
-                product: found[i],
-                quantity: cartItems[i].quantity,
-                itemPrice: itemPrice
-              })
+          let obj = []
+          let totalOfferPrice = 0
+          let totalProductPrice = 0
+          let totalItemPrice=1
+          let itemTotalOfferPrice=1
+          const matchingArray = found.filter(obj1 =>
+            cartItems.some(obj2 =>{
+                if( obj1._id.toString() === obj2.productId.toString()){
+                  totalItemPrice=(obj1.price*obj2.quantity)
+                  itemTotalOfferPrice=(obj1.offerPrice*obj2.quantity)
+                   obj.push({product:obj1,quantity:obj2.quantity,totalItemPrice:totalItemPrice,itemTotalOfferPrice:itemTotalOfferPrice})
+                   totalProductPrice=totalProductPrice+(obj1.price*obj2.quantity)
+                   totalOfferPrice=totalOfferPrice+(obj1.offerPrice*obj2.quantity)
+                }
+            })
+          );
 
-              totalOfferPrice =
-                totalOfferPrice + found[i].offerPrice * cartItems[i].quantity
-              totalProductPrice =
-                totalProductPrice + found[i].price * cartItems[i].quantity
-            }
-            temp--
-            i++
-          }
+          // while (temp > 0) {
+          //   let itemPrice = 0
+          //   if (cartItems[i].productId.toString() === found[i]._id.toString()) {
+          //     itemPrice = itemPrice + found[i].price * cartItems[i].quantity
+          //     obj.push({
+          //       product: found[i],
+          //       quantity: cartItems[i].quantity,
+          //       itemPrice: itemPrice
+          //     })
 
+          //     totalOfferPrice =
+          //       totalOfferPrice + found[i].offerPrice * cartItems[i].quantity
+          //     totalProductPrice =
+          //       totalProductPrice + found[i].price * cartItems[i].quantity
+          //   }
+          //   temp--
+          //   i++
+          // }
+          //  console.log("obj---->",obj)
           res.status(200).json({
             success: true,
-            message: 'cart items',
+            message: 'database cart items',
             data: obj,
             totalOfferPrice: totalOfferPrice,
             totalProductPrice: totalProductPrice
@@ -183,27 +195,23 @@ exports.getCart = async (req, res, next) => {
         const valuesToMatch = cartItems.map(obj => obj.productId)
         const found = await productModel.find({ _id: { $in: valuesToMatch } })
 
-        var obj = []
-        var totalOfferPrice = 0
-        var totalProductPrice = 0
-
         if (found.length > 0) {
-          for (let i = 0; i < found.length; i++) {
-            let itemPrice = 0
-            if (cartItems[i].productId === found[i]._id.toString()) {
-              itemPrice = itemPrice + found[i].price * cartItems[i].quantity
-              obj.push({
-                product: found[i],
-                quantity: cartItems[i].quantity,
-                itemPrice: itemPrice
-              })
-
-              totalOfferPrice =
-                totalOfferPrice + found[i].offerPrice * cartItems[i].quantity
-              totalProductPrice =
-                totalProductPrice + found[i].price * cartItems[i].quantity
-            }
-          }
+          let obj = []
+          let totalOfferPrice = 0
+          let totalProductPrice = 0
+          let totalItemPrice=1
+          let itemTotalOfferPrice=1
+          const matchingArray = found.filter(obj1 =>
+            cartItems.some(obj2 =>{
+                if( obj1._id.toString() === obj2.productId.toString()){
+                  totalItemPrice=(obj1.price*obj2.quantity)
+                  itemTotalOfferPrice=(obj1.offerPrice*obj2.quantity)
+                   obj.push({product:obj1,quantity:obj2.quantity,totalItemPrice:totalItemPrice,itemTotalOfferPrice:itemTotalOfferPrice})
+                   totalProductPrice=totalProductPrice+(obj1.price*obj2.quantity)
+                   totalOfferPrice=totalOfferPrice+(obj1.offerPrice*obj2.quantity)
+                }
+            })
+          );
           res.status(200).json({
             success: true,
             message: 'cart items',
@@ -231,9 +239,10 @@ exports.getCart = async (req, res, next) => {
 
 exports.updateItemQuantity = async (req, res, next) => {
   // const cartId = req.params.id //cart id
-  const {quantity}=req.body.quantity
+ 
 
   try {
+    const {quantity}=req.body
     const itemId = req.params.id // item id
     if (req.session.userId) {
       const result = await cartModel.findOne({ userId: req.session.userId })
@@ -243,6 +252,7 @@ exports.updateItemQuantity = async (req, res, next) => {
 
       if (indexToRemove !== -1) {
         result.items[indexToRemove].quantity=quantity
+       
         await result.save()
         res
           .status(200)
@@ -258,7 +268,7 @@ exports.updateItemQuantity = async (req, res, next) => {
           req.session.cart[indexToRemove].quantity=quantity
           res
             .status(200)
-            .json({ success: true, message: 'item deleted from session cart' })
+            .json({ success: true, message: 'session cart item updated' })
         }
       } else {
         res.status(200).json({ success: true, message: 'cart is empthy' })

@@ -37,6 +37,7 @@ router.get("/get-package-product/:id",package_controller.getPackageProduct) //pa
 router.get("/cart-details",cart_controller.getCart) 
 router.post("/remove-cart-item/:id",cart_controller.removeItemFromCart)
 router.post("/add-item-cart",cart_controller.addItemToCart)
+router.post("/update-item-quantity/:id",cart_controller.updateItemQuantity)
 
 // User Routes
 
