@@ -105,8 +105,9 @@ exports.verifyUserOtp = async (req, res, next) => {
               const result = await cartModel.findOne({
                 userId: req.session.userId
               })
-              result.items.push(...cartItems)
+              result.items.push(...cartItems)  // merging session cart ot user cart
               await result.save()
+              delete req.session.cart;  // req.session.cart deleted
               res.cookie('id', token).json({
                 success: true,
                 message: 'user login successful',
@@ -249,9 +250,7 @@ exports.deleteUser = async (req, res, next) => {
     await userModel.findByIdAndDelete({ _id: id }) //passing object id
     res.status(200).jso({ success: true, message: 'user deleted successful' })
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+    next(err)
   }
 }
 
@@ -307,9 +306,7 @@ exports.changeUserStatus = async (req, res, next) => {
     result.save()
     res.status(200).json({ success: true, message: 'Data updated successful' })
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+   next(err)
   }
 }
 exports.logoutUser = async (req, res, next) => {

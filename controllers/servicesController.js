@@ -44,9 +44,7 @@ exports.createService = async (req, res, next) => {
         .json({ success: true, message: "Service created successful" });
     }
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+   next(err)
   }
 };
 
@@ -57,9 +55,7 @@ exports.getAllService = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "These are all services", data: result });
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+    next(err)
   }
 };
 
@@ -71,9 +67,7 @@ exports.getCategoryService = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "These are all services", data: result });
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+    next(err)
   }
 };
 
@@ -116,9 +110,7 @@ exports.updateService = async (req, res, next) => {
         .json({ success: true, message: "Service updated successful" });
     }
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+   next(err)
   }
 };
 
@@ -130,9 +122,7 @@ exports.deleteCategoryService = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "service deleted successful" });
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+   next(err)
   }
 };
 
@@ -169,8 +159,6 @@ exports.searchService = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+   next(err)
   }
 };
