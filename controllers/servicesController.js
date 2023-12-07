@@ -2,7 +2,6 @@ const serviceModel = require("../models/service");
 
 exports.createService = async (req, res, next) => {
   try {
-    console.log("reached");
     console.log(req.body);
     var {
       name,
@@ -14,7 +13,7 @@ exports.createService = async (req, res, next) => {
       totalProducts,
     } = req.body;
     var imageUrl = "";
-    imageUrl = req.files[0].originalname;
+    imageUrl = req.files[0].filename;
 
     console.log(imageUrl);
     if (
@@ -29,7 +28,6 @@ exports.createService = async (req, res, next) => {
         .status(400)
         .json({ success: false, message: "All the fields are required" });
     } else {
-      console.log("reached 2");
       await serviceModel.create({
         name: name,
         startingPrice: startingPrice,

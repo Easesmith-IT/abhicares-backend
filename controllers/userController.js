@@ -32,10 +32,8 @@ exports.generateOtpUser = async (req, res, next) => {
     if (!result) {
       res.status(400).json({ success: false, message: 'User does not exist' })
     } else {
-      const id=result._id.toString()
-     req.session.id=id
-     console.log(req.session.id)
-     console.log(id)
+      const id = result._id.toString()
+      req.session.myId = id
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -60,6 +58,9 @@ exports.generateOtpUser = async (req, res, next) => {
           console.log('Email sent:', info.response)
 
           console.log(`Sending OTP ${otp} to ${phoneNumber}`)
+          if (!req.session.cart) {
+            req.session.cart = []
+          }
 
           res.status(200).json({ message: 'OTP sent successfully' })
         }
@@ -98,17 +99,22 @@ exports.verifyUserOtp = async (req, res, next) => {
               .status(400)
               .json({ success: false, message: 'token generating error' })
           } else {
-             if(req.session.id){
-              req.session.userId=req.session.id
+            if (req.session.id) {
+              const cartItems = req.session.cart
+              req.session.userId = req.session.myId
+              const result = await cartModel.findOne({
+                userId: req.session.userId
+              })
+              result.items.push(...cartItems)
+              await result.save()
               res.cookie('id', token).json({
                 success: true,
                 message: 'user login successful',
-                data: req.session.id
+                data: req.session.myId
               })
-             }else{
-             next()
-             }
-            
+            } else {
+              next()
+            }
           }
         }
       )
@@ -122,8 +128,8 @@ exports.verifyUserOtp = async (req, res, next) => {
 
 exports.createUser = async (req, res, next) => {
   try {
-    const { name, phone, password, gender, status } = req.body
-    if (!name || !phone || !password || !gender || !status) {
+    const { name, phone} = req.body
+    if (!name || !phone) {
       res
         .status(400)
         .json({ success: false, message: 'All the fields are required' })
@@ -138,17 +144,12 @@ exports.createUser = async (req, res, next) => {
             const result = await userModel.create({
               name: name,
               phone: phone,
-              password: hash,
-              gender: gender,
-              status: status
             })
             if (!result) {
-              res
-                .status(400)
-                .json({
-                  success: false,
-                  message: 'getting error while creating user'
-                })
+              res.status(400).json({
+                success: false,
+                message: 'getting error while creating user'
+              })
             } else {
               const cartCreated = await cartModel.create({
                 userId: result._id,
@@ -160,12 +161,10 @@ exports.createUser = async (req, res, next) => {
                   .status(201)
                   .json({ success: true, message: 'user created successful' })
               } else {
-                res
-                  .status(400)
-                  .json({
-                    success: false,
-                    message: 'getting error while creating cart'
-                  })
+                res.status(400).json({
+                  success: false,
+                  message: 'getting error while creating cart'
+                })
               }
             }
           }
@@ -173,9 +172,7 @@ exports.createUser = async (req, res, next) => {
       })
     }
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+    next(err)
   }
 }
 
@@ -206,9 +203,7 @@ exports.getAllUser = async (req, res, next) => {
       totalPage: totalPage
     })
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+    next(err)
   }
 }
 
@@ -216,8 +211,8 @@ exports.getAllUser = async (req, res, next) => {
 exports.updateUserByAdmin = async (req, res, next) => {
   try {
     const id = req.params.id // this is object id
-    const { name, phone, password, gender, status } = req.body
-    if (!name || !phone || !password || !gender || !status) {
+    const { name, phone} = req.body
+    if (!name || !phone) {
       res
         .status(400)
         .json({ success: false, message: 'All the fields are required' })
@@ -232,9 +227,9 @@ exports.updateUserByAdmin = async (req, res, next) => {
             var result = await userModel.findOne({ _id: id })
             result.name = name
             result.phone = phone
-            result.password = hash
-            result.gender = gender
-            result.status = status
+            // result.password = hash
+            // result.gender = gender
+            // result.status = status
             await result.save()
             res
               .status(200)
@@ -244,9 +239,7 @@ exports.updateUserByAdmin = async (req, res, next) => {
       })
     }
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+   next(err)
   }
 }
 
@@ -317,5 +310,21 @@ exports.changeUserStatus = async (req, res, next) => {
     const error = new Error(err)
     error.httpStatusCode = 500
     return next(err)
+  }
+}
+exports.logoutUser = async (req, res, next) => {
+  try {
+    req.session.destroy(err => {
+      if (err) {
+        console.error('Error destroying session:', err)
+        res
+          .status(500)
+          .json({ success: false, message: 'Error while destorying session' })
+      } else {
+        res.status(200).json({ success: true, message: 'Logout successful' })
+      }
+    })
+  } catch (err) {
+    next(err)
   }
 }
