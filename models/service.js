@@ -18,7 +18,7 @@ const ServiceSchema = new Schema(
     },
     imageUrl: {
       type: String,
-      // required: true,
+      required: true,
     },
     appHomepage: {
       type: Boolean,
@@ -33,10 +33,10 @@ const ServiceSchema = new Schema(
       ref: "category",
       required: true,
     },
-    totalProducts: {
-      type: Number,
-      default: 0,
-    },
+    totalProducts:{
+      type:Number
+    }
+
   },
   { timestamps: true }
 );

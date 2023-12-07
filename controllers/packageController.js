@@ -7,7 +7,7 @@ exports.createPackage = async (req, res, next) => {
     const { name, price, offerPrice, products, serviceId } = req.body
     let imageUrl = []
     req.files.find(data => {
-      imageUrl.push(data.filename)
+      imageUrl.push(data.originalname)
     })
     if (!name || !price || !offerPrice || !products || !serviceId) {
       req

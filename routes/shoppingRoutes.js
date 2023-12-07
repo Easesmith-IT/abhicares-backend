@@ -15,6 +15,8 @@ const userAddress_controller = require("../controllers/useraddress");
 const cmsHome_controller = require("../controllers/cmsHomeController");
 const review_controller = require("../controllers/reviewController");
 const payments_controller = require("../controllers/payments");
+const seller_controller = require("../controllers/sellerController");
+
 // Category routes
 router.get("/get-all-category", category_controller.getAllCategory);
 
@@ -76,5 +78,8 @@ router.get(
 
 //order Routes
 router.post("/place-cod-order", payments_controller.websiteCodOrder);
+
+// Seller api
+router.post("/get-seller-location", seller_controller.getSellerByLocation);
 
 module.exports = router;

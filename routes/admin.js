@@ -124,11 +124,6 @@ router.patch(
 ); // passing object id
 router.delete("/delete-user/:id", isAdminAuth, user_controller.deleteUser); // passing object id
 router.get("/search-user", isAdminAuth, user_controller.searchUser);
-router.patch(
-  "/update-user-status/:id",
-  isAdminAuth,
-  user_controller.changeUserStatus
-); // passing object id
 
 // Enquiry Routes
 router.get("/get-all-enquiry", isAdminAuth, enquiry_controller.getAllEnquiry);
