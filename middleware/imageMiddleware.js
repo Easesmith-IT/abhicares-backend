@@ -1,23 +1,20 @@
-const multer = require('multer')
-const { v4: uuidv4 } = require('uuid');
+const multer = require("multer");
+const { v4: uuidv4 } = require("uuid");
 
-  storage=multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, 'uploads')
-    },
-    filename: function (req, file, cb) {
-         let fileName = file.fieldname+"_"+Date.now()+'.jpg'
-      cb(null, fileName)  
-    }
-  })
-  const upload = multer({ storage: storage }).array("img",5)
+storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads");
+  },
+  filename: function (req, file, cb) {
+    let fileName = file.fieldname + "_" + Date.now() + ".jpg";
+    cb(null, fileName);
+  },
+});
+const upload = multer({ storage: storage }).array("img", 5);
 
-module.exports = upload
-
-
+module.exports = upload;
 
 /*
-
 
 const multer = require('multer')
 const { Storage } = require('@google-cloud/storage')
@@ -37,6 +34,7 @@ exports.myFun =async (req, res, next) => {
        const bucket = storageClient.bucket('abhicares-backend-bucket')
         var temp=0
        const uploadPromises = files.map(async file => {
+        console.log(file)
         const fileName = `${Date.now()}-${file.originalname}`
         req.files[temp].originalname=fileName
         temp++
@@ -69,17 +67,9 @@ exports.myFun =async (req, res, next) => {
       } catch (error) {
         console.error('Error uploading files:', error)
         res.status(500).json({ success: false, error: 'Internal Server Error' })
-      }
-
-    
+      } 
      
 }
 
+
 */
-
-
-
-
-
-
-

@@ -13,35 +13,36 @@ const Product = require("../models/product");
 const Order = require("../models/order");
 const Payments = require("../models/payments");
 
-const AppError = require('../controllers/errorController')
-
+const AppError = require("../controllers/errorController");
 
 exports.postCreateCategory = async (req, res, next) => {
   try {
-    const {name,totalServices}=req.body
-    if(!name || !totalServices){
+    const { name } = req.body;
+    if (!name) {
       // res.status(400).json({success:false,message:"All the fields are required"})
 
-      throw new AppError(400, 'All the fields are required')
-
-    }else{
-      await Category.create(req.body)
-      res.status(200).json({ success: true, message: "Category created successful" });
+      throw new AppError(400, "All the fields are required");
+    } else {
+      await Category.create(req.body);
+      res
+        .status(200)
+        .json({ success: true, message: "Category created successful" });
     }
-  
   } catch (err) {
-    next(err)
+    next(err);
   }
 };
 
 exports.getAllCategory = async (req, res, next) => {
   try {
-    
-      
-
-      const result=await Category.find()
-      res.status(200).json({ success: true, message: "These are all the categories",data:result });
-  
+    const result = await Category.find();
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "These are all the categories",
+        data: result,
+      });
   } catch (err) {
     const error = new Error(err);
     error.httpStatusCode = 500;
@@ -50,21 +51,21 @@ exports.getAllCategory = async (req, res, next) => {
 };
 exports.updateCategory = async (req, res, next) => {
   try {
-    const id=req.params.id
-          const {name,totalServices}=req.body
-          if(!name || !totalServices){
-            res.status(400).json({success:false,message:"All the fields are required"})
-          }else{
-            var result=await Category.findOne({_id:id})
-            result.name=name
-            result.totalServices=totalServices
-            result.save()
-            res.status(200).json({ success: true, message: "category updated successful"});
-          }
-      
-
-    
-  
+    const id = req.params.id;
+    const { name, totalServices } = req.body;
+    if (!name || !totalServices) {
+      res
+        .status(400)
+        .json({ success: false, message: "All the fields are required" });
+    } else {
+      var result = await Category.findOne({ _id: id });
+      result.name = name;
+      result.totalServices = totalServices;
+      result.save();
+      res
+        .status(200)
+        .json({ success: true, message: "category updated successful" });
+    }
   } catch (err) {
     const error = new Error(err);
     error.httpStatusCode = 500;
@@ -74,20 +75,17 @@ exports.updateCategory = async (req, res, next) => {
 
 exports.deleteCategory = async (req, res, next) => {
   try {
-    
-      const id=req.params.id
-      await Category.findByIdAndDelete({_id:id})
-      res.status(200).json({ success: true, message: "categories deleted successful" });
-  
+    const id = req.params.id;
+    await Category.findByIdAndDelete({ _id: id });
+    res
+      .status(200)
+      .json({ success: true, message: "categories deleted successful" });
   } catch (err) {
     const error = new Error(err);
     error.httpStatusCode = 500;
     return next(err);
   }
 };
-
-
-
 
 exports.postAddService = async (req, res, next) => {
   try {
