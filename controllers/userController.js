@@ -288,6 +288,9 @@ exports.searchUser = async (req, res, next) => {
 // }
 exports.logoutUser = async (req, res, next) => {
   try {
+   if(!req.session.userId){
+          res.status(400).json({success:false,message:"you are not loggedin"})
+   }else{
     req.session.destroy(err => {
       if (err) {
         console.error('Error destroying session:', err)
@@ -298,6 +301,8 @@ exports.logoutUser = async (req, res, next) => {
         res.status(200).json({ success: true, message: 'Logout successful' })
       }
     })
+   }
+   
   } catch (err) {
     next(err)
   }
