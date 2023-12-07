@@ -86,7 +86,7 @@ const sellerSchema = new Schema(
   { timestamps: true }
 );
 
-sellerSchema.index({ location: "2dsphere" });
+sellerSchema.index({ "address.location": "2dsphere" });
 
 module.exports = mongoose.model("Seller", sellerSchema);
 

@@ -2,7 +2,6 @@ const serviceModel = require("../models/service");
 
 exports.createService = async (req, res, next) => {
   try {
-    console.log("reached");
     console.log(req.body);
     var {
       name,
@@ -11,10 +10,9 @@ exports.createService = async (req, res, next) => {
       appHomepage,
       webHomepage,
       categoryId,
-      totalProducts,
     } = req.body;
     var imageUrl = "";
-    imageUrl = req.files[0].originalname;
+    imageUrl = req.files[0].filename;
 
     console.log(imageUrl);
     if (
@@ -22,14 +20,14 @@ exports.createService = async (req, res, next) => {
       !startingPrice ||
       !description ||
       !imageUrl ||
-      !categoryId ||
-      !totalProducts
+      !categoryId || 
+      !appHomepage ||
+      !webHomepage 
     ) {
       res
         .status(400)
         .json({ success: false, message: "All the fields are required" });
     } else {
-      console.log("reached 2");
       await serviceModel.create({
         name: name,
         startingPrice: startingPrice,
@@ -37,8 +35,7 @@ exports.createService = async (req, res, next) => {
         imageUrl: imageUrl,
         appHomepage: appHomepage,
         webHomepage: webHomepage,
-        categoryId: categoryId,
-        totalProducts: totalProducts,
+        categoryId: categoryId
       });
       console.log(serviceModel);
       res
@@ -46,9 +43,7 @@ exports.createService = async (req, res, next) => {
         .json({ success: true, message: "Service created successful" });
     }
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+   next(err)
   }
 };
 
@@ -59,9 +54,7 @@ exports.getAllService = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "These are all services", data: result });
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+    next(err)
   }
 };
 
@@ -73,22 +66,20 @@ exports.getCategoryService = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "These are all services", data: result });
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+    next(err)
   }
 };
 
 exports.updateService = async (req, res, next) => {
   try {
-    const id = req.params.id;
+    console.log(req.files)
+    const id = req.params.id;  //service id
     const {
-      name,
+      name, 
       startingPrice,
       description,
       appHomepage,
       webHomepage,
-      totalProducts,
     } = req.body;
     var imageUrl = "";
     imageUrl = req.files[0].filename;
@@ -98,8 +89,7 @@ exports.updateService = async (req, res, next) => {
       !description ||
       !imageUrl ||
       !appHomepage ||
-      !webHomepage ||
-      !totalProducts
+      !webHomepage
     ) {
       res
         .status(400)
@@ -111,16 +101,16 @@ exports.updateService = async (req, res, next) => {
       result.description = description;
       result.imageUrl = imageUrl;
       result.appHomepage = appHomepage;
-      result.totalProducts = totalProducts;
+      result.webHomepage = webHomepage;
+     
       await result.save();
       res
         .status(201)
         .json({ success: true, message: "Service updated successful" });
     }
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+    console.log(err)
+   next(err)
   }
 };
 
@@ -132,9 +122,7 @@ exports.deleteCategoryService = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "service deleted successful" });
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+   next(err)
   }
 };
 
@@ -171,8 +159,6 @@ exports.searchService = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+   next(err)
   }
 };

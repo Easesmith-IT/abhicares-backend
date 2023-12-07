@@ -11,32 +11,32 @@ const userSchema = new Schema({
         required: true,
         unique: true,
     },
-    password: {
-        type: String,
-        required: true,
-    },
-    razorPayOrderId: {
-        type: String,
-        // required: true,
-    },
-    gender:{
-        type: String,
-        required:true
-    },
-    otp:{
-        type: Number,
-    },
-    otpExpiresAt:{
-        type: Date,
-    },
-    cartId: {
-        type: Schema.Types.ObjectId,
-        ref: "Cart",
-    },
-    status:{
-        type:Boolean,
-        default:true
-    }
+    // password: {
+    //     type: String,
+    //     required: true,
+    // },
+    // razorPayOrderId: {
+    //     type: String,
+    //     // required: true,
+    // },
+    // gender:{
+    //     type: String,
+    //     required:true
+    // },
+    // otp:{
+    //     type: Number,
+    // },
+    // otpExpiresAt:{
+    //     type: Date,
+    // },
+    // cartId: {
+    //     type: Schema.Types.ObjectId,
+    //     ref: "Cart",
+    // },
+    // status:{
+    //     type:Boolean,
+    //     default:true
+    // }
 }, { timestamps: true });
 
 

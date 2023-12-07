@@ -21,12 +21,12 @@ const contentRoute = require('../routes/content')
 
 //////
 const path = require("path");
-server.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET ,POST,DELETE,PUT,PATCH");
-  res.setHeader("Access-Control-Allow-Headers", "Authorization,Content-Type");
-  next();
-});
+// server.use((req, res, next) => {
+//   res.setHeader("Access-Control-Allow-Origin", "*");
+//   res.setHeader("Access-Control-Allow-Methods", "GET ,POST,DELETE,PUT,PATCH");
+//   res.setHeader("Access-Control-Allow-Headers", "Authorization,Content-Type");
+//   next();
+// });
 
 // Admin Routes
 server.use("/api/website", adminRoute);

@@ -49,9 +49,7 @@ exports.createSeller = async (req, res, next) => {
       })
     }
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+    next(err)
   }
 }
 
@@ -135,9 +133,7 @@ exports.updateSeller = async (req, res, next) => {
         .json({ success: true, message: 'Seller updated successful' })
     }
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+    next(err)
   }
 }
 
@@ -149,9 +145,7 @@ exports.deleteSeller = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: 'Seller deleted successful' })
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+   next(err)
   }
 }
 
@@ -193,9 +187,7 @@ exports.searchSeller = async (req, res, next) => {
         totalPage: totalPage
       })
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+    next(err)
   }
 }
 
@@ -210,8 +202,44 @@ exports.changeSellerStatus=async(req,res,next)=>{
           res.status(200).json({success:true,message:"Data updated successful"})
 
   }catch(err){
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+   next(err)
+  }
+}
+
+exports.getSellerByLocation=async(req,res,next)=>{
+  try{
+          // const latitude=req.body.latitude
+          // const longitude=req.body.longitude
+          const latitude="24.750000"
+          const longitude="84.370003"
+          
+        const result= await sellerModel.aggregate([
+
+          // {
+          //   $geoNear: {
+          //     near:{type:"Point",coordinates:[parseFloat(longitude),parseFloat(latitude)]},
+          //     distanceField: "distance",
+          //     spherical: true
+          //   }
+          // }
+
+
+            {
+              $geoNear:{
+                near:{type:"Point",coordinates:[parseFloat(longitude),parseFloat(latitude)]},
+                // key:"location",
+                maxDistance:parseFloat(50)*1609,
+
+                distanceField:"distance",
+                spherical:true,
+                // maxDistance: 100*1000
+              }
+            }
+          ])
+     res.status(200).json({success:true,message:"near sellers",data:result})
+
+  }catch(err){
+    console.log(err)
+    next(err)
   }
 }
