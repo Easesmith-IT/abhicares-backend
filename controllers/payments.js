@@ -73,6 +73,9 @@ exports.websiteCodOrder = async (req, res, next) => {
     });
     //     // // Save the order to the database
     await order.save();
+    cart.items = [];
+    cart.totalPrice = 0;
+    await cart.save();
     return res.status(200).json(order);
     //     const newNurseryIds = [
     //       ...new Set(orderItems.map((item) => item.product.nurseryId.toString())),
