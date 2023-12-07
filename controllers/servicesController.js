@@ -12,7 +12,7 @@ exports.createService = async (req, res, next) => {
       categoryId,
     } = req.body;
     var imageUrl = "";
-    imageUrl = req.files[0].originalname;
+    imageUrl = req.files[0].filename;
 
     console.log(imageUrl);
     if (
@@ -82,7 +82,7 @@ exports.updateService = async (req, res, next) => {
       webHomepage,
     } = req.body;
     var imageUrl = "";
-    imageUrl = req.files[0].originalname;
+    imageUrl = req.files[0].filename;
     if (
       !name ||
       !startingPrice ||
