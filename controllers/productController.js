@@ -6,7 +6,7 @@ exports.createProduct = async (req, res, next) => {
 
     let imageUrl = []
     req.files.find(data => {
-      imageUrl.push(data.filename)
+      imageUrl.push(data.originalname)
     })
 
     if (
@@ -109,7 +109,7 @@ exports.updateProduct = async (req, res, next) => {
     const { name, price, offerPrice, description, serviceId } = req.body
     let imageUrl = []
     req.files.find(data => {
-      imageUrl.push(data.filename)
+      imageUrl.push(data.originalname)
     })
 
     if (

@@ -10,10 +10,9 @@ exports.createService = async (req, res, next) => {
       appHomepage,
       webHomepage,
       categoryId,
-      totalProducts,
     } = req.body;
     var imageUrl = "";
-    imageUrl = req.files[0].filename;
+    imageUrl = req.files[0].originalname;
 
     console.log(imageUrl);
     if (
@@ -21,8 +20,9 @@ exports.createService = async (req, res, next) => {
       !startingPrice ||
       !description ||
       !imageUrl ||
-      !categoryId ||
-      !totalProducts
+      !categoryId || 
+      !appHomepage ||
+      !webHomepage 
     ) {
       res
         .status(400)
@@ -35,8 +35,7 @@ exports.createService = async (req, res, next) => {
         imageUrl: imageUrl,
         appHomepage: appHomepage,
         webHomepage: webHomepage,
-        categoryId: categoryId,
-        totalProducts: totalProducts,
+        categoryId: categoryId
       });
       console.log(serviceModel);
       res
@@ -73,25 +72,24 @@ exports.getCategoryService = async (req, res, next) => {
 
 exports.updateService = async (req, res, next) => {
   try {
-    const id = req.params.id;
+    console.log(req.files)
+    const id = req.params.id;  //service id
     const {
-      name,
+      name, 
       startingPrice,
       description,
       appHomepage,
       webHomepage,
-      totalProducts,
     } = req.body;
     var imageUrl = "";
-    imageUrl = req.files[0].filename;
+    imageUrl = req.files[0].originalname;
     if (
       !name ||
       !startingPrice ||
       !description ||
       !imageUrl ||
       !appHomepage ||
-      !webHomepage ||
-      !totalProducts
+      !webHomepage
     ) {
       res
         .status(400)
@@ -103,13 +101,15 @@ exports.updateService = async (req, res, next) => {
       result.description = description;
       result.imageUrl = imageUrl;
       result.appHomepage = appHomepage;
-      result.totalProducts = totalProducts;
+      result.webHomepage = webHomepage;
+     
       await result.save();
       res
         .status(201)
         .json({ success: true, message: "Service updated successful" });
     }
   } catch (err) {
+    console.log(err)
    next(err)
   }
 };
