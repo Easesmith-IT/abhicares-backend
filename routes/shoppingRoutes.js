@@ -14,6 +14,7 @@ const user_controller=require("../controllers/userController")
 const userAddress_controller=require("../controllers/useraddress")
 const cmsHome_controller=require("../controllers/cmsHomeController")
 const review_controller=require("../controllers/reviewController")
+const seller_controller=require("../controllers/sellerController")
 
 
 // Category routes
@@ -64,5 +65,7 @@ router.patch("/update-product-review/:id",review_controller.updateProductReview)
 router.get("/get-product-review/:id",review_controller.getProductReview) // find product review by product id
 router.get("/get-user-product-review/:id",review_controller.getUserProductReview)
 
+// Seller api
+router.post("/get-seller-location",seller_controller.getSellerByLocation)
 
 module.exports=router

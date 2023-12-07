@@ -215,3 +215,29 @@ exports.changeSellerStatus=async(req,res,next)=>{
     return next(err)
   }
 }
+
+exports.getSellerByLocation=async(req,res,next)=>{
+  try{
+          // const latitude=req.body.latitude
+          // const longitude=req.body.longitude
+          const latitude="24.750000"
+          const longitude="84.370003"
+          
+        const result= await sellerModel.aggregate([
+            {
+              $geoNear:{
+                near:{type:"Point",coordinates:[parseFloat(longitude),parseFloat(latitude)]},
+                key:"location",
+                maxDistance:parseFloat(10000)*1609,
+                distanceField:"dist.calculated",
+                spherical:true
+              }
+            }
+          ])
+     res.status(200).json({success:true,message:"near sellers",data:result})
+
+  }catch(err){
+    console.log(err)
+    next(err)
+  }
+}
