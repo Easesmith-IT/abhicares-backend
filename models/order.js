@@ -19,8 +19,13 @@ const orderSchema = new Schema(
     },
     products: [
       {
-        type: Object,
-        required: true,
+        product: {
+          type: Object,
+          required: true,
+        },
+        quantity: {
+          type: Number,
+        },
       },
     ],
     user: {
