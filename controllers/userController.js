@@ -40,9 +40,12 @@ exports.generateOtpUser = async (req, res, next) => {
         'secretKey',
         {},
         function (err, token) {
-           if(err){
-            res.status(400).json({success:false,message:"getting error generating token"})
-           }else{
+          if (err) {
+            res.status(400).json({
+              success: false,
+              message: 'getting error generating token'
+            })
+          } else {
             const transporter = nodemailer.createTransport({
               service: 'gmail',
               auth: {
@@ -50,7 +53,7 @@ exports.generateOtpUser = async (req, res, next) => {
                 pass: 'aevm hfgp mizf aypu'
               }
             })
-      
+
             // Define the email message
             const mailOptions = {
               from: 'generaluser2003@gmail.com',
@@ -58,29 +61,29 @@ exports.generateOtpUser = async (req, res, next) => {
               subject: 'Test Email',
               text: `this is otp for testing abhicares ${otp}`
             }
-      
+
             // Send the email
             transporter.sendMail(mailOptions, (error, info) => {
               if (error) {
                 console.error('Error:', error)
               } else {
                 console.log('Email sent:', info.response)
-      
+
                 console.log(`Sending OTP ${otp} to ${phoneNumber}`)
                 // req.session.otp = otp
                 // req.session.cart = []
                 if (!req.session.cart) {
                   req.session.cart = []
                 }
-      
-                res.cookie('token', token, { maxAge: 900000, httpOnly: true }).json({message:"otp sent successful"})
+
+                res
+                  .cookie('token', token, { maxAge: 900000, httpOnly: true })
+                  .json({ message: 'otp sent successful' })
               }
             })
-           }
+          }
         }
       )
-
-      
     }
 
     // Send the OTP (you would typically send it via SMS, email, etc.)
@@ -104,42 +107,45 @@ exports.verifyUserOtp = async (req, res, next) => {
     const userData = myData[mdata]
 
     // Check if the entered OTP matches the stored OTP
-    
-      const tokenData = req.cookies["token"];
-       
 
-        jwt.verify(tokenData,"secretKey",async(err,authData)=>{
-             if(err){
-                res.status(400).json({success:false,message:"token validation failed"})
-             }else{
-                // if(authData.otp===enteredOTP){
-                  if(10===10){
-                  const cartItems = req.session.cart
-                 
-                  const result = await cartModel.findOne({
-                    userId:  authData.userId
-                  })
-                  // console.log("cartitems----->",cartItems)
-                  // console.log("result------>",result.items)
-                  if(result.items.length==0){
-                    result.items.push(...cartItems) // merging session cart to user cart
-                    await result.save()
-                  }
-                  delete req.session.cart // req.session.cart deleted
-                  req.session.userId =authData.userId
-                  res.status(200).json({
-                    success: true,
-                    message: 'user login successful',
-                    data:authData.userId
-                  })
-                }else{
-                    res.status(400).json({success:false,message:"Invalid Otp"})
-                } 
-             }          
-        })
-   
+    const tokenData = req.cookies['token']
+
+    jwt.verify(tokenData, 'secretKey', async (err, authData) => {
+      if (err) {
+        res
+          .status(400)
+          .json({ success: false, message: 'token validation failed' })
+      } else {
+        // if (authData.otp === enteredOTP) {
+          if (10 === 10) {
+            if(!req.session.cart){
+              req.session.cart=[]
+            }
+          const cartItems = req.session.cart
+
+          const result = await cartModel.findOne({
+            userId: authData.userId
+          })
+          // console.log("cartitems----->",cartItems)
+          // console.log("result------>",result.items)
+          if (result.items.length == 0) {
+            result.items.push(...cartItems) // merging session cart to user cart
+            await result.save()
+          }
+          delete req.session.cart // req.session.cart deleted
+          req.session.userId = authData.userId
+          res.status(200).json({
+            success: true,
+            message: 'user login successful',
+            data: authData.userId
+          })
+        } else {
+          res.status(400).json({ success: false, message: 'Invalid Otp' })
+        }
+      }
+    })
   } catch (err) {
-    console.log("err--->",err)
+    console.log('err--->', err)
     next(err)
   }
 }
@@ -166,30 +172,81 @@ exports.createUser = async (req, res, next) => {
             message: 'getting error while creating user'
           })
         } else {
-          if(req.session.cart){
-            const cartCreated = await cartModel.create({
-              userId: result._id,
-              items: req.session.cart,
-              // totalPrice: 0
-            })
-          }else{
-            const cartCreated = await cartModel.create({
-              userId: result._id,
-              items: [],
-              totalPrice: 0
-            })
-          }
-         
-          if (cartCreated) {
-            res
-              .status(201)
-              .json({ success: true, message: 'user created successful' })
-          } else {
-            res.status(400).json({
-              success: false,
-              message: 'getting error while creating cart'
-            })
-          }
+          const otp = otpGenerator.generate(6, {
+            digits: true,
+            alphabets: false,
+            upperCase: false,
+            specialChars: false
+          })
+          const id = result._id.toString()
+          req.session.myId = id
+
+          jwt.sign(
+            { userId: id, otp: otp },
+            'secretKey',
+            {},
+            function (err, token) {
+              if (err) {
+                res.status(400).json({
+                  success: false,
+                  message: 'getting error generating token'
+                })
+              } else {
+                const transporter = nodemailer.createTransport({
+                  service: 'gmail',
+                  auth: {
+                    user: 'generaluser2003@gmail.com',
+                    pass: 'aevm hfgp mizf aypu'
+                  }
+                })
+
+                // Define the email message
+                const mailOptions = {
+                  from: 'generaluser2003@gmail.com',
+                  to: 'lifegameraryan@gmail.com',
+                  subject: 'Test Email',
+                  text: `this is otp for testing abhicares ${otp}`
+                }
+
+                // Send the email
+                transporter.sendMail(mailOptions, async (error, info) => {
+                  if (error) {
+                    console.error('Error:', error)
+                  } else {
+                    console.log('Email sent:', info.response)
+
+                    // console.log(`Sending OTP ${otp} to ${phoneNumber}`)
+
+                    if (req.session.cart) {
+                      const cartCreated = await cartModel.create({
+                        userId: result._id,
+                        items: req.session.cart
+                        // totalPrice: 0
+                      })
+                      res
+                        .cookie('token', token, {
+                          maxAge: 900000,
+                          httpOnly: true
+                        })
+                        .json({ message: 'otp sent successful' })
+                    } else {
+                      const cartCreated = await cartModel.create({
+                        userId: result._id,
+                        items: [],
+                        totalPrice: 0
+                      })
+                      res
+                        .cookie('token', token, {
+                          maxAge: 900000,
+                          httpOnly: true
+                        })
+                        .json({ message: 'otp sent successful' })
+                    }
+                  }
+                })
+              }
+            }
+          )
         }
       }
     }
@@ -328,7 +385,9 @@ exports.logoutUser = async (req, res, next) => {
             .status(500)
             .json({ success: false, message: 'Error while destorying session' })
         } else {
-          res.clearCookie("token").json({ success: true, message: 'Logout successful' })
+          res
+            .clearCookie('token')
+            .json({ success: true, message: 'Logout successful' })
         }
       })
     }
