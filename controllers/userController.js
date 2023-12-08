@@ -127,7 +127,8 @@ exports.verifyUserOtp = async (req, res, next) => {
                   req.session.userId =authData.userId
                   res.status(200).json({
                     success: true,
-                    message: 'user login successful'
+                    message: 'user login successful',
+                    data:authData.userId
                   })
                 }else{
                     res.status(400).json({success:false,message:"Invalid Otp"})

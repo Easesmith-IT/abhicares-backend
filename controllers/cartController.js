@@ -100,7 +100,6 @@ exports.getCart = async (req, res, next) => {
   try {
     // const id = req.params.id // user id
 
-
     if (req.session.userId) {
       const result = await cartModel.findOne({ userId: req.session.userId })
       let cartItems = result.items
@@ -111,19 +110,26 @@ exports.getCart = async (req, res, next) => {
           let obj = []
           let totalOfferPrice = 0
           let totalProductPrice = 0
-          let totalItemPrice=1
-          let itemTotalOfferPrice=1
+          let totalItemPrice = 1
+          let itemTotalOfferPrice = 1
           const matchingArray = found.filter(obj1 =>
-            cartItems.some(obj2 =>{
-                if( obj1._id.toString()=== obj2.productId.toString()){
-                  totalItemPrice=(obj1.price*obj2.quantity)
-                  itemTotalOfferPrice=(obj1.offerPrice*obj2.quantity)
-                   obj.push({product:obj1,quantity:obj2.quantity,totalItemPrice:totalItemPrice,itemTotalOfferPrice:itemTotalOfferPrice})
-                   totalProductPrice=totalProductPrice+(obj1.price*obj2.quantity)
-                   totalOfferPrice=totalOfferPrice+(obj1.offerPrice*obj2.quantity)
-                }
+            cartItems.some(obj2 => {
+              if (obj1._id.toString() === obj2.productId.toString()) {
+                totalItemPrice = obj1.price * obj2.quantity
+                itemTotalOfferPrice = obj1.offerPrice * obj2.quantity
+                obj.push({
+                  product: obj1,
+                  quantity: obj2.quantity,
+                  totalItemPrice: totalItemPrice,
+                  itemTotalOfferPrice: itemTotalOfferPrice
+                })
+                totalProductPrice =
+                  totalProductPrice + obj1.price * obj2.quantity
+                totalOfferPrice =
+                  totalOfferPrice + obj1.offerPrice * obj2.quantity
+              }
             })
-          );
+          )
 
           // while (temp > 0) {
           //   let itemPrice = 0
@@ -152,12 +158,10 @@ exports.getCart = async (req, res, next) => {
             totalProductPrice: totalProductPrice
           })
         } else {
-          res
-            .status(400)
-            .json({
-              success: false,
-              message: 'Data not found from the database'
-            })
+          res.status(400).json({
+            success: false,
+            message: 'Data not found from the database'
+          })
         }
       } else {
         res.status(200).json({
@@ -185,36 +189,41 @@ exports.getCart = async (req, res, next) => {
       // res
       //   .status(200)
       //   .json({ success: true, message: 'user cart details', data: result })
-    }
-    else {
+    } else {
       if (!req.session.cart) {
         req.session.cart = []
       }
       const cartItems = req.session.cart
-     
+
       if (cartItems.length > 0) {
-      
         const valuesToMatch = cartItems.map(obj => obj.productId.toString())
-       
+
         const found = await productModel.find({ _id: { $in: valuesToMatch } })
-      
+
         if (found.length > 0) {
           let obj = []
           let totalOfferPrice = 0
           let totalProductPrice = 0
-          let totalItemPrice=1
-          let itemTotalOfferPrice=1
+          let totalItemPrice = 1
+          let itemTotalOfferPrice = 1
           const matchingArray = found.filter(obj1 =>
-            cartItems.some(obj2 =>{
-                if( obj1._id.toString() === obj2.productId.toString()){
-                  totalItemPrice=(obj1.price*obj2.quantity)
-                  itemTotalOfferPrice=(obj1.offerPrice*obj2.quantity)
-                   obj.push({product:obj1,quantity:obj2.quantity,totalItemPrice:totalItemPrice,itemTotalOfferPrice:itemTotalOfferPrice})
-                   totalProductPrice=totalProductPrice+(obj1.price*obj2.quantity)
-                   totalOfferPrice=totalOfferPrice+(obj1.offerPrice*obj2.quantity)
-                }
+            cartItems.some(obj2 => {
+              if (obj1._id.toString() === obj2.productId.toString()) {
+                totalItemPrice = obj1.price * obj2.quantity
+                itemTotalOfferPrice = obj1.offerPrice * obj2.quantity
+                obj.push({
+                  product: obj1,
+                  quantity: obj2.quantity,
+                  totalItemPrice: totalItemPrice,
+                  itemTotalOfferPrice: itemTotalOfferPrice
+                })
+                totalProductPrice =
+                  totalProductPrice + obj1.price * obj2.quantity
+                totalOfferPrice =
+                  totalOfferPrice + obj1.offerPrice * obj2.quantity
+              }
             })
-          );
+          )
           res.status(200).json({
             success: true,
             message: 'cart items',
@@ -222,7 +231,7 @@ exports.getCart = async (req, res, next) => {
             totalOfferPrice: totalOfferPrice,
             totalProductPrice: totalProductPrice
           })
-        }  
+        }
       } else {
         res.status(200).json({
           success: true,
@@ -237,13 +246,11 @@ exports.getCart = async (req, res, next) => {
   }
 }
 
-
 exports.updateItemQuantity = async (req, res, next) => {
   // const cartId = req.params.id //cart id
- 
 
   try {
-    const {quantity}=req.body
+    const { quantity } = req.body
     const itemId = req.params.id // item id
     if (req.session.userId) {
       const result = await cartModel.findOne({ userId: req.session.userId })
@@ -251,13 +258,26 @@ exports.updateItemQuantity = async (req, res, next) => {
         item => item.productId.toString() === itemId
       )
 
-      if (indexToRemove !== -1) {
-        result.items[indexToRemove].quantity=quantity
-       
-        await result.save()
-        res
-          .status(200)
-          .json({ success: true, message: 'item quantity updated to database cart' })
+      if (quantity == 0) {
+        if (indexToRemove !== -1) {
+          result.items.splice(indexToRemove, 1)
+          await result.save()
+          res
+            .status(200)
+            .json({ success: true, message: 'item deleted from database cart' })
+        }
+      } else {
+        if (indexToRemove !== -1) {
+          result.items[indexToRemove].quantity = quantity
+
+          await result.save()
+          res
+            .status(200)
+            .json({
+              success: true,
+              message: 'item quantity updated in database cart'
+            })
+        }
       }
     } else {
       if (req.session.cart) {
@@ -265,11 +285,26 @@ exports.updateItemQuantity = async (req, res, next) => {
         const indexToRemove = req.session.cart.findIndex(
           item => item.productId === itemId
         )
-        if (indexToRemove !== -1) {
-          req.session.cart[indexToRemove].quantity=quantity
-          res
-            .status(200)
-            .json({ success: true, message: 'session cart item updated' })
+        if (quantity ==0) {
+          if (indexToRemove !== -1) {
+            req.session.cart.splice(indexToRemove, 1)
+            res
+              .status(200)
+              .json({
+                success: true,
+                message: 'item deleted from session cart'
+              })
+          }
+        } else {
+          if (indexToRemove !== -1) {
+            req.session.cart[indexToRemove].quantity = quantity
+            res
+              .status(200)
+              .json({
+                success: true,
+                message: 'session cart item quantity updated'
+              })
+          }
         }
       } else {
         res.status(200).json({ success: true, message: 'cart is empthy' })
