@@ -100,6 +100,7 @@ exports.getCart = async (req, res, next) => {
   try {
     // const id = req.params.id // user id
 
+
     if (req.session.userId) {
       const result = await cartModel.findOne({ userId: req.session.userId })
       let cartItems = result.items
@@ -184,18 +185,19 @@ exports.getCart = async (req, res, next) => {
       // res
       //   .status(200)
       //   .json({ success: true, message: 'user cart details', data: result })
-    } else {
+    }
+    else {
       if (!req.session.cart) {
         req.session.cart = []
       }
       const cartItems = req.session.cart
      
       if (cartItems.length > 0) {
-        console.log("cartItems----->",cartItems)
+      
         const valuesToMatch = cartItems.map(obj => obj.productId.toString())
-        console.log("value to match--->",valuesToMatch)
+       
         const found = await productModel.find({ _id: { $in: valuesToMatch } })
-        console.log("foundItems----->",found)
+      
         if (found.length > 0) {
           let obj = []
           let totalOfferPrice = 0
@@ -220,9 +222,7 @@ exports.getCart = async (req, res, next) => {
             totalOfferPrice: totalOfferPrice,
             totalProductPrice: totalProductPrice
           })
-        } else {
-          res.send('hello')
-        }
+        }  
       } else {
         res.status(200).json({
           success: true,

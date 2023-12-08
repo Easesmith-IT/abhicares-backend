@@ -33,7 +33,7 @@ exports.generateOtpUser = async (req, res, next) => {
       res.status(400).json({ success: false, message: 'User does not exist' })
     } else {
       const id = result._id.toString()
-      // req.session.myId = id
+      req.session.myId = id
 
       jwt.sign(
         { userId: id, otp: otp },
