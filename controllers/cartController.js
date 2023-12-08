@@ -106,7 +106,6 @@ exports.getCart = async (req, res, next) => {
       if (cartItems.length > 0) {
         const valuesToMatch = cartItems.map(obj => obj.productId)
         const found = await productModel.find({ _id: { $in: valuesToMatch } })
-
         if (found.length > 0) {
           let obj = []
           let totalOfferPrice = 0
@@ -115,7 +114,7 @@ exports.getCart = async (req, res, next) => {
           let itemTotalOfferPrice=1
           const matchingArray = found.filter(obj1 =>
             cartItems.some(obj2 =>{
-                if( obj1._id.toString() === obj2.productId.toString()){
+                if( obj1._id.toString()=== obj2.productId.toString()){
                   totalItemPrice=(obj1.price*obj2.quantity)
                   itemTotalOfferPrice=(obj1.offerPrice*obj2.quantity)
                    obj.push({product:obj1,quantity:obj2.quantity,totalItemPrice:totalItemPrice,itemTotalOfferPrice:itemTotalOfferPrice})
@@ -190,11 +189,13 @@ exports.getCart = async (req, res, next) => {
         req.session.cart = []
       }
       const cartItems = req.session.cart
-
+     
       if (cartItems.length > 0) {
-        const valuesToMatch = cartItems.map(obj => obj.productId)
+        console.log("cartItems----->",cartItems)
+        const valuesToMatch = cartItems.map(obj => obj.productId.toString())
+        console.log("value to match--->",valuesToMatch)
         const found = await productModel.find({ _id: { $in: valuesToMatch } })
-
+        console.log("foundItems----->",found)
         if (found.length > 0) {
           let obj = []
           let totalOfferPrice = 0

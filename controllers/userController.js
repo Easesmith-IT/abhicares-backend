@@ -115,19 +115,19 @@ exports.verifyUserOtp = async (req, res, next) => {
                 // if(authData.otp===enteredOTP){
                   if(10===10){
                   const cartItems = req.session.cart
-                  req.session.userId = authData.userId
+                 
                   const result = await cartModel.findOne({
-                    userId: req.session.userId
+                    userId:  authData.userId
                   })
-                  console.log("cartitems----->",cartItems)
-                  console.log("result------>",result.items)
-                  result.items.push(...cartItems) // merging session cart ot user cart
+                  // console.log("cartitems----->",cartItems)
+                  // console.log("result------>",result.items)
+                  result.items.push(...cartItems) // merging session cart to user cart
                   await result.save()
                   delete req.session.cart // req.session.cart deleted
+                  req.session.userId =authData.userId
                   res.status(200).json({
                     success: true,
-                    message: 'user login successful',
-                    data: req.session.myId
+                    message: 'user login successful'
                   })
                 }else{
                     res.status(400).json({success:false,message:"Invalid Otp"})
