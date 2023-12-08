@@ -33,7 +33,7 @@ exports.generateOtpUser = async (req, res, next) => {
       res.status(400).json({ success: false, message: 'User does not exist' })
     } else {
       const id = result._id.toString()
-      // req.session.myId = id
+      req.session.myId = id
 
       jwt.sign(
         { userId: id, otp: otp },
@@ -114,8 +114,10 @@ exports.verifyUserOtp = async (req, res, next) => {
              }else{
                 // if(authData.otp===enteredOTP){
                   if(10===10){
-                  const cartItems = req.session.cart
-                  req.session.userId = authData.userId
+                    const cartItems = req.session.cart
+                    console.log('authData',authData)
+                    req.session.userId = authData.userId
+                    console.log('set userId',req.session.userId);
                   const result = await cartModel.findOne({
                     userId: req.session.userId
                   })
@@ -126,9 +128,10 @@ exports.verifyUserOtp = async (req, res, next) => {
                   delete req.session.cart // req.session.cart deleted
                   res.status(200).json({
                     success: true,
-                    message: 'user login successful',
-                    data: req.session.myId
-                  })
+                    message: "user login successful",
+                    userId: req.session.myId,
+                    data: req.session.myId,
+                  });
                 }else{
                     res.status(400).json({success:false,message:"Invalid Otp"})
                 } 
