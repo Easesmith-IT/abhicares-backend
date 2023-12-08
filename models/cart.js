@@ -13,7 +13,7 @@ const cartSchema = new Schema(
         productId: {
           type: Schema.Types.ObjectId,
           ref: 'Product', // Replace with the actual name of your Product model
-          required: true
+          // required: true
         },
         quantity: {
           type: Number,
@@ -24,7 +24,6 @@ const cartSchema = new Schema(
     ],
     totalPrice: {
       type: Number,
-      required: true,
       default: 0
     }
   },
