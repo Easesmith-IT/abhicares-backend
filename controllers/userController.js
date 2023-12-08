@@ -121,8 +121,10 @@ exports.verifyUserOtp = async (req, res, next) => {
                   })
                   // console.log("cartitems----->",cartItems)
                   // console.log("result------>",result.items)
-                  result.items.push(...cartItems) // merging session cart to user cart
-                  await result.save()
+                  if(result.items.length==0){
+                    result.items.push(...cartItems) // merging session cart to user cart
+                    await result.save()
+                  }
                   delete req.session.cart // req.session.cart deleted
                   req.session.userId =authData.userId
                   res.status(200).json({
@@ -326,7 +328,7 @@ exports.logoutUser = async (req, res, next) => {
             .status(500)
             .json({ success: false, message: 'Error while destorying session' })
         } else {
-          res.status(200).json({ success: true, message: 'Logout successful' })
+          res.clearCookie("token").json({ success: true, message: 'Logout successful' })
         }
       })
     }

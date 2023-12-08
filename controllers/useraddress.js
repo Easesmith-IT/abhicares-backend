@@ -4,7 +4,6 @@ const mongoose = require('mongoose')
 
 exports.addUserAddress = async (req, res, next) => {
   try {
-    console.log('--------------------')
     console.log(req.body)
     const { addressLine, pincode,landmark, mobile, defaultAddress, userId } = req.body
     if (
