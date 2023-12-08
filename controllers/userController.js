@@ -117,28 +117,54 @@ exports.verifyUserOtp = async (req, res, next) => {
           .json({ success: false, message: 'token validation failed' })
       } else {
         // if (authData.otp === enteredOTP) {
-          if (10 === 10) {
-            if(!req.session.cart){
-              req.session.cart=[]
-            }
-          const cartItems = req.session.cart
+        if (10 === 10) {
+          if (req.session.name && req.session.phone) {
+            const result = await userModel.create({
+              name: req.session.name,
+              phone: req.session.phone
+            })
 
-          const result = await cartModel.findOne({
-            userId: authData.userId
-          })
-          // console.log("cartitems----->",cartItems)
-          // console.log("result------>",result.items)
-          if (result.items.length == 0) {
-            result.items.push(...cartItems) // merging session cart to user cart
-            await result.save()
+            delete req.session.name
+            delete req.session.phone
+            req.session.userId = result._id.toString()
+            if (req.session.cart) {
+              const cartCreated = await cartModel.create({
+                userId: result._id,
+                items: req.session.cart
+                // totalPrice: 0
+              })
+              res.status(200).json({ message: 'Loggedin successful',data:req.session.userId })
+            } else {
+              const cartCreated = await cartModel.create({
+                userId: result._id,
+                items: [],
+                totalPrice: 0
+              })
+              res.status(200).json({success:true, message: 'Loggedin successful',data:req.session.userId })
+            }
+          } else {
+            if (!req.session.cart) {
+              req.session.cart = []
+            }
+            const cartItems = req.session.cart
+
+            const result = await cartModel.findOne({
+              userId: authData.userId
+            })
+            // console.log("cartitems----->",cartItems)
+            // console.log("result------>",result.items)
+            if (result.items.length == 0) {
+              result.items.push(...cartItems) // merging session cart to user cart
+              await result.save()
+            }
+            delete req.session.cart // req.session.cart deleted
+            req.session.userId = authData.userId
+            res.status(200).json({
+              success: true,
+              message: 'user login successful',
+              data: authData.userId
+            })
           }
-          delete req.session.cart // req.session.cart deleted
-          req.session.userId = authData.userId
-          res.status(200).json({
-            success: true,
-            message: 'user login successful',
-            data: authData.userId
-          })
         } else {
           res.status(400).json({ success: false, message: 'Invalid Otp' })
         }
@@ -162,93 +188,92 @@ exports.createUser = async (req, res, next) => {
       if (resultData) {
         res.status(200).json({ success: true, message: 'User already exist' })
       } else {
-        const result = await userModel.create({
-          name: name,
-          phone: phone
+        // const result = await userModel.create({
+        //   name: name,
+        //   phone: phone
+        // })
+        // if (!result) {
+        //   res.status(400).json({
+        //     success: false,
+        //     message: 'getting error while creating user'
+        //   })
+        // } else {
+        const otp = otpGenerator.generate(6, {
+          digits: true,
+          alphabets: false,
+          upperCase: false,
+          specialChars: false
         })
-        if (!result) {
-          res.status(400).json({
-            success: false,
-            message: 'getting error while creating user'
-          })
-        } else {
-          const otp = otpGenerator.generate(6, {
-            digits: true,
-            alphabets: false,
-            upperCase: false,
-            specialChars: false
-          })
-          const id = result._id.toString()
-          req.session.myId = id
+        // const id = result._id.toString()
+        // req.session.myId = id
 
-          jwt.sign(
-            { userId: id, otp: otp },
-            'secretKey',
-            {},
-            function (err, token) {
-              if (err) {
-                res.status(400).json({
-                  success: false,
-                  message: 'getting error generating token'
-                })
-              } else {
-                const transporter = nodemailer.createTransport({
-                  service: 'gmail',
-                  auth: {
-                    user: 'generaluser2003@gmail.com',
-                    pass: 'aevm hfgp mizf aypu'
-                  }
-                })
-
-                // Define the email message
-                const mailOptions = {
-                  from: 'generaluser2003@gmail.com',
-                  to: 'lifegameraryan@gmail.com',
-                  subject: 'Test Email',
-                  text: `this is otp for testing abhicares ${otp}`
-                }
-
-                // Send the email
-                transporter.sendMail(mailOptions, async (error, info) => {
-                  if (error) {
-                    console.error('Error:', error)
-                  } else {
-                    console.log('Email sent:', info.response)
-
-                    // console.log(`Sending OTP ${otp} to ${phoneNumber}`)
-
-                    if (req.session.cart) {
-                      const cartCreated = await cartModel.create({
-                        userId: result._id,
-                        items: req.session.cart
-                        // totalPrice: 0
-                      })
-                      res
-                        .cookie('token', token, {
-                          maxAge: 900000,
-                          httpOnly: true
-                        })
-                        .json({ message: 'otp sent successful' })
-                    } else {
-                      const cartCreated = await cartModel.create({
-                        userId: result._id,
-                        items: [],
-                        totalPrice: 0
-                      })
-                      res
-                        .cookie('token', token, {
-                          maxAge: 900000,
-                          httpOnly: true
-                        })
-                        .json({ message: 'otp sent successful' })
-                    }
-                  }
-                })
+        jwt.sign({ otp: otp }, 'secretKey', {}, function (err, token) {
+          if (err) {
+            res.status(400).json({
+              success: false,
+              message: 'getting error generating token'
+            })
+          } else {
+            const transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: {
+                user: 'generaluser2003@gmail.com',
+                pass: 'aevm hfgp mizf aypu'
               }
+            })
+
+            // Define the email message
+            const mailOptions = {
+              from: 'generaluser2003@gmail.com',
+              to: 'lifegameraryan@gmail.com',
+              subject: 'Test Email',
+              text: `this is otp for testing abhicares ${otp}`
             }
-          )
-        }
+
+            // Send the email
+            transporter.sendMail(mailOptions, async (error, info) => {
+              if (error) {
+                console.error('Error:', error)
+              } else {
+                req.session.name = name
+                req.session.phone = phone
+                res
+                  .cookie('token', token, { maxAge: 900000, httpOnly: true })
+                  .json({ message: 'otp sent successful' })
+
+                // console.log(`Sending OTP ${otp} to ${phoneNumber}`)
+
+                // if (req.session.cart) {
+                //   const cartCreated = await cartModel.create({
+                //     userId: result._id,
+                //     items: req.session.cart
+                //     // totalPrice: 0
+                //   })
+                //   res
+                //     .cookie('token', token, {
+                //       maxAge: 900000,
+                //       httpOnly: true
+                //     })
+                //     .json({ message: 'otp sent successful' })
+                // } else {
+                //   const cartCreated = await cartModel.create({
+                //     userId: result._id,
+                //     items: [],
+                //     totalPrice: 0
+                //   })
+                //   res
+                //     .cookie('token', token, {
+                //       maxAge: 900000,
+                //       httpOnly: true
+                //     })
+                //     .json({ message: 'otp sent successful' })
+                // }
+              }
+            })
+          }
+        })
       }
+      // }
     }
   } catch (err) {
     console.log(err)
