@@ -78,8 +78,10 @@ router.get(
 
 //order Routes
 router.post("/place-cod-order", payments_controller.websiteCodOrder);
+router.get("/get-user-orders/:id",payments_controller.getAllUserOrders)
 
 // Seller api
 router.post("/get-seller-location", seller_controller.getSellerByLocation);
+
 
 module.exports = router;
