@@ -105,8 +105,9 @@ exports.verifyUserOtp = async (req, res, next) => {
               const result = await cartModel.findOne({
                 userId: req.session.userId
               })
-              result.items.push(...cartItems)
+              result.items.push(...cartItems) // merging session cart ot user cart
               await result.save()
+              delete req.session.cart // req.session.cart deleted
               res.cookie('id', token).json({
                 success: true,
                 message: 'user login successful',
@@ -128,48 +129,38 @@ exports.verifyUserOtp = async (req, res, next) => {
 
 exports.createUser = async (req, res, next) => {
   try {
-    const { name, phone} = req.body
+    const { name, phone } = req.body
     if (!name || !phone) {
       res
         .status(400)
         .json({ success: false, message: 'All the fields are required' })
     } else {
-      bcrypt.genSalt(10, function (err, salt) {
-        bcrypt.hash(password, salt, async function (err, hash) {
-          if (err) {
-            res
-              .status(400)
-              .json({ success: false, message: 'password encryption error' })
-          } else {
-            const result = await userModel.create({
-              name: name,
-              phone: phone,
-            })
-            if (!result) {
-              res.status(400).json({
-                success: false,
-                message: 'getting error while creating user'
-              })
-            } else {
-              const cartCreated = await cartModel.create({
-                userId: result._id,
-                items: [],
-                totalPrice: 0
-              })
-              if (cartCreated) {
-                res
-                  .status(201)
-                  .json({ success: true, message: 'user created successful' })
-              } else {
-                res.status(400).json({
-                  success: false,
-                  message: 'getting error while creating cart'
-                })
-              }
-            }
-          }
-        })
+      const result = await userModel.create({
+        name: name,
+        phone: phone
       })
+      if (!result) {
+        res.status(400).json({
+          success: false,
+          message: 'getting error while creating user'
+        })
+      } else {
+        const cartCreated = await cartModel.create({
+          userId: result._id,
+          items: [],
+          totalPrice: 0
+        })
+        if (cartCreated) {
+          res
+            .status(201)
+            .json({ success: true, message: 'user created successful' })
+        } else {
+          res.status(400).json({
+            success: false,
+            message: 'getting error while creating cart'
+          })
+        }
+      }
     }
   } catch (err) {
     next(err)
@@ -211,35 +202,24 @@ exports.getAllUser = async (req, res, next) => {
 exports.updateUserByAdmin = async (req, res, next) => {
   try {
     const id = req.params.id // this is object id
-    const { name, phone} = req.body
+    const { name, phone } = req.body
     if (!name || !phone) {
       res
         .status(400)
         .json({ success: false, message: 'All the fields are required' })
     } else {
-      bcrypt.genSalt(10, function (err, salt) {
-        bcrypt.hash(password, salt, async function (err, hash) {
-          if (err) {
-            res
-              .status(400)
-              .json({ success: false, message: 'password encryption error' })
-          } else {
-            var result = await userModel.findOne({ _id: id })
+
+      var result = await userModel.findOne({ _id: id })
             result.name = name
             result.phone = phone
-            // result.password = hash
-            // result.gender = gender
-            // result.status = status
             await result.save()
             res
               .status(200)
               .json({ success: true, message: 'user updated successful' })
-          }
-        })
-      })
+
     }
   } catch (err) {
-   next(err)
+    next(err)
   }
 }
 
@@ -247,11 +227,9 @@ exports.deleteUser = async (req, res, next) => {
   try {
     const id = req.params.id // this is object id
     await userModel.findByIdAndDelete({ _id: id }) //passing object id
-    res.status(200).jso({ success: true, message: 'user deleted successful' })
+    res.status(200).json({ success: true, message: 'user deleted successful' })
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+    next(err)
   }
 }
 
@@ -291,27 +269,23 @@ exports.searchUser = async (req, res, next) => {
       totalPage: totalPage
     })
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+   next(err)
   }
 }
 
-exports.changeUserStatus = async (req, res, next) => {
-  try {
-    const id = req.params.id
-    const { status } = req.body
+// exports.changeUserStatus = async (req, res, next) => {
+//   try {
+//     const id = req.params.id
+//     const { status } = req.body
 
-    var result = await userModel.findOne({ _id: id })
-    result.status = status
-    result.save()
-    res.status(200).json({ success: true, message: 'Data updated successful' })
-  } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
-  }
-}
+//     var result = await userModel.findOne({ _id: id })
+//     result.status = status
+//     result.save()
+//     res.status(200).json({ success: true, message: 'Data updated successful' })
+//   } catch (err) {
+//    next(err)
+//   }
+// }
 exports.logoutUser = async (req, res, next) => {
   try {
     req.session.destroy(err => {

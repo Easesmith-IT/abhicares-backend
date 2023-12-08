@@ -34,9 +34,7 @@ exports.createProduct = async (req, res, next) => {
         .json({ success: true, message: 'product created successful' })
     }
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+    next(err)
   }
 }
 
@@ -67,9 +65,7 @@ exports.getAllProduct = async (req, res, next) => {
       totalPages: totalPage
     })
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+    next(err)
   }
 }
 
@@ -103,9 +99,7 @@ exports.getServiceProduct = async (req, res, next) => {
       totalPage: totalPage
     })
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+    next(err)
   }
 }
 
@@ -143,9 +137,7 @@ exports.updateProduct = async (req, res, next) => {
         .json({ success: true, message: 'product updated successful' })
     }
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+    next(err)
   }
 }
 
@@ -157,8 +149,6 @@ exports.deleteServiceProduct = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: 'product deleted successful' })
   } catch (err) {
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+    next(err)
   }
 }

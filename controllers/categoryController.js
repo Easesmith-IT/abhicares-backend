@@ -44,9 +44,7 @@ exports.getAllCategory = async (req, res, next) => {
         data: result,
       });
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+    next(err)
   }
 };
 exports.updateCategory = async (req, res, next) => {
@@ -67,9 +65,7 @@ exports.updateCategory = async (req, res, next) => {
         .json({ success: true, message: "category updated successful" });
     }
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+    next(err)
   }
 };
 
@@ -81,9 +77,7 @@ exports.deleteCategory = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "categories deleted successful" });
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+    next(err)
   }
 };
 
@@ -101,9 +95,7 @@ exports.postAddService = async (req, res, next) => {
     await service.save();
     return res.status(200).json({ service: service, message: "Success" });
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+    next(err)
   }
 };
 
@@ -120,9 +112,7 @@ exports.postAddProduct = async (req, res, next) => {
     await product.save();
     return res.status(200).json({ product: product, message: "Success" });
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+    next(err)
   }
 };
 
@@ -152,9 +142,7 @@ exports.AddPackage = async (req, res, next) => {
     await package.save();
     return res.status(200).json({ package: package, message: "Success" });
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+    next(err)
   }
 };
 
@@ -162,5 +150,7 @@ exports.getOrders = async (req, res, next) => {
   try {
     const orders = await Order.find();
     return res.status(200).json({ orders: orders });
-  } catch (err) {}
+  } catch (err) {
+    next(err)
+  }
 };

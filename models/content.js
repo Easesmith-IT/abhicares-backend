@@ -2,25 +2,29 @@ const mongoose = require("mongoose");
 
 const schema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      //   required: true,
-    },
     type: {
-      type: String,
-      //   required: true,
-    },
-    value: {
       type: String,
       required: true,
     },
-    description: {
+
+    page: {
       type: String,
-      //   required: true,
+      required: true,
     },
+
     section: {
       type: String,
       required: true,
+    },
+
+    content: {
+      type: String,
+      // required: true,
+    },
+
+    images: {
+      type: [String], 
+      default: [], 
     },
   },
   {
