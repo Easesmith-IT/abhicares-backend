@@ -67,9 +67,9 @@ exports.getAllAddresses = async (req, res, next) => {
     const addresses = await userAddressModel.find({ userId: id })
 
     if (addresses.length === 0) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: true,
-        message: 'No Address found'
+        data: []
       })
     } else {
       res.status(200).json({

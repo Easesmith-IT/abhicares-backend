@@ -33,6 +33,7 @@ const instance = new Razorpay({
 
 exports.websiteCodOrder = async (req, res, next) => {
   try {
+    console.log(req.body)
     const userId = req.body.userId
     const userAddressId = req.body.userAddressId
 
