@@ -140,6 +140,12 @@ router.post(
   img_upload,
   package_controller.createPackage
 );
+router.patch(
+  "/update-package/:id",
+  isAdminAuth,
+  img_upload,
+  package_controller.updatePackage
+);
 router.get(
   "/get-service-package/:id",
   isAdminAuth,

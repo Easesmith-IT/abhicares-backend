@@ -117,8 +117,7 @@ exports.updateProduct = async (req, res, next) => {
       !price ||
       !offerPrice ||
       !description ||
-      !imageUrl ||
-      !serviceId
+      !imageUrl 
     ) {
       res
         .status(400)
@@ -130,7 +129,6 @@ exports.updateProduct = async (req, res, next) => {
       result.offerPrice = offerPrice
       result.description = description
       result.imageUrl = imageUrl
-      result.serviceId = serviceId
       await result.save()
       res
         .status(200)

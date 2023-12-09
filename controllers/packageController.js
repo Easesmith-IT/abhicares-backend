@@ -7,7 +7,7 @@ exports.createPackage = async (req, res, next) => {
     const { name, price, offerPrice, products, serviceId } = req.body
     let imageUrl = []
     req.files.find(data => {
-      imageUrl.push(data.originalname)
+      imageUrl.push(data.filename)
     })
     if (!name || !price || !offerPrice || !products || !serviceId) {
       req
@@ -30,6 +30,43 @@ exports.createPackage = async (req, res, next) => {
     next(err)
   }
 }
+
+exports.updatePackage = async (req, res, next) => {
+  try {
+    const id=req.params.id // this is package id
+
+    const { name, price, offerPrice, products} = req.body
+    let imageUrl = []
+    req.files.find(data => {
+      imageUrl.push(data.filename)
+    })
+    if (!name || !price || !offerPrice || !products) {
+      req
+        .status(400)
+        .json({ success: false, message: 'All the fields are required' })
+    } else {
+      let result=await packageModel.findOne({_id:id})
+     
+        result.name= name,
+        result.price= price,
+        result.offerPrice= offerPrice,
+        result.imageUrl= imageUrl,
+        // result.products= products
+        result.products= JSON.parse(products)
+       await result.save()
+      
+      res
+        .status(201)
+        .json({ success: true, message: 'package updated successful' })
+    }
+  } catch (err) {
+    console.log(err)
+    next(err)
+  }
+}
+
+
+
 
 exports.getServicePackage = async (req, res, next) => {
   try {

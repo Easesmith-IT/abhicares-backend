@@ -1,25 +1,36 @@
 const userAddressModel = require('../models/useraddress')
 const mongoose = require('mongoose')
+
+
 exports.addUserAddress = async (req, res, next) => {
   try {
-    const { addressLine1, pincode, mobile, defaultAddress, userId } = req.body
-    if (!addressLine1 || !pincode || !mobile || !defaultAddress || !userId) {
+    console.log(req.body)
+    const { addressLine, pincode,landmark, mobile, defaultAddress, userId } = req.body
+    if (
+      !addressLine ||
+      !pincode ||
+      !landmark ||
+      !mobile ||
+      !userId
+    ) {
       res
         .status(400)
-        .json({ success: false, message: 'All the fields are required' })
+        .json({ success: false, message: "All the fields are required" });
     } else {
       await userAddressModel.create({
-        addressLine1: addressLine1,
+        addressLine: addressLine,
         pincode: pincode,
+        landmark: landmark,
         mobile: mobile,
         defaultAddress: defaultAddress,
-        userId: userId
-      })
+        userId: userId,
+      });
       res
         .status(201)
-        .json({ success: true, message: 'user address created successful' })
+        .json({ success: true, message: "user address created successful" });
     }
   } catch (err) {
+    console.log(err)
     next(err)
   }
 }
@@ -27,22 +38,23 @@ exports.addUserAddress = async (req, res, next) => {
 exports.updateUserAddress = async (req, res) => {
   try {
     const id = req.params.id // address id
-    const { addressLine1, pincode, mobile, defaultAddress } = req.body
-    if (!addressLine1 || !pincode || !mobile || !defaultAddress) {
+    const { addressLine, pincode, landmark, mobile, defaultAddress } = req.body;
+    if (!addressLine || !pincode || !landmark || !mobile) {
       res
         .status(400)
-        .json({ success: false, message: 'All the fields are required' })
+        .json({ success: false, message: "All the fields are required" });
     } else {
-      const result = await userAddressModel.findOne({ _id: id })
-      result.addressLine1 = addressLine1
-      result.pincode = pincode
-      result.mobile = mobile
-      result.defaultAddress = defaultAddress
-      await result.save()
+      const result = await userAddressModel.findOne({ _id: id });
+      result.addressLine = addressLine;
+      result.pincode = pincode;
+      result.landmark = landmark;
+      result.mobile = mobile;
+      result.defaultAddress = defaultAddress;
+      await result.save();
 
       res
         .status(200)
-        .json({ success: true, message: 'user address updated successful' })
+        .json({ success: true, message: "user address updated successful" });
     }
   } catch (err) {
     next(err)
@@ -55,9 +67,9 @@ exports.getAllAddresses = async (req, res, next) => {
     const addresses = await userAddressModel.find({ userId: id })
 
     if (addresses.length === 0) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: true,
-        message: 'No Address found'
+        data: []
       })
     } else {
       res.status(200).json({
