@@ -1,0 +1,31 @@
+{
+  "files": {
+    "main.css": "/static/css/main.0911556f.css",
+    "main.js": "/static/js/main.16270cba.js",
+    "static/js/787.d4aba7ab.chunk.js": "/static/js/787.d4aba7ab.chunk.js",
+    "static/media/rightPhoto.png": "/static/media/rightPhoto.78dde40a7d00a5f3f5b9.png",
+    "static/media/Logo3.png": "/static/media/Logo3.37082f76bb0c4c32f681.png",
+    "static/media/mainLogo2.png": "/static/media/mainLogo2.3d755b3357f4bddcb4fc.png",
+    "static/media/rolling.gif": "/static/media/rolling.e03ed8a6c3b748dd1f30.gif",
+    "static/media/Main Logo V1-02.png": "/static/media/Main Logo V1-02.b6ac40118fdd26b8be55.png",
+    "static/media/MainLogo.png": "/static/media/MainLogo.b6ac40118fdd26b8be55.png",
+    "static/media/rolling-white.gif": "/static/media/rolling-white.7f13ff45725ac2c20f1f.gif",
+    "static/media/housePainters.png": "/static/media/housePainters.3fa3f921ad256a161dc4.png",
+    "static/media/appliances.png": "/static/media/appliances.221c9cc739dbf8429b8e.png",
+    "static/media/electrician.png": "/static/media/electrician.7bb01259b724734d95dc.png",
+    "static/media/men.png": "/static/media/men.4ae092b2f1217c8348ca.png",
+    "static/media/cleaning.png": "/static/media/cleaning.ef1059c162e20e1533d6.png",
+    "static/media/revicons.eot": "/static/media/revicons.a77de540a38981833f9e.eot",
+    "static/media/revicons.ttf": "/static/media/revicons.57fd05d4ae650374c8de.ttf",
+    "static/media/makeup.png": "/static/media/makeup.0cff7538efb53a6f0453.png",
+    "static/media/revicons.woff": "/static/media/revicons.e8746a624ed098489406.woff",
+    "index.html": "/index.html",
+    "main.0911556f.css.map": "/static/css/main.0911556f.css.map",
+    "main.16270cba.js.map": "/static/js/main.16270cba.js.map",
+    "787.d4aba7ab.chunk.js.map": "/static/js/787.d4aba7ab.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.0911556f.css",
+    "static/js/main.16270cba.js"
+  ]
+}
