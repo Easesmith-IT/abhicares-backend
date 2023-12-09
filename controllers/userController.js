@@ -186,7 +186,7 @@ exports.createUser = async (req, res, next) => {
     } else {
       const resultData = await userModel.findOne({ phone: phone })
       if (resultData) {
-        res.status(200).json({ success: true, message: 'User already exist' })
+        res.status(400).json({ success: true, message: 'User already exists, Please Login!' })
       } else {
         // const result = await userModel.create({
         //   name: name,
