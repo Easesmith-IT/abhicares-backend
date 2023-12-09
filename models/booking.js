@@ -9,7 +9,8 @@ const bookingSchema = new mongoose.Schema(
     },
     sellerId: {
       type: mongoose.Types.ObjectId,
-      ref: 'Seller'
+      ref: 'Seller',
+
     },
     orderId: {
       type: mongoose.Types.ObjectId,
@@ -35,41 +36,46 @@ const bookingSchema = new mongoose.Schema(
       }
     },
 
-    items: [
-      {
-        name: {
-          type: String,
-          required: true
-        },
-        price: {
-          type: Number,
-          required: true
-        },
-        offerPrice: {
-          type: Number,
-          required: true
-        },
-        description: {
-          type: String,
-          required: true
-        },
-        quantity: {
-          type: Number,
-          default: 1
-        },
-        bookingDate: {
-          type: Date,
-          required: true
-        },
-        bookingTime: {
-          type: String,
-          required: true
-        },
-        status: {
-          type: String
-        }
+    productDetails: {
+      productId:{
+              type:mongoose.Types.ObjectId,
+              ref:"Product",
+              required:true,
+      },
+      name: {
+        type: String,
+        required: true
+      },
+      price: {
+        type: Number,
+        required: true
+      },
+      offerPrice: {
+        type: Number,
+        required: true
+      },
+      description: {
+        type: String,
+        required: true
       }
-    ],
+    },
+    quantity: {
+      type: Number,
+      default: 1
+    },
+    bookingDate: {
+      type: Date,
+      required: true
+    },
+    bookingTime: {
+      type: String,
+      required: true
+    },
+    status: {
+      type: String,
+      default:""
+
+    },
     imageUrl: [
       {
         type: String

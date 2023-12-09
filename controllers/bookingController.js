@@ -2,20 +2,31 @@ const bookingModel = require('../models/booking')
 
 exports.createBooking = async (req, res, next) => {
   try {
-    const id = req.params.id
+    const id = req.params.id  // user id
 
-    const { orderId, userAddress, items, orderValue } = req.body
+    const { orderId, userAddress, productDetails,quantity,bookingDate,bookingTime, orderValue } = req.body
     const { addressLine, pincode, landmark, mobile } = userAddress
+    const {productId,name,price,offerPrice,description}=productDetails
     let imageUrl = []
     req.files.find(data => {
       imageUrl.push(data.filename)
     })
     if (
-      items.length == 0 ||
+        !orderId ||
       !addressLine ||
       !pincode ||
       !landmark ||
-      !orderValue
+      !orderValue ||
+      !mobile ||
+      !quantity ||
+      !bookingDate ||
+      !bookingTime ||
+      !productId ||
+      !name ||
+      !price ||
+      !offerPrice ||
+      !description ||
+      imageUrl.length==0
     ) {
       res
         .status(400)
@@ -25,7 +36,10 @@ exports.createBooking = async (req, res, next) => {
         userId: id,
         orderId:orderId,
         userAddress: userAddress,
-        items: items,
+        productDetails:productDetails,
+        quantity:quantity,
+        bookingDate:bookingDate,
+        bookingTime:bookingTime,
         imageUrl:imageUrl,
         totalPrice: orderValue
       })
@@ -54,10 +68,10 @@ exports.deleteBooking=async(req,res,next)=>{
 
 exports.getUsersBooking=async(req,res,next)=>{
     try{
-            const id=req.params.id  // booking item id
-            const userId=req.body.userId  // user id
+            const id=req.params.id  // user id
+            // const userId=req.body.userId  // user id
 
-            const result=await bookingModel.find({_id:id,userId:userId})
+            const result=await bookingModel.find({userId:id})
             res.status(200).json({success:true,message:"These all are your booking",data:result})
 
     }catch(err){
