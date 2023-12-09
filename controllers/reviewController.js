@@ -53,6 +53,8 @@ exports.addProductReview = async (req, res, next) => {
   }
 }
 
+// it will also apply for package
+
 exports.updateProductReview = async (req, res, next) => {
   try {
     const id = req.params.id // review id
@@ -77,6 +79,8 @@ exports.updateProductReview = async (req, res, next) => {
     next(err)
   }
 }
+
+// it will also apply for package
 
 exports.deleteProductReview = async (req, res, next) => {
   try {

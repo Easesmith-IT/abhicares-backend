@@ -60,7 +60,6 @@ exports.updatePackage = async (req, res, next) => {
         .json({ success: true, message: 'package updated successful' })
     }
   } catch (err) {
-    console.log(err)
     next(err)
   }
 }

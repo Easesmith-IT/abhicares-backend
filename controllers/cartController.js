@@ -28,27 +28,28 @@ const { errorMonitor } = require('events')
 exports.addItemToCart = async (req, res, next) => {
   try {
     // const userId = req.params.id //user id
-    const { itemId, quantity } = req.body // item id
+    const { itemId, quantity,userId } = req.body // item id
     var newObj = {
       productId: itemId,
       quantity: quantity
     }
+       
 
-    if (req.session.userId) {
-      const result = await cartModel.findOne({ userId: req.session.userId })
+    if (userId) {
+      const result = await cartModel.findOne({ userId:userId })
       result.items.push(newObj)
       await result.save()
       res
         .status(200)
         .json({ success: true, message: 'item added to database cart' })
     } else {
-      if (!req.session.cart) {
-        req.session.cart = []
+      if (!req.cookies['cart']) {
+        req.cookies['cart'] = []
       }
-      req.session.cart.push(newObj)
-      res
-        .status(200)
-        .json({ success: true, message: 'item added to session cart' })
+        let myCart=req.cookies["cart"]
+
+         myCart.push(newObj)
+      res.cookie('cart', myCart, { maxAge: 900000, httpOnly: true }).json({success:true,message:"product added to cookie cart"})
     }
   } catch (err) {
     console.log(err)
@@ -99,9 +100,10 @@ exports.removeItemFromCart = async (req, res, next) => {
 exports.getCart = async (req, res, next) => {
   try {
     // const id = req.params.id // user id
+    const userId=req.body.userId
 
-    if (req.session.userId) {
-      const result = await cartModel.findOne({ userId: req.session.userId })
+    if (userId) {
+      const result = await cartModel.findOne({ userId:userId })
       let cartItems = result.items
       if (cartItems.length > 0) {
         const valuesToMatch = cartItems.map(obj => obj.productId)
@@ -166,8 +168,7 @@ exports.getCart = async (req, res, next) => {
       } else {
         res.status(200).json({
           success: true,
-          message: 'cart is empty',
-          data: req.session.cart
+          message: 'database cart is empty',
         })
       }
       // const result = await cartModel.aggregate([
@@ -190,10 +191,10 @@ exports.getCart = async (req, res, next) => {
       //   .status(200)
       //   .json({ success: true, message: 'user cart details', data: result })
     } else {
-      if (!req.session.cart) {
-        req.session.cart = []
+      if (!req.cookies["cart"]) {
+        req.cookies['cart'] = []
       }
-      const cartItems = req.session.cart
+      const cartItems = req.cookies["cart"]
 
       if (cartItems.length > 0) {
         const valuesToMatch = cartItems.map(obj => obj.productId.toString())
@@ -235,8 +236,7 @@ exports.getCart = async (req, res, next) => {
       } else {
         res.status(200).json({
           success: true,
-          message: 'cart is empty',
-          data: req.session.cart
+          message: 'cookie cart is empty',
         })
       }
     }

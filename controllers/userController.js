@@ -5,8 +5,8 @@ const otpGenerator = require('otp-generator')
 const nodemailer = require('nodemailer')
 const jwt = require('jsonwebtoken')
 const cartModel = require('../models/cart')
-const otpStore = {}
-const myData = {}
+// const otpStore = {}
+// const myData = {}
 exports.generateOtpUser = async (req, res, next) => {
   try {
     const { phoneNumber } = req.body
@@ -20,12 +20,12 @@ exports.generateOtpUser = async (req, res, next) => {
 
     // Store the OTP in the session
     // req.session.otp = otp
-    var myOtp = 'otp'
-    var phone = 'phoneNumber'
-    var mdata = 'mdata'
+    // var myOtp = 'otp'
+    // var phone = 'phoneNumber'
+    // var mdata = 'mdata'
     // For demonstration purposes, store the OTP in memory
-    otpStore[myOtp] = otp
-    otpStore[phone] = phoneNumber
+    // otpStore[myOtp] = otp
+    // otpStore[phone] = phoneNumber
     const result = await userModel
       .findOne({ phone: phoneNumber })
       .select('-password')
@@ -33,7 +33,7 @@ exports.generateOtpUser = async (req, res, next) => {
       res.status(400).json({ success: false, message: 'User does not exist' })
     } else {
       const id = result._id.toString()
-      req.session.myId = id
+      // req.session.myId = id
 
       jwt.sign(
         { userId: id, otp: otp },
@@ -72,12 +72,12 @@ exports.generateOtpUser = async (req, res, next) => {
                 console.log(`Sending OTP ${otp} to ${phoneNumber}`)
                 // req.session.otp = otp
                 // req.session.cart = []
-                if (!req.session.cart) {
-                  req.session.cart = []
-                }
-
+                // if (!req.session.cart) {
+                //   req.session.cart = []
+                // }
+                 var myCart=[]
                 res
-                  .cookie('token', token, { maxAge: 900000, httpOnly: true })
+                  .cookie('token', token,"cart",myCart, { maxAge: 900000, httpOnly: true })
                   .json({ message: 'otp sent successful' })
               }
             })
@@ -99,12 +99,12 @@ exports.verifyUserOtp = async (req, res, next) => {
 
     // Retrieve the stored OTP
 
-    var myOtp = 'otp'
-    var phone = 'phoneNumber'
-    var mdata = 'mdata'
-    const storedOTP = otpStore[myOtp]
-    const phoneNumber = otpStore[phone]
-    const userData = myData[mdata]
+    // var myOtp = 'otp'
+    // var phone = 'phoneNumber'
+    // var mdata = 'mdata'
+    // const storedOTP = otpStore[myOtp]
+    // const phoneNumber = otpStore[phone]
+    // const userData = myData[mdata]
 
     // Check if the entered OTP matches the stored OTP
 
@@ -126,28 +126,29 @@ exports.verifyUserOtp = async (req, res, next) => {
 
             delete req.session.name
             delete req.session.phone
+           // const cartItems = req.cookies['cart']
             req.session.userId = result._id.toString()
-            if (req.session.cart) {
+            if (req.cookies['cart']) {
               const cartCreated = await cartModel.create({
                 userId: result._id,
-                items: req.session.cart
+                items: req.cookies['cart']
                 // totalPrice: 0
               })
-              res.status(200).json({ message: 'Loggedin successful',data:req.session.userId })
+              res
+            .clearCookie('cart')
+            .json({ success: true, message: 'User created successful',data:authData.userId })
             } else {
               const cartCreated = await cartModel.create({
                 userId: result._id,
                 items: [],
                 totalPrice: 0
               })
-              res.status(200).json({success:true, message: 'Loggedin successful',data:req.session.userId })
+              res
+                  .status(201)
+                  .json({ message: 'User created successful',data:result._id })
             }
           } else {
-            if (!req.session.cart) {
-              req.session.cart = []
-            }
-            const cartItems = req.session.cart
-
+            const cartItems = req.cookies['cart']
             const result = await cartModel.findOne({
               userId: authData.userId
             })
@@ -157,13 +158,10 @@ exports.verifyUserOtp = async (req, res, next) => {
               result.items.push(...cartItems) // merging session cart to user cart
               await result.save()
             }
-            delete req.session.cart // req.session.cart deleted
-            req.session.userId = authData.userId
-            res.status(200).json({
-              success: true,
-              message: 'user login successful',
-              data: authData.userId
-            })
+            // req.session.userId = authData.userId
+            res
+            .clearCookie('cart')
+            .json({ success: true, message: 'User loggedin successful',data:authData.userId })
           }
         } else {
           res.status(400).json({ success: false, message: 'Invalid Otp' })

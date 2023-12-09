@@ -88,7 +88,7 @@ router.post("/get-seller-location", seller_controller.getSellerByLocation);
 
 
 // Booking Routes
-router.post("/create-order-booking/:id",img_upload,booking_controller.createBooking)
+router.post("/create-order-booking/:id",booking_controller.createBooking)
 router.delete("/delete-booking-item/:id",booking_controller.deleteBooking) // passing booking item id
 router.get("/get-user-bookings/:id",booking_controller.getUsersBooking) // passing user id
 

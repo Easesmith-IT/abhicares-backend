@@ -52,9 +52,7 @@ exports.updateCategory = async (req, res, next) => {
     const id = req.params.id;
     const { name, totalServices } = req.body;
     if (!name || !totalServices) {
-      res
-        .status(400)
-        .json({ success: false, message: "All the fields are required" });
+      throw new AppError(400, "All the fields are required");
     } else {
       var result = await Category.findOne({ _id: id });
       result.name = name;
