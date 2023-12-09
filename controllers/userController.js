@@ -32,54 +32,57 @@ exports.generateOtpUser = async (req, res, next) => {
     if (!result) {
       res.status(400).json({ success: false, message: "User does not exist" });
     } else {
-      const id = result._id.toString()
-      req.session.myId = id
+      const id = result._id.toString();
+      req.session.myId = id;
 
       jwt.sign(
         { userId: id, otp: otp },
-        'secretKey',
+        "secretKey",
         {},
         function (err, token) {
           if (err) {
             res.status(400).json({
               success: false,
-              message: 'getting error generating token'
-            })
+              message: "getting error generating token",
+            });
           } else {
             const transporter = nodemailer.createTransport({
-              service: 'gmail',
+              service: "gmail",
               auth: {
-                user: 'generaluser2003@gmail.com',
-                pass: 'aevm hfgp mizf aypu'
+                user: "generaluser2003@gmail.com",
+                pass: "aevm hfgp mizf aypu",
+              },
+            });
+
+            // Define the email message
+            const mailOptions = {
+              from: "generaluser2003@gmail.com",
+              to: "lifegameraryan@gmail.com",
+              subject: "Test Email",
+              text: `this is otp for testing abhicares ${otp}`,
+            };
+
+            // Send the email
+            transporter.sendMail(mailOptions, (error, info) => {
+              if (error) {
+                console.error("Error:", error);
+              } else {
+                console.log("Email sent:", info.response);
+
+                console.log(`Sending OTP ${otp} to ${phoneNumber}`);
+                if (!req.session.cart) {
+                  req.session.cart = [];
+                }
+
+                res.status(200).json({ message: "OTP sent successfully" });
               }
-            })
-
-      // Define the email message
-      const mailOptions = {
-        from: 'generaluser2003@gmail.com',
-        to: 'lifegameraryan@gmail.com',
-        subject: 'Test Email',
-        text: `this is otp for testing abhicares ${otp}`
-      }
-
-      // Send the email
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error('Error:', error)
-        } else {
-          console.log('Email sent:', info.response)
-
-          console.log(`Sending OTP ${otp} to ${phoneNumber}`)
-          if (!req.session.cart) {
-            req.session.cart = []
+            });
           }
 
-          res.status(200).json({ message: 'OTP sent successfully' })
+          // Send the OTP (you would typically send it via SMS, email, etc.)
         }
-      })
+      );
     }
-
-    // Send the OTP (you would typically send it via SMS, email, etc.)
   } catch (err) {
     console.log(err);
     next(err);
@@ -103,41 +106,39 @@ exports.verifyUserOtp = async (req, res, next) => {
     if (10 === 10) {
       jwt.sign(
         { phone: phoneNumber },
-        'secretkey',
+        "secretkey",
         {},
         async function (err, token) {
           if (err) {
             res
               .status(400)
-              .json({ success: false, message: 'token generating error' })
+              .json({ success: false, message: "token generating error" });
           } else {
             if (req.session.id) {
-              const cartItems = req.session.cart
-              req.session.userId = req.session.myId
+              const cartItems = req.session.cart;
+              req.session.userId = req.session.myId;
               const result = await cartModel.findOne({
-                userId: req.session.userId
-              })
-              result.items.push(...cartItems) // merging session cart ot user cart
-              await result.save()
-              delete req.session.cart // req.session.cart deleted
-              res.cookie('id', token).json({
+                userId: req.session.userId,
+              });
+              result.items.push(...cartItems); // merging session cart ot user cart
+              await result.save();
+              delete req.session.cart; // req.session.cart deleted
+              res.cookie("id", token).json({
                 success: true,
-                message: 'user login successful',
-                data: req.session.myId
-              })
+                message: "user login successful",
+                data: req.session.myId,
+              });
             } else {
-              next()
+              next();
             }
           }
-        } else {
-          res.status(400).json({ success: false, message: 'Invalid Otp' })
         }
-      )
+      );
     } else {
-      res.status(401).json({ message: 'Invalid OTP' })
+      res.status(401).json({ message: "Invalid OTP" });
     }
   } catch (err) {
-    next(err)
+    next(err);
   }
 };
 
@@ -151,33 +152,33 @@ exports.createUser = async (req, res, next) => {
     } else {
       const result = await userModel.create({
         name: name,
-        phone: phone
-      })
+        phone: phone,
+      });
       if (!result) {
         res.status(400).json({
           success: false,
-          message: 'getting error while creating user'
-        })
+          message: "getting error while creating user",
+        });
       } else {
         const cartCreated = await cartModel.create({
           userId: result._id,
           items: [],
-          totalPrice: 0
-        })
+          totalPrice: 0,
+        });
         if (cartCreated) {
           res
             .status(201)
-            .json({ success: true, message: 'user created successful' })
+            .json({ success: true, message: "user created successful" });
         } else {
           res.status(400).json({
             success: false,
-            message: 'getting error while creating cart'
-          })
+            message: "getting error while creating cart",
+          });
         }
       }
     }
   } catch (err) {
-    next(err)
+    next(err);
   }
 };
 
@@ -222,15 +223,13 @@ exports.updateUserByAdmin = async (req, res, next) => {
         .status(400)
         .json({ success: false, message: "All the fields are required" });
     } else {
-
-      var result = await userModel.findOne({ _id: id })
-            result.name = name
-            result.phone = phone
-            await result.save()
-            res
-              .status(200)
-              .json({ success: true, message: 'user updated successful' })
-
+      var result = await userModel.findOne({ _id: id });
+      result.name = name;
+      result.phone = phone;
+      await result.save();
+      res
+        .status(200)
+        .json({ success: true, message: "user updated successful" });
     }
   } catch (err) {
     next(err);
@@ -283,7 +282,7 @@ exports.searchUser = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
-   next(err)
+    next(err);
   }
 };
 
@@ -302,16 +301,16 @@ exports.searchUser = async (req, res, next) => {
 // }
 exports.logoutUser = async (req, res, next) => {
   try {
-    req.session.destroy(err => {
+    req.session.destroy((err) => {
       if (err) {
-        console.error('Error destroying session:', err)
+        console.error("Error destroying session:", err);
         res
           .status(500)
-          .json({ success: false, message: 'Error while destorying session' })
+          .json({ success: false, message: "Error while destorying session" });
       } else {
-        res.status(200).json({ success: true, message: 'Logout successful' })
+        res.status(200).json({ success: true, message: "Logout successful" });
       }
-    })
+    });
   } catch (err) {
     next(err);
   }
