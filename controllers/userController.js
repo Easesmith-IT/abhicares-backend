@@ -148,7 +148,13 @@ exports.verifyUserOtp = async (req, res, next) => {
                   .json({ message: 'User created successful',data:result._id })
             }
           } else {
-            const cartItems = req.cookies['cart']
+            let cartItems
+            if(req.cookies["cart"]){
+               cartItems = req.cookies['cart']
+            }else{
+              cartItems=[]
+            }
+           
             const result = await cartModel.findOne({
               userId: authData.userId
             })
