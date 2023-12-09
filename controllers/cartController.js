@@ -62,8 +62,9 @@ exports.removeItemFromCart = async (req, res, next) => {
 
   try {
     const itemId = req.params.id // item id
-    if (req.session.userId) {
-      const result = await cartModel.findOne({ userId: req.session.userId })
+    const userId=req.body.userId
+    if (userId) {
+      const result = await cartModel.findOne({ userId:userId })
       const indexToRemove = result.items.findIndex(
         item => item.productId.toString() === itemId
       )
@@ -76,16 +77,15 @@ exports.removeItemFromCart = async (req, res, next) => {
           .json({ success: true, message: 'item deleted from database cart' })
       }
     } else {
-      if (req.session.cart) {
+      if (req.cookies["cart"]) {
         // Use filter to create a new array without the item to remove
-        const indexToRemove = req.session.cart.findIndex(
+        const myCart=req.cookies["cart"]
+        const indexToRemove = myCart.findIndex(
           item => item.productId === itemId
         )
         if (indexToRemove !== -1) {
-          req.session.cart.splice(indexToRemove, 1)
-          res
-            .status(200)
-            .json({ success: true, message: 'item deleted from session cart' })
+          myCart.splice(indexToRemove, 1)
+          res.cookie('cart', myCart, { maxAge: 900000, httpOnly: true }).json({success:true,message:"item removed from session cart"})
         }
       } else {
         res.status(200).json({ success: true, message: 'cart is empthy' })
@@ -250,10 +250,11 @@ exports.updateItemQuantity = async (req, res, next) => {
   // const cartId = req.params.id //cart id
 
   try {
-    const { quantity } = req.body
+    const { quantity,userId } = req.body
+
     const itemId = req.params.id // item id
-    if (req.session.userId) {
-      const result = await cartModel.findOne({ userId: req.session.userId })
+    if (userId) {
+      const result = await cartModel.findOne({ userId:userId })
       const indexToRemove = result.items.findIndex(
         item => item.productId.toString() === itemId
       )
@@ -280,30 +281,21 @@ exports.updateItemQuantity = async (req, res, next) => {
         }
       }
     } else {
-      if (req.session.cart) {
+      if (req.cookies["cart"]) {
         // Use filter to create a new array without the item to remove
-        const indexToRemove = req.session.cart.findIndex(
+        const myCart=req.cookies["cart"]
+        const indexToRemove = myCart.findIndex(
           item => item.productId === itemId
         )
-        if (quantity ==0) {
+        if (quantity == 0) {
           if (indexToRemove !== -1) {
-            req.session.cart.splice(indexToRemove, 1)
-            res
-              .status(200)
-              .json({
-                success: true,
-                message: 'item deleted from session cart'
-              })
+            myCart.splice(indexToRemove, 1)
+            res.cookie('cart', myCart, { maxAge: 900000, httpOnly: true }).json({success:true,message:"data removed from session cart"})
           }
         } else {
           if (indexToRemove !== -1) {
-            req.session.cart[indexToRemove].quantity = quantity
-            res
-              .status(200)
-              .json({
-                success: true,
-                message: 'session cart item quantity updated'
-              })
+            myCart[indexToRemove].quantity = quantity
+            res.cookie('cart', myCart, { maxAge: 900000, httpOnly: true }).json({success:true,message:"session cart quantity updated"})
           }
         }
       } else {
