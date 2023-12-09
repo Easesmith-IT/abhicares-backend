@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 // middleware
 const user_auth = require("../middleware/userAuth");
+const img_upload=require("../middleware/imageMiddleware")
 
 // controllers
 const category_controller = require("../controllers/categoryController");
@@ -16,6 +17,8 @@ const cmsHome_controller = require("../controllers/cmsHomeController");
 const review_controller = require("../controllers/reviewController");
 const payments_controller = require("../controllers/payments");
 const seller_controller = require("../controllers/sellerController");
+const booking_controller=require("../controllers/bookingController")
+
 
 // Category routes
 router.get("/get-all-category", category_controller.getAllCategory);
@@ -82,6 +85,12 @@ router.get("/get-user-orders/:id",payments_controller.getAllUserOrders)
 
 // Seller api
 router.post("/get-seller-location", seller_controller.getSellerByLocation);
+
+
+// Booking Routes
+router.post("/create-order-booking/:id",user_auth.userVerify,img_upload,booking_controller.createBooking)
+router.delete("/delete booking-item/:id",user_auth.userVerify,booking_controller.deleteBooking) // passing booking item id
+router.get("/get-user-bookings/:id",user_auth.userVerify,booking_controller.getUsersBooking)
 
 
 module.exports = router;
