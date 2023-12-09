@@ -172,6 +172,7 @@ exports.getUser = async (req, res, next) => {
 exports.login = async (req, res, next) => {
   try {
     const phoneNumber = req.body.phone;
+    console.log(phoneNumber);
     var user = await User.findOne({ phone: phoneNumber });
     console.log(user);
     if (!user) {
@@ -190,18 +191,21 @@ exports.createUser = async (req, res, next) => {
   try {
     const phoneNumber = req.body.phone;
     const name = req.body.name;
-    const gender = req.body.gender;
     const psw = "password";
-
-    var user = await User({
-      phone: phoneNumber,
-      name: name,
-      password: psw,
-      gender: gender,
-    });
-    user.save();
-    console.log(user);
-    return res.status(200).json({ user });
+    var user = await User.findOne({ phone: phoneNumber });
+    if (user) {
+      return res.status(403).json({ message: "User already exist" });
+    } else {
+      user = await User({
+        phone: phoneNumber,
+        name: name,
+        password: psw,
+        gender: "notDefined",
+      });
+      user.save();
+      console.log(user);
+      return res.status(200).json({ user });
+    }
   } catch (err) {
     const error = new Error(err);
     error.httpStatusCode = 500;
@@ -216,13 +220,12 @@ exports.AddUserAddress = async (req, res, next) => {
     const mobile = req.body.phone;
     const userId = req.body.userId;
     const landmark = req.body.landmark;
-
     var address = await UserAddress({
-      mobile: mobile,
-      pincode: pincode,
       addressLine: addressLine,
-      userId: userId,
+      pincode: pincode,
       landmark: landmark,
+      mobile: mobile,
+      userId: userId,
     });
     address.save();
     console.log(address);
@@ -236,7 +239,8 @@ exports.AddUserAddress = async (req, res, next) => {
 
 exports.getUserAddress = async (req, res, next) => {
   try {
-    const userId = req.body.userId;
+    const userId = req.params.userId;
+    console.log(userId);
     var addresses = await UserAddress.find({ userId: userId });
     console.log(addresses);
     if (!addresses) {

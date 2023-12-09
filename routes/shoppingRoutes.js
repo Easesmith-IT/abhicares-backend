@@ -31,7 +31,6 @@ router.get("/get-all-product/:id", product_controller.getServiceProduct); //pass
 router.post("/create-enquiry", enquiry_controller.createEnquiry);
 
 // Package Routes
-
 router.get("/get-service-package/:id", package_controller.getServicePackage);
 router.get("/get-package-product/:id", package_controller.getPackageProduct); //passing service id
 
@@ -42,7 +41,6 @@ router.post("/add-item-cart", cart_controller.addItemToCart);
 router.post("/update-item-quantity/:id", cart_controller.updateItemQuantity); //product id
 
 // User Routes
-
 router.post("/generate-otp", user_controller.generateOtpUser);
 router.post("/verify-otp", user_controller.verifyUserOtp);
 router.post("/create-user", user_controller.createUser);
