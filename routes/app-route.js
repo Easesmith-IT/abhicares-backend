@@ -28,10 +28,10 @@ router.get("/get-Package-details/:packageId", appController.getPackageDetails);
 
 router.get("/get-user/:userId", appController.getUser);
 router.post("/login", appController.login);
-router.post("/create-user", appController.createUser);
-
+router.post("/signup", appController.createUser);
+//
 router.post("/add-address", appController.AddUserAddress);
-router.post("/get-address", appController.getUserAddress);
+router.get("/get-address/:userId", appController.getUserAddress);
 ////
 router.post("/create-order", paymentController.AppcodOrder);
 router.get("/get-upcoming-order/:userId", appController.geUpcomingOrders);
