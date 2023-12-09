@@ -4,13 +4,13 @@ exports.createBooking = async (req, res, next) => {
   try {
     const id = req.params.id  // user id
 
-    const { orderId, userAddress, productDetails,quantity,bookingDate,bookingTime, orderValue } = req.body
+    const { orderId, userAddress, productDetails,quantity,bookingDate,bookingTime,imageUrl, orderValue } = req.body
     const { addressLine, pincode, landmark, mobile } = userAddress
     const {productId,name,price,offerPrice,description}=productDetails
-    let imageUrl = []
-    req.files.find(data => {
-      imageUrl.push(data.filename)
-    })
+    // let imageUrl = []
+    // req.files.find(data => {
+    //   imageUrl.push(data.filename)
+    // })
     if (
         !orderId ||
       !addressLine ||
@@ -26,7 +26,7 @@ exports.createBooking = async (req, res, next) => {
       !price ||
       !offerPrice ||
       !description ||
-      imageUrl.length==0
+      !imageUrl
     ) {
       res
         .status(400)
