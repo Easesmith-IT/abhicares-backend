@@ -60,7 +60,6 @@ exports.getUsersBooking = async (req, res, next) => {
   try {
     const id = req.user._id; // user id
     // const userId=req.body.userId  // user id
-
     const result = await bookingModel.find({ userId: id });
     res.status(200).json({
       success: true,
