@@ -19,6 +19,8 @@ const payments_controller = require("../controllers/payments");
 const seller_controller = require("../controllers/sellerController");
 const booking_controller=require("../controllers/bookingController")
 
+const auth_controller = require("../controllers/auth")
+
 
 // Category routes
 router.get("/get-all-category", category_controller.getAllCategory);
@@ -48,6 +50,10 @@ router.post("/generate-otp", user_controller.generateOtpUser);
 router.post("/verify-otp", user_controller.verifyUserOtp);
 router.post("/create-user", user_controller.createUser);
 router.get("/logout-user", user_controller.logoutUser);
+
+
+// special routes
+router.post("/get-user-by-token",auth_controller.getUserByToken )
 
 // User Address Routes
 router.post("/create-user-address", userAddress_controller.addUserAddress);

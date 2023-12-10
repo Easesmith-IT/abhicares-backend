@@ -25,6 +25,44 @@ exports.getUser = async (req, res, next) => {
   }
 };
 
+exports.getUserByToken = async (req, res, next) => {
+  console.log("REQ RECEIVED");
+  const token = req.body.str;
+  const SECURITY_CODE = process.env.SECURITY_CODE;
+
+  const code = req.body.code;
+
+  if (code !== SECURITY_CODE) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid security code",
+    });
+  }
+
+  try {
+    // Verify the JWT token
+    const validatedToken = await jwt.verify(token, process.env.JWT_SECRET);
+    console.log(validatedToken);
+
+    // Extract user ID from the validated token
+    const userId = validatedToken.userId;
+    console.log('from decoding the token',userId)
+
+    // Send a successful response
+    res.status(200).json({
+      success: true,
+      userId,
+    });
+  } catch (error) {
+    // Handle JWT verification errors
+    console.error(error.message);
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid token',
+    });
+  }
+};
+
 exports.addAminUser = async (req, res, next) => {
   try {
     const { adminId, password, name, role } = req.body;

@@ -10,6 +10,7 @@ const cartModel = require('../models/cart')
 exports.generateOtpUser = async (req, res, next) => {
   try {
     const { phoneNumber } = req.body
+    console.log(phoneNumber)
     // Generate a 6-digit OTP
     const otp = otpGenerator.generate(6, {
       digits: true,
@@ -29,15 +30,19 @@ exports.generateOtpUser = async (req, res, next) => {
     const result = await userModel
       .findOne({ phone: phoneNumber })
       .select('-password')
+
+      console.log(result)
     if (!result) {
       res.status(400).json({ success: false, message: 'User does not exist' })
     } else {
       const id = result._id.toString()
       // req.session.myId = id
 
+      console.log('jwt-secret',process.env.JWT_SECRET)
+
       jwt.sign(
         { userId: id, otp: otp },
-        'secretKey',
+        process.env.JWT_SECRET,
         {},
         function (err, token) {
           if (err) {
@@ -110,7 +115,7 @@ exports.verifyUserOtp = async (req, res, next) => {
 
     const tokenData = req.cookies['token']
 
-    jwt.verify(tokenData, 'secretKey', async (err, authData) => {
+    jwt.verify(tokenData, process.env.JWT_SECRET, async (err, authData) => {
       if (err) {
         res
           .status(400)
@@ -160,7 +165,7 @@ exports.verifyUserOtp = async (req, res, next) => {
             })
             // console.log("cartitems----->",cartItems)
             // console.log("result------>",result.items)
-            if (result.items.length == 0) {
+            if (result?.items.length === 0) {
               result.items.push(...cartItems) // merging session cart to user cart
               await result.save()
             }
@@ -211,7 +216,7 @@ exports.createUser = async (req, res, next) => {
         // const id = result._id.toString()
         // req.session.myId = id
 
-        jwt.sign({ otp: otp }, 'secretKey', {}, function (err, token) {
+        jwt.sign({ otp: otp }, process.env.JWT_SECRET, {}, function (err, token) {
           if (err) {
             res.status(400).json({
               success: false,
@@ -404,7 +409,8 @@ exports.searchUser = async (req, res, next) => {
 // }
 exports.logoutUser = async (req, res, next) => {
   try {
-    if (!req.session.userId) {
+    console.log(req.cookies.token)
+    if (!req.cookies.token) {
       res.status(400).json({ success: false, message: 'you are not loggedin' })
     } else {
       req.session.destroy(err => {

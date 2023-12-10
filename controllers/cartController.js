@@ -29,14 +29,14 @@ exports.addItemToCart = async (req, res, next) => {
   try {
     // const userId = req.params.id //user id
     const { itemId, quantity,userId } = req.body // item id
+    console.log(req.body)
     var newObj = {
       productId: itemId,
       quantity: quantity
     }
        
-
-    if (userId) {
-      const result = await cartModel.findOne({ userId:userId })
+    const result = await cartModel.findOne({ userId:userId })
+    if (userId && result) {
       result.items.push(newObj)
       await result.save()
       res
@@ -100,10 +100,12 @@ exports.removeItemFromCart = async (req, res, next) => {
 exports.getCart = async (req, res, next) => {
   try {
     // const id = req.params.id // user id
-    const userId=req.body.userId
+    const userId=req.query.userId
+    const result = await cartModel.findOne({ userId:userId })
 
-    if (userId) {
-      const result = await cartModel.findOne({ userId:userId })
+    if (userId && result) {
+     
+      console.log('cart ',result)
       let cartItems = result.items
       if (cartItems.length > 0) {
         const valuesToMatch = cartItems.map(obj => obj.productId)
