@@ -6,7 +6,7 @@ exports.verify = (req, res, next) => {
     if (typeof bearerHeader !== 'undefined') {
       const token = bearerHeader.slice(3)
       req.token = token
-      jwt.verify(req.token, 'secretkey', async (err, authData) => {
+      jwt.verify(req.token, process.env.JWT_SECRET, async (err, authData) => {
         if (err) {
           req.phoneNumber = authData.phone
           res.status(400).json({

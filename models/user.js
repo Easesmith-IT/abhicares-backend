@@ -12,10 +12,11 @@ const userSchema = new Schema(
       required: true,
       unique: true,
     },
-    // password: {
-    //     type: String,
-    //     required: true,
-    // },
+    password: {
+      type: String,
+      required: true,
+      default: "password",
+    },
     // razorPayOrderId: {
     //     type: String,
     //     // required: true,
@@ -24,20 +25,20 @@ const userSchema = new Schema(
     //     type: String,
     //     required:true
     // },
-    // otp:{
-    //     type: Number,
-    // },
+    otp: {
+      type: Number,
+    },
     // otpExpiresAt:{
     //     type: Date,
     // },
-    // cartId: {
-    //     type: Schema.Types.ObjectId,
-    //     ref: "Cart",
-    // },
-    // status:{
-    //     type:Boolean,
-    //     default:true
-    // }
+    cartId: {
+      type: Schema.Types.ObjectId,
+      ref: "Cart",
+    },
+    status: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
