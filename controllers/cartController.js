@@ -1,8 +1,8 @@
-const cartModel = require('../models/cart')
-const mongoose = require('mongoose')
-const session = require('express-session')
-const productModel = require('../models/product')
-const { errorMonitor } = require('events')
+const cartModel = require("../models/cart");
+const mongoose = require("mongoose");
+const session = require("express-session");
+const productModel = require("../models/product");
+const { errorMonitor } = require("events");
 
 // exports.createCart = async (req, res, next) => {
 //   try {
@@ -27,285 +27,220 @@ const { errorMonitor } = require('events')
 
 exports.addItemToCart = async (req, res, next) => {
   try {
-    // const userId = req.params.id //user id
-    const { itemId, quantity,userId } = req.body // item id
-    console.log(req.body)
-    var newObj = {
-      productId: itemId,
-      quantity: quantity
-    }
-       
-    const result = await cartModel.findOne({ userId:userId })
-    if (userId && result) {
-      result.items.push(newObj)
-      await result.save()
-      res
-        .status(200)
-        .json({ success: true, message: 'item added to database cart' })
-    } else {
-      if (!req.cookies['cart']) {
-        req.cookies['cart'] = []
-      }
-        let myCart=req.cookies["cart"]
+    const user = req.user;
+    const { itemId } = req.body; // item id
+    console.log(req.body);
+    var cart;
 
-         myCart.push(newObj)
-      res.cookie('cart', myCart, { maxAge: 900000, httpOnly: true }).json({success:true,message:"product added to cookie cart"})
+    const prod = await productModel.findById(itemId);
+    if (!prod) {
+      res.status(400).json({ success: false, message: "Product Not found" });
+    } else if (user) {
+      cart = await cartModel.findById(user.cartId);
+      await cart.addProduct(prod);
+    } else if (req.cookies["guestCart"]) {
+      cart = JSON.parse(req.cookies["guestCart"]);
+      const existingItemIndex = cart.items.findIndex((product) => {
+        console.log(product.productId);
+        return product.productId.toString() === itemId.toString();
+      });
+      if (existingItemIndex >= 0) {
+        cart.items[existingItemIndex].quantity++;
+        cart.totalPrice += prod.offerPrice;
+      } else {
+        cart.items.push({ productId: itemId, quantity: 1 });
+        cart.totalPrice += prod.offerPrice;
+      }
+      res.cookie("guestCart", JSON.stringify(cart), { httpOnly: true });
+    } else {
+      cart = {
+        items: [{ productId: itemId, quantity: 1 }],
+        totalPrice: prod.offerPrice,
+      };
+      // console.log(prod);
+      console.log(cart);
+      res.cookie("guestCart", JSON.stringify(cart), { httpOnly: true });
+    }
+    if (cart) {
+      return res.status(200).json({
+        cart: cart,
+        cartlength: cart.items.length,
+        success: true,
+        message: "item added from cart",
+      });
     }
   } catch (err) {
-    console.log(err)
-    next(err)
+    console.log(err);
+    next(err);
   }
-}
+};
 
 exports.removeItemFromCart = async (req, res, next) => {
-  // const cartId = req.params.id //cart id
-
   try {
-    const itemId = req.params.id // item id
-    const userId=req.body.userId
-    if (userId) {
-      const result = await cartModel.findOne({ userId:userId })
-      const indexToRemove = result.items.findIndex(
-        item => item.productId.toString() === itemId
-      )
-
-      if (indexToRemove !== -1) {
-        result.items.splice(indexToRemove, 1)
-        await result.save()
-        res
-          .status(200)
-          .json({ success: true, message: 'item deleted from database cart' })
+    const itemId = req.params.id; // item id
+    const user = req.user;
+    const prod = await productModel.findById(itemId);
+    var cart;
+    if (!prod) {
+      return res.status(404).json({ message: "Product does not exist" });
+    } else if (user) {
+      cart = await cartModel.findById(user.cartId);
+      await cart.deleteProduct(prod);
+    } else if (req.cookies["guestCart"]) {
+      cart = JSON.parse(req.cookies["guestCart"]);
+      const existingItemIndex = cart.items.findIndex((product) => {
+        console.log(product.productId);
+        return product.productId.toString() === itemId.toString();
+      });
+      if (existingItemIndex < 0) {
+        return res
+          .status(404)
+          .json({ message: "Product does not exist in the cart" });
+      } else if (cart.items[existingItemIndex].quantity > 1) {
+        cart.items[existingItemIndex].quantity--;
+      } else {
+        var newCart = cart.items.filter((product) => {
+          console.log(product.productId.toString() !== itemId.toString());
+          return product.productId.toString() !== itemId.toString();
+        });
+        cart.items = newCart;
+        if ((cart.items = [])) {
+          console.log("empty");
+          res.clearCookie("guestCart");
+          res.json({ success: true, message: "cart is empthy" });
+        }
+      }
+      if (cart.items.length > 0) {
+        cart.totalPrice -= prod.offerPrice;
+        res.cookie("guestCart", JSON.stringify(cart), { httpOnly: true });
       }
     } else {
-      if (req.cookies["cart"]) {
-        // Use filter to create a new array without the item to remove
-        const myCart=req.cookies["cart"]
-        const indexToRemove = myCart.findIndex(
-          item => item.productId === itemId
-        )
-        if (indexToRemove !== -1) {
-          myCart.splice(indexToRemove, 1)
-          res.cookie('cart', myCart, { maxAge: 900000, httpOnly: true }).json({success:true,message:"item removed from session cart"})
-        }
-      } else {
-        res.status(200).json({ success: true, message: 'cart is empthy' })
-      }
+      res.status(200).json({ success: true, message: "cart is empthy" });
+    }
+    if (cart && cart.items.length > 0) {
+      return res.status(200).json({
+        cart: cart,
+        cartlength: cart.items.length,
+        success: true,
+        message: "item removed from cart",
+      });
     }
   } catch (err) {
-    console.log(err)
-    next(err)
+    console.log(err);
+    next(err);
   }
-}
+};
 
 exports.getCart = async (req, res, next) => {
   try {
-    // const id = req.params.id // user id
-    const userId=req.query.userId
-    const result = await cartModel.findOne({ userId:userId })
-
-    if (userId && result) {
-     
-      console.log('cart ',result)
-      let cartItems = result.items
+    const user = req.user;
+    var cart;
+    if (user) {
+      cart = await cartModel.findById(user.cartId).populate("items");
       if (cartItems.length > 0) {
-        const valuesToMatch = cartItems.map(obj => obj.productId)
-        const found = await productModel.find({ _id: { $in: valuesToMatch } })
-        if (found.length > 0) {
-          let obj = []
-          let totalOfferPrice = 0
-          let totalProductPrice = 0
-          let totalItemPrice = 1
-          let itemTotalOfferPrice = 1
-          const matchingArray = found.filter(obj1 =>
-            cartItems.some(obj2 => {
-              if (obj1._id.toString() === obj2.productId.toString()) {
-                totalItemPrice = obj1.price * obj2.quantity
-                itemTotalOfferPrice = obj1.offerPrice * obj2.quantity
-                obj.push({
-                  product: obj1,
-                  quantity: obj2.quantity,
-                  totalItemPrice: totalItemPrice,
-                  itemTotalOfferPrice: itemTotalOfferPrice
-                })
-                totalProductPrice =
-                  totalProductPrice + obj1.price * obj2.quantity
-                totalOfferPrice =
-                  totalOfferPrice + obj1.offerPrice * obj2.quantity
-              }
-            })
-          )
-
-          // while (temp > 0) {
-          //   let itemPrice = 0
-          //   if (cartItems[i].productId.toString() === found[i]._id.toString()) {
-          //     itemPrice = itemPrice + found[i].price * cartItems[i].quantity
-          //     obj.push({
-          //       product: found[i],
-          //       quantity: cartItems[i].quantity,
-          //       itemPrice: itemPrice
-          //     })
-
-          //     totalOfferPrice =
-          //       totalOfferPrice + found[i].offerPrice * cartItems[i].quantity
-          //     totalProductPrice =
-          //       totalProductPrice + found[i].price * cartItems[i].quantity
-          //   }
-          //   temp--
-          //   i++
-          // }
-          //  console.log("obj---->",obj)
-          res.status(200).json({
-            success: true,
-            message: 'database cart items',
-            data: obj,
-            totalOfferPrice: totalOfferPrice,
-            totalProductPrice: totalProductPrice
-          })
-        } else {
-          res.status(400).json({
-            success: false,
-            message: 'Data not found from the database'
-          })
-        }
-      } else {
-        res.status(200).json({
-          success: true,
-          message: 'database cart is empty',
-        })
+        res.status(400).json({
+          success: false,
+          message: "Data not found from the database",
+        });
       }
-      // const result = await cartModel.aggregate([
-      //   {
-      //     $match: { userId: new mongoose.Types.ObjectId(req.session.userId) }
-      //   },
-      //   {
-      //     $lookup: {
-      //       from: 'products',
-      //       let: { pid: '$items.productId' },
-      //       pipeline: [
-      //         { $match: { $expr: { $in: ['$_id', '$$pid'] } } }
-      //         // Add additional stages here
-      //       ],
-      //       as: 'productObjects'
-      //     }
-      //   }
-      // ])
-      // res
-      //   .status(200)
-      //   .json({ success: true, message: 'user cart details', data: result })
+    } else if (req.cookies["guestCart"]) {
+      cart = JSON.parse(req.cookies["guestCart"]);
+      var cartItems = [];
+      for (index in cart.items) {
+        const product = await productModel.findById(
+          cart.items[index].productId
+        );
+        console.log("product:", product);
+        var item = { productId: product, quantity: cart.items[index].quantity };
+        cartItems.push(item);
+      }
+      cart.items = cartItems;
     } else {
-      if (!req.cookies["cart"]) {
-        req.cookies['cart'] = []
-      }
-      const cartItems = req.cookies["cart"]
-
-      if (cartItems.length > 0) {
-        const valuesToMatch = cartItems.map(obj => obj.productId.toString())
-
-        const found = await productModel.find({ _id: { $in: valuesToMatch } })
-
-        if (found.length > 0) {
-          let obj = []
-          let totalOfferPrice = 0
-          let totalProductPrice = 0
-          let totalItemPrice = 1
-          let itemTotalOfferPrice = 1
-          const matchingArray = found.filter(obj1 =>
-            cartItems.some(obj2 => {
-              if (obj1._id.toString() === obj2.productId.toString()) {
-                totalItemPrice = obj1.price * obj2.quantity
-                itemTotalOfferPrice = obj1.offerPrice * obj2.quantity
-                obj.push({
-                  product: obj1,
-                  quantity: obj2.quantity,
-                  totalItemPrice: totalItemPrice,
-                  itemTotalOfferPrice: itemTotalOfferPrice
-                })
-                totalProductPrice =
-                  totalProductPrice + obj1.price * obj2.quantity
-                totalOfferPrice =
-                  totalOfferPrice + obj1.offerPrice * obj2.quantity
-              }
-            })
-          )
-          res.status(200).json({
-            success: true,
-            message: 'cart items',
-            data: obj,
-            totalOfferPrice: totalOfferPrice,
-            totalProductPrice: totalProductPrice
-          })
-        }
-      } else {
-        res.status(200).json({
-          success: true,
-          message: 'cookie cart is empty',
-        })
-      }
+      res.status(200).json({
+        success: false,
+        message: "cart is empty",
+        data: [],
+      });
     }
+    if (cart)
+      res.status(200).json({
+        success: true,
+        message: "cart items",
+        data: cart.items,
+        totalOfferPrice: cart.totalPrice,
+      });
   } catch (err) {
-    console.log(err)
-    next(err)
+    console.log(err);
+    next(err);
   }
-}
+};
 
 exports.updateItemQuantity = async (req, res, next) => {
   // const cartId = req.params.id //cart id
-
   try {
-    const { quantity,userId } = req.body
+    const { quantity, userId } = req.body;
 
-    const itemId = req.params.id // item id
+    const itemId = req.params.id; // item id
     if (userId) {
-      const result = await cartModel.findOne({ userId:userId })
+      const result = await cartModel.findOne({ userId: userId });
       const indexToRemove = result.items.findIndex(
-        item => item.productId.toString() === itemId
-      )
+        (item) => item.productId.toString() === itemId
+      );
 
       if (quantity == 0) {
         if (indexToRemove !== -1) {
-          result.items.splice(indexToRemove, 1)
-          await result.save()
-          res
-            .status(200)
-            .json({ success: true, message: 'item deleted from database cart' })
+          result.items.splice(indexToRemove, 1);
+          await result.save();
+          res.status(200).json({
+            success: true,
+            message: "item deleted from database cart",
+          });
         }
       } else {
         if (indexToRemove !== -1) {
-          result.items[indexToRemove].quantity = quantity
+          result.items[indexToRemove].quantity = quantity;
 
-          await result.save()
-          res
-            .status(200)
-            .json({
-              success: true,
-              message: 'item quantity updated in database cart'
-            })
+          await result.save();
+          res.status(200).json({
+            success: true,
+            message: "item quantity updated in database cart",
+          });
         }
       }
     } else {
       if (req.cookies["cart"]) {
         // Use filter to create a new array without the item to remove
-        const myCart=req.cookies["cart"]
+        const myCart = req.cookies["cart"];
         const indexToRemove = myCart.findIndex(
-          item => item.productId === itemId
-        )
+          (item) => item.productId === itemId
+        );
         if (quantity == 0) {
           if (indexToRemove !== -1) {
-            myCart.splice(indexToRemove, 1)
-            res.cookie('cart', myCart, { maxAge: 900000, httpOnly: true }).json({success:true,message:"data removed from session cart"})
+            myCart.splice(indexToRemove, 1);
+            res
+              .cookie("cart", myCart, { maxAge: 900000, httpOnly: true })
+              .json({
+                success: true,
+                message: "data removed from session cart",
+              });
           }
         } else {
           if (indexToRemove !== -1) {
-            myCart[indexToRemove].quantity = quantity
-            res.cookie('cart', myCart, { maxAge: 900000, httpOnly: true }).json({success:true,message:"session cart quantity updated"})
+            myCart[indexToRemove].quantity = quantity;
+            res
+              .cookie("cart", myCart, { maxAge: 900000, httpOnly: true })
+              .json({
+                success: true,
+                message: "session cart quantity updated",
+              });
           }
         }
       } else {
-        res.status(200).json({ success: true, message: 'cart is empthy' })
+        res.status(200).json({ success: true, message: "cart is empthy" });
       }
     }
   } catch (err) {
-    console.log(err)
-    next(err)
+    console.log(err);
+    next(err);
   }
-}
+};

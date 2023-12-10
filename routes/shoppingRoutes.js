@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 // middleware
-const user_auth = require("../middleware/userAuth");
-const img_upload=require("../middleware/imageMiddleware")
+const { userAuth, userAuthForCart } = require("../middleware/auth");
+const img_upload = require("../middleware/imageMiddleware");
 
 // controllers
 const category_controller = require("../controllers/categoryController");
@@ -17,14 +17,11 @@ const cmsHome_controller = require("../controllers/cmsHomeController");
 const review_controller = require("../controllers/reviewController");
 const payments_controller = require("../controllers/payments");
 const seller_controller = require("../controllers/sellerController");
-const booking_controller=require("../controllers/bookingController")
+const booking_controller = require("../controllers/bookingController");
 
-const auth_controller = require("../controllers/auth")
-
-
+const auth_controller = require("../controllers/auth");
 // Category routes
 router.get("/get-all-category", category_controller.getAllCategory);
-
 // Service routes
 router.get("/get-all-service/:id", service_controller.getCategoryService); //passing category id
 router.get("/search-service", service_controller.searchService); // search and pagination both are added
@@ -34,49 +31,72 @@ router.get("/get-all-product/:id", product_controller.getServiceProduct); //pass
 
 // Enquiry Routes
 router.post("/create-enquiry", enquiry_controller.createEnquiry);
-
 // Package Routes
 router.get("/get-service-package/:id", package_controller.getServicePackage);
 router.get("/get-package-product/:id", package_controller.getPackageProduct); //passing service id
-
 //Cart Routes
-router.get("/cart-details", cart_controller.getCart);
-router.post("/remove-cart-item/:id", cart_controller.removeItemFromCart); //product id
-router.post("/add-item-cart", cart_controller.addItemToCart);
-router.post("/update-item-quantity/:id", cart_controller.updateItemQuantity); //product id
-
+router.get("/cart-details", userAuthForCart, cart_controller.getCart);
+router.post(
+  "/remove-cart-item/:id",
+  userAuthForCart,
+  cart_controller.removeItemFromCart
+); //product id
+router.post("/add-item-cart", userAuthForCart, cart_controller.addItemToCart);
+router.post(
+  "/update-item-quantity/:id",
+  userAuthForCart,
+  cart_controller.updateItemQuantity
+); //product id
 // User Routes
 router.post("/generate-otp", user_controller.generateOtpUser);
 router.post("/verify-otp", user_controller.verifyUserOtp);
-router.post("/create-user", user_controller.createUser);
-router.get("/logout-user", user_controller.logoutUser);
-
-
+router.post("/signup-otp", user_controller.signupOtp);
+router.post("/verify-signup", user_controller.createUser);
+router.get("/logout-user", userAuth, user_controller.logoutUser);
 // special routes
-router.post("/get-user-by-token",auth_controller.getUserByToken )
+// router.post("/get-user-by-token", auth_controller.getUserByToken);
 
 // User Address Routes
-router.post("/create-user-address", userAddress_controller.addUserAddress);
-router.get("/get-user-address/:id", userAddress_controller.getAllAddresses); //passing user id
-router.delete("/delete-user-address/:id", userAddress_controller.deleteAddress); // passing address id
+router.post(
+  "/create-user-address",
+  userAuth,
+  userAddress_controller.addUserAddress
+);
+router.get(
+  "/get-user-address",
+  userAuth,
+  userAddress_controller.getAllAddresses
+); //passing user id
+router.delete(
+  "/delete-user-address/:id",
+  userAuth,
+  userAddress_controller.deleteAddress
+); // passing address id
 router.patch(
   "/update-user-address/:id",
+  userAuth,
   userAddress_controller.updateUserAddress
 ); // passing address id
-
 // CMS Routes
 router.get("/get-cms-data/:id", cmsHome_controller.getCmsProduct);
-
 // Review Routes
-router.post("/add-product-review/:id", review_controller.addProductReview); //passing product id
+router.post(
+  "/add-product-review/:id",
+  userAuth,
+  review_controller.addProductReview
+); //passing product id
 router.delete(
   "/delete-product-review/:id",
+  userAuth,
   review_controller.deleteProductReview
-); //passing review id
+);
+//passing review id
 router.patch(
   "/update-product-review/:id",
+  userAuth,
   review_controller.updateProductReview
-); // review id
+);
+// review id
 router.get("/get-product-review/:id", review_controller.getProductReview); // find product review by product id
 router.get(
   "/get-user-product-review/:id",
@@ -84,17 +104,27 @@ router.get(
 );
 
 //order Routes
-router.post("/place-cod-order", payments_controller.websiteCodOrder);
-router.get("/get-user-orders/:id",payments_controller.getAllUserOrders)
+router.post("/place-cod-order", userAuth, payments_controller.websiteCodOrder);
+router.get(
+  "/get-user-orders/:id",
+  userAuth,
+  payments_controller.getAllUserOrders
+);
 
 // Seller api
 router.post("/get-seller-location", seller_controller.getSellerByLocation);
 
-
 // Booking Routes
-router.post("/create-order-booking/:id",booking_controller.createBooking)
-router.delete("/delete-booking-item/:id",booking_controller.deleteBooking) // passing booking item id
-router.get("/get-user-bookings/:id",booking_controller.getUsersBooking) // passing user id
-
+router.post(
+  "/create-order-booking",
+  userAuth,
+  booking_controller.createBooking
+);
+router.delete(
+  "/delete-booking-item/:id",
+  userAuth,
+  booking_controller.deleteBooking
+); // passing booking item id
+router.get("/get-user-bookings", userAuth, booking_controller.getUsersBooking); // passing user id
 
 module.exports = router;

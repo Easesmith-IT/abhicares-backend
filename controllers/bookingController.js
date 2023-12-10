@@ -1,11 +1,11 @@
-const bookingModel = require('../models/booking')
+const bookingModel = require("../models/booking");
 
 exports.createBooking = async (req, res, next) => {
   try {
-    const id = req.params.id  // user id
-
-    const { orderId, userAddress, productDetails,imageUrl, orderValue } = req.body
-    const { addressLine, pincode, landmark, mobile } = userAddress
+    const id = req.user._id; // user id
+    const { orderId, userAddress, productDetails, imageUrl, orderValue } =
+      req.body;
+    const { addressLine, pincode, landmark, mobile } = userAddress;
     // const {productId,name,price,offerPrice,description}=productDetails
     // let imageUrl = []
     // req.files.find(data => {
@@ -18,56 +18,59 @@ exports.createBooking = async (req, res, next) => {
       !landmark ||
       !orderValue ||
       !mobile ||
-      productDetails.length==0 ||
+      productDetails.length == 0 ||
       !imageUrl
     ) {
       res
         .status(400)
-        .json({ success: false, message: 'All the fields are required' })
+        .json({ success: false, message: "All the fields are required" });
     } else {
       await bookingModel.create({
         userId: id,
-        orderId:orderId,
+        orderId: orderId,
         userAddress: userAddress,
-        productDetails:productDetails,
-        imageUrl:imageUrl,
-        totalPrice: orderValue
-      })
+        productDetails: productDetails,
+        imageUrl: imageUrl,
+        totalPrice: orderValue,
+      });
       res
         .status(201)
-        .json({ success: true, message: 'Booking created successful' })
+        .json({ success: true, message: "Booking created successful" });
     }
   } catch (err) {
-    next(err)
+    next(err);
   }
-}
+};
 
-exports.deleteBooking=async(req,res,next)=>{
-    try{
-             const id=req.params.id  // booking item id
-             await bookingModel.findByIdAndDelete({_id:id})
-             res.status(200).json({success:true,message:"Booking deleted successful"})
-
-
-    }catch(err){
-        next(err)
-    }
-}
+exports.deleteBooking = async (req, res, next) => {
+  try {
+    const id = req.params.id; // booking item id
+    await bookingModel.findByIdAndDelete({ _id: id });
+    res
+      .status(200)
+      .json({ success: true, message: "Booking deleted successful" });
+  } catch (err) {
+    next(err);
+  }
+};
 
 // get user bookings
 
-exports.getUsersBooking=async(req,res,next)=>{
-    try{
-            const id=req.params.id  // user id
-            // const userId=req.body.userId  // user id
+exports.getUsersBooking = async (req, res, next) => {
+  try {
+    const id = req.user._id; // user id
+    // const userId=req.body.userId  // user id
 
-            const result=await bookingModel.find({userId:id})
-            res.status(200).json({success:true,message:"These all are your booking",data:result})
-
-    }catch(err){
-        next(err)
-    }
-}
+    const result = await bookingModel.find({ userId: id });
+    res.status(200).json({
+      success: true,
+      message: "These all are your booking",
+      data: result,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
 // get seller bookings
 
