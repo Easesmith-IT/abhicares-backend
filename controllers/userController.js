@@ -437,8 +437,10 @@ exports.searchUser = async (req, res, next) => {
 // }
 exports.logoutUser = async (req, res, next) => {
   try {
+
     res.clearCookie("guestCart");
     return res.json({ success: true, message: "Logout successful" });
+
     // console.log(req.cookies.token);
     // if (!req.cookies.token) {
     //   res.status(400).json({ success: false, message: "you are not loggedin" });
