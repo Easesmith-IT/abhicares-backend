@@ -13,6 +13,7 @@ const Order = require("../models/order");
 const Payment = require("../models/payments");
 const Products = require("../models/product");
 const Cart = require("../models/cart");
+const Booking = require("../models/booking");
 // const { trackUserOrder } = require("../controllers/nursery");
 const {
   getInvoiceData,
@@ -35,7 +36,8 @@ exports.websiteCodOrder = async (req, res, next) => {
   try {
     const userAddressId = req.body.userAddressId;
     const user = req.user;
-    const cart = await Cart.findOne({ userId: userId }).populate("items"); // Populate the 'cart' field
+    const bookings = req.body.bookings;
+    const cart = await Cart.findOne({ userId: user._id }).populate("items"); // Populate the 'cart' field
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -46,9 +48,14 @@ exports.websiteCodOrder = async (req, res, next) => {
     for (const productItem of items) {
       const prod = await Products.findById(productItem.productId);
       if (prod) {
+        var bookingItem = bookings.find((bookItem) => {
+          return bookItem.productId == prod._id;
+        });
         orderItems.push({
           product: prod,
           quantity: productItem.quantity,
+          bookingTime: bookingItem.bookingTime,
+          bookingDate: bookingItem.bookingDate,
         });
       }
     }
@@ -72,65 +79,30 @@ exports.websiteCodOrder = async (req, res, next) => {
     });
     //     // // Save the order to the database
     await order.save();
+    ///booking creation
+    for (const orderItem of orderItems) {
+      console.log(orderItem);
+      var booking = new Booking({
+        order: order._id,
+        userId: user._id,
+        userAddress: {
+          addressLine: userAddress.addressLine,
+          pincode: userAddress.pincode,
+          mobile: userAddress.mobile,
+          landmark: userAddress.landmark,
+        },
+        product: orderItem.product,
+        quantity: orderItem.quantity,
+        bookingDate: orderItem.bookingDate,
+        bookingTime: orderItem.bookingTime,
+        orderValue: orderItem.product.offerPrice * orderItem.quantity,
+      });
+      await booking.save();
+    }
     cart.items = [];
     cart.totalPrice = 0;
     await cart.save();
     return res.status(200).json(order);
-    //     const newNurseryIds = [
-    //       ...new Set(orderItems.map((item) => item.product.nurseryId.toString())),
-    //     ];
-    //     console.log(
-    //       "nurseryIds ==== ",
-    //       newNurseryIds,
-    //       "count -- ",
-    //       newNurseryIds.length
-    //     );
-    //     const productItems = orderItems
-    //       // .filter((item) => item.type === "Plant")
-    //       .map((item) => ({
-    //         type: item.type,
-    //         product: item.product,
-    //         quantity: item.quantity,
-    //       }));
-    //     // console.log("productItems ====== ", productItems);
-    //     for (const id of newNurseryIds) {
-    //       let productDetails = [];
-    //       const orderedProduct = productItems.filter(
-    //         (ele) => ele.product.nurseryId.toString() === id
-    //       );
-    //       console.log("orderedProduct === ", orderedProduct);
-    //       const totalPrice = orderedProduct.reduce(
-    //         (total, item) => total + item.product.price * item.quantity,
-    //         0
-    //       );
-    //       // console.log("totalPrice ===== ", totalPrice);
-    //       const newValue1 = orderedProduct.map((item) => ({
-    //         type: item.type,
-    //         plantId: item.product._id,
-    //         quantity: item.quantity,
-    //       }));
-    //       // console.log(newValue1);
-    //       productDetails = {
-    //         orderId: order._id,
-    //         products: newValue1,
-    //         nurseryId: new mongoose.Types.ObjectId(id),
-    //         totalPrice: totalPrice,
-    //       };
-    //       trackUserOrder(productDetails);
-    //       console.log("seller order == ", productDetails);
-    //     }
-    //     // retrieving quantity price and name of he product
-    //     const pdf = await getUserInvoice(order);
-    //     // console.log(pdf)
-    //     // Clear the user's cart after creating the order
-    //     cart.items = [];
-    //     cart.totalValue = 0;
-    //     await cart.save();
-    //     return res.status(200).json({
-    //       success: true,
-    //       order: order,
-    //       invoice: pdf,
-    //     });
   } catch (err) {
     console.log(err);
     return { message: "error", error: err };
