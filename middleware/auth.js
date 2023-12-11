@@ -44,6 +44,7 @@ exports.userAuthForCart = async (req, res, next) => {
       if (token) {
         const validatedToken = await jwt.verify(token, process.env.JWT_SECRET);
         const userId = validatedToken.id;
+        console.log("user id--->",userId)
         const user = await User.findById(userId);
         req.user = user;
       } else {
