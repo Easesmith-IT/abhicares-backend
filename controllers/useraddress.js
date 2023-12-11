@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 
 exports.addUserAddress = async (req, res, next) => {
   try {
-    console.log(req.body);
+    // console.log(req.body);
     const { addressLine, pincode, landmark, mobile, defaultAddress } = req.body;
     const userId = req.user._id;
     if (!addressLine || !pincode || !landmark || !mobile || !userId) {

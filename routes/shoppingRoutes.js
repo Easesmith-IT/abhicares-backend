@@ -99,7 +99,7 @@ router.patch(
 // review id
 router.get("/get-product-review/:id", review_controller.getProductReview); // find product review by product id
 router.get(
-  "/get-user-product-review/:id",
+  "/get-user-product-review/:id",userAuth,
   review_controller.getUserProductReview
 );
 
@@ -115,11 +115,11 @@ router.get(
 router.post("/get-seller-location", seller_controller.getSellerByLocation);
 
 // Booking Routes
-router.post(
-  "/create-order-booking",
-  userAuth,
-  booking_controller.createBooking
-);
+// router.post(
+//   "/create-order-booking",
+//   userAuth,
+//   booking_controller.createBooking
+// );
 router.delete(
   "/delete-booking-item/:id",
   userAuth,
