@@ -5,7 +5,7 @@ const jwtkey = require("../util/jwtkey");
 
 exports.userAuth = async (req, res, next) => {
   try {
-    console.log("token inside", req.cookies);
+    // console.log("token inside", req.cookies);
     const token = req.header("Authorization");
     //token is missing
     if (!token) {
