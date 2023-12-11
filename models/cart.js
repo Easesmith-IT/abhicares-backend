@@ -48,7 +48,7 @@ cartSchema.methods.addProduct = function (prod) {
       quantity: newQuantity,
     });
   }
-  this.totalPrice += prod.price;
+  this.totalPrice += prod.offerPrice;
   this.items = updatedCartItems;
   return this.save();
 };
@@ -68,7 +68,7 @@ cartSchema.methods.deleteProduct = function (prod) {
       (item) => item.productId.toString() !== prod._id.toString()
     );
   }
-  this.totalPrice -= prod.price;
+  this.totalPrice -= prod.offerPrice;
   this.items = updatedCartItems;
   return this.save();
 };
