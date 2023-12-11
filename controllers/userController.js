@@ -94,6 +94,7 @@ exports.generateOtpUser = async (req, res, next) => {
 
 exports.verifyUserOtp = async (req, res, next) => {
   try {
+    console.log("cookie",req.cookies)
     const { enteredOTP, phoneNumber } = req.body;
     console.log(enteredOTP);
     const user = await userModel
