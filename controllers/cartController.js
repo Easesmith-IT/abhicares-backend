@@ -87,7 +87,7 @@ exports.removeItemFromCart = async (req, res, next) => {
     } else if (user) {
       cart = await cartModel.findById(user.cartId);
       await cart.deleteProduct(prod);
-      if ((cart.items.length === 0)) {
+      if (cart.items.length === 0) {
         console.log("empty");
         res.clearCookie("guestCart");
         res.json({ success: true, message: "cart is empthy" });
@@ -110,7 +110,7 @@ exports.removeItemFromCart = async (req, res, next) => {
           return product.productId.toString() !== itemId.toString();
         });
         cart.items = newCart;
-        if ((cart.items == [])) {
+        if (cart.items == []) {
           console.log("empty");
           res.clearCookie("guestCart");
           res.json({ success: true, message: "cart is empthy" });
@@ -144,13 +144,13 @@ exports.getCart = async (req, res, next) => {
     const user = req.user;
     var cart;
     if (user) {
-      cart = await cartModel.findById(user.cartId).populate("items.productId");
-      // if (cart.items.length > 0) {
-      // res.status(400).json({
-      //   success: false,
-      //   message: "Data not found from the database",
-      // });
-      // }
+      cart = await cartModel.findById(user.cartId).populate("items");
+      if (cartItems.length > 0) {
+        res.status(400).json({
+          success: false,
+          message: "Data not found from the database",
+        });
+      }
     } else if (req.cookies["guestCart"]) {
       cart = JSON.parse(req.cookies["guestCart"]);
       var cartItems = [];
