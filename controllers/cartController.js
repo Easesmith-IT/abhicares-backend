@@ -77,6 +77,7 @@ exports.addItemToCart = async (req, res, next) => {
 
 exports.removeItemFromCart = async (req, res, next) => {
   try {
+    // console.log("cookie",req.cookies["guestCart"]);
     const itemId = req.params.id; // item id
     const user = req.user;
     const prod = await productModel.findById(itemId);
@@ -86,6 +87,11 @@ exports.removeItemFromCart = async (req, res, next) => {
     } else if (user) {
       cart = await cartModel.findById(user.cartId);
       await cart.deleteProduct(prod);
+      if (cart.items.length === 0) {
+        console.log("empty");
+        res.clearCookie("guestCart");
+        res.json({ success: true, message: "cart is empthy" });
+      }
     } else if (req.cookies["guestCart"]) {
       cart = JSON.parse(req.cookies["guestCart"]);
       const existingItemIndex = cart.items.findIndex((product) => {
@@ -118,6 +124,7 @@ exports.removeItemFromCart = async (req, res, next) => {
       res.status(200).json({ success: true, message: "cart is empthy" });
     }
     if (cart && cart.items.length > 0) {
+      console.log(cart.items.length);
       return res.status(200).json({
         cart: cart,
         cartlength: cart.items.length,
@@ -133,16 +140,17 @@ exports.removeItemFromCart = async (req, res, next) => {
 
 exports.getCart = async (req, res, next) => {
   try {
+    console.log("cookie", req.cookies["guestCart"]);
     const user = req.user;
     var cart;
     if (user) {
-      cart = await cartModel.findById(user.cartId).populate("items.productId");
-      // if (cart.items.length > 0) {
-      //   res.status(400).json({
-      //     success: false,
-      //     message: "your cart is empty",
-      //   });
-      // }
+      cart = await cartModel.findById(user.cartId).populate("items");
+      if (cartItems.length > 0) {
+        res.status(400).json({
+          success: false,
+          message: "Data not found from the database",
+        });
+      }
     } else if (req.cookies["guestCart"]) {
       cart = JSON.parse(req.cookies["guestCart"]);
       var cartItems = [];
