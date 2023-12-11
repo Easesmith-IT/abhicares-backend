@@ -145,7 +145,7 @@ exports.getCart = async (req, res, next) => {
     var cart;
     if (user) {
       cart = await cartModel.findById(user.cartId).populate("items");
-      if (cartItems.length > 0) {
+      if (cart.items.length > 0) {
         res.status(400).json({
           success: false,
           message: "Data not found from the database",
