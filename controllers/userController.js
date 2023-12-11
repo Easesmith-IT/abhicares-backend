@@ -94,8 +94,9 @@ exports.generateOtpUser = async (req, res, next) => {
 
 exports.verifyUserOtp = async (req, res, next) => {
   try {
+    console.log("cookie",req.cookies);
     const { enteredOTP, phoneNumber } = req.body;
-    console.log(enteredOTP);
+    // console.log(enteredOTP);
     const user = await userModel
       .findOne({ phone: phoneNumber, otp: enteredOTP })
       .select("-password");
