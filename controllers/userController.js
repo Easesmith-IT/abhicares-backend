@@ -18,7 +18,6 @@ exports.generateOtpUser = async (req, res, next) => {
       upperCaseAlphabets: false,
       specialChars: false,
     });
-    console.log(otp);
     const user = await userModel
       .findOne({ phone: phoneNumber })
       .select("-password");
@@ -94,13 +93,10 @@ exports.generateOtpUser = async (req, res, next) => {
 
 exports.verifyUserOtp = async (req, res, next) => {
   try {
-    console.log("cookie",req.cookies);
     const { enteredOTP, phoneNumber } = req.body;
-    // console.log(enteredOTP);
     const user = await userModel
       .findOne({ phone: phoneNumber, otp: enteredOTP })
       .select("-password");
-    console.log(user);
     if (!user) {
       return res
         .status(400)
