@@ -79,6 +79,9 @@ router.patch(
 ); // passing address id
 // CMS Routes
 router.get("/get-cms-data/:id", cmsHome_controller.getCmsProduct);
+router.get("/get-category-services/:id",service_controller.getCategoryService)
+
+
 // Review Routes
 router.post(
   "/add-product-review/:id",
