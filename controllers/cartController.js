@@ -4,37 +4,15 @@ const session = require("express-session");
 const productModel = require("../models/product");
 const { errorMonitor } = require("events");
 
-// exports.createCart = async (req, res, next) => {
-//   try {
-//     const { userId, items, totalPrice } = req.body
-//     const result = await cartModel.find({ userId: userId })
-//     if (result.length == 0) {
-//       await cartModel.create({
-//         userId: userId,
-//         items: [],
-//         totalPrice: 0
-//       })
-//       res.status(201).json({ success: true, message: 'user cart created' })
-//     } else {
-//       res
-//         .status(200)
-//         .json({ success: true, message: 'user cart already exist' })
-//     }
-//   } catch (err) {
-//     next(err)
-//   }
-// }
-
 exports.addItemToCart = async (req, res, next) => {
   try {
     const user = req.user;
     const { itemId } = req.body; // item id
-    console.log(req.body);
     var cart;
 
     const prod = await productModel.findById(itemId);
     if (!prod) {
-      res.status(400).json({ success: false, message: "Product Not found" });
+      throw new AppError(400, "product not found");
     } else if (user) {
       cart = await cartModel.findById(user.cartId);
       await cart.addProduct(prod);
@@ -83,7 +61,7 @@ exports.removeItemFromCart = async (req, res, next) => {
     const prod = await productModel.findById(itemId);
     var cart;
     if (!prod) {
-      return res.status(404).json({ message: "Product does not exist" });
+      throw new AppError(400, "Product does not exist");
     } else if (user) {
       cart = await cartModel.findById(user.cartId);
       await cart.deleteProduct(prod);
@@ -140,17 +118,16 @@ exports.removeItemFromCart = async (req, res, next) => {
 
 exports.getCart = async (req, res, next) => {
   try {
-    console.log("cookie", req.cookies["guestCart"]);
     const user = req.user;
     var cart;
     if (user) {
-      cart = await cartModel.findById(user.cartId).populate("items");
-      if (cart.items.length > 0) {
-        res.status(400).json({
-          success: false,
-          message: "Data not found from the database",
-        });
-      }
+      cart = await cartModel.findById(user.cartId).populate("items.productId");
+      // if (cart.items.length > 0) {
+      //   res.status(400).json({
+      //     success: false,
+      //     message: "Data not found from the database",
+      //   });
+      // }
     } else if (req.cookies["guestCart"]) {
       cart = JSON.parse(req.cookies["guestCart"]);
       var cartItems = [];
