@@ -16,6 +16,8 @@ const enquiry_controller = require("../controllers/enquiryController");
 const package_controller = require("../controllers/packageController");
 const auth_controller = require("../controllers/auth");
 
+const availableCities_controller=require("../controllers/availableCitiesController")
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // Category Routes
 
@@ -156,6 +158,15 @@ router.delete(
   isAdminAuth,
   package_controller.deletePackage
 ); //passing object id
+
+
+// Available Cities Routes
+   router.post("/create-availabe-city",isAdminAuth,availableCities_controller.createAvailableCities)
+   router.delete("/delete-availabe-city/:id",isAdminAuth,availableCities_controller.deleteAvailableCities) // passing object id
+   router.patch("/update-availabe-city/:id",isAdminAuth,availableCities_controller.updateAvailableCities)   // passing object id
+   router.get("/get-availabe-city",isAdminAuth,availableCities_controller.getAvailableCities)
+
+
 
 //Admin Routes
 router.post("/create-Admin", auth_controller.addAminUser);
