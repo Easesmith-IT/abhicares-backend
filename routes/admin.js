@@ -16,7 +16,9 @@ const enquiry_controller = require("../controllers/enquiryController");
 const package_controller = require("../controllers/packageController");
 const auth_controller = require("../controllers/auth");
 
-const availableCities_controller=require("../controllers/availableCitiesController")
+const availableCities_controller = require("../controllers/availableCitiesController")
+
+const coupon_controller = require("../controllers/couponController")
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // Category Routes
@@ -164,7 +166,22 @@ router.delete(
    router.post("/create-availabe-city",isAdminAuth,availableCities_controller.createAvailableCities)
    router.delete("/delete-availabe-city/:id",isAdminAuth,availableCities_controller.deleteAvailableCities) // passing object id
    router.patch("/update-availabe-city/:id",isAdminAuth,availableCities_controller.updateAvailableCities)   // passing object id
-   router.get("/get-availabe-city",isAdminAuth,availableCities_controller.getAvailableCities)
+router.get("/get-availabe-city", isAdminAuth, availableCities_controller.getAvailableCities)
+   
+
+// coupons Routes
+   router.post("/create-coupon", isAdminAuth, coupon_controller.createCoupon);
+   router.delete(
+     "/delete-coupon/:id",
+     isAdminAuth,
+     coupon_controller.deleteCoupon
+   ); // passing object id
+   router.patch(
+     "/update-coupon/:id",
+     isAdminAuth,
+     coupon_controller.updateCoupon
+   );   // passing object id
+   router.get("/get-coupons", isAdminAuth, coupon_controller.getAllCoupons);
 
 
 
