@@ -6,7 +6,7 @@ exports.addUserAddress = async (req, res, next) => {
     // console.log(req.body);
     const { addressLine, pincode, landmark,location, defaultAddress } = req.body;
     const userId = req.user._id;
-    if (!addressLine || !pincode || !landmark || !mobile || !userId) {
+    if (!addressLine || !pincode || !landmark || !userId) {
       res
         .status(400)
         .json({ success: false, message: "All the fields are required" });
@@ -29,11 +29,11 @@ exports.addUserAddress = async (req, res, next) => {
   }
 };
 
-exports.updateUserAddress = async (req, res) => {
+exports.updateUserAddress = async (req, res,next) => {
   try {
     const id = req.params.id; // address id
     const { addressLine, pincode, landmark,location, defaultAddress } = req.body;
-    if (!addressLine || !pincode || !landmark || !mobile) {
+    if (!addressLine || !pincode || !landmark) {
       res
         .status(400)
         .json({ success: false, message: "All the fields are required" });
@@ -51,6 +51,7 @@ exports.updateUserAddress = async (req, res) => {
         .json({ success: true, message: "user address updated successful" });
     }
   } catch (err) {
+    console.log(err)
     next(err);
   }
 };
@@ -83,6 +84,7 @@ exports.deleteAddress = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "address deleted successful" });
   } catch (err) {
+    console.log(err)
     next(err);
   }
 };
