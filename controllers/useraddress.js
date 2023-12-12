@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 exports.addUserAddress = async (req, res, next) => {
   try {
     // console.log(req.body);
-    const { addressLine, pincode, landmark, mobile, defaultAddress } = req.body;
+    const { addressLine, pincode, landmark,location, defaultAddress } = req.body;
     const userId = req.user._id;
     if (!addressLine || !pincode || !landmark || !mobile || !userId) {
       res
@@ -15,7 +15,7 @@ exports.addUserAddress = async (req, res, next) => {
         addressLine: addressLine,
         pincode: pincode,
         landmark: landmark,
-        mobile: mobile,
+        location:location,
         defaultAddress: defaultAddress,
         userId: userId,
       });
@@ -32,7 +32,7 @@ exports.addUserAddress = async (req, res, next) => {
 exports.updateUserAddress = async (req, res) => {
   try {
     const id = req.params.id; // address id
-    const { addressLine, pincode, landmark, mobile, defaultAddress } = req.body;
+    const { addressLine, pincode, landmark,location, defaultAddress } = req.body;
     if (!addressLine || !pincode || !landmark || !mobile) {
       res
         .status(400)
@@ -42,7 +42,7 @@ exports.updateUserAddress = async (req, res) => {
       result.addressLine = addressLine;
       result.pincode = pincode;
       result.landmark = landmark;
-      result.mobile = mobile;
+      result.location=location;
       result.defaultAddress = defaultAddress;
       await result.save();
 
