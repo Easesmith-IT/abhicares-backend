@@ -11,7 +11,7 @@ const offerCouponSchema=new mongoose.Schema({
      },
      date:{
         type:Date,
-        required:[true,"please provide date"]
+      //   required:[true,"please provide date"]
      },
      description:{
         type:String,
