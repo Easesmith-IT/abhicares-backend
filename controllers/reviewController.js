@@ -8,9 +8,7 @@ exports.addProductReview = async (req, res, next) => {
     const { title, content, rating } = req.body;
     // const userId = '656c897bf8aa1bb3806013ef'
     if (!rating) {
-      res
-        .status(400)
-        .json({ success: false, message: "Please provide rating, productId" });
+      throw new AppError(400, "Please provide rating");
     } else {
       if (!req.user) {
         res.status(400).json({ success: false, message: "Please login" });
@@ -79,9 +77,7 @@ exports.updateProductReview = async (req, res, next) => {
     const id = req.params.id; // review id
     const { title, content, rating } = req.body;
     if (!rating) {
-      res
-        .status(400)
-        .json({ success: false, message: "Please provide rating" });
+      throw new AppError(400, "Please provide rating");
     } else {
       const result = await reviewModel.findOne({ _id: id });
       result.title = title;
