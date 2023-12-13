@@ -110,12 +110,12 @@ router.get(
 //order Routes
 router.post("/place-cod-order", userAuth,isCity.isCityAvailable, payments_controller.websiteCodOrder);
 router.get(
-  "/get-user-orders/:id",
+  "/get-user-orders",
   userAuth,
   payments_controller.getAllUserOrders
 );
 router.get("/get-product-invoice/:id",userAuth,payments_controller.createOrderInvoice)
-
+router.post("/change-order-status/:id",userAuth,payments_controller.updateOrderStatus) // passing order id
 
 // Seller api
 router.post("/get-seller-location", seller_controller.getSellerByLocation);

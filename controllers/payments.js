@@ -264,16 +264,10 @@ async function getUserInvoice(order) {
 exports.getAllUserOrders = async (req, res, next) => {
   try {
     const id = req.user._id;
-    if (req.session.userId) {
       const result = await Order.find({ "user.userId": id });
       res
         .status(200)
-        .json({ success: true, message: "Your all orders", data: result });
-    } else {
-      res
-        .status(400)
-        .json({ success: false, message: "you are not authorized" });
-    }
+        .json({ success: true, message: "Your all orders", data: result })
   } catch (err) {
     next(err);
   }
@@ -289,3 +283,15 @@ exports.createOrderInvoice=async(req,res,next)=>{
   }
 }
 
+exports.updateOrderStatus=async(req,res,next)=>{
+  try{
+        const id=req.params.id  // order id
+        const status=req.body.status
+        var result=await Order.findOne({_id:id})
+        result.status= status        
+        await result.save()
+        res.status(200).json({success:false,message:"Order status changed successfull"})
+  }catch(err){
+    next(err)
+  }
+}

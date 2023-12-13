@@ -15,6 +15,7 @@ const user_controller = require("../controllers/userController");
 const enquiry_controller = require("../controllers/enquiryController");
 const package_controller = require("../controllers/packageController");
 const auth_controller = require("../controllers/auth");
+const payments_controller=require("../controllers/payments")
 
 const availableCities_controller = require("../controllers/availableCitiesController")
 
@@ -183,7 +184,9 @@ router.get("/get-availabe-city", isAdminAuth, availableCities_controller.getAvai
    );   // passing object id
    router.get("/get-coupons", isAdminAuth, coupon_controller.getAllCoupons);
 
+// Orders Routes
 
+router.post("/change-order-status/:id",isAdminAuth,payments_controller.updateOrderStatus) // passing order id
 
 //Admin Routes
 router.post("/create-Admin", auth_controller.addAminUser);
