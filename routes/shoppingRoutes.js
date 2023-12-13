@@ -114,6 +114,8 @@ router.get(
   userAuth,
   payments_controller.getAllUserOrders
 );
+router.get("/get-product-invoice/:id",userAuth,payments_controller.createOrderInvoice)
+
 
 // Seller api
 router.post("/get-seller-location", seller_controller.getSellerByLocation);

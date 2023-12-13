@@ -278,3 +278,14 @@ exports.getAllUserOrders = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.createOrderInvoice=async(req,res,next)=>{
+  try{
+          const id=req.params.id
+          const result=await Order.findOne({_id:id})
+          res.status(200).json({success:true,message:"This is order details",data:result})
+  }catch(err){
+    next(err)
+  }
+}
+
