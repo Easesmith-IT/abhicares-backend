@@ -116,7 +116,13 @@ exports.deleteProductReview = async (req, res, next) => {
 exports.getProductReview = async (req, res, next) => {
   try {
     const id = req.params.id;
-    const result = await reviewModel.find({ productId: id });
+    const result = await reviewModel.find({ productId: id }).populate("userId")
+    
+    // const result=await reviewModel.aggregate([
+          
+    // ])
+     
+
     res.status(200).json({
       success: true,
       message: "These all are product review",
