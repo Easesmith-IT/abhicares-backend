@@ -5,7 +5,7 @@ const jwtkey = require("../util/jwtkey");
 
 exports.userAuth = async (req, res, next) => {
   try {
-    // console.log("token inside", req.cookies);
+    console.log("token inside", req.cookies);
     const token = req.header("Authorization");
     //token is missing
     if (!token) {
@@ -16,7 +16,7 @@ exports.userAuth = async (req, res, next) => {
     }
     try {
       const validatedToken = await jwt.verify(token, process.env.JWT_SECRET);
-      // console.log(validatedToken);
+      console.log(validatedToken);
       const userId = validatedToken.id;
       const user = await User.findById(userId);
       req.user = user;
@@ -36,7 +36,7 @@ exports.userAuth = async (req, res, next) => {
 
 exports.userAuthForCart = async (req, res, next) => {
   try {
-    // console.log("token inside", req.cookies);
+    console.log("token inside", req.cookies);
     const token = req.header("Authorization");
     //token is missing
 
@@ -44,7 +44,6 @@ exports.userAuthForCart = async (req, res, next) => {
       if (token) {
         const validatedToken = await jwt.verify(token, process.env.JWT_SECRET);
         const userId = validatedToken.id;
-        // console.log("user id--->",userId)
         const user = await User.findById(userId);
         req.user = user;
       } else {

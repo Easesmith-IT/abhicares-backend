@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 
 exports.addProductReview = async (req, res, next) => {
   try {
-    const id = req.params.id;
+    const id = req.params.id;   // this is product id
     const { title, content, rating } = req.body;
     // const userId = '656c897bf8aa1bb3806013ef'
     if (!rating) {
@@ -25,16 +25,34 @@ exports.addProductReview = async (req, res, next) => {
             .json({ success: true, message: "Please update your review" });
         } else {
           const result = await orderModel.find({
-            "products._id": id,
+            // "products.product._id": id,
             "user.userId": req.user._id,
           });
-          if (result.length > 0) {
+
+          
+
+
+
+          let flag=false;
+          var productArray=[]
+          for(let data of result){
+
+              productArray.push(...data.products)
+          }
+
+          productArray.map((item)=>{
+            if(item.product._id.toString()==id){
+              flag=true
+            }
+          })
+
+          if (flag==true) {
             await reviewModel.create({
               title: title,
               content: content,
               rating: rating,
               productId: id,
-              userId: userId,
+              userId: req.user._id
             });
             res
               .status(200)
@@ -49,6 +67,7 @@ exports.addProductReview = async (req, res, next) => {
       }
     }
   } catch (err) {
+    console.log("error--->",err)
     next(err);
   }
 };
@@ -97,7 +116,13 @@ exports.deleteProductReview = async (req, res, next) => {
 exports.getProductReview = async (req, res, next) => {
   try {
     const id = req.params.id;
-    const result = await reviewModel.find({ productId: id });
+    const result = await reviewModel.find({ productId: id }).populate("userId")
+    
+    // const result=await reviewModel.aggregate([
+          
+    // ])
+     
+
     res.status(200).json({
       success: true,
       message: "These all are product review",

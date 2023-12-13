@@ -3,6 +3,7 @@ const router = express.Router();
 // middleware
 const { userAuth, userAuthForCart } = require("../middleware/auth");
 const img_upload = require("../middleware/imageMiddleware");
+const isCity=require("../middleware/availableCity")
 
 // controllers
 const category_controller = require("../controllers/categoryController");
@@ -79,6 +80,9 @@ router.patch(
 ); // passing address id
 // CMS Routes
 router.get("/get-cms-data/:id", cmsHome_controller.getCmsProduct);
+router.get("/get-category-services/:id",service_controller.getCategoryService)
+
+
 // Review Routes
 router.post(
   "/add-product-review/:id",
@@ -104,7 +108,7 @@ router.get(
 );
 
 //order Routes
-router.post("/place-cod-order", userAuth, payments_controller.websiteCodOrder);
+router.post("/place-cod-order", userAuth,isCity.isCityAvailable, payments_controller.websiteCodOrder);
 router.get(
   "/get-user-orders/:id",
   userAuth,

@@ -228,7 +228,10 @@ exports.getSellerByLocation=async(req,res,next)=>{
               $geoNear:{
                 near:{type:"Point",coordinates:[parseFloat(longitude),parseFloat(latitude)]},
                 // key:"location",
-                maxDistance:parseFloat(50)*1609,
+                maxDistance:parseFloat(100)*1609,
+                //  maxDistance:6000 * 0.621371,
+                // maxDistance: 100 * 1000,
+                // distanceMultiplier: 1 / 1000,
 
                 distanceField:"distance",
                 spherical:true,
