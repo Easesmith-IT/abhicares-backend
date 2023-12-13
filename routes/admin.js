@@ -16,11 +16,11 @@ const enquiry_controller = require("../controllers/enquiryController");
 const package_controller = require("../controllers/packageController");
 const auth_controller = require("../controllers/auth");
 const payments_controller=require("../controllers/payments")
-
+const helpCenter_controller=require("../controllers/helpCenterController")
 const availableCities_controller = require("../controllers/availableCitiesController")
 
 const coupon_controller = require("../controllers/couponController")
-
+const faq_controller=require("../controllers/faqController")
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // Category Routes
 
@@ -117,6 +117,8 @@ router.patch(
   isAdminAuth,
   seller_controller.changeSellerStatus
 ); // passing object id
+router.get("/in-review-seller",isAdminAuth,seller_controller.getInReviewSeller)
+
 
 // User Routes
 
@@ -187,6 +189,17 @@ router.get("/get-availabe-city", isAdminAuth, availableCities_controller.getAvai
 // Orders Routes
 
 router.post("/change-order-status/:id",isAdminAuth,payments_controller.updateOrderStatus) // passing order id
+
+// FAQ Routes
+
+router.post("/create-faq",isAdminAuth,faq_controller.createFaq)
+router.get("/get-all-faq",isAdminAuth,faq_controller.getAllFaq)
+router.patch("/update-faq/:id",isAdminAuth,faq_controller.updateFaq)
+router.delete("/delete-faq/:id",isAdminAuth,faq_controller.deleteFaq)
+
+//Help Center Routes
+router.get("/get-all-help-list",isAdminAuth,helpCenter_controller.getAllHelpCenter)
+router.delete("/delete-help-list/:id",isAdminAuth,helpCenter_controller.deleteHelpCenter)
 
 //Admin Routes
 router.post("/create-Admin", auth_controller.addAminUser);

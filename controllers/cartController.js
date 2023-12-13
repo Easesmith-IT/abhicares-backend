@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const session = require("express-session");
 const productModel = require("../models/product");
 const { errorMonitor } = require("events");
+const AppError = require("../controllers/errorController");
 
 exports.addItemToCart = async (req, res, next) => {
   try {

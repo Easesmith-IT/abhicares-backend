@@ -1,4 +1,5 @@
 const bookingModel = require("../models/booking");
+const AppError = require("../controllers/errorController");
 
 exports.createBooking = async (req, res, next) => {
   try {

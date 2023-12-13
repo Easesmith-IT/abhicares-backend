@@ -1,4 +1,5 @@
 const Coupon = require("../models/offerCoupon");
+const AppError = require("../controllers/errorController");
 
 exports.createCoupon = async (req, res, next) => {
   try {
@@ -72,3 +73,18 @@ exports.getAllCoupons = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getCouponByName=async(req,res,next)=>{
+  try{
+         
+        const {name}=req.body
+      if(!name){
+        throw new AppError(400, "Please provide coupon name");
+      }else{
+              const result=await Coupon.find({name:name})
+              res.status(200).json({success:true,message:"Your coupon", data:result})
+      }
+  }catch(err){
+    next(err)
+  }
+}

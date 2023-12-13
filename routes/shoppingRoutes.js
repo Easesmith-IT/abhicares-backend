@@ -19,8 +19,13 @@ const review_controller = require("../controllers/reviewController");
 const payments_controller = require("../controllers/payments");
 const seller_controller = require("../controllers/sellerController");
 const booking_controller = require("../controllers/bookingController");
-
+const faq_controller=require("../controllers/faqController")
 const auth_controller = require("../controllers/auth");
+const helpCenter_controller=require("../controllers/helpCenterController")
+const coupon_controller=require("../controllers/couponController")
+
+
+
 // Category routes
 router.get("/get-all-category", category_controller.getAllCategory);
 // Service routes
@@ -132,5 +137,15 @@ router.delete(
   booking_controller.deleteBooking
 ); // passing booking item id
 router.get("/get-user-bookings", userAuth, booking_controller.getUsersBooking); // passing user id
+
+// FAQ Routes
+router.post("/get-all-faq",userAuth,faq_controller.getAllFaq)
+
+// Help Center Routes
+router.post("/create-help",userAuth,helpCenter_controller.createHelpCenter)
+
+// Coupon routes
+router.post("/get-coupon-details",userAuth,coupon_controller.getCouponByName)
+
 
 module.exports = router;

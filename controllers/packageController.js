@@ -1,6 +1,7 @@
 const { default: mongoose } = require('mongoose')
 const packageModel = require('../models/packages')
 const productModel = require('../models/product')
+const AppError = require("../controllers/errorController");
 
 exports.createPackage = async (req, res, next) => {
   try {
