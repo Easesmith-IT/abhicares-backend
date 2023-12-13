@@ -21,9 +21,7 @@ exports.createBooking = async (req, res, next) => {
       productDetails.length == 0 ||
       !imageUrl
     ) {
-      res
-        .status(400)
-        .json({ success: false, message: "All the fields are required" });
+      throw new AppError(400, "All the fields are required");
     } else {
       await bookingModel.create({
         userId: id,

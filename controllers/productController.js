@@ -17,9 +17,7 @@ exports.createProduct = async (req, res, next) => {
       !imageUrl ||
       !serviceId
     ) {
-      res
-        .status(400)
-        .json({ success: false, message: 'All the fields are required' })
+      throw new AppError(400, "All the fields are required");
     } else {
       await productModel.create({
         name: name,
@@ -119,9 +117,7 @@ exports.updateProduct = async (req, res, next) => {
       !description ||
       !imageUrl 
     ) {
-      res
-        .status(400)
-        .json({ success: false, message: 'All the fields are required' })
+      throw new AppError(400, "All the fields are required");
     } else {
       const result = await productModel.findOne({ _id: id })
       result.name = name

@@ -4,7 +4,7 @@ exports.createEnquiry=async(req,res,next)=>{
     try{
            const {name,phone,serviceType,city,state}=req.body
            if(!name || !phone || !serviceType || !city || !state){
-                res.status(400).json({success:false,message:"All the fields are required"})
+            throw new AppError(400, "All the fields are required");
            }else{
                 await enquiryModel.create({name:name,phone:phone,serviceType:serviceType,city:city,state:state})
            }    res.status(201).json({success:true,message:"enquiry created successful"})

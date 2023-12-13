@@ -28,9 +28,7 @@ exports.createSeller = async (req, res, next) => {
       !contactPerson ||
       !categoryId
     ) {
-      res
-        .status(400)
-        .json({ success: false, message: 'All the fields are required' })
+      throw new AppError(400, "All the fields are required");
     } else {
       bcrypt.genSalt(10, function (err, salt) {
         bcrypt.hash(password, salt, async function (err, hash) {
@@ -108,9 +106,7 @@ exports.updateSeller = async (req, res, next) => {
       !address ||
       !contactPerson
     ) {
-      res
-        .status(400)
-        .json({ success: false, message: 'All the fields are required' })
+      throw new AppError(400, "All the fields are required");
     } else {
       var result = await sellerModel.findOne({ _id: id })
       result.name = name
@@ -215,15 +211,6 @@ exports.getSellerByLocation=async(req,res,next)=>{
           
         const result= await sellerModel.aggregate([
 
-          // {
-          //   $geoNear: {
-          //     near:{type:"Point",coordinates:[parseFloat(longitude),parseFloat(latitude)]},
-          //     distanceField: "distance",
-          //     spherical: true
-          //   }
-          // }
-
-
             {
               $geoNear:{
                 near:{type:"Point",coordinates:[parseFloat(longitude),parseFloat(latitude)]},
@@ -239,6 +226,11 @@ exports.getSellerByLocation=async(req,res,next)=>{
               }
             }
           ])
+
+      if(result.length>0){
+        const posts = await Post.find().populate('author');
+      }
+
      res.status(200).json({success:true,message:"near sellers",data:result})
 
   }catch(err){
