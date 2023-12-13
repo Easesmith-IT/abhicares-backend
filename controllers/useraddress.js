@@ -51,6 +51,7 @@ exports.updateUserAddress = async (req, res,next) => {
         .json({ success: true, message: "user address updated successful" });
     }
   } catch (err) {
+    console.log(err)
     next(err);
   }
 };
@@ -83,6 +84,7 @@ exports.deleteAddress = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "address deleted successful" });
   } catch (err) {
+    console.log(err)
     next(err);
   }
 };
