@@ -1,6 +1,6 @@
 const sellerModel = require('../models/seller')
 var bcrypt = require('bcryptjs')
-
+const AppError = require("../controllers/errorController");
 exports.createSeller = async (req, res, next) => {
   try {
     var {
@@ -47,6 +47,7 @@ exports.createSeller = async (req, res, next) => {
       })
     }
   } catch (err) {
+    console.log("error--->",err)
     next(err)
   }
 }
@@ -235,6 +236,20 @@ exports.getSellerByLocation=async(req,res,next)=>{
 
   }catch(err){
     console.log(err)
+    next(err)
+  }
+}
+
+exports.getInReviewSeller=async(req,res,next)=>{
+  try{
+        // const {type}=req.body.type
+          // if(!type){
+          //   throw new AppError(400, "All the fields are required"); 
+          // }else{
+            const result=await sellerModel.find({status:"in-review"})
+            res.status(200).json({success:false,message:"In-review seller list",data:result})
+          // }
+  }catch(err){
     next(err)
   }
 }
