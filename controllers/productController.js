@@ -104,18 +104,21 @@ exports.getServiceProduct = async (req, res, next) => {
 exports.updateProduct = async (req, res, next) => {
   try {
     const id = req.params.id // object id
-    const { name, price, offerPrice, description, serviceId } = req.body
+    const { name, price, offerPrice, description} = req.body
     let imageUrl = []
-    req.files.find(data => {
-      imageUrl.push(data.filename)
-    })
-
+  
+      if(req.files.length>0 ){
+        req.files.find(data => {
+          imageUrl.push(data.filename)
+        })
+       } 
+    
+  
     if (
       !name ||
       !price ||
       !offerPrice ||
-      !description ||
-      !imageUrl 
+      !description 
     ) {
       throw new AppError(400, "All the fields are required");
     } else {
@@ -124,13 +127,18 @@ exports.updateProduct = async (req, res, next) => {
       result.price = price
       result.offerPrice = offerPrice
       result.description = description
-      result.imageUrl = imageUrl
+    
+        if(req.files.length>0){
+          result.imageUrl = imageUrl
+        }
+      
       await result.save()
       res
         .status(200)
         .json({ success: true, message: 'product updated successful' })
     }
   } catch (err) {
+    console.log("err---->",err)
     next(err)
   }
 }
