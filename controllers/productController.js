@@ -131,6 +131,7 @@ exports.updateProduct = async (req, res, next) => {
         .json({ success: true, message: 'product updated successful' })
     }
   } catch (err) {
+    console.log(err)
     next(err)
   }
 }
