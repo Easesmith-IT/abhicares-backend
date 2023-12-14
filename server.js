@@ -5,11 +5,10 @@ const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const crypto = require("crypto");
-const session = require('express-session');
-const otpGenerator = require('otp-generator');
+const session = require("express-session");
+const otpGenerator = require("otp-generator");
 require("dotenv").config();
 const cookieParser = require("cookie-parser");
-
 
 const server = express();
 
@@ -46,16 +45,16 @@ const server = express();
 // };
 
 // Use session middleware
-server.use(session({
-  secret: 'your-secret-key',
-  resave: false,
-  saveUninitialized: true,
-  cookie: {
-    secure: false
-  }
-}));
-
-
+server.use(
+  session({
+    secret: "your-secret-key",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      secure: false,
+    },
+  })
+);
 
 server.use(bodyParser.json({ limit: "50mb" }));
 server.use(express.urlencoded({ extended: true }));
