@@ -4,7 +4,7 @@ const AppError = require('../controllers/errorController')
 exports.createHelpCenter = async (req, res, next) => {
   try {
     const { name, description, mobile, issue, others } = req.body
-    if (!name || !description || !mobile || !issue || !others) {
+    if (!name || !description || !mobile) {
       throw new AppError(400, 'All the fields are required')
     } else {
       await helpCenterModel.create({
