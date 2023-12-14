@@ -15,11 +15,13 @@ const helpCenterSchema = new mongoose.Schema(
       },
       issue: {
         type: String,
-        required:true
+        default:""
+        // required:true
       },
       others: {
         type: String,
-        required:true
+        default:""
+        // required:true
       },
      
     },
