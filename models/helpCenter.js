@@ -1,25 +1,32 @@
 const mongoose=require("mongoose")
 const helpCenterSchema = new mongoose.Schema(
     {
-      name: {
-        type: String,
+      userId:{
+        type:mongoose.Types.ObjectId,
+        ref:"User",
         required:true
       },
       description: {
         type: String,
         required:true
       },
-      mobile: {
+      resolution: {
         type: String,
-        required:true
+        default:""
+      },
+      status: {
+        type: String,
+        default:"in-review"
       },
       issue: {
         type: String,
-        required:true
+        default:""
+        // required:true
       },
       others: {
         type: String,
-        required:true
+        default:""
+        // required:true
       },
      
     },

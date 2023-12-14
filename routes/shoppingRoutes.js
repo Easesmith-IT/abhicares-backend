@@ -139,13 +139,15 @@ router.delete(
 router.get("/get-user-bookings", userAuth, booking_controller.getUsersBooking); // passing user id
 
 // FAQ Routes
-router.post("/get-all-faq",userAuth,faq_controller.getAllFaq)
+router.get("/get-all-faq",userAuth,faq_controller.getAllFaq)
 
 // Help Center Routes
 router.post("/create-help",userAuth,helpCenter_controller.createHelpCenter)
+router.get("/get-user-help",userAuth,helpCenter_controller.getUserHelpCenter)
 
 // Coupon routes
 router.post("/get-coupon-details",userAuth,coupon_controller.getCouponByName)
+
 
 
 module.exports = router;

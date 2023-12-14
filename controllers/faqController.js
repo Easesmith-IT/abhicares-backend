@@ -7,13 +7,19 @@ exports.createFaq = async (req, res, next) => {
     if (!ques || !ans) {
       throw new AppError(400, 'All the fields are required')
     } else {
-      await faqModel.create({
-        ques: ques,
-        ans: ans
-      })
-      res
-        .status(201)
-        .json({ success: true, message: 'FAQ created successful' })
+        const result=await faqModel.find({ques:ques})
+        if(result.length>0){
+            throw new AppError(400, 'Question already exist')
+        }else{
+            await faqModel.create({
+                ques: ques,
+                ans: ans
+              })
+              res
+                .status(201)
+                .json({ success: true, message: 'FAQ created successful' })
+        }
+     
     }
   } catch (err) {
     next(err)
