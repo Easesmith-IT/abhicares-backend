@@ -24,10 +24,29 @@ exports.createHelpCenter = async (req, res, next) => {
 }
 exports.getAllHelpCenter = async (req, res, next) => {
   try {
-    const result = await helpCenterModel.find()
+    let status="in-review"
+    if(req.body.status){
+         status=req.body.status
+    }
+  //  const {status}=req.body.status
+    var page = 1
+    if (req.query.page) {
+      page = req.query.page
+    }
+    var limit = 12
+    const allList = await helpCenterModel.find({"status":status}).count()
+    var num = allList / limit
+    var fixedNum = num.toFixed()
+    var totalPage = fixedNum
+    if (num > fixedNum) {
+      totalPage++
+    }
+    const result = await helpCenterModel.find({"status":status}).populate("userId") .limit(limit * 1)
+    .skip((page - 1) * limit)
+    .exec()
     res
       .status(201)
-      .json({ success: true, message: 'list of all help data', data: result })
+      .json({ success: true, message: 'list of all help data', data: result,totalPage:totalPage })
   } catch (err) {
     next(err)
   }
@@ -82,3 +101,4 @@ exports.getUserHelpCenter = async (req, res, next) => {
     next(err)
   }
 }
+
