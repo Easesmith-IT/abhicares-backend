@@ -79,10 +79,15 @@ exports.getCouponByName=async(req,res,next)=>{
          
         const {name}=req.body
       if(!name){
-        throw new AppError(400, "Please provide coupon name");
+       
       }else{
               const result=await Coupon.find({name:name})
-              res.status(200).json({success:true,message:"Your coupon", data:result})
+              if(result.length==0){
+                throw new AppError(400, "Coupon not found");
+              }else{
+                res.status(200).json({success:true,message:"Your coupon", data:result})
+              }
+             
       }
   }catch(err){
     next(err)
