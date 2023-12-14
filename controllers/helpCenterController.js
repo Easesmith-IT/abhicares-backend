@@ -24,6 +24,7 @@ exports.createHelpCenter = async (req, res, next) => {
 }
 exports.getAllHelpCenter = async (req, res, next) => {
   try {
+    console.log('inside help center')
     const result = await helpCenterModel.find()
     res
       .status(201)
