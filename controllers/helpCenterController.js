@@ -3,14 +3,14 @@ const AppError = require('../controllers/errorController')
 
 exports.createHelpCenter = async (req, res, next) => {
   try {
-    const { name, description, mobile, issue, others } = req.body
-    if (!name || !description || !mobile) {
+    const id = req.user._id
+    const { description, issue, others } = req.body
+    if (!description) {
       throw new AppError(400, 'All the fields are required')
     } else {
       await helpCenterModel.create({
-        name: name,
+        userId: id,
         description: description,
-        mobile: mobile,
         issue: issue,
         others: others
       })
@@ -38,6 +38,46 @@ exports.deleteHelpCenter = async (req, res, next) => {
 
     await helpCenterModel.findByIdAndDelete({ _id: id })
     res.status(201).json({ success: true, message: 'data deleted successful' })
+  } catch (err) {
+    next(err)
+  }
+}
+
+exports.updateHelpCenter = async (req, res, next) => {
+  try {
+    const id = req.params.id
+    const { resolution } = req.body
+    if (!resolution) {
+      throw new AppError(400, 'Please provide resolution')
+    } else {
+      var result = await helpCenterModel.findOne({ _id: id })
+      result.resolution = resolution
+      result.status = 'solved'
+      await result.save()
+      res
+        .status(201)
+        .json({ success: true, message: 'data updated successful' })
+    }
+  } catch (err) {
+    next(err)
+  }
+}
+
+exports.getUserHelpCenter = async (req, res, next) => {
+  try {
+    const id = req.user._id
+    const result = await helpCenterModel.find({ "userId": id })
+    if (result.length == 0) {
+      throw new AppError(400, 'Data not found')
+    } else {
+      res
+        .status(201)
+        .json({
+          success: true,
+          message: 'data updated successful',
+          data: result
+        })
+    }
   } catch (err) {
     next(err)
   }

@@ -199,7 +199,8 @@ router.delete("/delete-faq/:id",isAdminAuth,faq_controller.deleteFaq)
 
 //Help Center Routes
 router.get("/get-all-help-list",isAdminAuth,helpCenter_controller.getAllHelpCenter)
-router.delete("/delete-help-list/:id",isAdminAuth,helpCenter_controller.deleteHelpCenter)
+router.delete("/delete-help-list/:id",isAdminAuth,helpCenter_controller.deleteHelpCenter) // passing object id
+router.patch("/update-help-list/:id",isAdminAuth,helpCenter_controller.updateHelpCenter) // passing object id
 
 //Admin Routes
 router.post("/create-Admin", auth_controller.addAminUser);
