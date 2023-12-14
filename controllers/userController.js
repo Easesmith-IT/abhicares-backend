@@ -6,6 +6,7 @@ const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const cartModel = require("../models/cart");
 const productModel = require("../models/product");
+const AppError = require("../controllers/errorController");
 // const otpStore = {}
 // const myData = {}
 exports.generateOtpUser = async (req, res, next) => {
@@ -352,9 +353,7 @@ exports.updateUserByAdmin = async (req, res, next) => {
     const id = req.params.id; // this is object id
     const { name, phone } = req.body;
     if (!name || !phone) {
-      res
-        .status(400)
-        .json({ success: false, message: "All the fields are required" });
+      throw new AppError(400, "All the fields are required");
     } else {
       var result = await userModel.findOne({ _id: id });
       result.name = name;

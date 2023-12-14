@@ -1,6 +1,7 @@
 const { default: mongoose } = require('mongoose')
 const packageModel = require('../models/packages')
 const productModel = require('../models/product')
+const AppError = require("../controllers/errorController");
 
 exports.createPackage = async (req, res, next) => {
   try {
@@ -10,9 +11,7 @@ exports.createPackage = async (req, res, next) => {
       imageUrl.push(data.filename)
     })
     if (!name || !price || !offerPrice || !products || !serviceId) {
-      req
-        .status(400)
-        .json({ success: false, message: 'All the fields are required' })
+      throw new AppError(400, "All the fields are required");
     } else {
       await packageModel.create({
         name: name,
@@ -41,9 +40,7 @@ exports.updatePackage = async (req, res, next) => {
       imageUrl.push(data.filename)
     })
     if (!name || !price || !offerPrice || !products) {
-      req
-        .status(400)
-        .json({ success: false, message: 'All the fields are required' })
+      throw new AppError(400, "All the fields are required");
     } else {
       let result=await packageModel.findOne({_id:id})
      

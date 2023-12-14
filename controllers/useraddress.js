@@ -1,5 +1,6 @@
 const userAddressModel = require("../models/useraddress");
 const mongoose = require("mongoose");
+const AppError = require("../controllers/errorController");
 
 exports.addUserAddress = async (req, res, next) => {
   try {
@@ -7,9 +8,7 @@ exports.addUserAddress = async (req, res, next) => {
     const { addressLine, pincode, landmark,location, defaultAddress } = req.body;
     const userId = req.user._id;
     if (!addressLine || !pincode || !landmark || !userId) {
-      res
-        .status(400)
-        .json({ success: false, message: "All the fields are required" });
+      throw new AppError(400, "All the fields are required");
     } else {
       await userAddressModel.create({
         addressLine: addressLine,
@@ -34,9 +33,7 @@ exports.updateUserAddress = async (req, res,next) => {
     const id = req.params.id; // address id
     const { addressLine, pincode, landmark,location, defaultAddress } = req.body;
     if (!addressLine || !pincode || !landmark) {
-      res
-        .status(400)
-        .json({ success: false, message: "All the fields are required" });
+      throw new AppError(400, "All the fields are required");
     } else {
       const result = await userAddressModel.findOne({ _id: id });
       result.addressLine = addressLine;

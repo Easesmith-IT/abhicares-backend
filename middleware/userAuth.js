@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken')
 
+
 exports.verify = (req, res, next) => {
   try {
     const bearerHeader = req.headers['cookie']

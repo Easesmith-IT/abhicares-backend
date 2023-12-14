@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const { configDotenv } = require("dotenv");
 configDotenv({ path: "../config/config.env" });
 const fs = require("fs");
+const AppError = require("../controllers/errorController");
 
 //Importing Models
 const UserAddress = require("../models/useraddress");
@@ -72,7 +73,6 @@ exports.websiteCodOrder = async (req, res, next) => {
         address: {
           addressLine: userAddress.addressLine,
           pincode: userAddress.pincode,
-          mobile: userAddress.mobile,
           landmark: userAddress.landmark,
         },
       },
@@ -88,7 +88,6 @@ exports.websiteCodOrder = async (req, res, next) => {
         userAddress: {
           addressLine: userAddress.addressLine,
           pincode: userAddress.pincode,
-          mobile: userAddress.mobile,
           landmark: userAddress.landmark,
         },
         product: orderItem.product,
@@ -264,17 +263,34 @@ async function getUserInvoice(order) {
 exports.getAllUserOrders = async (req, res, next) => {
   try {
     const id = req.user._id;
-    if (req.session.userId) {
       const result = await Order.find({ "user.userId": id });
       res
         .status(200)
-        .json({ success: true, message: "Your all orders", data: result });
-    } else {
-      res
-        .status(400)
-        .json({ success: false, message: "you are not authorized" });
-    }
+        .json({ success: true, message: "Your all orders", data: result })
   } catch (err) {
     next(err);
   }
 };
+
+exports.createOrderInvoice=async(req,res,next)=>{
+  try{
+          const id=req.params.id
+          const result=await Order.findOne({_id:id})
+          res.status(200).json({success:true,message:"This is order details",data:result})
+  }catch(err){
+    next(err)
+  }
+}
+
+exports.updateOrderStatus=async(req,res,next)=>{
+  try{
+        const id=req.params.id  // order id
+        const status=req.body.status
+        var result=await Order.findOne({_id:id})
+        result.status= status        
+        await result.save()
+        res.status(200).json({success:false,message:"Order status changed successfull"})
+  }catch(err){
+    next(err)
+  }
+}

@@ -1,5 +1,5 @@
 const serviceModel = require("../models/service");
-
+const AppError = require("../controllers/errorController");
 exports.createService = async (req, res, next) => {
   try {
     console.log(req.body);
@@ -24,9 +24,7 @@ exports.createService = async (req, res, next) => {
       !appHomepage ||
       !webHomepage 
     ) {
-      res
-        .status(400)
-        .json({ success: false, message: "All the fields are required" });
+      throw new AppError(400, "All the fields are required");
     } else {
       await serviceModel.create({
         name: name,
@@ -91,9 +89,7 @@ exports.updateService = async (req, res, next) => {
       !appHomepage ||
       !webHomepage
     ) {
-      res
-        .status(400)
-        .json({ success: false, message: "All the fields are required" });
+      throw new AppError(400, "All the fields are required");
     } else {
       var result = await serviceModel.findOne({ _id: id });
       result.name = name;

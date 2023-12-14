@@ -3,14 +3,17 @@ const mongoose = require("mongoose");
 const session = require("express-session");
 const productModel = require("../models/product");
 const { errorMonitor } = require("events");
+const AppError = require("../controllers/errorController");
 
 exports.addItemToCart = async (req, res, next) => {
   try {
     const user = req.user;
     const { itemId } = req.body; // item id
     var cart;
+    console.log('item id',itemId)
 
     const prod = await productModel.findById(itemId);
+    
     if (!prod) {
       throw new AppError(400, "product not found");
     } else if (user) {

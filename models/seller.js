@@ -20,8 +20,8 @@ const sellerSchema = new Schema(
       required: true,
     },
     status: {
-      type: Boolean,
-      default: true,
+      type: String,
+      default:"in-review",
     },
     address: {
       state: {

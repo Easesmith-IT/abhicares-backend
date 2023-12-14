@@ -19,8 +19,13 @@ const review_controller = require("../controllers/reviewController");
 const payments_controller = require("../controllers/payments");
 const seller_controller = require("../controllers/sellerController");
 const booking_controller = require("../controllers/bookingController");
-
+const faq_controller=require("../controllers/faqController")
 const auth_controller = require("../controllers/auth");
+const helpCenter_controller=require("../controllers/helpCenterController")
+const coupon_controller=require("../controllers/couponController")
+
+
+
 // Category routes
 router.get("/get-all-category", category_controller.getAllCategory);
 // Service routes
@@ -110,10 +115,12 @@ router.get(
 //order Routes
 router.post("/place-cod-order", userAuth,isCity.isCityAvailable, payments_controller.websiteCodOrder);
 router.get(
-  "/get-user-orders/:id",
+  "/get-user-orders",
   userAuth,
   payments_controller.getAllUserOrders
 );
+router.get("/get-product-invoice/:id",userAuth,payments_controller.createOrderInvoice)
+router.post("/change-order-status/:id",userAuth,payments_controller.updateOrderStatus) // passing order id
 
 // Seller api
 router.post("/get-seller-location", seller_controller.getSellerByLocation);
@@ -130,5 +137,17 @@ router.delete(
   booking_controller.deleteBooking
 ); // passing booking item id
 router.get("/get-user-bookings", userAuth, booking_controller.getUsersBooking); // passing user id
+
+// FAQ Routes
+router.get("/get-all-faq",userAuth,faq_controller.getAllFaq)
+
+// Help Center Routes
+router.post("/create-help",userAuth,helpCenter_controller.createHelpCenter)
+router.get("/get-user-help",userAuth,helpCenter_controller.getUserHelpCenter)
+
+// Coupon routes
+router.post("/get-coupon-details",userAuth,coupon_controller.getCouponByName)
+
+
 
 module.exports = router;

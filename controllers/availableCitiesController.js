@@ -1,5 +1,5 @@
 const availableCitiesModel=require("../models/availableCities");
-
+const AppError = require("../controllers/errorController");
 exports.createAvailableCities=async(req,res,next)=>{
     try{
             const {city,state,pinCode}=req.body
