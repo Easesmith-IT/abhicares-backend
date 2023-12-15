@@ -18,7 +18,6 @@ exports.addItemToCart = async (req, res, next) => {
     const pack = await packageModel.findById(itemId);
 
     if (!prod && !pack) {
-
       throw new AppError(400, "product not found");
     } else if (user) {
       cart = await cartModel.findById(user.cartId);
@@ -96,11 +95,7 @@ exports.removeItemFromCart = async (req, res, next) => {
           return product.productId.toString() !== itemId.toString();
         });
         cart.items = newCart;
-<<<<<<<<< Temporary merge branch 1
-        if (cart.items.length=== 0) {
-=========
-        if (cart.items.length == 0) {
->>>>>>>>> Temporary merge branch 2
+        if (cart.items.length === 0) {
           console.log("empty");
           res.clearCookie("guestCart");
           res.json({ success: true, message: "cart is empthy" });
