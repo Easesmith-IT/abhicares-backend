@@ -36,7 +36,7 @@ server.use("/api/shopping", shoppingRoute);
 server.use("/api/content", contentRoute);
 
 server.get("/admin", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "../", "admin", "index.html"));
+  return res.sendFile(path.resolve(__dirname, "../", "admin", "index.html"));
 });
 //IMPORTING ROUTES
 // server.use("/auth", authRoute);
