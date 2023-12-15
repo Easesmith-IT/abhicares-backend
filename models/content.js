@@ -22,9 +22,13 @@ const schema = new mongoose.Schema(
       // required: true,
     },
 
-    images: {
-      type: [String], 
-      default: [], 
+    heroBannerNumber: {
+      type: String,
+    },
+
+    image: {
+      type: String, 
+      default: null, 
     },
   },
   {

@@ -10,8 +10,10 @@ exports.addItemToCart = async (req, res, next) => {
     const user = req.user;
     const { itemId } = req.body; // item id
     var cart;
+    console.log('item id',itemId)
 
     const prod = await productModel.findById(itemId);
+    
     if (!prod) {
       throw new AppError(400, "product not found");
     } else if (user) {
