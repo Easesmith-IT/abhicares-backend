@@ -5,18 +5,10 @@ const AppError = require("./errorController");
 exports.uploadBanners = async (req, res, next) => {
   try {
     console.log("inside single");
-    const { type, section, page, no_of_images } = req.body;
-    console.log(no_of_images);
+    const { type, section, page } = req.body;
 
-    let images = []
-
-    if (no_of_images === "single") {
-      images = [req.files[0].filename];
-    }
-
-    if (no_of_images === "multiple") {
-      images = req.files.map((data) => data.filename);
-    }
+     const  image = req.files[0].filename
+    
 
     if (!type || !section || !page) {
       throw new AppError(400, "All the fields are required");
@@ -26,7 +18,7 @@ exports.uploadBanners = async (req, res, next) => {
 
     if (existingDoc) {
       // Update images array in the existing document
-      existingDoc.images = images;
+      existingDoc.image = image;
       await existingDoc.save();
 
       res.status(200).json({
@@ -38,7 +30,7 @@ exports.uploadBanners = async (req, res, next) => {
         type: type,
         page: page,
         section: section,
-        images: images,
+        image: image,
       });
 
       res.status(200).json({
@@ -54,17 +46,34 @@ exports.uploadBanners = async (req, res, next) => {
 
 exports.getBanners = async (req, res, next) => {
   try {
-    const { type, section, page } = req.query;
-  const doc = await Content.findOne({ type, section, page });
 
-  if (!doc) {
-    throw new AppError(401,'Document does not exists')
+    const { type, section, page, heroBanners } = req.query;
+    let doc;
+    if (heroBanners) {
+      doc = await Content.find({ section, page });
+
+      const banners = doc.map((doc)=>doc.image)
+
+      res.status(200).json({
+        success: true,
+        banners: banners,
+      });
+    }
+    else {
+      doc = await Content.findOne({ type, section, page });
+      console.log(doc)
+      res.status(200).json({
+        success: true,
+        banners: doc.image,
+      });
     }
     
-    res.status(200).json({
-      success: true,
-      banners:doc.images
-    })
+
+  if (!doc) {
+    throw new AppError(400,'Document does not exists')
+    }
+    
+
   } catch (err) {
      console.log(err);
      next(err);

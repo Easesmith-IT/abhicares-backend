@@ -62,7 +62,8 @@ const orderSchema = new Schema(
         landmark: {
           type: String,
           required: true,
-        }
+        },
+        
       },
     },
     status: {

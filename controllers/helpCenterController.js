@@ -24,6 +24,7 @@ exports.createHelpCenter = async (req, res, next) => {
 }
 exports.getAllHelpCenter = async (req, res, next) => {
   try {
+
     let status="in-review"
     if(req.body.status){
          status=req.body.status
@@ -44,6 +45,7 @@ exports.getAllHelpCenter = async (req, res, next) => {
     const result = await helpCenterModel.find({"status":status}).populate("userId") .limit(limit * 1)
     .skip((page - 1) * limit)
     .exec()
+
     res
       .status(201)
       .json({ success: true, message: 'list of all help data', data: result,totalPage:totalPage })

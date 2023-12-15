@@ -28,7 +28,8 @@ const bookingSchema = new mongoose.Schema(
       landmark: {
         type: String,
         required: true,
-      }
+      },
+
     },
     product: {
       type: Object,
