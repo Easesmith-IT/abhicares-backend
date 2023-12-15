@@ -29,6 +29,7 @@ const bookingSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
+
     },
     product: {
       type: Object,
