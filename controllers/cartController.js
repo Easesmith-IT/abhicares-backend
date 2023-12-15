@@ -16,14 +16,12 @@ exports.addItemToCart = async (req, res, next) => {
     const prod = await productModel.findById(itemId);
 
     const pack = await packageModel.findById(itemId);
-    
-    if (!prod && !pack) {
 
+    if (!prod && !pack) {
       throw new AppError(400, "product not found");
     } else if (user) {
       cart = await cartModel.findById(user.cartId);
       await cart.addProduct(prod);
-      
     } else if (req.cookies["guestCart"]) {
       cart = JSON.parse(req.cookies["guestCart"]);
       const existingItemIndex = cart.items.findIndex((product) => {
@@ -47,7 +45,6 @@ exports.addItemToCart = async (req, res, next) => {
       console.log(cart);
       res.cookie("guestCart", JSON.stringify(cart), { httpOnly: true });
     }
-
 
     if (cart) {
       return res.status(200).json({
@@ -98,8 +95,7 @@ exports.removeItemFromCart = async (req, res, next) => {
           return product.productId.toString() !== itemId.toString();
         });
         cart.items = newCart;
-        if (cart.items.length=== 0) {
-
+        if (cart.items.length === 0) {
           console.log("empty");
           res.clearCookie("guestCart");
           res.json({ success: true, message: "cart is empthy" });
