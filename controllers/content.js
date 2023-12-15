@@ -3,12 +3,10 @@ const AppError = require("./errorController");
 
 exports.uploadBanners = async (req, res, next) => {
   try {
-    console.log("inside single");
     const { type, section, page } = req.body;
 
      const  image = req.files[0].filename
     
-
     if (!type || !section || !page) {
       throw new AppError(400, "All the fields are required");
     }
@@ -17,6 +15,7 @@ exports.uploadBanners = async (req, res, next) => {
 
     if (existingDoc) {
       // Update images array in the existing document
+      console.log('existing document',existingDoc.image)
       existingDoc.image = image;
       await existingDoc.save();
 
@@ -25,6 +24,7 @@ exports.uploadBanners = async (req, res, next) => {
       });
     } else {
       // Create a new document if not found
+      console.log('creating new document')
       const newDoc = await Content.create({
         type: type,
         page: page,
@@ -60,7 +60,6 @@ exports.getBanners = async (req, res, next) => {
     }
     else {
       doc = await Content.findOne({ type, section, page });
-      console.log(doc)
       res.status(200).json({
         success: true,
         banners: doc.image,
