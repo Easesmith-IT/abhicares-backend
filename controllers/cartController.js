@@ -10,10 +10,10 @@ exports.addItemToCart = async (req, res, next) => {
     const user = req.user;
     const { itemId } = req.body; // item id
     var cart;
-    console.log('item id',itemId)
+    console.log("item id", itemId);
 
     const prod = await productModel.findById(itemId);
-    
+
     if (!prod) {
       throw new AppError(400, "product not found");
     } else if (user) {
@@ -91,7 +91,7 @@ exports.removeItemFromCart = async (req, res, next) => {
           return product.productId.toString() !== itemId.toString();
         });
         cart.items = newCart;
-        if (cart.items == []) {
+        if (cart.items.length == 0) {
           console.log("empty");
           res.clearCookie("guestCart");
           res.json({ success: true, message: "cart is empthy" });
