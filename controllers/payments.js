@@ -38,6 +38,7 @@ exports.websiteCodOrder = async (req, res, next) => {
     const userAddressId = req.body.userAddressId;
     const user = req.user;
     const bookings = req.body.bookings;
+    const couponId= req.body.couponId;
     const cart = await Cart.findOne({ userId: user._id }).populate("items"); // Populate the 'cart' field
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -66,6 +67,7 @@ exports.websiteCodOrder = async (req, res, next) => {
       paymentType: "COD",
       orderValue: cart.totalPrice,
       products: orderItems,
+      couponId:couponId,
       user: {
         userId: user._id,
         phone: user.phone,
@@ -289,8 +291,44 @@ exports.updateOrderStatus=async(req,res,next)=>{
         var result=await Order.findOne({_id:id})
         result.status= status        
         await result.save()
-        res.status(200).json({success:false,message:"Order status changed successfull"})
+        res.status(200).json({success:true,message:"Order status changed successfull"})
   }catch(err){
+    next(err)
+  }
+}
+
+exports.getAllOrders= async (req, res, next) => {
+  try {
+    // let status="in-review"
+    // if(req.body.status){
+    //      status=req.body.status
+    // }
+  //  const {status}=req.body.status
+    var page = 1
+    if (req.query.page) {
+      page = req.query.page
+    }
+    var limit = 10
+    const allList = await Order.find().count()
+    var num = allList / limit
+    var fixedNum = num.toFixed()
+    var totalPage = fixedNum
+    if (num > fixedNum) {
+      totalPage++
+    }
+    const result = await Order.find().populate({ 
+      path: 'user',
+      populate: {
+        path: 'userId',
+        model: 'User'
+      } 
+   }) .limit(limit * 1)
+    .skip((page - 1) * limit)
+    .exec()
+    res
+      .status(201)
+      .json({ success: true, message: 'List of all orders', data: result,totalPage:totalPage })
+  } catch (err) {
     next(err)
   }
 }
