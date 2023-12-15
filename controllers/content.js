@@ -1,6 +1,7 @@
 const Content = require("../models/content");
 const AppError = require("./errorController");
 
+
 exports.uploadBanners = async (req, res, next) => {
   try {
     console.log("inside single");

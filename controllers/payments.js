@@ -294,3 +294,40 @@ exports.updateOrderStatus=async(req,res,next)=>{
     next(err)
   }
 }
+
+exports.getAllOrders= async (req, res, next) => {
+  try {
+    // let status="in-review"
+    // if(req.body.status){
+    //      status=req.body.status
+    // }
+  //  const {status}=req.body.status
+    var page = 1
+    if (req.query.page) {
+      page = req.query.page
+    }
+    var limit = 10
+    const allList = await Order.find().count()
+    var num = allList / limit
+    var fixedNum = num.toFixed()
+    var totalPage = fixedNum
+    if (num > fixedNum) {
+      totalPage++
+    }
+    const result = await Order.find().populate({ 
+      path: 'user',
+      populate: {
+        path: 'userId',
+        model: 'User'
+      } 
+   }) .limit(limit * 1)
+    .skip((page - 1) * limit)
+    .exec()
+    res
+      .status(201)
+      .json({ success: true, message: 'list of all help data', data: result,totalPage:totalPage })
+  } catch (err) {
+    console.log("err---->",err)
+    next(err)
+  }
+}
