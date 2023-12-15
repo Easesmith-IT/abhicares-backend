@@ -147,7 +147,7 @@ exports.AppcodOrder = async (req, res, next) => {
         address: {
           addressLine: userAddress.addressLine,
           pincode: userAddress.pincode,
-          mobile: userAddress.mobile,
+          // mobile: userAddress.mobile,
           landmark: userAddress.landmark,
         },
       },
