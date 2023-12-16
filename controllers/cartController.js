@@ -12,20 +12,21 @@ exports.addItemToCart = async (req, res, next) => {
     const { itemId, type } = req.body; // item id
     var cart;
     console.log("item id", itemId);
-
-    const prod = await productModel.findById(itemId);
-    const pack = await packageModel.findById(itemId);
-
+    if (type == "product") {
+      const prod = await productModel.findById(itemId);
+    } else if (type == "package") {
+      const pack = await packageModel.findById(itemId);
+    }
     if (!prod && !pack) {
       throw new AppError(400, "product not found");
     } else if (user) {
       cart = await cartModel.findById(user.cartId);
       await cart.addToCart(prod, type);
-      // if (prod) {
-      //   await cart.addProduct(prod)
-      // } else if (pack) {
-      //   await cart.addProduct(pack)
-      // }
+      if (type == "product") {
+        await cart.addToCart(prod, type);
+      } else if (type == "package") {
+        await cart.addToCart(pack, type);
+      }
     } else if (req.cookies["guestCart"]) {
       cart = JSON.parse(req.cookies["guestCart"]);
       const existingItemIndex = cart.items.findIndex((product) => {
@@ -44,10 +45,10 @@ exports.addItemToCart = async (req, res, next) => {
         // cart.items.push({ productId: itemId, quantity: 1 });
         // cart.totalPrice += prod.offerPrice;
         if (prod) {
-          cart.items.push({ productId: itemId, quantity: 1 });
+          cart.items.push({ productId: itemId, type: "product", quantity: 1 });
           cart.totalPrice += prod.offerPrice;
         } else if (pack) {
-          cart.items.push({ packageId: itemId, quantity: 1 });
+          cart.items.push({ packageId: itemId, type: "package", quantity: 1 });
           cart.totalPrice += pack.offerPrice;
         }
       }
@@ -94,13 +95,21 @@ exports.removeItemFromCart = async (req, res, next) => {
     // const itemId = req.params.id;
     const { itemId, type } = req.body; // item id
     const user = req.user;
-    const prod = await productModel.findById(itemId);
+    if (type == "product") {
+      const prod = await productModel.findById(itemId);
+    } else if (type == "package") {
+      const pack = await packageModel.findById(itemId);
+    }
     var cart;
     if (!prod) {
       throw new AppError(400, "Product does not exist");
     } else if (user) {
       cart = await cartModel.findById(user.cartId);
-      await cart.deleteFromCart(prod, type);
+      if (type == "product") {
+        await cart.deleteFromCart(prod, type);
+      } else if (type == "package") {
+        await cart.deleteFromCart(pack, type);
+      }
       if (cart.items.length === 0) {
         console.log("empty");
         res.clearCookie("guestCart");
