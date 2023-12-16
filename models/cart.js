@@ -15,6 +15,16 @@ const cartSchema = new Schema(
           ref: "Product", // Replace with the actual name of your Product model
           // required: true
         },
+        packageId: {
+          type: Schema.Types.ObjectId,
+          ref: "Package", // Replace with the actual name of your Product model
+          // required: true
+        },
+        type: {
+          type: String,
+          required: true,
+          default: "product",
+        },
         quantity: {
           type: Number,
           default: 1,
@@ -29,11 +39,8 @@ const cartSchema = new Schema(
   { timestamps: true }
 );
 
-cartSchema.methods.addProduct = function (prod) {
+cartSchema.methods.addToCart = function ({ prod, type }) {
   const cartProductIndex = this.items.findIndex((cp) => {
-    // console.log(" cart skuId",cp.skuId.toString());
-    // console.log("prod skuId", sku._id.toString());
-    // console.log(cp.skuId.toString() === sku._id.toString());
     return cp.productId.toString() === prod._id.toString();
   });
   let newQuantity = 1;
