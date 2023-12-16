@@ -5,8 +5,7 @@ const adminRoute = require("../routes/admin");
 const shoppingRoute = require("../routes/shoppingRoutes");
 const errorHandler = require("../middleware/globalErrorHandler");
 const appRoute = require("../routes/app-route");
-const contentRoute = require('../routes/content')
-
+const contentRoute = require("../routes/content");
 
 // const appRoute = require("../routes/app-route.js");
 // const authRoute = require("../routes/auth");
@@ -36,8 +35,9 @@ server.use("/api/shopping", shoppingRoute);
 
 server.use("/api/content", contentRoute);
 
-
-
+server.get("/admin", (req, res) => {
+  return res.sendFile(path.resolve(__dirname, "../", "admin", "index.html"));
+});
 //IMPORTING ROUTES
 // server.use("/auth", authRoute);
 

@@ -72,6 +72,7 @@ exports.addItemToCart = async (req, res, next) => {
       console.log(cart)
       res.cookie('guestCart', JSON.stringify(cart), { httpOnly: true })
     }
+
     if (cart) {
       return res.status(200).json({
         cart: cart,
@@ -121,7 +122,7 @@ exports.removeItemFromCart = async (req, res, next) => {
           return product.productId.toString() !== itemId.toString()
         })
         cart.items = newCart
-        if (cart.items == []) {
+        if (cart.items.length === 0) {
           console.log('empty')
           res.clearCookie('guestCart')
           res.json({ success: true, message: 'cart is empthy' })
