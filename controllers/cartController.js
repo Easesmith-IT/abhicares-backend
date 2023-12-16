@@ -19,11 +19,12 @@ exports.addItemToCart = async (req, res, next) => {
       throw new AppError(400, "product not found");
     } else if (user) {
       cart = await cartModel.findById(user.cartId);
-      if (prod) {
-        await cart.addProduct(prod);
-      } else if (pack) {
-        await cart.addProduct(pack);
-      }
+      await cart.addProduct(prod);
+      // if (prod) {
+      //   await cart.addProduct(prod)
+      // } else if (pack) {
+      //   await cart.addProduct(pack)
+      // }
     } else if (req.cookies["guestCart"]) {
       cart = JSON.parse(req.cookies["guestCart"]);
       const existingItemIndex = cart.items.findIndex((product) => {
@@ -154,7 +155,8 @@ exports.getCart = async (req, res, next) => {
     const user = req.user;
     var cart;
     if (user) {
-      // cart = await cartModel.findById(user.cartId).populate("items.productId");
+      cart = await cartModel.findById(user.cartId).populate("items.productId");
+
       // cart = await cartModel.findById(user.cartId).populate(
       //   {
       //     path: 'items',
