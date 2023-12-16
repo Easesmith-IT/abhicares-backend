@@ -2,9 +2,9 @@ const cartModel = require("../models/cart");
 const mongoose = require("mongoose");
 const session = require("express-session");
 const productModel = require("../models/product");
-const packageModel = require("../models/package");
 const { errorMonitor } = require("events");
 const AppError = require("../controllers/errorController");
+const packageModel = require("../models/package");
 
 exports.addItemToCart = async (req, res, next) => {
   try {
@@ -15,13 +15,15 @@ exports.addItemToCart = async (req, res, next) => {
 
     const prod = await productModel.findById(itemId);
 
-    const pack = await packageModel.findById(itemId);
-
-    if (!prod && !pack) {
+    if (!prod) {
       throw new AppError(400, "product not found");
     } else if (user) {
       cart = await cartModel.findById(user.cartId);
-      await cart.addProduct(prod);
+      if (prod) {
+        await cart.addProduct(prod);
+      } else if (pack) {
+        await cart.addProduct(pack);
+      }
     } else if (req.cookies["guestCart"]) {
       cart = JSON.parse(req.cookies["guestCart"]);
       const existingItemIndex = cart.items.findIndex((product) => {
@@ -30,17 +32,41 @@ exports.addItemToCart = async (req, res, next) => {
       });
       if (existingItemIndex >= 0) {
         cart.items[existingItemIndex].quantity++;
-        cart.totalPrice += prod.offerPrice;
+        if (prod) {
+          cart.totalPrice += prod.offerPrice;
+        } else if (pack) {
+          cart.totalPrice += pack.offerPrice;
+        }
+        // cart.totalPrice += prod.offerPrice;
       } else {
-        cart.items.push({ productId: itemId, quantity: 1 });
-        cart.totalPrice += prod.offerPrice;
+        // cart.items.push({ productId: itemId, quantity: 1 });
+        // cart.totalPrice += prod.offerPrice;
+        if (prod) {
+          cart.items.push({ productId: itemId, quantity: 1 });
+          cart.totalPrice += prod.offerPrice;
+        } else if (pack) {
+          cart.items.push({ packageId: itemId, quantity: 1 });
+          cart.totalPrice += pack.offerPrice;
+        }
       }
       res.cookie("guestCart", JSON.stringify(cart), { httpOnly: true });
     } else {
-      cart = {
-        items: [{ productId: itemId, quantity: 1 }],
-        totalPrice: prod.offerPrice,
-      };
+      // cart = {
+      //   items: [{ productId: itemId, quantity: 1 }],
+      //   totalPrice: prod.offerPrice,
+      // };
+      if (prod) {
+        cart = {
+          items: [{ productId: itemId, quantity: 1 }],
+          totalPrice: prod.offerPrice,
+        };
+      } else if (pack) {
+        cart = {
+          items: [{ packageId: itemId, quantity: 1 }],
+          totalPrice: pack.offerPrice,
+        };
+      }
+
       // console.log(prod);
       console.log(cart);
       res.cookie("guestCart", JSON.stringify(cart), { httpOnly: true });
@@ -128,7 +154,25 @@ exports.getCart = async (req, res, next) => {
     const user = req.user;
     var cart;
     if (user) {
-      cart = await cartModel.findById(user.cartId).populate("items.productId");
+      // cart = await cartModel.findById(user.cartId).populate("items.productId");
+      // cart = await cartModel.findById(user.cartId).populate(
+      //   {
+      //     path: 'items',
+      //     populate: {
+      //       path: 'productId',
+      //       model: 'Package'
+      //     }
+      //   }
+      // )
+      // cart = await cartModel.findById(user.cartId).populate(
+      //   {
+      //     path: 'items',
+      //     populate: {
+      //       path: 'productId',
+      //       model: 'Package'
+      //     }
+      //   }
+      // )
       // if (cart.items.length > 0) {
       //   res.status(400).json({
       //     success: false,
@@ -139,12 +183,33 @@ exports.getCart = async (req, res, next) => {
       cart = JSON.parse(req.cookies["guestCart"]);
       var cartItems = [];
       for (index in cart.items) {
-        const product = await productModel.findById(
-          cart.items[index].productId
-        );
-        console.log("product:", product);
-        var item = { productId: product, quantity: cart.items[index].quantity };
-        cartItems.push(item);
+        if (cart.items[index].productId) {
+          const product = await productModel.findById(
+            cart.items[index].productId
+          );
+          var item = {
+            productId: product,
+            quantity: cart.items[index].quantity,
+          };
+          cartItems.push(item);
+        } else if (cart.items[index].packageId) {
+          const package = await packageModel
+            .findById(cart.items[index].packageId)
+            .populate({
+              path: "products",
+              populate: {
+                path: "productId",
+                model: "Product",
+              },
+            });
+          var item = {
+            packageId: package,
+            quantity: cart.items[index].quantity,
+          };
+          cartItems.push(item);
+        }
+
+        // console.log('product:', product)
       }
       cart.items = cartItems;
     } else {
