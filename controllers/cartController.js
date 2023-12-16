@@ -121,7 +121,7 @@ exports.removeItemFromCart = async (req, res, next) => {
           return product.productId.toString() !== itemId.toString();
         });
         cart.items = newCart;
-        if (cart.items.length === 0) {
+        if (cart.items == []) {
           console.log("empty");
           res.clearCookie("guestCart");
           res.json({ success: true, message: "cart is empthy" });
