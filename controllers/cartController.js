@@ -198,7 +198,7 @@ exports.getCart = async (req, res, next) => {
               model:"Product"
             }
           })
-          var item = { packageId: package}
+          var item = { packageId: package,quantity: cart.items[index].quantity }
           cartItems.push(item)
         }
       
