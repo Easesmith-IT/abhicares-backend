@@ -59,7 +59,7 @@ const PackageSchema = new Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Package", PackageSchema);
+module.exports = mongoose.model("package", PackageSchema);
 
 // const mongodb = require("mongodb");
 
