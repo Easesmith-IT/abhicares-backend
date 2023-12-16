@@ -35,11 +35,14 @@ const instance = new Razorpay({
 
 exports.websiteCodOrder = async (req, res, next) => {
   try {
-    const userAddressId = req.body.userAddressId
-    const user = req.user
-    const bookings = req.body.bookings
-    const couponId = req.body.couponId
-    const cart = await Cart.findOne({ userId: user._id }).populate('items') // Populate the 'cart' field
+    const userAddressId = req.body.userAddressId;
+    const user = req.user;
+    const bookings = req.body.bookings;
+    let couponId = null
+    if(req.body.couponId) {
+       couponId= req.body.couponId
+    }
+    const cart = await Cart.findOne({ userId: user._id }).populate("items"); // Populate the 'cart' field
     if (!user) {
       return res.status(404).json({ message: 'User not found.' })
     }
