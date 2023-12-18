@@ -3,17 +3,19 @@ const mongoose = require("mongoose");
 const AppError = require("../controllers/errorController");
 
 exports.addUserAddress = async (req, res, next) => {
+  console.log("hello")
   try {
     // console.log(req.body);
-    const { addressLine, pincode, landmark,location, defaultAddress } = req.body;
+    const { addressLine, pincode, landmark,city,location, defaultAddress } = req.body;
     const userId = req.user._id;
-    if (!addressLine || !pincode || !landmark || !userId) {
+    if (!addressLine || !pincode || !landmark || !city || !userId) {
       throw new AppError(400, "All the fields are required");
     } else {
       await userAddressModel.create({
         addressLine: addressLine,
         pincode: pincode,
         landmark: landmark,
+        city:city,
         location:location,
         defaultAddress: defaultAddress,
         userId: userId,
@@ -31,14 +33,15 @@ exports.addUserAddress = async (req, res, next) => {
 exports.updateUserAddress = async (req, res,next) => {
   try {
     const id = req.params.id; // address id
-    const { addressLine, pincode, landmark,location, defaultAddress } = req.body;
-    if (!addressLine || !pincode || !landmark) {
+    const { addressLine, pincode, landmark,city,location, defaultAddress } = req.body;
+    if (!addressLine || !pincode || !landmark || !city) {
       throw new AppError(400, "All the fields are required");
     } else {
       const result = await userAddressModel.findOne({ _id: id });
       result.addressLine = addressLine;
       result.pincode = pincode;
       result.landmark = landmark;
+      result.city=city;
       result.location=location;
       result.defaultAddress = defaultAddress;
       await result.save();

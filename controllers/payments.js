@@ -43,7 +43,24 @@ exports.websiteCodOrder = async (req, res, next) => {
     if(req.body.couponId) {
        couponId= req.body.couponId
     }
-    const cart = await Cart.findOne({ userId: user._id }).populate("items"); // Populate the 'cart' field
+    // const cart = await Cart.findOne({ userId: user._id }).populate("items"); // Populate the 'cart' field
+    const cart = await Cart.findOne({ userId: user._id }).populate({
+      path: 'items',
+      model: 'Cart',
+      populate: [
+        {
+          path: 'productId',
+          model: 'Product',
+        },
+        {
+          path: 'packageId',
+          model: 'Package',
+        },
+      ],
+    })
+    
+    console.log("cart----->",cart)
+   
     if (!user) {
       return res.status(404).json({ message: 'User not found.' })
     }
@@ -52,11 +69,13 @@ exports.websiteCodOrder = async (req, res, next) => {
     const orderItems = []
     //     // Process and add plant items to the order
     for (const productItem of items) {
+      // console.log("something---->",productItem)
       let prod,pack
      if(productItem.type=="product"){
        prod = await Products.findById(productItem.productId)
      }else if(productItem.type=="package"){
-      pack = await Products.findById(productItem.productId)   
+      pack = await packageModel.findById(productItem.packageId._id.toString()) 
+      console.log("pack--->",pack)  
      }
 
      
@@ -72,7 +91,7 @@ exports.websiteCodOrder = async (req, res, next) => {
         })
       }else if(pack){
         var bookingItem = bookings.find(bookItem => {
-          return bookItem.productId == pack._id
+          return bookItem.packageId == pack._id
         })
         orderItems.push({
           package: pack,
@@ -87,7 +106,7 @@ exports.websiteCodOrder = async (req, res, next) => {
       orderPlatform: 'website',
       paymentType: 'COD',
       orderValue: cart.totalPrice,
-      products: orderItems,
+      items: orderItems,
       couponId: couponId,
       user: {
         userId: user._id,
@@ -104,7 +123,7 @@ exports.websiteCodOrder = async (req, res, next) => {
     await order.save()
     ///booking creation
     for (const orderItem of orderItems) {
-      console.log(orderItem)
+     if(orderItem.product){
       var booking = new Booking({
         order: order._id,
         userId: user._id,
@@ -114,13 +133,31 @@ exports.websiteCodOrder = async (req, res, next) => {
           landmark: userAddress.landmark
         },
         product: orderItem.product,
-        package: orderItem.package,
         quantity: orderItem.quantity,
         bookingDate: orderItem.bookingDate,
         bookingTime: orderItem.bookingTime,
         orderValue: orderItem.product.offerPrice * orderItem.quantity
       })
       await booking.save()
+     }else if(orderItem.package){
+      var booking = new Booking({
+        order: order._id,
+        userId: user._id,
+        userAddress: {
+          addressLine: userAddress.addressLine,
+          pincode: userAddress.pincode,
+          landmark: userAddress.landmark
+        },
+        package: orderItem.package,
+        quantity: orderItem.quantity,
+        bookingDate: orderItem.bookingDate,
+        bookingTime: orderItem.bookingTime,
+        orderValue: orderItem.package.offerPrice * orderItem.quantity
+      })
+      await booking.save()
+     }
+     
+    
     }
     cart.items = []
     cart.totalPrice = 0
@@ -286,12 +323,28 @@ async function getUserInvoice (order) {
 
 exports.getAllUserOrders = async (req, res, next) => {
   try {
+
+   
     const id = req.user._id
-    const result = await Order.find({ 'user.userId': id })
+    const result = await Order.find({ 'user.userId': id }).populate({
+      path:"items",
+      populate:{
+        path:"package",
+       populate:{
+        path:"products",
+        populate:{
+          path:"productId",
+          model:"Product"
+        }
+       }
+       
+      }
+    })
     res
       .status(200)
       .json({ success: true, message: 'Your all orders', data: result })
   } catch (err) {
+    console.log("err---->",err)
     next(err)
   }
 }
@@ -325,6 +378,7 @@ exports.updateOrderStatus = async (req, res, next) => {
 
 exports.getAllOrders = async (req, res, next) => {
   try {
+    console.log("Hello--->")
     // let status="in-review"
     // if(req.body.status){
     //      status=req.body.status
