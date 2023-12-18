@@ -45,7 +45,7 @@ cartSchema.methods.addToCart = function ( prod, type ) {
   const updatedCartItems = [...this.items];
   if (type == "product") {
     const cartProductIndex = this.items.findIndex((cp) => {
-      return cp.productId.toString() === prod._id.toString();
+      return String(cp.productId) === prod._id.toString();
     });
     if (cartProductIndex >= 0) {
       newQuantity = updatedCartItems[cartProductIndex].quantity + 1;
@@ -89,7 +89,7 @@ cartSchema.methods.deleteFromCart = function (prod,type) {
       updatedCartItems[cartProductIndex].quantity = quantity;
     } else {
       updatedCartItems = this.items.filter(
-        (item) => item.productId.toString() !== prod._id.toString()
+        (item) => String(item.productId) !== prod._id.toString()
       );
     }
   } else if (type == "package") {

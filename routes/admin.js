@@ -190,7 +190,7 @@ router.get("/get-availabe-city", isAdminAuth, availableCities_controller.getAvai
 
 router.post("/change-order-status/:id",isAdminAuth,payments_controller.updateOrderStatus) // passing order id
 router.get("/get-all-orders",isAdminAuth,payments_controller.getAllOrders)
-router.get("/get-monthly-orders",isAdminAuth,payments_controller.getMolthlyOrder)
+router.post("/get-monthly-orders",isAdminAuth,payments_controller.getMolthlyOrder)
 
 // FAQ Routes
 

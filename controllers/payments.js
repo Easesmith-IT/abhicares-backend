@@ -15,6 +15,7 @@ const Payment = require('../models/payments')
 const Products = require('../models/product')
 const Cart = require('../models/cart')
 const Booking = require('../models/booking')
+const packageModel=require("../models/packages")
 // const { trackUserOrder } = require("../controllers/nursery");
 const {
   getInvoiceData,
@@ -51,13 +52,30 @@ exports.websiteCodOrder = async (req, res, next) => {
     const orderItems = []
     //     // Process and add plant items to the order
     for (const productItem of items) {
-      const prod = await Products.findById(productItem.productId)
+      let prod,pack
+     if(productItem.type=="product"){
+       prod = await Products.findById(productItem.productId)
+     }else if(productItem.type=="package"){
+      pack = await Products.findById(productItem.productId)   
+     }
+
+     
       if (prod) {
         var bookingItem = bookings.find(bookItem => {
           return bookItem.productId == prod._id
         })
         orderItems.push({
           product: prod,
+          quantity: productItem.quantity,
+          bookingTime: bookingItem.bookingTime,
+          bookingDate: bookingItem.bookingDate
+        })
+      }else if(pack){
+        var bookingItem = bookings.find(bookItem => {
+          return bookItem.productId == pack._id
+        })
+        orderItems.push({
+          package: pack,
           quantity: productItem.quantity,
           bookingTime: bookingItem.bookingTime,
           bookingDate: bookingItem.bookingDate
@@ -96,6 +114,7 @@ exports.websiteCodOrder = async (req, res, next) => {
           landmark: userAddress.landmark
         },
         product: orderItem.product,
+        package: orderItem.package,
         quantity: orderItem.quantity,
         bookingDate: orderItem.bookingDate,
         bookingTime: orderItem.bookingTime,

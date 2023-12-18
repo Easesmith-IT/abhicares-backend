@@ -1,10 +1,11 @@
-const User = require("../models/user");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const User = require('../models/user')
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
-const Admin = require("../models/admin");
-const authHelper = require("../util/authHelper");
-const jwtkey = require("../util/jwtkey");
+const Admin = require('../models/admin')
+const authHelper = require('../util/authHelper')
+const jwtkey = require('../util/jwtkey')
+const { findOne } = require('../models/cart')
 
 // exports.getUser = async (req, res, next) => {
 //   console.log("inside user fn");
@@ -65,44 +66,84 @@ const jwtkey = require("../util/jwtkey");
 
 exports.addAminUser = async (req, res, next) => {
   try {
-    const { adminId, password, name, role } = req.body;
-    var bsalt = await bcrypt.genSalt(10);
-    console.log("Salt: ", bsalt);
-    var hashPsw = await bcrypt.hash(password, bsalt);
-    var admin = await new Admin({
-      adminId: adminId,
-      password: hashPsw,
-      name: name,
-      role: role,
-    });
-    await admin.save();
-    return res.status(200).json("admin");
+    const { adminId, password, name, role, permissions } = req.body
+    const {
+      dashboard,
+      banners,
+      cms,
+      bookings,
+      services,
+      partners,
+      customers,
+      offers,
+      availableCities,
+      payments,
+      enquiry
+    } = permissions
+    if (
+      !adminId ||
+      !password ||
+      !name ||
+      !role ||
+      !dashboard ||
+      !banners ||
+      !cms ||
+      !bookings ||
+      !services ||
+      !partners ||
+      !customers ||
+      !offers ||
+      !availableCities ||
+      !payments ||
+      !enquiry
+    ) {
+      res
+        .status(400)
+        .json({ success: false, message: 'All the fields are required' })
+    } else {
+      const result = await Admin.findOne({ adminId: adminId })
+      if (result) {
+        res.status(400).json({ success: false, message: 'User already exist' })
+      } else {
+        var bsalt = await bcrypt.genSalt(10)
+        console.log('Salt: ', bsalt)
+        var hashPsw = await bcrypt.hash(password, bsalt)
+        var admin = await new Admin({
+          adminId: adminId,
+          password: hashPsw,
+          name: name,
+          role: role,
+          permissions: permissions
+        })
+        await admin.save()
+        return res.status(200).json('admin created successful')
+      }
+    }
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+    console.log("err====>",err)
+   next(err)
   }
-};
+}
 
 exports.loginAdminUser = async (req, res, next) => {
   try {
-    const { adminId, password } = req.body;
-    const admin = await Admin.findOne({ adminId: adminId });
-    const isMatch = await bcrypt.compare(password, admin.password);
-    console.log(isMatch);
+    const { adminId, password } = req.body
+    const admin = await Admin.findOne({ adminId: adminId })
+    const isMatch = await bcrypt.compare(password, admin.password)
+    console.log(isMatch)
     if (isMatch) {
-      var token = jwt.sign({ adminId: adminId }, jwtkey.secretJwtKey);
-      console.log;
-      return res.status(200).json({ token: token });
+      var token = jwt.sign({ adminId: adminId }, jwtkey.secretJwtKey)
+      console.log
+      return res.status(200).json({ token: token })
     } else {
-      return res.status(500).json("error");
+      return res.status(500).json('error')
     }
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+    const error = new Error(err)
+    error.httpStatusCode = 500
+    return next(err)
   }
-};
+}
 
 // exports.postAddUser = async (req, res, next) => {
 //   try {

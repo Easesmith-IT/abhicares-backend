@@ -9,7 +9,7 @@ exports.isCityAvailable=async(req,res,next)=>{
            if(result!==null){
              next()
            }else{
-                   res.status(200).json({success:false,message:"No available product in your cities"})
+                   res.status(400).json({success:false,message:"No available product in your cities"})
            }    
     }catch(err){
         next(err)
