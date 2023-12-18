@@ -239,6 +239,7 @@ exports.getCart = async (req, res, next) => {
           )
           var item = {
             productId: product,
+            type:"product",
             quantity: cart.items[index].quantity
           }
           cartItems.push(item)
@@ -254,6 +255,7 @@ exports.getCart = async (req, res, next) => {
             })
           var item = {
             packageId: package,
+            type:"package",
             quantity: cart.items[index].quantity
           }
           cartItems.push(item)
