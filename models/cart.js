@@ -59,7 +59,7 @@ cartSchema.methods.addToCart = function ( prod, type ) {
     }
   } else if (type == "package") {
     const cartProductIndex = this.items.findIndex((cp) => {
-      return cp.productId.toString() === prod._id.toString();
+      return String(cp.packageId) === prod._id.toString();
     });
     if (cartProductIndex >= 0) {
       newQuantity = updatedCartItems[cartProductIndex].quantity + 1;

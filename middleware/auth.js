@@ -67,7 +67,6 @@ exports.isAdminAuth = async (req, res, next) => {
   try {
     console.log("token inside", req.header("Authorization"));
     const token = req.header("Authorization");
-    console.log("token---->", token);
     //token is missing
     if (!token) {
       return res.status(401).json({
