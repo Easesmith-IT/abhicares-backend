@@ -65,7 +65,7 @@ exports.userAuthForCart = async (req, res, next) => {
 
 exports.isAdminAuth = async (req, res, next) => {
   try {
-    console.log('token inside', req.header('Authorization'))
+    // console.log('token inside', req.header('Authorization'))
     const token = req.header('Authorization')
     jwt.verify(token, jwtkey.secretJwtKey, function(err, authData) {
       if(err){
@@ -75,8 +75,7 @@ exports.isAdminAuth = async (req, res, next) => {
           success: false
         })
       }else{
-        
-          req.perm(authData.permissions) 
+          // req.perm=authData.permissions
           next()     
       }
     });
