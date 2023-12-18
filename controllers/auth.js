@@ -129,10 +129,11 @@ exports.loginAdminUser = async (req, res, next) => {
   try {
     const { adminId, password } = req.body
     const admin = await Admin.findOne({ adminId: adminId })
+   
     const isMatch = await bcrypt.compare(password, admin.password)
     console.log(isMatch)
     if (isMatch) {
-      var token = jwt.sign({ adminId: adminId }, jwtkey.secretJwtKey)
+      var token = jwt.sign({ adminId: adminId,permissions:admin.permissions}, jwtkey.secretJwtKey)
       console.log
       return res.status(200).json({ token: token })
     } else {

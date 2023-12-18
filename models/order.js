@@ -27,9 +27,9 @@ const orderSchema = new Schema(
           type: Object,
           // required: true
         },
-        // quantity: {
-        //   type: Number
-        // },
+        quantity: {
+          type: Number
+        },
         // bookingDate: {
         //   type: String
         //   // required: true,

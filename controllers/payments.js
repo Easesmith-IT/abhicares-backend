@@ -15,7 +15,7 @@ const Payment = require('../models/payments')
 const Products = require('../models/product')
 const Cart = require('../models/cart')
 const Booking = require('../models/booking')
-const packageModel=require("../models/packages")
+const packageModel = require('../models/packages')
 // const { trackUserOrder } = require("../controllers/nursery");
 const {
   getInvoiceData,
@@ -36,12 +36,12 @@ const instance = new Razorpay({
 
 exports.websiteCodOrder = async (req, res, next) => {
   try {
-    const userAddressId = req.body.userAddressId;
-    const user = req.user;
-    const bookings = req.body.bookings;
+    const userAddressId = req.body.userAddressId
+    const user = req.user
+    const bookings = req.body.bookings
     let couponId = null
-    if(req.body.couponId) {
-       couponId= req.body.couponId
+    if (req.body.couponId) {
+      couponId = req.body.couponId
     }
     // const cart = await Cart.findOne({ userId: user._id }).populate("items"); // Populate the 'cart' field
     const cart = await Cart.findOne({ userId: user._id }).populate({
@@ -50,17 +50,17 @@ exports.websiteCodOrder = async (req, res, next) => {
       populate: [
         {
           path: 'productId',
-          model: 'Product',
+          model: 'Product'
         },
         {
           path: 'packageId',
-          model: 'Package',
-        },
-      ],
+          model: 'Package'
+        }
+      ]
     })
-    
-    console.log("cart----->",cart)
-   
+
+    console.log('cart----->', cart)
+
     if (!user) {
       return res.status(404).json({ message: 'User not found.' })
     }
@@ -70,26 +70,25 @@ exports.websiteCodOrder = async (req, res, next) => {
     //     // Process and add plant items to the order
     for (const productItem of items) {
       // console.log("something---->",productItem)
-      let prod,pack
-     if(productItem.type=="product"){
-       prod = await Products.findById(productItem.productId)
-     }else if(productItem.type=="package"){
-      pack = await packageModel.findById(productItem.packageId._id.toString()) 
-      console.log("pack--->",pack)  
-     }
+      let prod, pack
+      if (productItem.type == 'product') {
+        prod = await Products.findById(productItem.productId)
+      } else if (productItem.type == 'package') {
+        pack = await packageModel.findById(productItem.packageId._id.toString())
+      }
 
-     
       if (prod) {
         var bookingItem = bookings.find(bookItem => {
           return bookItem.productId == prod._id
         })
+        console.log("productItem---->",productItem.quantity)
         orderItems.push({
           product: prod,
           quantity: productItem.quantity,
           bookingTime: bookingItem.bookingTime,
           bookingDate: bookingItem.bookingDate
         })
-      }else if(pack){
+      } else if (pack) {
         var bookingItem = bookings.find(bookItem => {
           return bookItem.packageId == pack._id
         })
@@ -123,41 +122,39 @@ exports.websiteCodOrder = async (req, res, next) => {
     await order.save()
     ///booking creation
     for (const orderItem of orderItems) {
-     if(orderItem.product){
-      var booking = new Booking({
-        order: order._id,
-        userId: user._id,
-        userAddress: {
-          addressLine: userAddress.addressLine,
-          pincode: userAddress.pincode,
-          landmark: userAddress.landmark
-        },
-        product: orderItem.product,
-        quantity: orderItem.quantity,
-        bookingDate: orderItem.bookingDate,
-        bookingTime: orderItem.bookingTime,
-        orderValue: orderItem.product.offerPrice * orderItem.quantity
-      })
-      await booking.save()
-     }else if(orderItem.package){
-      var booking = new Booking({
-        order: order._id,
-        userId: user._id,
-        userAddress: {
-          addressLine: userAddress.addressLine,
-          pincode: userAddress.pincode,
-          landmark: userAddress.landmark
-        },
-        package: orderItem.package,
-        quantity: orderItem.quantity,
-        bookingDate: orderItem.bookingDate,
-        bookingTime: orderItem.bookingTime,
-        orderValue: orderItem.package.offerPrice * orderItem.quantity
-      })
-      await booking.save()
-     }
-     
-    
+      if (orderItem.product) {
+        var booking = new Booking({
+          order: order._id,
+          userId: user._id,
+          userAddress: {
+            addressLine: userAddress.addressLine,
+            pincode: userAddress.pincode,
+            landmark: userAddress.landmark
+          },
+          product: orderItem.product,
+          quantity: orderItem.quantity,
+          bookingDate: orderItem.bookingDate,
+          bookingTime: orderItem.bookingTime,
+          orderValue: orderItem.product.offerPrice * orderItem.quantity
+        })
+        await booking.save()
+      } else if (orderItem.package) {
+        var booking = new Booking({
+          order: order._id,
+          userId: user._id,
+          userAddress: {
+            addressLine: userAddress.addressLine,
+            pincode: userAddress.pincode,
+            landmark: userAddress.landmark
+          },
+          package: orderItem.package,
+          quantity: orderItem.quantity,
+          bookingDate: orderItem.bookingDate,
+          bookingTime: orderItem.bookingTime,
+          orderValue: orderItem.package.offerPrice * orderItem.quantity
+        })
+        await booking.save()
+      }
     }
     cart.items = []
     cart.totalPrice = 0
@@ -323,28 +320,25 @@ async function getUserInvoice (order) {
 
 exports.getAllUserOrders = async (req, res, next) => {
   try {
-
-   
     const id = req.user._id
     const result = await Order.find({ 'user.userId': id }).populate({
-      path:"items",
-      populate:{
-        path:"package",
-       populate:{
-        path:"products",
-        populate:{
-          path:"productId",
-          model:"Product"
+      path: 'items',
+      populate: {
+        path: 'package',
+        populate: {
+          path: 'products',
+          populate: {
+            path: 'productId',
+            model: 'Product'
+          }
         }
-       }
-       
       }
     })
     res
       .status(200)
       .json({ success: true, message: 'Your all orders', data: result })
   } catch (err) {
-    console.log("err---->",err)
+    console.log('err---->', err)
     next(err)
   }
 }
@@ -352,7 +346,19 @@ exports.getAllUserOrders = async (req, res, next) => {
 exports.createOrderInvoice = async (req, res, next) => {
   try {
     const id = req.params.id
-    const result = await Order.findOne({ _id: id })
+    const result = await Order.findOne({ _id: id }).populate({
+      path: 'items',
+      populate: {
+        path: 'package',
+        populate: {
+          path: 'products',
+          populate: {
+            path: 'productId',
+            model: 'Product'
+          }
+        }
+      }
+    })
     res
       .status(200)
       .json({ success: true, message: 'This is order details', data: result })
@@ -378,7 +384,7 @@ exports.updateOrderStatus = async (req, res, next) => {
 
 exports.getAllOrders = async (req, res, next) => {
   try {
-    console.log("Hello--->")
+    console.log('Hello--->')
     // let status="in-review"
     // if(req.body.status){
     //      status=req.body.status
@@ -398,23 +404,27 @@ exports.getAllOrders = async (req, res, next) => {
     }
     const result = await Order.find()
       .populate({
-        path: 'user',
+        path: 'items',
         populate: {
-          path: 'userId',
-          model: 'User'
+          path: 'package',
+          populate: {
+            path: 'products',
+            populate: {
+              path: 'productId',
+              model: 'Product'
+            }
+          }
         }
       })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec()
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: 'List of all orders',
-        data: result,
-        totalPage: totalPage
-      })
+    res.status(201).json({
+      success: true,
+      message: 'List of all orders',
+      data: result,
+      totalPage: totalPage
+    })
   } catch (err) {
     next(err)
   }
@@ -422,6 +432,8 @@ exports.getAllOrders = async (req, res, next) => {
 
 exports.getMolthlyOrder = async (req, res, next) => {
   try {
+     console.log("req.pem",req.perm)
+
     const { month, year } = req.body
     if (!month || !year) {
       throw new AppError(400, 'All the fields are required')
@@ -432,6 +444,18 @@ exports.getMolthlyOrder = async (req, res, next) => {
         createdAt: {
           $gte: startDate,
           $lte: endDate
+        }
+      }).populate({
+        path: 'items',
+        populate: {
+          path: 'package',
+          populate: {
+            path: 'products',
+            populate: {
+              path: 'productId',
+              model: 'Product'
+            }
+          }
         }
       })
       res
