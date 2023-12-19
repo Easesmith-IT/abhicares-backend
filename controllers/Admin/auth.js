@@ -1,11 +1,11 @@
-const User = require('../models/user')
+const User = require('../../models/user')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
-const Admin = require('../models/admin')
-const authHelper = require('../util/authHelper')
-const jwtkey = require('../util/jwtkey')
-const { findOne } = require('../models/cart')
+const Admin = require('../../models/admin')
+const authHelper = require('../../util/authHelper')
+const jwtkey = require('../../util/jwtkey')
+const { findOne } = require('../../models/cart')
 
 // exports.getUser = async (req, res, next) => {
 //   console.log("inside user fn");

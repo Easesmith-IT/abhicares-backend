@@ -1,6 +1,6 @@
-const Favorite = require('../models/favorite');
-const Product = require('../models/product');
-const User = require('../models/user');
+const Favorite = require('../../models/favorite');
+const Product = require('../../models/product');
+const User = require('../../models/user');
 
 exports.addToFavorite = async(req, res)=>{
     try{

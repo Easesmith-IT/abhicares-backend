@@ -1,6 +1,6 @@
-const sellerModel = require('../models/seller')
+const sellerModel = require('../../models/seller')
 var bcrypt = require('bcryptjs')
-const AppError = require("../controllers/errorController");
+const AppError = require("../Admin/errorController");
 exports.createSeller = async (req, res, next) => {
   try {
     var {

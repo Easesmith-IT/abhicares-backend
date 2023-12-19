@@ -1,7 +1,7 @@
-const reviewModel = require("../models/review");
-const orderModel = require("../models/order");
+const reviewModel = require("../../models/review");
+const orderModel = require("../../models/order");
 const mongoose = require("mongoose");
-const AppError = require("../controllers/errorController");
+const AppError = require("../User/errorController");
 
 exports.addProductReview = async (req, res, next) => {
   try {

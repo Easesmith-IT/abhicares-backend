@@ -1,12 +1,12 @@
-const userModel = require("../models/user");
+const userModel = require("../../models/user");
 const bcrypt = require("bcryptjs");
 const session = require("express-session");
 const otpGenerator = require("otp-generator");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
-const cartModel = require("../models/cart");
-const productModel = require("../models/product");
-const AppError = require("../controllers/errorController");
+const cartModel = require("../../models/cart");
+const productModel = require("../../models/product");
+const AppError = require("../User/errorController");
 // const otpStore = {}
 // const myData = {}
 exports.generateOtpUser = async (req, res, next) => {

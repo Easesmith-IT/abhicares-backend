@@ -1,5 +1,5 @@
-const faqModel=require("../models/faq")
-const AppError = require('../controllers/errorController')
+const faqModel=require("../../models/faq")
+const AppError = require("../Admin/errorController");
 
 exports.createFaq = async (req, res, next) => {
   try {

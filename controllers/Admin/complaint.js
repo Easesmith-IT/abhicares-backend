@@ -1,4 +1,4 @@
-const Complaint = require('../models/complaint');
+const Complaint = require('../../models/complaint');
 const mongoose = require('mongoose');
 
 

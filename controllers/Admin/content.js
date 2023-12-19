@@ -1,5 +1,5 @@
-const Content = require("../models/content");
-const AppError = require("./errorController");
+const Content = require("../../models/content");
+const AppError = require("../Admin/errorController");
 
 
 exports.uploadBanners = async (req, res, next) => {

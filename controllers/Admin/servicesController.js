@@ -1,5 +1,5 @@
-const serviceModel = require("../models/service");
-const AppError = require("../controllers/errorController");
+const serviceModel = require("../../models/service");
+const AppError = require("../Admin/errorController");
 exports.createService = async (req, res, next) => {
   try {
     console.log(req.body);

@@ -5,25 +5,25 @@ const mongoose = require('mongoose')
 const { configDotenv } = require('dotenv')
 configDotenv({ path: '../config/config.env' })
 const fs = require('fs')
-const AppError = require('../controllers/errorController')
+const AppError = require("../Admin/errorController");
 
 //Importing Models
-const UserAddress = require('../models/useraddress')
-const User = require('../models/user')
-const Order = require('../models/order')
-const Payment = require('../models/payments')
-const Products = require('../models/product')
-const Cart = require('../models/cart')
-const Booking = require('../models/booking')
-const packageModel = require('../models/packages')
+const UserAddress = require('../../models/useraddress')
+const User = require('../../models/user')
+const Order = require('../../models/order')
+const Payment = require('../../models/payments')
+const Products = require('../../models/product')
+const Cart = require('../../models/cart')
+const Booking = require('../../models/booking')
+const packageModel = require('../../models/packages')
 // const { trackUserOrder } = require("../controllers/nursery");
 const {
   getInvoiceData,
   getCurrentDate,
   getDeliveryDate
-} = require('../util/invoiceData')
+} = require('../../util/invoiceData')
 const easyinvoice = require('easyinvoice')
-const order = require('../models/order')
+const order = require('../../models/order')
 // test credentials
 const razorPayKeyId = 'rzp_test_XtC1VoPYosmoCP'
 const razorKeySecret = 'olIq40GreBPUaEz80552bG2f'
@@ -396,8 +396,6 @@ exports.getAllOrders = async (req, res, next) => {
     // if(req.perm.dashboard!="write"){
     //   throw new AppError(400, 'You are not authorized')
     //  }
-
-    console.log('Hello--->')
     // let status="in-review"
     // if(req.body.status){
     //      status=req.body.status
@@ -428,7 +426,7 @@ exports.getAllOrders = async (req, res, next) => {
             }
           }
         }
-      })
+      }).populate("couponId")
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec()
@@ -471,7 +469,7 @@ exports.getMolthlyOrder = async (req, res, next) => {
             }
           }
         }
-      })
+      }).populate("couponId")
       res
         .status(200)
         .json({ success: true, message: 'Orders list', data: result })

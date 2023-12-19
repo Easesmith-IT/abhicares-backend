@@ -1,5 +1,5 @@
-const productModel = require('../models/product')
-const AppError = require("../controllers/errorController");
+const productModel = require('../../models/product')
+const AppError = require("../User/errorController");
 exports.createProduct = async (req, res, next) => {
   try {
     var { name, price, offerPrice, description, serviceId } = req.body

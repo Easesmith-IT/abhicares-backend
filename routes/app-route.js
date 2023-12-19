@@ -5,10 +5,10 @@ const { userAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
-const appController = require("../controllers/app-controller");
-const paymentController = require("../controllers/payments");
+const appController = require("../controllers/User/app-controller");
+const paymentController = require("../controllers/User/payments");
 
-const authController = require("../controllers/auth");
+const authController = require("../controllers/User/auth");
 // const orderController = require("../controllers/order");
 //////////////////////////////////////////////////////////////////
 

@@ -1,10 +1,10 @@
-const cartModel = require('../models/cart')
+const cartModel = require('../../models/cart')
 const mongoose = require('mongoose')
 const session = require('express-session')
-const productModel = require('../models/product')
+const productModel = require('../../models/product')
 const { errorMonitor } = require('events')
-const AppError = require('../controllers/errorController')
-const packageModel = require('../models/packages')
+const AppError = require("../Admin/errorController");
+const packageModel = require('../../models/packages')
 
 exports.addItemToCart = async (req, res, next) => {
   try {

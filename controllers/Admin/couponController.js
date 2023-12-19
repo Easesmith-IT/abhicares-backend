@@ -1,5 +1,5 @@
-const Coupon = require("../models/offerCoupon");
-const AppError = require("../controllers/errorController");
+const Coupon = require("../../models/offerCoupon");
+const AppError = require("../Admin/errorController");
 
 exports.createCoupon = async (req, res, next) => {
   try {

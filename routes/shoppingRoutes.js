@@ -6,23 +6,23 @@ const img_upload = require("../middleware/imageMiddleware");
 const isCity=require("../middleware/availableCity")
 
 // controllers
-const category_controller = require("../controllers/categoryController");
-const product_controller = require("../controllers/productController");
-const service_controller = require("../controllers/servicesController");
-const enquiry_controller = require("../controllers/enquiryController");
-const package_controller = require("../controllers/packageController");
-const cart_controller = require("../controllers/cartController");
-const user_controller = require("../controllers/userController");
-const userAddress_controller = require("../controllers/useraddress");
-const cmsHome_controller = require("../controllers/cmsHomeController");
-const review_controller = require("../controllers/reviewController");
-const payments_controller = require("../controllers/payments");
-const seller_controller = require("../controllers/sellerController");
-const booking_controller = require("../controllers/bookingController");
-const faq_controller=require("../controllers/faqController")
-const auth_controller = require("../controllers/auth");
-const helpCenter_controller=require("../controllers/helpCenterController")
-const coupon_controller=require("../controllers/couponController")
+const category_controller = require("../controllers/User/categoryController");
+const product_controller = require("../controllers/User/productController");
+const service_controller = require("../controllers/User/servicesController");
+const enquiry_controller = require("../controllers/User/enquiryController");
+const package_controller = require("../controllers/User/packageController");
+const cart_controller = require("../controllers/User/cartController");
+const user_controller = require("../controllers/User/userController");
+const userAddress_controller = require("../controllers/User/useraddress");
+const cmsHome_controller = require("../controllers/User/cmsHomeController");
+const review_controller = require("../controllers/User/reviewController");
+const payments_controller = require("../controllers/User/payments");
+const seller_controller = require("../controllers/User/sellerController");
+const booking_controller = require("../controllers/User/bookingController");
+const faq_controller=require("../controllers/User/faqController")
+const auth_controller = require("../controllers/User/auth");
+const helpCenter_controller=require("../controllers/User/helpCenterController")
+const coupon_controller=require("../controllers/User/couponController")
 
 
 
