@@ -43,11 +43,15 @@ exports.createBooking = async (req, res, next) => {
 
 exports.deleteBooking = async (req, res, next) => {
   try {
+    if (req.perm.bookings === 'write') {
     const id = req.params.id; // booking item id
     await bookingModel.findByIdAndDelete({ _id: id });
     res
       .status(200)
       .json({ success: true, message: "Booking deleted successful" });
+    } else {
+      throw new AppError(400, 'You are not authorized')
+    }
   } catch (err) {
     next(err);
   }
@@ -57,6 +61,7 @@ exports.deleteBooking = async (req, res, next) => {
 
 exports.getUsersBooking = async (req, res, next) => {
   try {
+    if (req.perm.bookings === 'write' || req.perm.bookings === 'read') {
     const id = req.user._id; // user id
     // const userId=req.body.userId  // user id
     const result = await bookingModel.find({ userId: id });
@@ -65,6 +70,9 @@ exports.getUsersBooking = async (req, res, next) => {
       message: "These all are your booking",
       data: result,
     });
+  } else {
+    throw new AppError(400, 'You are not authorized')
+  }
   } catch (err) {
     next(err);
   }

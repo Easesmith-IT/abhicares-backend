@@ -5,7 +5,7 @@ const mongoose = require('mongoose')
 const { configDotenv } = require('dotenv')
 configDotenv({ path: '../config/config.env' })
 const fs = require('fs')
-const AppError = require("../Admin/errorController");
+const AppError = require('../Admin/errorController')
 
 //Importing Models
 const UserAddress = require('../../models/useraddress')
@@ -81,7 +81,7 @@ exports.websiteCodOrder = async (req, res, next) => {
         var bookingItem = bookings.find(bookItem => {
           return bookItem.productId == prod._id
         })
-        console.log("productItem---->",productItem.quantity)
+        console.log('productItem---->', productItem.quantity)
         orderItems.push({
           product: prod,
           quantity: productItem.quantity,
@@ -320,29 +320,30 @@ async function getUserInvoice (order) {
 
 exports.getAllUserOrders = async (req, res, next) => {
   try {
-    if(req.perm.payments!="write" || req.perm.payments!="read"){
-      throw new AppError(400, 'You are not authorized')
-     }
-    // if(req.perm.bookings!="write"){
-    //   throw new AppError(400, 'You are not authorized')
-    //  }
-    const id = req.user._id
-    const result = await Order.find({ 'user.userId': id }).populate({
-      path: 'items',
-      populate: {
-        path: 'package',
+    if (req.perm.payments === 'write' || req.perm.payments === 'read') {
+      // if(req.perm.bookings!="write"){
+      //   throw new AppError(400, 'You are not authorized')
+      //  }
+      const id = req.user._id
+      const result = await Order.find({ 'user.userId': id }).populate({
+        path: 'items',
         populate: {
-          path: 'products',
+          path: 'package',
           populate: {
-            path: 'productId',
-            model: 'Product'
+            path: 'products',
+            populate: {
+              path: 'productId',
+              model: 'Product'
+            }
           }
         }
-      }
-    })
-    res
-      .status(200)
-      .json({ success: true, message: 'Your all orders', data: result })
+      })
+      res
+        .status(200)
+        .json({ success: true, message: 'Your all orders', data: result })
+    } else {
+      throw new AppError(400, 'You are not authorized')
+    }
   } catch (err) {
     console.log('err---->', err)
     next(err)
@@ -377,18 +378,19 @@ exports.createOrderInvoice = async (req, res, next) => {
 }
 
 exports.updateOrderStatus = async (req, res, next) => {
-  if(req.perm.payments!="write"){
-    throw new AppError(400, 'You are not authorized')
-   }
   try {
-    const id = req.params.id // order id
-    const status = req.body.status
-    var result = await Order.findOne({ _id: id })
-    result.status = status
-    await result.save()
-    res
-      .status(200)
-      .json({ success: true, message: 'Order status changed successfull' })
+    if (req.perm.payments === 'write') {
+      const id = req.params.id // order id
+      const status = req.body.status
+      var result = await Order.findOne({ _id: id })
+      result.status = status
+      await result.save()
+      res
+        .status(200)
+        .json({ success: true, message: 'Order status changed successfull' })
+    } else {
+      throw new AppError(400, 'You are not authorized')
+    }
   } catch (err) {
     next(err)
   }
@@ -396,52 +398,46 @@ exports.updateOrderStatus = async (req, res, next) => {
 
 exports.getAllOrders = async (req, res, next) => {
   try {
-    if(req.perm.payments!="write" || req.perm.payments!="read"){
-      throw new AppError(400, 'You are not authorized')
-     }
-    // if(req.perm.dashboard!="write"){
-    //   throw new AppError(400, 'You are not authorized')
-    //  }
-    // let status="in-review"
-    // if(req.body.status){
-    //      status=req.body.status
-    // }
-    //  const {status}=req.body.status
-    var page = 1
-    if (req.query.page) {
-      page = req.query.page
-    }
-    var limit = 10
-    const allList = await Order.find().count()
-    var num = allList / limit
-    var fixedNum = num.toFixed()
-    var totalPage = fixedNum
-    if (num > fixedNum) {
-      totalPage++
-    }
-    const result = await Order.find()
-      .populate({
-        path: 'items',
-        populate: {
-          path: 'package',
+    if (req.perm.payments === 'write' || req.perm.payments === 'read') {
+      var page = 1
+      if (req.query.page) {
+        page = req.query.page
+      }
+      var limit = 10
+      const allList = await Order.find().count()
+      var num = allList / limit
+      var fixedNum = num.toFixed()
+      var totalPage = fixedNum
+      if (num > fixedNum) {
+        totalPage++
+      }
+      const result = await Order.find()
+        .populate({
+          path: 'items',
           populate: {
-            path: 'products',
+            path: 'package',
             populate: {
-              path: 'productId',
-              model: 'Product'
+              path: 'products',
+              populate: {
+                path: 'productId',
+                model: 'Product'
+              }
             }
           }
-        }
-      }).populate("couponId")
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .exec()
-    res.status(201).json({
-      success: true,
-      message: 'List of all orders',
-      data: result,
-      totalPage: totalPage
-    })
+        })
+        .populate('couponId')
+        .limit(limit * 1)
+        .skip((page - 1) * limit)
+        .exec()
+      res.status(201).json({
+        success: true,
+        message: 'List of all orders',
+        data: result,
+        totalPage: totalPage
+      })
+    } else {
+      throw new AppError(400, 'You are not authorized')
+    }
   } catch (err) {
     next(err)
   }
@@ -449,36 +445,39 @@ exports.getAllOrders = async (req, res, next) => {
 
 exports.getMolthlyOrder = async (req, res, next) => {
   try {
-    if(req.perm.payments!="write" || req.perm.payments!="read"){
-      throw new AppError(400, 'You are not authorized')
-     }
-    const { month, year } = req.body
-    if (!month || !year) {
-      throw new AppError(400, 'All the fields are required')
-    } else {
-      const startDate = new Date(year, month - 1, 1) // Month is zero-based
-      const endDate = new Date(year, month, 0, 23, 59, 59)
-      const result = await Order.find({
-        createdAt: {
-          $gte: startDate,
-          $lte: endDate
-        }
-      }).populate({
-        path: 'items',
-        populate: {
-          path: 'package',
-          populate: {
-            path: 'products',
-            populate: {
-              path: 'productId',
-              model: 'Product'
-            }
+    if (req.perm.payments === 'write' || req.perm.payments === 'read') {
+      const { month, year } = req.body
+      if (!month || !year) {
+        throw new AppError(400, 'All the fields are required')
+      } else {
+        const startDate = new Date(year, month - 1, 1) // Month is zero-based
+        const endDate = new Date(year, month, 0, 23, 59, 59)
+        const result = await Order.find({
+          createdAt: {
+            $gte: startDate,
+            $lte: endDate
           }
-        }
-      }).populate("couponId")
-      res
-        .status(200)
-        .json({ success: true, message: 'Orders list', data: result })
+        })
+          .populate({
+            path: 'items',
+            populate: {
+              path: 'package',
+              populate: {
+                path: 'products',
+                populate: {
+                  path: 'productId',
+                  model: 'Product'
+                }
+              }
+            }
+          })
+          .populate('couponId')
+        res
+          .status(200)
+          .json({ success: true, message: 'Orders list', data: result })
+      }
+    } else {
+      throw new AppError(400, 'You are not authorized')
     }
   } catch (err) {
     console.log('err--->', err)
