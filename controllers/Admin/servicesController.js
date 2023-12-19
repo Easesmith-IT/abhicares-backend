@@ -58,6 +58,7 @@ exports.getAllService = async (req, res, next) => {
 
 exports.getCategoryService = async (req, res, next) => {
   try {
+    console.log("perm---->",req.perm)
     const id = req.params.id;
     const result = await serviceModel.find({ categoryId: id });
     res

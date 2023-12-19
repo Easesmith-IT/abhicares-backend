@@ -17,9 +17,9 @@ const AppError = require("../Admin/errorController");
 
 exports.postCreateCategory = async (req, res, next) => {
   try {
-    // if(req.perm.bookings!="write"){
-    //   throw new AppError(400, 'You are not authorized')
-    //  }
+    if(req.perm.services!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const { name } = req.body;
     if (!name) {
       // res.status(400).json({success:false,message:"All the fields are required"})
@@ -38,6 +38,10 @@ exports.postCreateCategory = async (req, res, next) => {
 
 exports.getAllCategory = async (req, res, next) => {
   try {
+          console.log("perm---->",req.perm)
+    if(req.perm.services!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const result = await Category.find();
     res
       .status(200)
@@ -72,6 +76,7 @@ exports.updateCategory = async (req, res, next) => {
 
 exports.deleteCategory = async (req, res, next) => {
   try {
+    console.log("perm---->",req.perm)
     const id = req.params.id;
     await Category.findByIdAndDelete({ _id: id });
     res

@@ -75,36 +75,10 @@ exports.isAdminAuth = async (req, res, next) => {
           success: false
         })
       }else{
-          // req.perm=authData.permissions
+          req.perm=authData.permissions
           next()     
       }
     });
-    //token is missing
-    // if (!token) {
-    //   return res.status(401).json({
-    //     message: 'Token is missing',
-    //     success: false
-    //   })
-    // }
-    // try {
-
-     
-
-      // const decoded = await jwt.verify(token, jwtkey.secretJwtKey)
-      //   const username = decoded.username;
-      //   const admin = await Admin.findOne({ userName: username });
-      //   console.log("username", username);
-      //   console.log("admin", admin);
-      //give token to user
-      //   req.admin = admin;
-    // } catch (err) {
-    //   return res.status(401).json({
-    //     message: 'Invalid Token',
-    //     error: err,
-    //     success: false
-    //   })
-    // }
-    //if token is valid move on to next middleware
    
   } catch (err) {
     console.log(err)
