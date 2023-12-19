@@ -38,6 +38,9 @@ exports.postCreateCategory = async (req, res, next) => {
 
 exports.getAllCategory = async (req, res, next) => {
   try {
+    if(req.perm.services!="write" || req.perm.services!="read"){
+      throw new AppError(400, 'You are not authorized')
+     }
           console.log("perm---->",req.perm)
     if(req.perm.services!="write"){
       throw new AppError(400, 'You are not authorized')
@@ -56,6 +59,9 @@ exports.getAllCategory = async (req, res, next) => {
 };
 exports.updateCategory = async (req, res, next) => {
   try {
+    if(req.perm.services!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const id = req.params.id;
     const { name, totalServices } = req.body;
     if (!name || !totalServices) {
@@ -76,7 +82,9 @@ exports.updateCategory = async (req, res, next) => {
 
 exports.deleteCategory = async (req, res, next) => {
   try {
-    console.log("perm---->",req.perm)
+    if(req.perm.services!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const id = req.params.id;
     await Category.findByIdAndDelete({ _id: id });
     res
@@ -89,6 +97,9 @@ exports.deleteCategory = async (req, res, next) => {
 
 exports.postAddService = async (req, res, next) => {
   try {
+    if(req.perm.services!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const { categoryId, name, description, image, startingPrice, appHomepage } =
       req.body;
     var service = await Service({
@@ -107,6 +118,9 @@ exports.postAddService = async (req, res, next) => {
 
 exports.postAddProduct = async (req, res, next) => {
   try {
+    if(req.perm.services!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const { serviceId, name, description, price, offerPrice } = req.body;
     var product = await Product({
       serviceId: serviceId,
@@ -124,6 +138,9 @@ exports.postAddProduct = async (req, res, next) => {
 
 exports.AddPackage = async (req, res, next) => {
   try {
+    if(req.perm.services!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const { categoryId, name, description, price, offerPrice, products } =
       req.body;
     var prods = [];
@@ -154,6 +171,9 @@ exports.AddPackage = async (req, res, next) => {
 
 exports.getOrders = async (req, res, next) => {
   try {
+    if(req.perm.services!="write" || req.perm.services!="read"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const orders = await Order.find();
     return res.status(200).json({ orders: orders });
   } catch (err) {

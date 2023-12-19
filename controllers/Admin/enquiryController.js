@@ -3,7 +3,7 @@ const AppError = require("../Admin/errorController");
 
 exports.createEnquiry=async(req,res,next)=>{
     try{
-         if(req.perm.enquiry!="read"){
+         if(req.perm.enquiry!="write"){
             throw new AppError(400, 'You are not authorized')
            }
            const {name,phone,serviceType,city,state}=req.body
@@ -18,7 +18,7 @@ exports.createEnquiry=async(req,res,next)=>{
 }
 exports.getAllEnquiry=async(req,res,next)=>{
     try{
-        if(req.perm.enquiry!="read"){
+           if(req.perm.enquiry!="read" || req.perm.enquiry!="write"){
             throw new AppError(400, 'You are not authorized')
            }
            var page=1

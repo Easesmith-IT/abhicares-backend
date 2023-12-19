@@ -4,6 +4,9 @@ const AppError = require("../Admin/errorController");
 
 exports.uploadBanners = async (req, res, next) => {
   try {
+    if(req.perm.content!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const { type, section, page } = req.body;
 
      const  image = req.files[0].filename
@@ -46,7 +49,9 @@ exports.uploadBanners = async (req, res, next) => {
 
 exports.getBanners = async (req, res, next) => {
   try {
-
+    if(req.perm.content!="write" || req.perm.content!="read"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const { type, section, page, heroBanners } = req.query;
     let doc;
     if (heroBanners) {
@@ -85,6 +90,9 @@ exports.getBanners = async (req, res, next) => {
 
 exports.updateContent = async (req, res) => {
   try {
+    if(req.perm.content!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const id = req.params.id;
     const content = await Content.findOne({ _id: id });
 
@@ -127,6 +135,9 @@ exports.updateContent = async (req, res) => {
 
 exports.getContent = async (req, res) => {
   try {
+    if(req.perm.content!="write" || req.perm.content!="read"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const title = req.query.title;
     const content = await Content.findOne({ title: title });
     if (!content) {

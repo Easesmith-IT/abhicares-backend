@@ -3,6 +3,9 @@ const AppError = require("../Admin/errorController");
 
 exports.createCoupon = async (req, res, next) => {
   try {
+    if(req.perm.offers!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const { name, offPercentage, description } = req.body;
 
     if (!name || !offPercentage || !description) {
@@ -29,6 +32,9 @@ exports.createCoupon = async (req, res, next) => {
 
 exports.deleteCoupon = async (req, res, next) => {
   try {
+    if(req.perm.offers!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const id = req.params.id; // this is object id
     await Coupon.findByIdAndDelete({ _id: id });
     res.status(200).json({ success: true, message: "data deleted successful" });
@@ -39,6 +45,9 @@ exports.deleteCoupon = async (req, res, next) => {
 
 exports.updateCoupon = async (req, res, next) => {
   try {
+    if(req.perm.offers!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const { name, offPercentage, description } = req.body;
     const id = req.params.id; // this is object id of available city
 
@@ -61,6 +70,9 @@ exports.updateCoupon = async (req, res, next) => {
 
 exports.getAllCoupons = async (req, res, next) => {
   try {
+    if(req.perm.offers!="write" || req.perm.offers!="read" ){
+      throw new AppError(400, 'You are not authorized')
+     }
     const result = await Coupon.find();
     res
       .status(200)
@@ -76,7 +88,9 @@ exports.getAllCoupons = async (req, res, next) => {
 
 exports.getCouponByName=async(req,res,next)=>{
   try{
-         
+    if(req.perm.offers!="write" || req.perm.offers!="read" ){
+      throw new AppError(400, 'You are not authorized')
+     }  
         const {name}=req.body
       if(!name){
        

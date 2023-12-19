@@ -2,6 +2,9 @@ const availableCitiesModel=require("../../models/availableCities");
 const AppError = require("../Admin/errorController");
 exports.createAvailableCities=async(req,res,next)=>{
     try{
+        if(req.perm.availableCities!="write"){
+            throw new AppError(400, 'You are not authorized')
+           }
             const {city,state,pinCode}=req.body
 
              if(!city || !state || !pinCode){
@@ -24,6 +27,9 @@ exports.createAvailableCities=async(req,res,next)=>{
 
 exports.deleteAvailableCities=async(req,res,next)=>{
     try{
+        if(req.perm.availableCities!="write"){
+            throw new AppError(400, 'You are not authorized')
+           }
             const id=req.params.id  // this is object id
             await availableCitiesModel.findByIdAndDelete({_id:id})
             res.status(200).json({success:true,message:"data deleted successful"})
@@ -34,6 +40,9 @@ exports.deleteAvailableCities=async(req,res,next)=>{
 
 exports.updateAvailableCities=async(req,res,next)=>{
     try{
+        if(req.perm.availableCities!="write"){
+            throw new AppError(400, 'You are not authorized')
+           }
             const {city,state,pinCode}=req.body
             const id=req.params.id  // this is object id of available city
 
@@ -55,6 +64,9 @@ exports.updateAvailableCities=async(req,res,next)=>{
 
 exports.getAvailableCities=async(req,res,next)=>{
     try{
+        if(req.perm.availableCities!="write" || req.perm.availableCities!="read"){
+            throw new AppError(400, 'You are not authorized')
+           }
               
                    const result=await availableCitiesModel.find()
                      res.status(200).json({success:true,message:"List of all available cities",data:result})

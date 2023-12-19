@@ -1,5 +1,5 @@
 const productModel=require("../../models/product")
-
+const AppError = require("../Admin/errorController");
 exports.getCmsProduct=async(req,res,next)=>{
     try{
           const id=req.params.id // this is service id

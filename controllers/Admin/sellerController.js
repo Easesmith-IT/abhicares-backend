@@ -68,7 +68,13 @@ exports.getAllSeller = async (req, res, next) => {
     }
 
     const result = await sellerModel
-      .find()
+      .find().populate("categoryId").populate({
+        path:"services",
+        populate:{
+          path:"serviceId",
+          model:"Service"
+        }
+      })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec()

@@ -2,7 +2,9 @@ const serviceModel = require("../../models/service");
 const AppError = require("../Admin/errorController");
 exports.createService = async (req, res, next) => {
   try {
-    console.log(req.body);
+    if(req.perm.services!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     var {
       name,
       startingPrice,
@@ -47,6 +49,9 @@ exports.createService = async (req, res, next) => {
 
 exports.getAllService = async (req, res, next) => {
   try {
+    if(req.perm.services!="write" || req.perm.services!="read"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const result = await serviceModel.find();
     res
       .status(200)
@@ -58,7 +63,9 @@ exports.getAllService = async (req, res, next) => {
 
 exports.getCategoryService = async (req, res, next) => {
   try {
-    console.log("perm---->",req.perm)
+    if(req.perm.services!="write" || req.perm.services!="read"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const id = req.params.id;
     const result = await serviceModel.find({ categoryId: id });
     res
@@ -71,6 +78,9 @@ exports.getCategoryService = async (req, res, next) => {
 
 exports.updateService = async (req, res, next) => {
   try {
+    if(req.perm.services!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     console.log(req.files)
     const id = req.params.id;  //service id
     const {
@@ -113,6 +123,9 @@ exports.updateService = async (req, res, next) => {
 
 exports.deleteCategoryService = async (req, res, next) => {
   try {
+    if(req.perm.services!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const id = req.params.id;
     await serviceModel.findByIdAndDelete({ _id: id });
     res

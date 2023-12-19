@@ -3,6 +3,9 @@ const AppError = require("../Admin/errorController");
 
 exports.createHelpCenter = async (req, res, next) => {
   try {
+    if(req.perm.helpCenter!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const id = req.user._id
     const { description, issue, others } = req.body
     if (!description) {
@@ -24,7 +27,9 @@ exports.createHelpCenter = async (req, res, next) => {
 }
 exports.getAllHelpCenter = async (req, res, next) => {
   try {
-
+    if(req.perm.helpCenter!="write" || req.perm.helpCenter!="read"){
+      throw new AppError(400, 'You are not authorized')
+     }
     let status="in-review"
     if(req.body.status){
          status=req.body.status
@@ -55,6 +60,9 @@ exports.getAllHelpCenter = async (req, res, next) => {
 }
 exports.deleteHelpCenter = async (req, res, next) => {
   try {
+    if(req.perm.helpCenter!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const id = req.params.id
 
     await helpCenterModel.findByIdAndDelete({ _id: id })
@@ -66,6 +74,9 @@ exports.deleteHelpCenter = async (req, res, next) => {
 
 exports.updateHelpCenter = async (req, res, next) => {
   try {
+    if(req.perm.helpCenter!="write" || req.perm.helpCenter!="read"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const id = req.params.id
     const { resolution } = req.body
     if (!resolution) {
@@ -86,6 +97,9 @@ exports.updateHelpCenter = async (req, res, next) => {
 
 exports.getUserHelpCenter = async (req, res, next) => {
   try {
+    if(req.perm.helpCenter!="write" || req.perm.helpCenter!="read"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const id = req.user._id
     const result = await helpCenterModel.find({ "userId": id })
     if (result.length == 0) {
