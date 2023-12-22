@@ -17,23 +17,27 @@ const orderSchema = new Schema(
       type: String,
       default: 'Online payment'
     },
-    products: [
+    items: [
       {
         product: {
           type: Object,
-          required: true
+          // required: true
+        },
+        package: {
+          type: Object,
+          // required: true
         },
         quantity: {
           type: Number
         },
-        bookingDate: {
-          type: String
-          // required: true,
-        },
-        bookingTime: {
-          type: String
-          // required: true,
-        }
+        // bookingDate: {
+        //   type: String
+        //   // required: true,
+        // },
+        // bookingTime: {
+        //   type: String
+        //   // required: true,
+        // }
       }
     ],
     user: {

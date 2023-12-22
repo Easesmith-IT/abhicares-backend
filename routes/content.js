@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth')
-const contentController = require('../controllers/content.js');
+const contentController = require('../controllers/Admin/content.js');
 const image_middleware = require('../middleware/imageMiddleware.js')
 
 router.post("/upload-banners", image_middleware, contentController.uploadBanners);

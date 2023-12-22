@@ -33,7 +33,11 @@ const bookingSchema = new mongoose.Schema(
     },
     product: {
       type: Object,
-      required: true,
+      // required: true,
+    },
+    package: {
+      type: Object,
+      // required: true,
     },
     quantity: {
       type: Number,

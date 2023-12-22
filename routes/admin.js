@@ -7,20 +7,20 @@ const router = express.Router();
 
 const img_upload = require("../middleware/imageMiddleware");
 
-const category_controller = require("../controllers/categoryController");
-const service_controller = require("../controllers/servicesController");
-const product_controller = require("../controllers/productController");
-const seller_controller = require("../controllers/sellerController");
-const user_controller = require("../controllers/userController");
-const enquiry_controller = require("../controllers/enquiryController");
-const package_controller = require("../controllers/packageController");
-const auth_controller = require("../controllers/auth");
-const payments_controller=require("../controllers/payments")
-const helpCenter_controller=require("../controllers/helpCenterController")
-const availableCities_controller = require("../controllers/availableCitiesController")
+const category_controller = require("../controllers/Admin/categoryController");
+const service_controller = require("../controllers/Admin/servicesController");
+const product_controller = require("../controllers/Admin/productController");
+const seller_controller = require("../controllers/Admin/sellerController");
+const user_controller = require("../controllers/Admin/userController");
+const enquiry_controller = require("../controllers/Admin/enquiryController");
+const package_controller = require("../controllers/Admin/packageController");
+const auth_controller = require("../controllers/Admin/auth");
+const payments_controller=require("../controllers/Admin/payments")
+const helpCenter_controller=require("../controllers/Admin/helpCenterController")
+const availableCities_controller = require("../controllers/Admin/availableCitiesController")
 
-const coupon_controller = require("../controllers/couponController")
-const faq_controller=require("../controllers/faqController")
+const coupon_controller = require("../controllers/Admin/couponController")
+const faq_controller=require("../controllers/Admin/faqController")
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // Category Routes
 
@@ -190,7 +190,7 @@ router.get("/get-availabe-city", isAdminAuth, availableCities_controller.getAvai
 
 router.post("/change-order-status/:id",isAdminAuth,payments_controller.updateOrderStatus) // passing order id
 router.get("/get-all-orders",isAdminAuth,payments_controller.getAllOrders)
-router.get("/get-monthly-orders",isAdminAuth,payments_controller.getMolthlyOrder)
+router.post("/get-monthly-orders",isAdminAuth,payments_controller.getMolthlyOrder)
 
 // FAQ Routes
 
