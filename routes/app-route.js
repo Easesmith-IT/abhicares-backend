@@ -7,6 +7,7 @@ const router = express.Router();
 
 const appController = require("../controllers/User/app-controller");
 const paymentController = require("../controllers/User/payments");
+const service_controller = require("../controllers/User/servicesController");
 
 const authController = require("../controllers/User/auth");
 // const orderController = require("../controllers/order");
@@ -36,5 +37,7 @@ router.get("/get-address/:userId", appController.getUserAddress);
 router.post("/create-order", paymentController.AppcodOrder);
 router.get("/get-upcoming-order/:userId", appController.geUpcomingOrders);
 router.get("/get-complete-order", appController.getCompletedOrders);
+
+router.get("/search-service", service_controller.searchService);
 
 module.exports = router;
