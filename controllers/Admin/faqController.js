@@ -3,6 +3,9 @@ const AppError = require("../Admin/errorController");
 
 exports.createFaq = async (req, res, next) => {
   try {
+    if(req.perm.faq!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const { ques,ans} = req.body
     if (!ques || !ans) {
       throw new AppError(400, 'All the fields are required')
@@ -27,6 +30,9 @@ exports.createFaq = async (req, res, next) => {
 }
 exports.getAllFaq= async (req, res, next) => {
   try {
+    if(req.perm.faq!="write" || req.perm.faq!="read"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const result = await faqModel.find()
     res
       .status(201)
@@ -37,6 +43,9 @@ exports.getAllFaq= async (req, res, next) => {
 }
 exports.deleteFaq = async (req, res, next) => {
   try {
+    if(req.perm.faq!="write"){
+      throw new AppError(400, 'You are not authorized')
+     }
     const id = req.params.id
     await faqModel.findByIdAndDelete({ _id: id })
     res.status(201).json({ success: true, message: 'data deleted successful' })
@@ -47,6 +56,9 @@ exports.deleteFaq = async (req, res, next) => {
 
 exports.updateFaq = async (req, res, next) => {
     try {
+      if(req.perm.faq!="write"){
+        throw new AppError(400, 'You are not authorized')
+       }
         const id=req.params.id
       const { ques,ans} = req.body
       if (!ques || !ans) {
