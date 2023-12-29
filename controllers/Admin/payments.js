@@ -168,34 +168,24 @@ exports.websiteCodOrder = async (req, res, next) => {
   }
 };
 
-exports.AppcodOrder = async (req, res, next) => {
+exports.appcodOrder = async (req, res, next) => {
   try {
-    console.log(req.body);
+    // console.log(req.body);
     const userId = req.body.userId;
     const userAddressId = req.body.userAddressId;
     const user = await User.findById(userId);
     const cart = req.body.cart;
-    // cart["products"].forEach((value, index, array) => {
-    //   console.log(cart["products"][index]);
-    // });
-    // console.log(cart)
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-
-    // Extract cart data from the user's cart
     const products = cart["products"];
-    // // Create an array to store order items
     const orderItems = [];
-    console.log(products);
     for (const productItem of products) {
-      console.log(products);
+      console.log("---", productItem);
       orderItems.push(productItem["prod"]);
     }
-    // console.log(orderItems);
 
     const userAddress = await UserAddress.findById(userAddressId);
-    // Create a new order instance
 
     const order = new Order({
       paymentType: cart["paymentType"],
@@ -214,8 +204,6 @@ exports.AppcodOrder = async (req, res, next) => {
         },
       },
     });
-
-    // // // Save the order to the database
 
     await order.save();
     return res.status(200).json(order);
