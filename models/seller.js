@@ -10,7 +10,7 @@ const sellerSchema = new Schema(
     },
     legalName: {
       type: String,
-      required: true,
+      // required: true,
     },
     gstNumber: {
       type: String,
@@ -21,7 +21,7 @@ const sellerSchema = new Schema(
     },
     status: {
       type: String,
-      default:"in-review",
+      default: "in-review",
     },
     address: {
       state: {
@@ -59,15 +59,15 @@ const sellerSchema = new Schema(
     contactPerson: {
       name: {
         type: String,
-        required: true,
+        // required: true,
       },
       phone: {
         type: String,
-        required: true,
+        // required: true,
       },
       email: {
         type: String,
-        required: true,
+        // required: true,
       },
     },
     categoryId: {

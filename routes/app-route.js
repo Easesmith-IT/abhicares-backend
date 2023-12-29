@@ -34,10 +34,12 @@ router.post("/signup", appController.createUser);
 router.post("/add-address", appController.AddUserAddress);
 router.get("/get-address/:userId", appController.getUserAddress);
 ////
-router.post("/create-order", paymentController.AppcodOrder);
+router.post("/create-order", paymentController.appCodOrder);
 router.get("/get-upcoming-order/:userId", appController.geUpcomingOrders);
 router.get("/get-complete-order", appController.getCompletedOrders);
 
 router.get("/search-service", service_controller.searchService);
+router.get("/get-tickets/:userId", appController.getUserTickets);
+router.post("/raise-ticket", appController.raiseTicket);
 
 module.exports = router;
