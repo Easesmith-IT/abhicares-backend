@@ -67,6 +67,7 @@ exports.isAdminAuth = async (req, res, next) => {
   try {
     // console.log('token inside', req.header('Authorization'))
     const token = req.header('Authorization')
+    console.log("hello")
     jwt.verify(token, jwtkey.secretJwtKey, function(err, authData) {
       if(err){
         return res.status(401).json({

@@ -32,6 +32,13 @@ const schema = new mongoose.Schema({
     type: String,
     default: "placed",
   },
+  bookingDate: {
+    type: Date,
+  },
+  bookingTime: {
+    type: String,
+  },
+
 });
 
 const model = new mongoose.model("SellerOrder", schema);

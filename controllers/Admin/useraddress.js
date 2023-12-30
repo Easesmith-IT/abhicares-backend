@@ -1,6 +1,6 @@
-const userAddressModel = require("../models/useraddress");
+const userAddressModel = require("../../models/useraddress");
 const mongoose = require("mongoose");
-const AppError = require("../controllers/errorController");
+const AppError = require("../Admin/errorController");
 
 exports.addUserAddress = async (req, res, next) => {
   console.log("hello")
