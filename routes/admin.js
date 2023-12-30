@@ -207,9 +207,9 @@ router.delete("/delete-help-list/:id",isAdminAuth,helpCenter_controller.deleteHe
 router.patch("/update-help-list/:id",isAdminAuth,helpCenter_controller.updateHelpCenter) // passing object id
 
 //Seller order Routes
-router.get("/get-seller-list/:id",isAdminAuth,sellerOrder_controller.getSellerList)  // passing category id
-router.post("/allot-seller-order/:id",isAdminAuth,sellerOrder_controller.allotSeller) // passing seller id
-router.patch("/update-seller-order-status/:id",isAdminAuth,sellerOrder_controller.updateSellerOrderStatus) // passing seller order id
+router.get("/get-seller-list/:id",isAdminAuth,sellerOrder_controller.getSellerList)  // passing service id
+router.patch("/allot-seller-order/:id",isAdminAuth,sellerOrder_controller.allotSeller) // passing seller id
+router.patch("/update-seller-order-status/:id",isAdminAuth,sellerOrder_controller.updateSellerOrderStatus) // passing booking id
 // router.get("/get-seller-order-list/:id",isAdminAuth,sellerOrder_controller.getSellerOrder)
 
 

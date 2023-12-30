@@ -28,7 +28,11 @@ exports.getSellerList = async (req, res, next) => {
 exports.allotSeller = async (req, res, next) => {
   try {
     if (req.perm.partners === 'write') {
-      const id = req.params.id // this is seller id      
+      const id = req.params.id // this is seller id 
+      const {bookingId}=req.body
+      if(!bookingId){
+        throw new AppError(400, 'All the fields are required')
+      }     
         var bookingData= await bookingModel.findOne({_id:bookingId})
         bookingData.sellerId=id
         await bookingData.save()
