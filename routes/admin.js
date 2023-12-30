@@ -214,7 +214,7 @@ router.get("/get-seller-order-list/:id",isAdminAuth,sellerOrder_controller.getSe
 
 
 //Booking Routes
-
+router.get("/get-booking-details/:id",isAdminAuth,booking_controller.getBookingDetails) // passing booking id
 router.get("/get-booking-list",isAdminAuth,booking_controller.getAllBooking)
 router.delete("/delete-booking/:id",isAdminAuth,booking_controller.deleteBooking) // passing booking id
 
