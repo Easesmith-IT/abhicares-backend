@@ -31,7 +31,7 @@ exports.getAllBooking = async (req, res, next) => {
             model: 'Product'
           }
         }
-      })
+      }).populate("sellerId")
       res.status(200).json({
         success: true,
         message: 'All booking list',
@@ -63,6 +63,35 @@ exports.updateBookingStatus = async (req, res, next) => {
       throw new AppError(400, 'You are not authorized')
     }
   } catch (err) {
+    next(err)
+  }
+}
+
+
+exports.getBookingDetails= async (req, res, next) => {
+  try {
+    if (req.perm.bookings === 'write' || req.perm.bookings === 'read') {
+      const id=req.params.id
+      const result = await bookingModel.findOne({_id:id}).populate({
+        path: 'package',
+        populate: {
+          path: 'products',
+          populate: {
+            path: 'productId',
+            model: 'Product'
+          }
+        }
+      }).populate("sellerId")
+      res.status(200).json({
+        success: true,
+        message: 'Booking details getting successful',
+        bookingDetails: result
+      })
+    } else {
+      throw new AppError(400, 'You are not authorized')
+    }
+  } catch (err) {
+    console.log(err)
     next(err)
   }
 }

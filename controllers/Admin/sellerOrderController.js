@@ -35,6 +35,7 @@ exports.allotSeller = async (req, res, next) => {
       }     
         var bookingData= await bookingModel.findOne({_id:bookingId})
         bookingData.sellerId=id
+        bookingData.status="alloted"
         await bookingData.save()
         res.status(200).json({
           success: true,
@@ -72,22 +73,22 @@ exports.updateSellerOrderStatus = async (req, res, next) => {
   }
 
 
-//   exports.getSellerOrder = async (req, res, next) => {
-//     try {
-//       if (req.perm.partners === 'write' || req.perm.partners === 'read') {
-//         const id = req.params.id // seller id
-//         const result =await sellerOrderModel.find({"Seller":id})
+  exports.getSellerOrder = async (req, res, next) => {
+    try {
+      if (req.perm.partners === 'write' || req.perm.partners === 'read') {
+        const id = req.params.id // seller id
+        const result =await bookingModel.find({"sellerId":id})
 
-//         res.status(200).json({
-//           success: true,
-//           message: 'Your order list',
-//           data:result
-//         })
-//       } else {
-//         throw new AppError(400, 'You are not authorized')
-//       }
-//     } catch (err) {
-//         console.log(err)
-//       next(err)
-//     }
-//   }
+        res.status(200).json({
+          success: true,
+          message: 'Your order list',
+          sellerOrders:result
+        })
+      } else {
+        throw new AppError(400, 'You are not authorized')
+      }
+    } catch (err) {
+        console.log(err)
+      next(err)
+    }
+  }
