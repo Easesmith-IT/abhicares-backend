@@ -176,12 +176,29 @@ exports.login = async (req, res, next) => {
   try {
     const phoneNumber = req.body.phone;
     console.log(phoneNumber);
-    var user = await User.findOne({ phone: phoneNumber });
-    console.log(user);
-    if (!user) {
-      return res.status(404).json({ error: "No user Found" });
+    var partner = await sellerModel.findOne({ phone: phoneNumber });
+    console.log(partner);
+    if (!partner) {
+      return res.status(404).json({ error: "No partner Found" });
     } else {
-      return res.status(200).json({ user });
+      return res.status(200).json({ partner });
+    }
+  } catch (err) {
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(err);
+  }
+};
+
+exports.getPartner = async (req, res, next) => {
+  try {
+    const partnerId = req.params.id;
+    var partner = await sellerModel.findById(partnerId).populate("categoryId");
+    console.log(partner);
+    if (!partner) {
+      return res.status(404).json({ error: "No partner Found" });
+    } else {
+      return res.status(200).json({ partner });
     }
   } catch (err) {
     const error = new Error(err);
