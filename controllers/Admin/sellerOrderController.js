@@ -14,7 +14,7 @@ exports.getSellerList = async (req, res, next) => {
       res.status(200).json({
         success: true,
         message: 'Active seller list',
-        data: result
+        sellerList: result
       })
     } else {
       throw new AppError(400, 'You are not authorized')
