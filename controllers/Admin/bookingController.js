@@ -31,7 +31,7 @@ exports.getAllBooking = async (req, res, next) => {
             model: 'Product'
           }
         }
-      })
+      }).populate("sellerId")
       res.status(200).json({
         success: true,
         message: 'All booking list',
