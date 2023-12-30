@@ -35,6 +35,7 @@ exports.allotSeller = async (req, res, next) => {
       }     
         var bookingData= await bookingModel.findOne({_id:bookingId})
         bookingData.sellerId=id
+        bookingData.status="alloted"
         await bookingData.save()
         res.status(200).json({
           success: true,
