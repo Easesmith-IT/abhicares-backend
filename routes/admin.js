@@ -19,6 +19,7 @@ const payments_controller=require("../controllers/Admin/payments")
 const helpCenter_controller=require("../controllers/Admin/helpCenterController")
 const availableCities_controller = require("../controllers/Admin/availableCitiesController")
 const sellerOrder_controller=require("../controllers/Admin/sellerOrderController")
+const booking_controller=require("../controllers/Admin/bookingController")
 
 const coupon_controller = require("../controllers/Admin/couponController")
 const faq_controller=require("../controllers/Admin/faqController")
@@ -207,11 +208,15 @@ router.patch("/update-help-list/:id",isAdminAuth,helpCenter_controller.updateHel
 
 //Seller order Routes
 router.get("/get-seller-list/:id",isAdminAuth,sellerOrder_controller.getSellerList)  // passing category id
-router.post("/create-seller-order/:id",isAdminAuth,sellerOrder_controller.createSellerOrder) // passing seller id
-router.delete("/delete-seller-order/:id",isAdminAuth,sellerOrder_controller.deleteSellerOrder) // passing seller order id
+router.post("/allot-seller-order/:id",isAdminAuth,sellerOrder_controller.allotSeller) // passing seller id
 router.patch("/update-seller-order-status/:id",isAdminAuth,sellerOrder_controller.updateSellerOrderStatus) // passing seller order id
-router.get("/get-seller-order-list/:id",isAdminAuth,sellerOrder_controller.getSellerOrder)
+// router.get("/get-seller-order-list/:id",isAdminAuth,sellerOrder_controller.getSellerOrder)
 
+
+//Booking Routes
+
+router.get("/get-booking-list",isAdminAuth,booking_controller.getAllBooking)
+router.delete("/delete-booking/:id",isAdminAuth,booking_controller.deleteBooking) // passing booking id
 
 //Admin Routes
 router.post("/create-Admin", auth_controller.addAminUser);
