@@ -1,93 +1,68 @@
-const bookingModel = require("../../models/booking");
-const AppError = require("../Admin/errorController");
-
-exports.createBooking = async (req, res, next) => {
-  try {
-    const id = req.user._id; // user id
-    const { orderId, userAddress, productDetails, imageUrl, orderValue } =
-      req.body;
-    const { addressLine, pincode, landmark, mobile } = userAddress;
-    // const {productId,name,price,offerPrice,description}=productDetails
-    // let imageUrl = []
-    // req.files.find(data => {
-    //   imageUrl.push(data.filename)
-    // })
-    if (
-      !orderId ||
-      !addressLine ||
-      !pincode ||
-      !landmark ||
-      !orderValue ||
-      !mobile ||
-      productDetails.length == 0 ||
-      !imageUrl
-    ) {
-      throw new AppError(400, "All the fields are required");
-    } else {
-      await bookingModel.create({
-        userId: id,
-        orderId: orderId,
-        userAddress: userAddress,
-        productDetails: productDetails,
-        imageUrl: imageUrl,
-        totalPrice: orderValue,
-      });
-      res
-        .status(201)
-        .json({ success: true, message: "Booking created successful" });
-    }
-  } catch (err) {
-    next(err);
-  }
-};
+const bookingModel = require('../../models/booking')
+const AppError = require('../Admin/errorController')
 
 exports.deleteBooking = async (req, res, next) => {
   try {
     if (req.perm.bookings === 'write') {
-    const id = req.params.id; // booking item id
-    await bookingModel.findByIdAndDelete({ _id: id });
-    res
-      .status(200)
-      .json({ success: true, message: "Booking deleted successful" });
+      const id = req.params.id // booking item id
+      await bookingModel.findByIdAndDelete({ _id: id })
+      res
+        .status(200)
+        .json({ success: true, message: 'Booking deleted successful' })
     } else {
       throw new AppError(400, 'You are not authorized')
     }
   } catch (err) {
-    next(err);
+    next(err)
   }
-};
+}
 
 // get user bookings
 
-exports.getUsersBooking = async (req, res, next) => {
+exports.getAllBooking = async (req, res, next) => {
   try {
     if (req.perm.bookings === 'write' || req.perm.bookings === 'read') {
-    const id = req.user._id; // user id
-    // const userId=req.body.userId  // user id
-    const result = await bookingModel.find({ userId: id });
-    res.status(200).json({
-      success: true,
-      message: "These all are your booking",
-      data: result,
-    });
-  } else {
-    throw new AppError(400, 'You are not authorized')
-  }
+      const result = await bookingModel.find().populate({
+        path: 'package',
+        populate: {
+          path: 'products',
+          populate: {
+            path: 'productId',
+            model: 'Product'
+          }
+        }
+      })
+      res.status(200).json({
+        success: true,
+        message: 'All booking list',
+        data: result
+      })
+    } else {
+      throw new AppError(400, 'You are not authorized')
+    }
   } catch (err) {
-    next(err);
+    console.log(err)
+    next(err)
   }
-};
+}
 
-// get seller bookings
+exports.updateBookingStatus = async (req, res, next) => {
+  try {
+    if (req.perm.bookings === 'write') {
+      const id = req.params.id // booking item id
+      const {status}=req.body
 
-// exports.getSellerBooking=async(req,res,next)=>{
-//     try{
-//             const sellerId=req.params.id  // booking item id
-
-//             const result=await bookingModel.find({sellerId:sellerId})
-//             res.status(200).json({success:true,message:"These all are your booking",data:result})
-
-//     }catch(err){
-//         next(err)
-//     }
-// }
+      var result=await bookingModel.findOne({_id:id})
+      result.status=status
+      await result.save()
+      res.status(200).json({
+        success: true,
+        message: 'Booking status changed successful'
+      })
+    } else {
+      throw new AppError(400, 'You are not authorized')
+    }
+  } catch (err) {
+    next(err)
+  }
+}

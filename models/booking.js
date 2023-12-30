@@ -53,7 +53,7 @@ const bookingSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      default: "created",
+      default: "not-alloted",
     },
     orderValue: {
       type: Number,
