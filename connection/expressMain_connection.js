@@ -6,7 +6,7 @@ const shoppingRoute = require("../routes/shoppingRoutes");
 const errorHandler = require("../middleware/globalErrorHandler");
 const appRoute = require("../routes/app-route");
 const contentRoute = require("../routes/content");
-
+const serviceAppRoute = require("../routes/service-app-route");
 // const appRoute = require("../routes/app-route.js");
 // const authRoute = require("../routes/auth");
 // const paymentRoute = require("../routes/payment");
@@ -30,6 +30,8 @@ const path = require("path");
 // Admin Routes
 server.use("/api/website", adminRoute);
 server.use("/api/app", appRoute);
+server.use("/api/service-app", serviceAppRoute);
+
 // shopping routes
 server.use("/api/shopping", shoppingRoute);
 

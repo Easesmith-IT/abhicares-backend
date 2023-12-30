@@ -7,6 +7,7 @@ const User = require("../../models/user");
 const UserAddress = require("../../models/useraddress");
 const Order = require("../../models/order");
 const Content = require("../../models/content");
+const HelpCentre = require("../../models/helpCenter");
 const mongoose = require("mongoose");
 const { auth } = require("../../middleware/auth");
 const jwt = require("jsonwebtoken");
@@ -217,16 +218,17 @@ exports.AddUserAddress = async (req, res, next) => {
   try {
     const addressLine = req.body.addressLine;
     const pincode = req.body.pincode;
-    const mobile = req.body.phone;
+    const city = req.body.city;
     const userId = req.body.userId;
     const landmark = req.body.landmark;
     var address = await UserAddress({
       addressLine: addressLine,
       pincode: pincode,
       landmark: landmark,
-      mobile: mobile,
+      city: city,
       userId: userId,
     });
+
     address.save();
     console.log(address);
     return res.status(200).json({ address });
@@ -248,6 +250,42 @@ exports.getUserAddress = async (req, res, next) => {
     } else {
       return res.status(200).json({ addresses });
     }
+  } catch (err) {
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(err);
+  }
+};
+
+exports.getUserTickets = async (req, res, next) => {
+  try {
+    console.log("reached");
+    const userId = req.params.userId;
+    console.log(userId);
+    var tickets = await HelpCentre.find({ userId: userId });
+    console.log(tickets);
+    return res.status(200).json({ tickets });
+  } catch (err) {
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(err);
+  }
+};
+
+exports.raiseTicket = async (req, res, next) => {
+  try {
+    const issue = req.body.issue;
+    const description = req.body.description;
+    const userId = req.body.userId;
+    var ticket = await HelpCentre({
+      issue: issue,
+      description: description,
+      userId: userId,
+    });
+
+    ticket.save();
+    console.log(ticket);
+    return res.status(200).json({ ticket });
   } catch (err) {
     const error = new Error(err);
     error.httpStatusCode = 500;

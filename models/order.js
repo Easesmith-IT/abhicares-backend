@@ -30,14 +30,14 @@ const orderSchema = new Schema(
         quantity: {
           type: Number
         },
-        // bookingDate: {
-        //   type: String
-        //   // required: true,
-        // },
-        // bookingTime: {
-        //   type: String
-        //   // required: true,
-        // }
+        bookingDate: {
+          type: String,
+          required: true,
+        },
+        bookingTime: {
+          type: String,
+          required: true,
+        }
       }
     ],
     user: {
