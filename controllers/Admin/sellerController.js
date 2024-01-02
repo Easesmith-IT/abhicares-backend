@@ -1,9 +1,9 @@
-const sellerModel = require("../../models/seller");
-var bcrypt = require("bcryptjs");
-const AppError = require("../Admin/errorController");
+const sellerModel = require('../../models/seller')
+var bcrypt = require('bcryptjs')
+const AppError = require('../Admin/errorController')
 exports.createSeller = async (req, res, next) => {
   try {
-    if (req.perm.partners === "write") {
+    if (req.perm.partners === 'write') {
       var {
         name,
         legalName,
@@ -14,8 +14,8 @@ exports.createSeller = async (req, res, next) => {
         password,
         contactPerson,
         categoryId,
-        services,
-      } = req.body;
+        services
+      } = req.body
       // const {state,city,addressLine,pincode,location}=address
       // const {name,phone,email}=contactPerson
 
@@ -29,80 +29,80 @@ exports.createSeller = async (req, res, next) => {
         !contactPerson ||
         !categoryId
       ) {
-        throw new AppError(400, "All the fields are required");
+        throw new AppError(400, 'All the fields are required')
       } else {
         bcrypt.genSalt(10, function (err, salt) {
           bcrypt.hash(password, salt, async function (err, hash) {
             if (err) {
               res
                 .status(400)
-                .json({ success: false, message: "password enctyption error" });
+                .json({ success: false, message: 'password enctyption error' })
             } else {
-              req.body.password = hash;
-              await sellerModel.create(req.body);
+              req.body.password = hash
+              await sellerModel.create(req.body)
               res
                 .status(201)
-                .json({ success: true, message: "Seller created successful" });
+                .json({ success: true, message: 'Seller created successful' })
             }
-          });
-        });
+          })
+        })
       }
     } else {
-      throw new AppError(400, "You are not authorized");
+      throw new AppError(400, 'You are not authorized')
     }
   } catch (err) {
-    console.log("error--->", err);
-    next(err);
+    console.log('error--->', err)
+    next(err)
   }
-};
+}
 
 exports.getAllSeller = async (req, res, next) => {
   try {
-    if (req.perm.partners === "write" || req.perm.partners === "read") {
-      var page = 1;
+    if (req.perm.partners === 'write' || req.perm.partners === 'read') {
+      var page = 1
       if (req.query.page) {
-        page = req.query.page;
+        page = req.query.page
       }
-      var limit = 20;
-      const allSeller = await sellerModel.count();
-      var num = allSeller / limit;
-      var fixedNum = num.toFixed();
-      var totalPage = fixedNum;
+      var limit = 20
+      const allSeller = await sellerModel.count()
+      var num = allSeller / limit
+      var fixedNum = num.toFixed()
+      var totalPage = fixedNum
       if (num > fixedNum) {
-        totalPage++;
+        totalPage++
       }
 
       const result = await sellerModel
         .find()
-        .populate("categoryId")
+        .populate('categoryId')
         .populate({
-          path: "services",
+          path: 'services',
           populate: {
-            path: "serviceId",
-            model: "Service",
-          },
+            path: 'serviceId',
+            model: 'Service'
+          }
         })
         .limit(limit * 1)
         .skip((page - 1) * limit)
-        .exec();
+        .exec()
       res.status(200).json({
         success: true,
-        message: "This is all the seller list",
+        message: 'This is all the seller list',
         data: result,
-        totalPage: totalPage,
-      });
+        totalPage: totalPage
+      })
     } else {
-      throw new AppError(400, "You are not authorized");
+      throw new AppError(400, 'You are not authorized')
     }
   } catch (err) {
-    next(err);
+    next(err)
   }
-};
+}
 
 exports.updateSeller = async (req, res, next) => {
   try {
-    if (req.perm.partners === "write") {
-      const id = req.params.id;
+    if (req.perm.partners === 'write') {
+      const id = req.params.id
       const {
         name,
         legalName,
@@ -110,8 +110,8 @@ exports.updateSeller = async (req, res, next) => {
         phone,
         status,
         address,
-        contactPerson,
-      } = req.body;
+        contactPerson
+      } = req.body
       // const {state,city,addressLine,pincode,location}=address
       // const {name,phone,email}=contactPerson
 
@@ -124,170 +124,162 @@ exports.updateSeller = async (req, res, next) => {
         !address ||
         !contactPerson
       ) {
-        throw new AppError(400, "All the fields are required");
+        throw new AppError(400, 'All the fields are required')
       } else {
-        var result = await sellerModel.findOne({ _id: id });
-        result.name = name;
-        result.legalName = legalName;
-        result.gstNumber = gstNumber;
-        result.phone = phone;
-        result.status = status;
-        result.address.state = address.state;
-        result.address.city = address.city;
-        result.address.addressLine = address.addressLine;
-        result.address.pincode = address.pincode;
-        result.address.location = address.location;
-        result.contactPerson.name = contactPerson.name;
-        result.contactPerson.phone = contactPerson.phone;
-        result.contactPerson.email = contactPerson.email;
-        await result.save();
+        var result = await sellerModel.findOne({ _id: id })
+        result.name = name
+        result.legalName = legalName
+        result.gstNumber = gstNumber
+        result.phone = phone
+        result.status = status
+        result.address.state = address.state
+        result.address.city = address.city
+        result.address.addressLine = address.addressLine
+        result.address.pincode = address.pincode
+        result.address.location = address.location
+        result.contactPerson.name = contactPerson.name
+        result.contactPerson.phone = contactPerson.phone
+        result.contactPerson.email = contactPerson.email
+        await result.save()
 
         res
           .status(200)
-          .json({ success: true, message: "Seller updated successful" });
+          .json({ success: true, message: 'Seller updated successful' })
       }
     } else {
-      throw new AppError(400, "You are not authorized");
+      throw new AppError(400, 'You are not authorized')
     }
   } catch (err) {
-    next(err);
+    next(err)
   }
-};
+}
 
 exports.deleteSeller = async (req, res, next) => {
   try {
-    if (req.perm.partners === "write") {
-      const id = req.params.id;
-      await sellerModel.findOneAndDelete({ _id: id });
+    if (req.perm.partners === 'write') {
+      const id = req.params.id
+      await sellerModel.findOneAndDelete({ _id: id })
       res
         .status(200)
-        .json({ success: true, message: "Seller deleted successful" });
+        .json({ success: true, message: 'Seller deleted successful' })
     } else {
-      throw new AppError(400, "You are not authorized");
+      throw new AppError(400, 'You are not authorized')
     }
   } catch (err) {
-    next(err);
+    next(err)
   }
-};
+}
 
 exports.searchSeller = async (req, res, next) => {
   try {
-    var search = "";
-    var page = 1;
+    var search = ''
+    var page = 1
     if (req.query.search) {
-      search = req.query.search;
-      page = req.query.page;
+      search = req.query.search
+      page = req.query.page
     }
 
-    var limit = 20;
-    const allSeller = await sellerModel.count();
-    var num = allSeller / limit;
-    var fixedNum = num.toFixed();
-    var totalPage = fixedNum;
+    var limit = 20
+    const allSeller = await sellerModel.count()
+    var num = allSeller / limit
+    var fixedNum = num.toFixed()
+    var totalPage = fixedNum
     if (num > fixedNum) {
-      totalPage++;
+      totalPage++
     }
 
     const userData = await sellerModel
       .find({
         $or: [
-          { "address.city": { $regex: ".*" + search + ".*", $options: "i" } },
-          { name: { $regex: ".*" + search + ".*", $options: "i" } },
-        ],
+          { 'address.city': { $regex: '.*' + search + '.*', $options: 'i' } },
+          { name: { $regex: '.*' + search + '.*', $options: 'i' } }
+        ]
       })
       .limit(limit * 1)
       .skip((page - 1) * limit)
-      .exec();
+      .exec()
 
     res.status(200).json({
       success: true,
-      message: "Seller data",
+      message: 'Seller data',
       data: userData,
-      totalPage: totalPage,
-    });
+      totalPage: totalPage
+    })
   } catch (err) {
-    next(err);
+    next(err)
   }
-};
+}
 
 exports.changeSellerStatus = async (req, res, next) => {
   try {
-    if (req.perm.partners === "write") {
-      const id = req.params.id;
-      const { status } = req.body;
+    if (req.perm.partners === 'write') {
+      const id = req.params.id
+      const { status } = req.body
 
-      var result = await sellerModel.findOne({ _id: id });
-      result.status = status;
-      result.save();
+      var result = await sellerModel.findOne({ _id: id })
+      result.status = status
+      result.save()
       res
         .status(200)
-        .json({ success: true, message: "Data updated successful" });
+        .json({ success: true, message: 'Data updated successful' })
     } else {
-      throw new AppError(400, "You are not authorized");
+      throw new AppError(400, 'You are not authorized')
     }
   } catch (err) {
-    next(err);
+    next(err)
   }
-};
+}
 
 exports.getSellerByLocation = async (req, res, next) => {
   try {
-    // const latitude=req.body.latitude
-    // const longitude=req.body.longitude
-    const latitude = "24.750000";
-    const longitude = "84.370003";
+    if (req.perm.partners === 'write' || req.perm.partners === 'read') {
+      const { latitude, longitude, distance } = req.body
 
-    const result = await sellerModel.aggregate([
-      {
-        $geoNear: {
-          near: {
-            type: "Point",
-            coordinates: [parseFloat(longitude), parseFloat(latitude)],
-          },
-          // key:"location",
-          maxDistance: parseFloat(100) * 1609,
-          //  maxDistance:6000 * 0.621371,
-          // maxDistance: 100 * 1000,
-          // distanceMultiplier: 1 / 1000,
+      if (!latitude || !longitude || !distance) {
+        throw new AppError(400, 'All the fields are required')
+      }
 
-          distanceField: "distance",
-          spherical: true,
-          // maxDistance: 100*1000
-        },
-      },
-    ]);
+      const result = await sellerModel.find({
+        'address.location': {
+          $near: {
+            $geometry: {
+              type: 'Point',
+              coordinates: [parseFloat(longitude), parseFloat(latitude)]
+            },
+            $maxDistance: parseFloat(distance) * 1000 // Convert distance to meters
+          }
+        }
+      })
 
-    if (result.length > 0) {
-      const posts = await Post.find().populate("author");
+      res
+        .status(200)
+        .json({ success: true, message: 'near sellers', sellerList: result })
+    } else {
+      throw new AppError(400, 'You are not authorized')
     }
-
-    res
-      .status(200)
-      .json({ success: true, message: "near sellers", data: result });
   } catch (err) {
-    console.log(err);
-    next(err);
+    next(err)
   }
-};
+}
 
 exports.getInReviewSeller = async (req, res, next) => {
   try {
-    if (req.perm.partners === "write" || req.perm.partners === "read") {
+    if (req.perm.partners === 'write' || req.perm.partners === 'read') {
       // const {type}=req.body.type
       // if(!type){
       //   throw new AppError(400, "All the fields are required");
       // }else{
-      const result = await sellerModel.find({ status: "in-review" });
+      const result = await sellerModel.find({ status: 'in-review' })
       res.status(200).json({
         success: false,
-        message: "In-review seller list",
-        data: result,
-      });
+        message: 'In-review seller list',
+        data: result
+      })
       // }
     } else {
-      throw new AppError(400, "You are not authorized");
+      throw new AppError(400, 'You are not authorized')
     }
   } catch (err) {
-    next(err);
+    next(err)
   }
-};
+}

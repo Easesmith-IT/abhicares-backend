@@ -10,6 +10,7 @@ const otpGenerator = require("otp-generator");
 require("dotenv").config();
 const cookieParser = require("cookie-parser");
 
+
 const server = express();
 
 // const fileStorage = multer.diskStorage({
@@ -74,6 +75,8 @@ server.use(
     credentials: true,
   })
 );
+
+
 
 server.use((req, res, next) => {
   console.log(
