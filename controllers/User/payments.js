@@ -591,7 +591,7 @@ exports.paymentVerification = async (req, res) => {
       if (orderItem.product) {
         var booking = new Booking({
           order: order._id,
-          userId: result[0].user.userId,
+          userId: result.user.userId,
           userAddress:{
                     addressLine: result.user.address.addressLine,
                     pincode: result.user.address.pincode,
