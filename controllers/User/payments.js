@@ -18,7 +18,7 @@ const Products = require('../../models/product')
 const Cart = require('../../models/cart')
 const Booking = require('../../models/booking')
 const packageModel = require('../../models/packages')
-const tempOrder=require("../../models/tempOrder")
+const tempOrder = require("../../models/tempOrder")
 // const { trackUserOrder } = require("../controllers/nursery");
 const {
   getInvoiceData,
@@ -87,7 +87,7 @@ exports.websiteCodOrder = async (req, res, next) => {
         var bookingItem = bookings.find(bookItem => {
           return bookItem.productId == prod._id
         })
-        
+
         orderItems.push({
           product: prod,
           quantity: productItem.quantity,
@@ -448,7 +448,7 @@ exports.getMolthlyOrder = async (req, res, next) => {
 
 exports.checkout = async (req, res) => {
   try {
-            
+
     const userAddressId = req.body.userAddressId
     const user = req.user
     const bookings = req.body.bookings
@@ -493,7 +493,7 @@ exports.checkout = async (req, res) => {
         var bookingItem = bookings.find(bookItem => {
           return bookItem.productId == prod._id
         })
-        
+
         orderItems.push({
           product: prod,
           quantity: productItem.quantity,
@@ -513,7 +513,7 @@ exports.checkout = async (req, res) => {
       }
     }
     const userAddress = await UserAddress.findById(userAddressId)
-    orderPrice=cart.totalPrice
+    orderPrice = cart.totalPrice
     const order = new tempOrder({
       orderPlatform: 'Online',
       paymentType: 'Online',
@@ -581,11 +581,11 @@ exports.checkout = async (req, res) => {
 
 
     const options = {
-      amount: amount*100, // amount in the smallest currency unit
+      amount: amount * 100, // amount in the smallest currency unit
       currency: 'INR'
     }
-    const createdOrder=await instance.orders.create(options)
-    res.status(200).json({ success: true, message: 'order created',razorpayOrder:createdOrder, order:order })
+    const createdOrder = await instance.orders.create(options)
+    res.status(200).json({ success: true, message: 'order created', razorpayOrder: createdOrder, order: order })
   } catch (err) {
     res.status(400).json({ success: false, message: 'internal server error' })
   }
@@ -606,52 +606,60 @@ exports.paymentVerification = async (req, res) => {
     const isAuthentic = expectedSignature === razorpay_signature
 
     if (isAuthentic) {
-     
-    const result=await tempOrder.find()
 
-    const order = new Order({
-      orderPlatform: result[0].orderPlatform,
-      paymentType: result[0].paymentType,
-      orderValue: result[0].orderValue,
-      items: result[0].items,
-      couponId: result[0].couponId,
-      user:result[0].user,
-      razorpay_payment_id
-    })
-   
-    await order.save()
+      const result = await tempOrder.find()
+
+      const order = new Order({
+        orderPlatform: result[0].orderPlatform,
+        paymentType: result[0].paymentType,
+        orderValue: result[0].orderValue,
+        items: result[0].items,
+        couponId: result[0].couponId,
+        user: result[0].user,
+        razorpay_payment_id
+      })
+
+      await order.save()
 
       ///booking creation
-      const orderItems=result[0].items
-    for (const orderItem of orderItems) {
-      if (orderItem.product) {
-        var booking = new Booking({
-          order: order._id,
-          userId: result[0].user.userId,
-          userAddress:result[0].user.userAddress,
-          product: orderItem.product,
-          quantity:  orderItem.quantity,
-          bookingDate:  orderItem.bookingDate,
-          bookingTime:  orderItem.bookingTime,
-          orderValue:  orderItem.product.offerPrice *  orderItem.quantity
-        })
-        await booking.save()
-      } else if (orderItem.package) {
-        var booking = new Booking({
-          order: order._id,
-          userId:result[0].user.userId,
-          userAddress: result[0].user.userAddress,
-          package: orderItem.package,
-          quantity: orderItem.quantity,
-          bookingDate: orderItem.bookingDate,
-          bookingTime: orderItem.bookingTime,
-          orderValue: orderItem.package.offerPrice * orderItem.quantity
-        })
-        await booking.save()
+      const orderItems = result[0].items
+      for (const orderItem of orderItems) {
+        if (orderItem.product) {
+          var booking = new Booking({
+            order: order._id,
+            userId: result[0].user.userId,
+            userAddress: {
+              addressLine: result[0].user.address.addressLine,
+              pincode: result[0].user.address.pincode,
+              landmark: result[0].user.address.landmark
+            },
+            product: orderItem.product,
+            quantity: orderItem.quantity,
+            bookingDate: orderItem.bookingDate,
+            bookingTime: orderItem.bookingTime,
+            orderValue: orderItem.product.offerPrice * orderItem.quantity
+          })
+          await booking.save()
+        } else if (orderItem.package) {
+          var booking = new Booking({
+            order: order._id,
+            userId: result[0].user.userId,
+            userAddress: {
+              addressLine: result[0].user.address.addressLine,
+              pincode: result[0].user.address.pincode,
+              landmark: result[0].user.address.landmark
+            },
+            package: orderItem.package,
+            quantity: orderItem.quantity,
+            bookingDate: orderItem.bookingDate,
+            bookingTime: orderItem.bookingTime,
+            orderValue: orderItem.package.offerPrice * orderItem.quantity
+          })
+          await booking.save()
+        }
       }
-    }
-   
-    await tempOrder.findByIdAndDelete({_id:result[0]._id}) 
+
+      await tempOrder.findByIdAndDelete({ _id: result[0]._id })
 
       res
         .status(200)
@@ -663,7 +671,7 @@ exports.paymentVerification = async (req, res) => {
       })
     }
   } catch (err) {
-    console.log("online order booking",err);
+    console.log("online order booking", err);
     res.status(400).json({ success: false, message: 'internal server error' })
   }
 }
