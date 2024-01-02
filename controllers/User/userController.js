@@ -147,6 +147,8 @@ exports.verifyUserOtp = async (req, res, next) => {
     res.status(200).json({
       message: 'Logged In',
       success: true,
+      userName:user.name,
+      userPhone:user.phone,
       token: token
     })
     // jwt.verify(tokenData, process.env.JWT_SECRET, async (err, authData) => {
@@ -324,6 +326,8 @@ exports.createUser = async (req, res, next) => {
           return res.status(200).json({
             message: 'Logged In',
             success: true,
+            userName:user.name,
+            userPhone:user.phone,
             token: token
           })
         } else {
