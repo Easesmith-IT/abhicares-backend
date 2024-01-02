@@ -628,7 +628,11 @@ exports.paymentVerification = async (req, res) => {
         var booking = new Booking({
           order: order._id,
           userId: result[0].user.userId,
-          userAddress:result[0].user.userAddress,
+          userAddress:{
+                    addressLine: result[0].user.address.addressLine,
+                    pincode: result[0].user.address.pincode,
+                    landmark: result[0].user.address.landmark
+                  },
           product: orderItem.product,
           quantity:  orderItem.quantity,
           bookingDate:  orderItem.bookingDate,
@@ -640,7 +644,11 @@ exports.paymentVerification = async (req, res) => {
         var booking = new Booking({
           order: order._id,
           userId:result[0].user.userId,
-          userAddress: result[0].user.userAddress,
+          userAddress:{
+            addressLine: result[0].user.address.addressLine,
+            pincode: result[0].user.address.pincode,
+            landmark: result[0].user.address.landmark
+          },
           package: orderItem.package,
           quantity: orderItem.quantity,
           bookingDate: orderItem.bookingDate,
