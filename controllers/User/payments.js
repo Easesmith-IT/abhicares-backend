@@ -608,7 +608,50 @@ exports.paymentVerification = async (req, res) => {
     if (isAuthentic) {
      
     const result=await tempOrder.find()
-    console.log("result--->",result)
+
+    const order = new Order({
+      orderPlatform: result[0].orderPlatform,
+      paymentType: result[0].paymentType,
+      orderValue: result[0].orderValue,
+      items: result[0].items,
+      couponId: result[0].couponId,
+      user:result[0].user 
+    })
+   
+    await order.save()
+
+      ///booking creation
+      const orderItems=result[0].items
+    for (const orderItem of orderItems) {
+      if (orderItem.product) {
+        var booking = new Booking({
+          order: order._id,
+          userId: result[0].user.userId,
+          userAddress:result[0].user.userAddress,
+          product: orderItem.product,
+          quantity:  orderItem.quantity,
+          bookingDate:  orderItem.bookingDate,
+          bookingTime:  orderItem.bookingTime,
+          orderValue:  orderItem.product.offerPrice *  orderItem.quantity
+        })
+        await booking.save()
+      } else if (orderItem.package) {
+        var booking = new Booking({
+          order: order._id,
+          userId:result[0].user.userId,
+          userAddress: result[0].user.userAddress,
+          package: orderItem.package,
+          quantity: orderItem.quantity,
+          bookingDate: orderItem.bookingDate,
+          bookingTime: orderItem.bookingTime,
+          orderValue: orderItem.package.offerPrice * orderItem.quantity
+        })
+        await booking.save()
+      }
+    }
+   
+    await tempOrder.findByIdAndDelete({_id:result[0]._id}) 
+
       res
         .status(200)
         .json({ success: true, message: 'varification successful' })
