@@ -100,3 +100,37 @@ exports.updateSellerOrderStatus = async (req, res, next) => {
       next(err)
     }
   }
+
+
+  exports.getSellerOrderByStatus = async (req, res, next) => {
+    try {
+      if (req.perm.partners === 'write' || req.perm.partners === 'read') {
+       
+        const id = req.params.id // seller id
+        const {status}=req.body
+        if(!status){
+          throw new AppError(400, 'All the fields are required')
+        }
+        const result =await bookingModel.find({"sellerId":id,status:status}).populate({
+          path: 'package',
+          populate: {
+            path: 'products',
+            populate: {
+              path: 'productId',
+              model: 'Product'
+            }
+          }
+        })
+
+        res.status(200).json({
+          success: true,
+          message: 'Your order list',
+          sellerOrders:result
+        })
+      } else {
+        throw new AppError(400, 'You are not authorized')
+      }
+    } catch (err) {
+      next(err)
+    }
+  }
