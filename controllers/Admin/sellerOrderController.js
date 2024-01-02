@@ -86,7 +86,7 @@ exports.updateSellerOrderStatus = async (req, res, next) => {
               model: 'Product'
             }
           }
-        })
+        }).populate("userId","-password")
 
         res.status(200).json({
           success: true,
@@ -120,7 +120,7 @@ exports.updateSellerOrderStatus = async (req, res, next) => {
               model: 'Product'
             }
           }
-        })
+        }).populate("userId","-password")
 
         res.status(200).json({
           success: true,
