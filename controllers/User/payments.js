@@ -533,46 +533,10 @@ exports.checkout = async (req, res) => {
     })
     //     // // Save the order to the database
     await order.save()
-    ///booking creation
-    // for (const orderItem of orderItems) {
-    //   if (orderItem.product) {
-    //     var booking = new Booking({
-    //       order: order._id,
-    //       userId: user._id,
-    //       userAddress: {
-    //         addressLine: userAddress.addressLine,
-    //         pincode: userAddress.pincode,
-    //         landmark: userAddress.landmark
-    //       },
-    //       product: orderItem.product,
-    //       quantity: orderItem.quantity,
-    //       bookingDate: orderItem.bookingDate,
-    //       bookingTime: orderItem.bookingTime,
-    //       orderValue: orderItem.product.offerPrice * orderItem.quantity
-    //     })
-    //     await booking.save()
-    //   } else if (orderItem.package) {
-    //     var booking = new Booking({
-    //       order: order._id,
-    //       userId: user._id,
-    //       userAddress: {
-    //         addressLine: userAddress.addressLine,
-    //         pincode: userAddress.pincode,
-    //         landmark: userAddress.landmark
-    //       },
-    //       package: orderItem.package,
-    //       quantity: orderItem.quantity,
-    //       bookingDate: orderItem.bookingDate,
-    //       bookingTime: orderItem.bookingTime,
-    //       orderValue: orderItem.package.offerPrice * orderItem.quantity
-    //     })
-    //     await booking.save()
-    //   }
-    // }
+    
     cart.items = []
     cart.totalPrice = 0
     await cart.save()
-    // return res.status(200).json(order)
 
 
 
@@ -593,7 +557,7 @@ exports.checkout = async (req, res) => {
 
 exports.paymentVerification = async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature,productId } =
       req.body
 
     const body = razorpay_order_id + '|' + razorpay_payment_id
@@ -607,31 +571,31 @@ exports.paymentVerification = async (req, res) => {
 
     if (isAuthentic) {
      
-    const result=await tempOrder.find()
+    const result=await tempOrder.findOne({_id:productId})
 
     const order = new Order({
-      orderPlatform: result[0].orderPlatform,
-      paymentType: result[0].paymentType,
-      orderValue: result[0].orderValue,
-      items: result[0].items,
-      couponId: result[0].couponId,
-      user:result[0].user,
+      orderPlatform: result.orderPlatform,
+      paymentType: result.paymentType,
+      orderValue: result.orderValue,
+      items: result.items,
+      couponId: result.couponId,
+      user:result.user,
       razorpay_payment_id
     })
    
     await order.save()
 
       ///booking creation
-      const orderItems=result[0].items
+      const orderItems=result.items
     for (const orderItem of orderItems) {
       if (orderItem.product) {
         var booking = new Booking({
           order: order._id,
           userId: result[0].user.userId,
           userAddress:{
-                    addressLine: result[0].user.address.addressLine,
-                    pincode: result[0].user.address.pincode,
-                    landmark: result[0].user.address.landmark
+                    addressLine: result.user.address.addressLine,
+                    pincode: result.user.address.pincode,
+                    landmark: result.user.address.landmark
                   },
           product: orderItem.product,
           quantity:  orderItem.quantity,
@@ -643,11 +607,11 @@ exports.paymentVerification = async (req, res) => {
       } else if (orderItem.package) {
         var booking = new Booking({
           order: order._id,
-          userId:result[0].user.userId,
+          userId:result.user.userId,
           userAddress:{
-            addressLine: result[0].user.address.addressLine,
-            pincode: result[0].user.address.pincode,
-            landmark: result[0].user.address.landmark
+            addressLine: result.user.address.addressLine,
+            pincode: result.user.address.pincode,
+            landmark: result.user.address.landmark
           },
           package: orderItem.package,
           quantity: orderItem.quantity,
@@ -659,7 +623,7 @@ exports.paymentVerification = async (req, res) => {
       }
     }
    
-    await tempOrder.findByIdAndDelete({_id:result[0]._id}) 
+    await tempOrder.findByIdAndDelete({_id:productId})
 
       res
         .status(200)
