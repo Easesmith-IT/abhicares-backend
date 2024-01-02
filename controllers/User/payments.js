@@ -581,7 +581,7 @@ exports.checkout = async (req, res) => {
 
 
     const options = {
-      amount: amount, // amount in the smallest currency unit
+      amount: amount*100, // amount in the smallest currency unit
       currency: 'INR'
     }
     const createdOrder=await instance.orders.create(options)
@@ -606,18 +606,9 @@ exports.paymentVerification = async (req, res) => {
     const isAuthentic = expectedSignature === razorpay_signature
 
     if (isAuthentic) {
-      // Database comes here
-
-      // await Payment.create({
-      //   razorpay_order_id,
-      //   razorpay_payment_id,
-      //   razorpay_signature,
-      // });
-
-      // res.redirect(
-      //   `http://localhost:3000/paymentsuccess?reference=${razorpay_payment_id}`
-      // );
-
+     
+    const result=await tempOrder.find()
+    console.log("result--->",result)
       res
         .status(200)
         .json({ success: true, message: 'varification successful' })
