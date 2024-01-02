@@ -615,7 +615,8 @@ exports.paymentVerification = async (req, res) => {
       orderValue: result[0].orderValue,
       items: result[0].items,
       couponId: result[0].couponId,
-      user:result[0].user 
+      user:result[0].user,
+      razorpay_payment_id
     })
    
     await order.save()
