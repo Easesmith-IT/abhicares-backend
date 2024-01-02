@@ -120,6 +120,7 @@ router.patch(
   seller_controller.changeSellerStatus
 ); // passing object id
 router.get("/in-review-seller",isAdminAuth,seller_controller.getInReviewSeller)
+router.post("/get-seller-by-location",isAdminAuth,seller_controller.getSellerByLocation)
 
 
 // User Routes
