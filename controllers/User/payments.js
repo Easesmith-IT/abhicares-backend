@@ -7,6 +7,8 @@ configDotenv({ path: "../config/config.env" });
 const fs = require("fs");
 const AppError = require("../User/errorController");
 
+require("dotenv").config()
+
 //Importing Models
 const UserAddress = require("../../models/useraddress");
 const User = require("../../models/user");
@@ -29,10 +31,17 @@ const razorPayKeyId = "rzp_test_XtC1VoPYosmoCP";
 const razorKeySecret = "olIq40GreBPUaEz80552bG2f";
 
 ///
-const instance = new Razorpay({
-  key_id: razorPayKeyId,
-  key_secret: razorKeySecret,
+// const instance = new Razorpay({
+//   key_id: razorPayKeyId,
+//   key_secret: razorKeySecret,
+// });
+
+ const instance = new Razorpay({
+  key_id:process.env.RAZORPAY_API_KEY,
+  key_secret:process.env.RAZORPAY_API_SECRET,
 });
+
+
 
 exports.websiteCodOrder = async (req, res, next) => {
   try {
@@ -442,3 +451,32 @@ exports.getMolthlyOrder = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.checkout=async(req,res)=>{
+ try{
+  const options = {
+    amount: Number(req.body.amount * 100),  // amount in the smallest currency unit
+    currency: "INR"
+  };
+  const order= await instance.orders.create(options)
+  res.status(200).json({success:true,message:"order created",order})
+ }catch(err){
+  res.status(400).json({success:false,message:"internal server error"})
+ } 
+}
+
+exports.paymentVerification=async(req,res)=>{
+  try{
+   res.status(200).json({success:true,message:"varification successful"})
+  }catch(err){
+   res.status(400).json({success:false,message:"internal server error"})
+  } 
+ }
+
+ exports.getApiKey=async(req,res)=>{
+  try{
+   res.status(200).json({success:true,message:"api key",apiKey:process.env.RAZORPAY_API_KEY})
+  }catch(err){
+   res.status(400).json({success:false,message:"internal server error"})
+  } 
+ }

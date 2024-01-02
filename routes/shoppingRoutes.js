@@ -121,6 +121,11 @@ router.get(
 );
 router.get("/get-product-invoice/:id",userAuth,payments_controller.createOrderInvoice)
 router.post("/change-order-status/:id",userAuth,payments_controller.updateOrderStatus) // passing order id
+router.post("/create-online-order",userAuth,payments_controller.checkout)
+router.post("/payment-verification",userAuth,payments_controller.paymentVerification)
+router.post("/get-api-key",userAuth,payments_controller.getApiKey)
+
+
 
 // Seller api
 router.post("/get-seller-location", seller_controller.getSellerByLocation);
