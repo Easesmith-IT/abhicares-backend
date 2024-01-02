@@ -211,6 +211,7 @@ router.get("/get-seller-list/:id",isAdminAuth,sellerOrder_controller.getSellerLi
 router.patch("/allot-seller-order/:id",isAdminAuth,sellerOrder_controller.allotSeller) // passing seller id
 router.patch("/update-seller-order-status/:id",isAdminAuth,sellerOrder_controller.updateSellerOrderStatus) // passing booking id
 router.get("/get-seller-order-list/:id",isAdminAuth,sellerOrder_controller.getSellerOrder) // passing seller id
+router.post("/get-seller-order-by-status/:id",isAdminAuth,sellerOrder_controller.getSellerOrderByStatus) // passing seller id
 
 
 //Booking Routes
