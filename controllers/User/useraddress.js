@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 const AppError = require("../User/errorController");
 
 exports.addUserAddress = async (req, res, next) => {
-  console.log("hello")
   try {
     // console.log(req.body);
     const { addressLine, pincode, landmark,city,location, defaultAddress } = req.body;

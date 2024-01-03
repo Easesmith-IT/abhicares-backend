@@ -17,7 +17,7 @@ const userAddress_controller = require("../controllers/User/useraddress");
 const cmsHome_controller = require("../controllers/User/cmsHomeController");
 const review_controller = require("../controllers/User/reviewController");
 const payments_controller = require("../controllers/User/payments");
-const seller_controller = require("../controllers/User/sellerController");
+
 const booking_controller = require("../controllers/User/bookingController");
 const faq_controller=require("../controllers/User/faqController")
 const auth_controller = require("../controllers/User/auth");
@@ -126,9 +126,6 @@ router.post("/payment-verification",userAuth,payments_controller.paymentVerifica
 router.post("/get-api-key",userAuth,payments_controller.getApiKey)
 
 
-
-// Seller api
-router.post("/get-seller-location", seller_controller.getSellerByLocation);
 
 // Booking Routes
 // router.post(
