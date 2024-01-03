@@ -106,8 +106,8 @@ router.patch(
   review_controller.updateProductReview
 );
 // review id
-router.get("/get-product-review/:id", review_controller.getProductReview); // find product review by product id
-router.get(
+router.post("/get-product-review/:id", review_controller.getProductReview); // find product review by product id
+router.post(
   "/get-user-product-review/:id",userAuth,
   review_controller.getUserProductReview
 );
