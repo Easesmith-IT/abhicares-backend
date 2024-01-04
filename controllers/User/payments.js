@@ -18,7 +18,7 @@ const Products = require('../../models/product')
 const Cart = require('../../models/cart')
 const Booking = require('../../models/booking')
 const packageModel = require('../../models/packages')
-const tempOrder=require("../../models/tempOrder")
+const tempOrder = require('../../models/tempOrder')
 // const { trackUserOrder } = require("../controllers/nursery");
 const {
   getInvoiceData,
@@ -639,7 +639,7 @@ exports.paymentVerification = async (req, res,next) => {
       })
     }
   } catch (err) {
-    res.status(400).json({ success: false, message: 'internal server error' })
+    next(err)
   }
 }
 
