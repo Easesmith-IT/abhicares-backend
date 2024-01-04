@@ -109,8 +109,10 @@ mongoose
 
 const port = process.env.PORT || 5000;
 
-server.listen(port, function () {
+const socketConnection=server.listen(port, function () {
   console.log(`Server is running on port http://localhost:${port}`);
 });
 
-module.exports = server;
+const io = require('socket.io')(socketConnection)
+
+module.exports = {server,io};
