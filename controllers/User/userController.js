@@ -144,7 +144,7 @@ exports.verifyUserOtp = async (req, res, next) => {
       await userCart.save()
     }
     res.clearCookie('guestCart')
-    res.cookie('token', token,{ maxAge: 900000, httpOnly: true })
+    res.cookie('token', token,{ httpOnly: true })
     res.status(200).json({
       message: 'Logged In',
       success: true,
@@ -323,7 +323,7 @@ exports.createUser = async (req, res, next) => {
           }
           res.clearCookie('guestCart')
           res.clearCookie('tempVerf')
-          res.cookie('token', token,{ maxAge: 900000, httpOnly: true })
+          res.cookie('token', token,{ httpOnly: true })
           return res.status(200).json({
             message: 'Logged In',
             success: true,
