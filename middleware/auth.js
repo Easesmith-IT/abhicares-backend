@@ -5,8 +5,7 @@ const jwtkey = require('../util/jwtkey')
 
 exports.userAuth = async (req, res, next) => {
   try {
-    console.log('token inside', req.cookies)
-    const token = req.header('Authorization')
+    const token = req.cookies['token']
     //token is missing
     if (!token) {
       return res.status(401).json({
@@ -36,8 +35,9 @@ exports.userAuth = async (req, res, next) => {
 
 exports.userAuthForCart = async (req, res, next) => {
   try {
-    console.log('token inside', req.cookies)
-    const token = req.header('Authorization')
+    const token = req.cookies['token']
+    // console.log('token inside', req.cookies)
+    // const token = req.header('Authorization')
     //token is missing
 
     try {
