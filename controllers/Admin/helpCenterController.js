@@ -65,6 +65,7 @@ exports.getAllHelpCenter = async (req, res, next) => {
       throw new AppError(400, 'You are not authorized')
     }
   } catch (err) {
+    console.log("err--->",err)
     next(err)
   }
 }
