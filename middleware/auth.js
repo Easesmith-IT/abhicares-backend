@@ -66,7 +66,7 @@ exports.userAuthForCart = async (req, res, next) => {
 exports.isAdminAuth = async (req, res, next) => {
   try {
     // console.log('token inside', req.header('Authorization'))
-    const token = req.header('Authorization')
+    const token = req.cookies['token']
    
     jwt.verify(token, jwtkey.secretJwtKey, function(err, authData) {
       if(err){
