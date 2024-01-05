@@ -146,6 +146,15 @@ exports.loginAdminUser = async (req, res, next) => {
   }
 }
 
+exports.logoutAdmin = async (req, res, next) => {
+  try {
+    res.clearCookie("token")
+    return res.json({ success: true, message: 'Logout successful' })
+  } catch (err) {
+    next(err)
+  }
+}
+
 // exports.postAddUser = async (req, res, next) => {
 //   try {
 //     const { name, phone, password, gender } = req.body;
