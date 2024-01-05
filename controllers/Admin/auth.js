@@ -134,8 +134,8 @@ exports.loginAdminUser = async (req, res, next) => {
     console.log(isMatch)
     if (isMatch) {
       var token = jwt.sign({ adminId: adminId,permissions:admin.permissions}, jwtkey.secretJwtKey)
-      console.log
-      return res.status(200).json({ token: token })
+      res.cookie('token', token,{ maxAge: 900000, httpOnly: true })
+      return res.status(200).json({ success:true,message:"Login successful" })
     } else {
       return res.status(500).json('error')
     }

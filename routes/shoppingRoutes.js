@@ -24,6 +24,8 @@ const auth_controller = require("../controllers/User/auth");
 const helpCenter_controller=require("../controllers/User/helpCenterController")
 const coupon_controller=require("../controllers/User/couponController")
 
+const traceOrder_controller=require("../controllers/User/traceOrderController")
+
 
 
 // Category routes
@@ -150,6 +152,8 @@ router.get("/get-user-help",userAuth,helpCenter_controller.getUserHelpCenter)
 // Coupon routes
 router.post("/get-coupon-details",userAuth,coupon_controller.getCouponByName)
 
-
+// Trace order routes
+router.post("/add-booking-location/:id",traceOrder_controller.addLocationToDatabase) // passing booking id
+router.get("/get-booking-location/:id",traceOrder_controller.getOrderLocation) // passing booking id
 
 module.exports = router;

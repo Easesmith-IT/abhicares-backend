@@ -144,12 +144,12 @@ exports.verifyUserOtp = async (req, res, next) => {
       await userCart.save()
     }
     res.clearCookie('guestCart')
+    res.cookie('token', token,{ maxAge: 900000, httpOnly: true })
     res.status(200).json({
       message: 'Logged In',
       success: true,
       userName:user.name,
-      userPhone:user.phone,
-      token: token
+      userPhone:user.phone
     })
     // jwt.verify(tokenData, process.env.JWT_SECRET, async (err, authData) => {
     //   if (err) {
@@ -323,12 +323,12 @@ exports.createUser = async (req, res, next) => {
           }
           res.clearCookie('guestCart')
           res.clearCookie('tempVerf')
+          res.cookie('token', token,{ maxAge: 900000, httpOnly: true })
           return res.status(200).json({
             message: 'Logged In',
             success: true,
             userName:user.name,
-            userPhone:user.phone,
-            token: token
+            userPhone:user.phone
           })
         } else {
           return res.status(400).json({ message: 'OTP in Invalid' })
