@@ -460,25 +460,8 @@ exports.searchUser = async (req, res, next) => {
 // }
 exports.logoutUser = async (req, res, next) => {
   try {
-    res.clearCookie('guestCart')
+    res.clearCookie("token")
     return res.json({ success: true, message: 'Logout successful' })
-
-    // console.log(req.cookies.token);
-    // if (!req.cookies.token) {
-    //   res.status(400).json({ success: false, message: "you are not loggedin" });
-    // } else {
-    //   req.session.destroy((err) => {
-    //     if (err) {
-    //       console.error("Error destroying session:", err);
-    //       res.status(500).json({
-    //         success: false,
-    //         message: "Error while destorying session",
-    //       });
-    //     } else {
-    //       res.json({ success: true, message: "Logout successful" });
-    //     }
-    //   });
-    // }
   } catch (err) {
     next(err)
   }
