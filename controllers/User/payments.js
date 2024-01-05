@@ -584,7 +584,7 @@ exports.paymentVerification = async (req, res, next) => {
       const order = new Order({
         orderPlatform: result.orderPlatform,
         paymentType: result.paymentType,
-        orderValue: result.total,
+        orderValue: result.orderValue,
         itemTotal: result.itemTotal,
         discount: result.discount,
         tax: result.tax,
@@ -646,6 +646,7 @@ exports.paymentVerification = async (req, res, next) => {
       })
     }
   } catch (err) {
+    console.log("err",err);
     next(err)
   }
 }
