@@ -58,7 +58,7 @@ const limiter = rateLimit({
 
 // Apply the rate limiter to all requests
 server.use(limiter);
-server.use(helmet());
+// server.use(helmet());
 server.use(hpp());
 server.use(mongoSanitize());
 
