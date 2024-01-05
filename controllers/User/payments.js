@@ -545,7 +545,7 @@ exports.checkout = async (req, res, next) => {
     await cart.save()
 
     const options = {
-      amount: amount * 100, // amount in the smallest currency unit
+      amount: total * 100, // amount in the smallest currency unit
       currency: 'INR'
     }
     const createdOrder = await instance.orders.create(options)
