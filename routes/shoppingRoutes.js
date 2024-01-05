@@ -60,7 +60,7 @@ router.post("/generate-otp", user_controller.generateOtpUser);
 router.post("/verify-otp", user_controller.verifyUserOtp);
 router.post("/signup-otp", user_controller.signupOtp);
 router.post("/verify-signup", user_controller.createUser);
-router.get("/logout-user", userAuth, user_controller.logoutUser);
+router.get("/logout-user", user_controller.logoutUser);
 // special routes
 // router.post("/get-user-by-token", auth_controller.getUserByToken);
 
