@@ -3,8 +3,9 @@ const router = express.Router();
 const { auth } = require('../middleware/auth')
 const contentController = require('../controllers/Admin/content.js');
 const image_middleware = require('../middleware/imageMiddleware.js')
+const { isAdminAuth } = require("../middleware/auth");
 
-router.post("/upload-banners", image_middleware, contentController.uploadBanners);
+router.post("/upload-banners",isAdminAuth, image_middleware, contentController.uploadBanners);
 
 
 router.get("/get-banners", contentController.getBanners);
