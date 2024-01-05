@@ -3,7 +3,7 @@ const AppError = require('../Admin/errorController')
 
 exports.createFaq = async (req, res, next) => {
   try {
-    if (req.perm.faq === 'write') {
+    if (req.perm.helpCenter === 'write') {
       const { ques, ans } = req.body
       if (!ques || !ans) {
         throw new AppError(400, 'All the fields are required')
@@ -30,7 +30,7 @@ exports.createFaq = async (req, res, next) => {
 }
 exports.getAllFaq = async (req, res, next) => {
   try {
-    if (req.perm.faq === 'write' || req.perm.faq === 'read') {
+    if (req.perm.helpCenter === 'write' || req.perm.faq === 'read') {
       const result = await faqModel.find()
       res
         .status(201)
@@ -44,7 +44,7 @@ exports.getAllFaq = async (req, res, next) => {
 }
 exports.deleteFaq = async (req, res, next) => {
   try {
-    if (req.perm.faq === 'write') {
+    if (req.perm.helpCenter === 'write') {
       const id = req.params.id
       await faqModel.findByIdAndDelete({ _id: id })
       res
@@ -60,7 +60,7 @@ exports.deleteFaq = async (req, res, next) => {
 
 exports.updateFaq = async (req, res, next) => {
   try {
-    if (req.perm.faq === 'write') {
+    if (req.perm.helpCenter === 'write') {
       const id = req.params.id
       const { ques, ans } = req.body
       if (!ques || !ans) {
