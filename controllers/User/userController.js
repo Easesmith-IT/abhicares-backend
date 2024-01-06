@@ -144,12 +144,12 @@ exports.verifyUserOtp = async (req, res, next) => {
       await userCart.save()
     }
     res.clearCookie('guestCart')
+    res.cookie('token', token,{secure: true, httpOnly: true })
     res.status(200).json({
       message: 'Logged In',
       success: true,
       userName:user.name,
-      userPhone:user.phone,
-      token: token
+      userPhone:user.phone
     })
     // jwt.verify(tokenData, process.env.JWT_SECRET, async (err, authData) => {
     //   if (err) {
@@ -323,12 +323,12 @@ exports.createUser = async (req, res, next) => {
           }
           res.clearCookie('guestCart')
           res.clearCookie('tempVerf')
+          res.cookie('token', token,{secure: true, httpOnly: true })
           return res.status(200).json({
             message: 'Logged In',
             success: true,
             userName:user.name,
-            userPhone:user.phone,
-            token: token
+            userPhone:user.phone
           })
         } else {
           return res.status(400).json({ message: 'OTP in Invalid' })
@@ -460,25 +460,8 @@ exports.searchUser = async (req, res, next) => {
 // }
 exports.logoutUser = async (req, res, next) => {
   try {
-    res.clearCookie('guestCart')
+    res.clearCookie("token")
     return res.json({ success: true, message: 'Logout successful' })
-
-    // console.log(req.cookies.token);
-    // if (!req.cookies.token) {
-    //   res.status(400).json({ success: false, message: "you are not loggedin" });
-    // } else {
-    //   req.session.destroy((err) => {
-    //     if (err) {
-    //       console.error("Error destroying session:", err);
-    //       res.status(500).json({
-    //         success: false,
-    //         message: "Error while destorying session",
-    //       });
-    //     } else {
-    //       res.json({ success: true, message: "Logout successful" });
-    //     }
-    //   });
-    // }
   } catch (err) {
     next(err)
   }

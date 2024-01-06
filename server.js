@@ -9,6 +9,10 @@ const session = require("express-session");
 const otpGenerator = require("otp-generator");
 require("dotenv").config();
 const cookieParser = require("cookie-parser");
+const rateLimit = require('express-rate-limit');
+const hpp = require('hpp');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
 
 
 const server = express();
@@ -44,6 +48,19 @@ const server = express();
 //     cb(null, true);
 //   }
 // };
+
+// Define a rate limiter with certain options
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.',
+});
+
+// Apply the rate limiter to all requests
+server.use(limiter);
+// server.use(helmet());
+server.use(hpp());
+server.use(mongoSanitize());
 
 // Use session middleware
 server.use(
@@ -109,8 +126,10 @@ mongoose
 
 const port = process.env.PORT || 5000;
 
-server.listen(port, function () {
+const socketConnection=server.listen(port, function () {
   console.log(`Server is running on port http://localhost:${port}`);
 });
 
-module.exports = server;
+const io = require('socket.io')(socketConnection)
+
+module.exports = {server,io};

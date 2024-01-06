@@ -134,8 +134,8 @@ exports.loginAdminUser = async (req, res, next) => {
     console.log(isMatch)
     if (isMatch) {
       var token = jwt.sign({ adminId: adminId,permissions:admin.permissions}, jwtkey.secretJwtKey)
-      console.log
-      return res.status(200).json({ token: token })
+      res.cookie('token', token,{secure: true, httpOnly: true })
+      return res.status(200).json({ success:true,message:"Login successful" })
     } else {
       return res.status(500).json('error')
     }
@@ -143,6 +143,15 @@ exports.loginAdminUser = async (req, res, next) => {
     const error = new Error(err)
     error.httpStatusCode = 500
     return next(err)
+  }
+}
+
+exports.logoutAdmin = async (req, res, next) => {
+  try {
+    res.clearCookie("token")
+    return res.json({ success: true, message: 'Logout successful' })
+  } catch (err) {
+    next(err)
   }
 }
 

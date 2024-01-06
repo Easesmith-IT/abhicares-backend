@@ -3,7 +3,7 @@ const AppError = require('../Admin/errorController')
 
 exports.uploadBanners = async (req, res, next) => {
   try {
-    if (req.perm.content === 'write') {
+    if (req.perm.banners === 'write') {
       const { type, section, page } = req.body
 
       const image = req.files[0].filename
@@ -49,25 +49,25 @@ exports.uploadBanners = async (req, res, next) => {
 
 exports.getBanners = async (req, res, next) => {
   try {
-    if (req.perm.content === 'write' || req.perm.content === 'read') {
-      const { type, section, page, heroBanners } = req.query
-      let doc
-      if (heroBanners) {
-        doc = await Content.find({ section, page })
+    // if (req.perm.content === 'write' || req.perm.content === 'read') {
+    const { type, section, page, heroBanners } = req.query
+    let doc
+    if (heroBanners) {
+      doc = await Content.find({ section, page })
 
-        const banners = doc.map(doc => doc.image)
+      const banners = doc.map(doc => doc.image)
 
-        res.status(200).json({
-          success: true,
-          banners: banners
-        })
-      } else {
-        doc = await Content.findOne({ type, section, page })
-        res.status(200).json({
-          success: true,
-          banners: doc.image
-        })
-      }
+      res.status(200).json({
+        success: true,
+        banners: banners
+      })
+      // } else {
+      //   doc = await Content.findOne({ type, section, page })
+      //   res.status(200).json({
+      //     success: true,
+      //     banners: doc.image
+      //   })
+      // }
 
       if (!doc) {
         throw new AppError(400, 'Document does not exists')
@@ -83,7 +83,7 @@ exports.getBanners = async (req, res, next) => {
 
 exports.updateContent = async (req, res) => {
   try {
-    if (req.perm.content === 'write') {
+    if (req.perm.banners === 'write') {
       const id = req.params.id
       const content = await Content.findOne({ _id: id })
 
@@ -133,7 +133,7 @@ exports.updateContent = async (req, res) => {
 
 exports.getContent = async (req, res) => {
   try {
-    if (req.perm.content === 'write' || req.perm.content === 'read') {
+    if (req.perm.banners === 'write' || req.perm.content === 'read') {
       const title = req.query.title
       const content = await Content.findOne({ title: title })
       if (!content) {

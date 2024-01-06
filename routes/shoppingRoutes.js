@@ -17,12 +17,14 @@ const userAddress_controller = require("../controllers/User/useraddress");
 const cmsHome_controller = require("../controllers/User/cmsHomeController");
 const review_controller = require("../controllers/User/reviewController");
 const payments_controller = require("../controllers/User/payments");
-const seller_controller = require("../controllers/User/sellerController");
+
 const booking_controller = require("../controllers/User/bookingController");
 const faq_controller=require("../controllers/User/faqController")
 const auth_controller = require("../controllers/User/auth");
 const helpCenter_controller=require("../controllers/User/helpCenterController")
 const coupon_controller=require("../controllers/User/couponController")
+
+const traceOrder_controller=require("../controllers/User/traceOrderController")
 
 
 
@@ -58,7 +60,7 @@ router.post("/generate-otp", user_controller.generateOtpUser);
 router.post("/verify-otp", user_controller.verifyUserOtp);
 router.post("/signup-otp", user_controller.signupOtp);
 router.post("/verify-signup", user_controller.createUser);
-router.get("/logout-user", userAuth, user_controller.logoutUser);
+router.get("/logout-user", user_controller.logoutUser);
 // special routes
 // router.post("/get-user-by-token", auth_controller.getUserByToken);
 
@@ -106,8 +108,8 @@ router.patch(
   review_controller.updateProductReview
 );
 // review id
-router.get("/get-product-review/:id", review_controller.getProductReview); // find product review by product id
-router.get(
+router.post("/get-product-review/:id", review_controller.getProductReview); // find product review by product id
+router.post(
   "/get-user-product-review/:id",userAuth,
   review_controller.getUserProductReview
 );
@@ -126,9 +128,6 @@ router.post("/payment-verification",userAuth,payments_controller.paymentVerifica
 router.post("/get-api-key",userAuth,payments_controller.getApiKey)
 
 
-
-// Seller api
-router.post("/get-seller-location", seller_controller.getSellerByLocation);
 
 // Booking Routes
 // router.post(
@@ -153,6 +152,8 @@ router.get("/get-user-help",userAuth,helpCenter_controller.getUserHelpCenter)
 // Coupon routes
 router.post("/get-coupon-details",userAuth,coupon_controller.getCouponByName)
 
-
+// Trace order routes
+router.post("/add-booking-location/:id",traceOrder_controller.addLocationToDatabase) // passing booking id
+router.get("/get-booking-location/:id",traceOrder_controller.getOrderLocation) // passing booking id
 
 module.exports = router;

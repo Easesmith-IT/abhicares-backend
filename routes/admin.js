@@ -223,5 +223,6 @@ router.delete("/delete-booking/:id",isAdminAuth,booking_controller.deleteBooking
 //Admin Routes
 router.post("/create-Admin", auth_controller.addAminUser);
 router.post("/login-Admin", auth_controller.loginAdminUser);
+router.get("/logout-Admin", auth_controller.logoutAdmin);
 
 module.exports = router;
