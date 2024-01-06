@@ -29,7 +29,10 @@ const bookingSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
-
+      city: {
+        type: String,
+        required: true,
+      },
     },
     product: {
       type: Object,
@@ -58,16 +61,16 @@ const bookingSchema = new mongoose.Schema(
     orderValue: {
       type: Number,
     },
-    currentLocation:{
-      status:{
+    currentLocation: {
+      status: {
         type: String,
-        enum : ['booking-placed','out-of-delivery',"reached","completed"],
-        default: 'booking-placed'
+        enum: ["booking-placed", "out-of-delivery", "reached", "completed"],
+        default: "booking-placed",
       },
-      location:{
-        type:Object
-      }
-    }
+      location: {
+        type: Object,
+      },
+    },
   },
   { timestamps: true }
 );

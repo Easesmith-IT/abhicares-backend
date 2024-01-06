@@ -7,27 +7,27 @@ const orderSchema = new Schema(
     orderPlatform: {
       type: String,
       required: true,
-      default: 'app'
+      default: "app",
     },
     orderValue: {
       type: Number,
-      required: true
+      required: true,
     },
-    itemTotal:{
+    itemTotal: {
       type: Number,
-      required: true
-    }, 
-    discount:{
+      required: true,
+    },
+    discount: {
       type: Number,
-      required: true
-    }, 
-    tax:{
+      required: true,
+    },
+    tax: {
       type: Number,
-      required: true
+      required: true,
     },
     paymentType: {
       type: String,
-      default: 'Online payment'
+      default: "Online payment",
     },
     items: [
       {
@@ -40,7 +40,7 @@ const orderSchema = new Schema(
           // required: true
         },
         quantity: {
-          type: Number
+          type: Number,
         },
         bookingDate: {
           type: String,
@@ -49,54 +49,59 @@ const orderSchema = new Schema(
         bookingTime: {
           type: String,
           required: true,
-        }
-      }
+        },
+      },
     ],
     user: {
       userId: {
         type: Schema.Types.ObjectId,
-        ref: 'user',
-        required: true
+        ref: "user",
+        required: true,
       },
       phone: {
         type: String,
-        required: true
+        required: true,
       },
       name: {
         type: String,
-        required: true
+        required: true,
       },
       address: {
         addressLine: {
-          type: String
+          type: String,
           // required: true,
         },
         pincode: {
-          type: Number
+          type: Number,
           // required: true,
         },
         landmark: {
           type: String,
-          required: true
-        }
-      }
+          required: true,
+        },
+        
+        city: {
+          type: String,
+          required: true,
+        },
+      },
     },
     status: {
       required: true,
       type: String,
-      default: 'pending'
+      default: "pending",
     },
     couponId: {
       type: mongoose.Types.ObjectId,
-      ref: 'offerCoupon'
+      ref: "offerCoupon",
     },
     adminComment: {
       required: true,
       type: String,
-      default: 'Your oder has been placed'
-    }
+      default: "Your oder has been placed",
+    },
   },
   { timestamps: true }
-)
+);
 
 module.exports = mongoose.model('Order', orderSchema)
