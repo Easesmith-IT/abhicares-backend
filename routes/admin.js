@@ -4,6 +4,7 @@ const User = require("../models/user");
 const { isAdminAuth } = require("../middleware/auth");
 
 const router = express.Router();
+const sharpUpload=require("../middleware/sharpImage")
 
 const img_upload = require("../middleware/imageMiddleware");
 
@@ -82,6 +83,7 @@ router.post(
   "/create-product",
   isAdminAuth,
   img_upload,
+  sharpUpload.sharpUpload,
   product_controller.createProduct
 );
 router.get("/get-all-product", isAdminAuth, product_controller.getAllProduct);
@@ -224,5 +226,9 @@ router.delete("/delete-booking/:id",isAdminAuth,booking_controller.deleteBooking
 router.post("/create-Admin", auth_controller.addAminUser);
 router.post("/login-Admin", auth_controller.loginAdminUser);
 router.get("/logout-Admin", auth_controller.logoutAdmin);
+
+// //Sharp test Routes
+// router.post("/sharp-test",img_upload,sharpUpload.sharpUpload)
+
 
 module.exports = router;
