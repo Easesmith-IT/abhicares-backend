@@ -3,6 +3,8 @@ const AppError = require('../Admin/errorController')
 
 exports.uploadBanners = async (req, res, next) => {
   try {
+    console.log('Hello')
+    console.log(req.perm.banners);
     if (req.perm.banners === 'write') {
       const { type, section, page } = req.body
 
@@ -49,7 +51,7 @@ exports.uploadBanners = async (req, res, next) => {
 
 exports.getBanners = async (req, res, next) => {
   try {
-    // if (req.perm.content === 'write' || req.perm.content === 'read') {
+    
     const { type, section, page, heroBanners } = req.query
     let doc
     if (heroBanners) {
@@ -61,20 +63,17 @@ exports.getBanners = async (req, res, next) => {
         success: true,
         banners: banners
       })
-      // } else {
-      //   doc = await Content.findOne({ type, section, page })
-      //   res.status(200).json({
-      //     success: true,
-      //     banners: doc.image
-      //   })
-      // }
+      } else {
+        doc = await Content.findOne({ type, section, page })
+        res.status(200).json({
+          success: true,
+          banners: doc.image
+        })
+      }
 
       if (!doc) {
         throw new AppError(400, 'Document does not exists')
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
   } catch (err) {
     console.log(err)
     next(err)

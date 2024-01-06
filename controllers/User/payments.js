@@ -124,7 +124,8 @@ exports.websiteCodOrder = async (req, res, next) => {
         address: {
           addressLine: userAddress.addressLine,
           pincode: userAddress.pincode,
-          landmark: userAddress.landmark
+          landmark: userAddress.landmark,
+          city:userAddress.city
         }
       }
     })
@@ -139,7 +140,8 @@ exports.websiteCodOrder = async (req, res, next) => {
           userAddress: {
             addressLine: userAddress.addressLine,
             pincode: userAddress.pincode,
-            landmark: userAddress.landmark
+            landmark: userAddress.landmark,
+            city:userAddress.city
           },
           product: orderItem.product,
           quantity: orderItem.quantity,
@@ -155,14 +157,15 @@ exports.websiteCodOrder = async (req, res, next) => {
           userAddress: {
             addressLine: userAddress.addressLine,
             pincode: userAddress.pincode,
-            landmark: userAddress.landmark
+            landmark: userAddress.landmark,
+            city: userAddress.city,
           },
           package: orderItem.package,
           quantity: orderItem.quantity,
           bookingDate: orderItem.bookingDate,
           bookingTime: orderItem.bookingTime,
-          orderValue: orderItem.package.offerPrice * orderItem.quantity
-        })
+          orderValue: orderItem.package.offerPrice * orderItem.quantity,
+        });
         await booking.save()
       }
     }
@@ -213,7 +216,8 @@ exports.appCodOrder = async (req, res, next) => {
           addressLine: userAddress.addressLine,
           pincode: userAddress.pincode,
           // mobile: userAddress.mobile,
-          landmark: userAddress.landmark
+          landmark: userAddress.landmark,
+          city:userAddress.city
         }
       }
     })
@@ -533,7 +537,8 @@ exports.checkout = async (req, res, next) => {
         address: {
           addressLine: userAddress.addressLine,
           pincode: userAddress.pincode,
-          landmark: userAddress.landmark
+          landmark: userAddress.landmark,
+          city: userAddress.city
         }
       }
     })
@@ -606,14 +611,15 @@ exports.paymentVerification = async (req, res, next) => {
             userAddress: {
               addressLine: result.user.address.addressLine,
               pincode: result.user.address.pincode,
-              landmark: result.user.address.landmark
+              landmark: result.user.address.landmark,
+              city: result.user.address.city,
             },
             product: orderItem.product,
             quantity: orderItem.quantity,
             bookingDate: orderItem.bookingDate,
             bookingTime: orderItem.bookingTime,
-            orderValue: orderItem.product.offerPrice * orderItem.quantity
-          })
+            orderValue: orderItem.product.offerPrice * orderItem.quantity,
+          });
           await booking.save()
         } else if (orderItem.package) {
           var booking = new Booking({
@@ -622,14 +628,15 @@ exports.paymentVerification = async (req, res, next) => {
             userAddress: {
               addressLine: result.user.address.addressLine,
               pincode: result.user.address.pincode,
-              landmark: result.user.address.landmark
+              landmark: result.user.address.landmark,
+              city: result.user.address.city,
             },
             package: orderItem.package,
             quantity: orderItem.quantity,
             bookingDate: orderItem.bookingDate,
             bookingTime: orderItem.bookingTime,
-            orderValue: orderItem.package.offerPrice * orderItem.quantity
-          })
+            orderValue: orderItem.package.offerPrice * orderItem.quantity,
+          });
           await booking.save()
         }
       }
