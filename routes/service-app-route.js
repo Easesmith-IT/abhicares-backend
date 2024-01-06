@@ -30,6 +30,7 @@ router.get(
 // router.get("/get-product/:productId", serviceAppController.getProductDetails);
 
 router.get("/get-user/:userId", serviceAppController.getUser);
+router.get("/get-partner/:id", serviceAppController.getPartner);
 router.post("/login", serviceAppController.login);
 router.post("/signup", serviceAppController.createUser);
 //

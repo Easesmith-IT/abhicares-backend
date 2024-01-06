@@ -10,7 +10,19 @@ const tempOrderSchema = new Schema(
       default: 'app'
     },
     orderValue: {
-      type: String,
+      type: Number,
+      required: true
+    },
+    itemTotal:{
+      type: Number,
+      required: true
+    },
+    discount:{
+      type: Number,
+      required: true
+    },
+    tax:{
+      type: Number,
       required: true
     },
     paymentType: {

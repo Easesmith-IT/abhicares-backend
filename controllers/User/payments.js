@@ -47,7 +47,7 @@ exports.websiteCodOrder = async (req, res, next) => {
     const userAddressId = req.body.userAddressId
     const user = req.user
     const bookings = req.body.bookings
-    const amount=req.body.amount
+    const { itemTotal, discount, tax, total } = req.body
     let couponId = null
     if (req.body.couponId) {
       couponId = req.body.couponId
@@ -111,7 +111,10 @@ exports.websiteCodOrder = async (req, res, next) => {
     const order = new Order({
       orderPlatform: 'website',
       paymentType: 'COD',
-      orderValue: amount,
+      orderValue: total,
+      itemTotal,
+      discount,
+      tax,
       items: orderItems,
       couponId: couponId,
       user: {
@@ -447,12 +450,12 @@ exports.getMolthlyOrder = async (req, res, next) => {
   }
 }
 
-exports.checkout = async (req, res,next) => {
+exports.checkout = async (req, res, next) => {
   try {
     const userAddressId = req.body.userAddressId
     const user = req.user
     const bookings = req.body.bookings
-    const amount = req.body.amount
+    const { itemTotal, discount, tax, total } = req.body
     let couponId = null
     if (req.body.couponId) {
       couponId = req.body.couponId
@@ -517,7 +520,10 @@ exports.checkout = async (req, res,next) => {
     const order = new tempOrder({
       orderPlatform: 'Online',
       paymentType: 'Online',
-      orderValue: amount,
+      orderValue: total,
+      itemTotal,
+      discount,
+      tax,
       items: orderItems,
       couponId: couponId,
       user: {
@@ -539,24 +545,22 @@ exports.checkout = async (req, res,next) => {
     await cart.save()
 
     const options = {
-      amount: amount * 100, // amount in the smallest currency unit
+      amount: total * 100, // amount in the smallest currency unit
       currency: 'INR'
     }
     const createdOrder = await instance.orders.create(options)
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: 'order created',
-        razorpayOrder: createdOrder,
-        order: order
-      })
+    res.status(200).json({
+      success: true,
+      message: 'order created',
+      razorpayOrder: createdOrder,
+      order: order
+    })
   } catch (err) {
-   next(err)
+    next(err)
   }
 }
 
-exports.paymentVerification = async (req, res,next) => {
+exports.paymentVerification = async (req, res, next) => {
   try {
     const {
       razorpay_order_id,
@@ -581,6 +585,9 @@ exports.paymentVerification = async (req, res,next) => {
         orderPlatform: result.orderPlatform,
         paymentType: result.paymentType,
         orderValue: result.orderValue,
+        itemTotal: result.itemTotal,
+        discount: result.discount,
+        tax: result.tax,
         items: result.items,
         couponId: result.couponId,
         user: result.user,
@@ -639,11 +646,12 @@ exports.paymentVerification = async (req, res,next) => {
       })
     }
   } catch (err) {
+    console.log("err",err);
     next(err)
   }
 }
 
-exports.getApiKey = async (req, res,next) => {
+exports.getApiKey = async (req, res, next) => {
   try {
     res.status(200).json({
       success: true,
@@ -651,6 +659,6 @@ exports.getApiKey = async (req, res,next) => {
       apiKey: process.env.RAZORPAY_API_KEY
     })
   } catch (err) {
-   next(err)
+    next(err)
   }
 }
