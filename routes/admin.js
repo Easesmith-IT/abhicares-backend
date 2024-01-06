@@ -55,6 +55,7 @@ router.post(
   "/create-service",
   isAdminAuth,
   img_upload,
+  sharpUpload.sharpUpload,
   service_controller.createService
 );
 router.get("/get-all-service", isAdminAuth, service_controller.getAllService);
@@ -67,6 +68,7 @@ router.patch(
   "/update-service/:id",
   isAdminAuth,
   img_upload,
+  sharpUpload.sharpUpload,
   service_controller.updateService
 ); // passing object id
 router.delete(
@@ -96,6 +98,7 @@ router.patch(
   "/update-product/:id",
   isAdminAuth,
   img_upload,
+  sharpUpload.sharpUpload,
   product_controller.updateProduct
 ); // passing object id
 router.delete(
@@ -150,12 +153,14 @@ router.post(
   "/create-package",
   isAdminAuth,
   img_upload,
+  sharpUpload.sharpUpload,
   package_controller.createPackage
 );
 router.patch(
   "/update-package/:id",
   isAdminAuth,
   img_upload,
+  sharpUpload.sharpUpload,
   package_controller.updatePackage
 );
 router.get(
