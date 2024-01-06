@@ -154,9 +154,9 @@ exports.updateProduct = async (req, res, next) => {
 
 exports.deleteServiceProduct = async (req, res, next) => {
   try {
-    if (req.perm.services != 'write') {
+    if (req.perm.services == 'write') {
       const id = req.params.id // object id
-      const result = await productModel.findOneAndDelete({ _id: id })
+      await productModel.findByIdAndDelete({ _id: id })
       res
         .status(200)
         .json({ success: true, message: 'product deleted successful' })
