@@ -4,6 +4,7 @@ const User = require("../models/user");
 const { isAdminAuth } = require("../middleware/auth");
 
 const router = express.Router();
+const sharpUpload=require("../middleware/sharpImage")
 
 const img_upload = require("../middleware/imageMiddleware");
 
@@ -54,6 +55,7 @@ router.post(
   "/create-service",
   isAdminAuth,
   img_upload,
+  sharpUpload.sharpUpload,
   service_controller.createService
 );
 router.get("/get-all-service", isAdminAuth, service_controller.getAllService);
@@ -66,6 +68,7 @@ router.patch(
   "/update-service/:id",
   isAdminAuth,
   img_upload,
+  sharpUpload.sharpUpload,
   service_controller.updateService
 ); // passing object id
 router.delete(
@@ -82,6 +85,7 @@ router.post(
   "/create-product",
   isAdminAuth,
   img_upload,
+  sharpUpload.sharpUpload,
   product_controller.createProduct
 );
 router.get("/get-all-product", isAdminAuth, product_controller.getAllProduct);
@@ -94,6 +98,7 @@ router.patch(
   "/update-product/:id",
   isAdminAuth,
   img_upload,
+  sharpUpload.sharpUpload,
   product_controller.updateProduct
 ); // passing object id
 router.delete(
@@ -148,12 +153,14 @@ router.post(
   "/create-package",
   isAdminAuth,
   img_upload,
+  sharpUpload.sharpUpload,
   package_controller.createPackage
 );
 router.patch(
   "/update-package/:id",
   isAdminAuth,
   img_upload,
+  sharpUpload.sharpUpload,
   package_controller.updatePackage
 );
 router.get(
@@ -224,5 +231,9 @@ router.delete("/delete-booking/:id",isAdminAuth,booking_controller.deleteBooking
 router.post("/create-Admin", auth_controller.addAminUser);
 router.post("/login-Admin", auth_controller.loginAdminUser);
 router.get("/logout-Admin", auth_controller.logoutAdmin);
+
+// //Sharp test Routes
+// router.post("/sharp-test",img_upload,sharpUpload.sharpUpload)
+
 
 module.exports = router;

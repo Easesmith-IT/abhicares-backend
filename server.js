@@ -78,12 +78,14 @@ server.use(bodyParser.json({ limit: "50mb" }));
 server.use(express.urlencoded({ extended: true }));
 server.use(express.static(path.join(__dirname, "build")));
 server.use(express.static(path.join(__dirname, "admin")));
+
 server.use(cookieParser());
 
 // server.use(
 //   multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
 // );
 server.use("/uploads", express.static(path.join(__dirname, "uploads")));
+server.use("/newUpload", express.static(path.join(__dirname, "newUpload")));
 // express.static(path.join(__dirname, "..));
 
 server.use(
