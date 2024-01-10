@@ -520,6 +520,7 @@ exports.checkout = async (req, res, next) => {
       }
     }
     const userAddress = await UserAddress.findById(userAddressId)
+    console.log("userAddress 123", userAddress);
     orderPrice = cart.totalPrice
     const order = new tempOrder({
       orderPlatform: 'Online',

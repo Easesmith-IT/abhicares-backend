@@ -69,17 +69,16 @@ const orderSchema = new Schema(
       address: {
         addressLine: {
           type: String,
-          // required: true,
+          required: true,
         },
         pincode: {
           type: Number,
-          // required: true,
+          required: true,
         },
         landmark: {
           type: String,
           required: true,
         },
-        
         city: {
           type: String,
           required: true,
