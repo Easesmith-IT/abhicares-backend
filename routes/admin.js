@@ -132,11 +132,13 @@ router.post("/get-seller-by-location",isAdminAuth,seller_controller.getSellerByL
 
 router.post("/create-user", isAdminAuth, user_controller.createUser);
 router.get("/get-all-user", isAdminAuth, user_controller.getAllUser);
+router.get("/get-all-addresses/:id",isAdminAuth ,user_controller.getAllAddressesByUserId);
 router.patch(
   "/update-user/:id",
   isAdminAuth,
   user_controller.updateUserByAdmin
 ); // passing object id
+router
 router.delete("/delete-user/:id", isAdminAuth, user_controller.deleteUser); // passing object id
 router.get("/search-user", isAdminAuth, user_controller.searchUser);
 

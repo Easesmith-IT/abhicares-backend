@@ -1,4 +1,5 @@
 const userModel = require('../../models/user')
+const userAddressModel = require('../../models/useraddress')
 const bcrypt = require('bcryptjs')
 const session = require('express-session')
 const otpGenerator = require('otp-generator')
@@ -350,6 +351,35 @@ exports.getAllUser = async (req, res, next) => {
     next(err)
   }
 }
+
+exports.getAllAddressesByUserId = async (req, res, next) => {
+  try {
+    if (req.perm.customers === "write" || req.perm.customers === "read") {
+
+    const id = req.params.id
+    console.log(id)
+
+      const addresses = await userAddressModel.find({ userId: id });
+      
+      if (!addresses) {
+        res.status(400).json({
+          success: false,
+          message:"No addresses found"
+        })
+      }
+
+      res.status(200).json({
+        success: true,
+        addresses: addresses,
+      });
+    } else {
+      throw new AppError(400, "You are not authorized");
+    }
+  } catch (err) {
+    console.log(err)
+    next(err);
+  }
+};
 
 // this only for admin not for general user
 exports.updateUserByAdmin = async (req, res, next) => {
