@@ -230,6 +230,7 @@ router.get("/get-booking-list",isAdminAuth,booking_controller.getAllBooking)
 router.delete("/delete-booking/:id",isAdminAuth,booking_controller.deleteBooking) // passing booking id
 
 //Admin Routes
+router.get("/check-token-expiration", isAdminAuth);
 router.post("/create-Admin", auth_controller.addAminUser);
 router.post("/login-Admin", auth_controller.loginAdminUser);
 router.get("/logout-Admin", auth_controller.logoutAdmin);

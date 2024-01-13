@@ -107,7 +107,9 @@ exports.verifyUserOtp = async (req, res, next) => {
     // user.otp = null;
     await user.save()
     const payload = { id: user._id }
-    const token = jwt.sign(payload, process.env.JWT_SECRET)
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn:'2d'
+    })
     const userCart = await cartModel.findById(user.cartId)
     if (req.cookies['guestCart']) {
       const guestCart = JSON.parse(req.cookies['guestCart'])
@@ -233,7 +235,8 @@ exports.signupOtp = async (req, res, next) => {
         })
         console.log(otp)
         var payload = { phone: phone, otp: otp, name: name }
-        var token = jwt.sign(payload, process.env.JWT_SECRET)
+        var token = jwt.sign(payload, process.env.JWT_SECRET,
+        {expiresIn:'2d'})
         res
           .status(200)
           .cookie('tempVerf', token, { httpOnly: true })
