@@ -64,6 +64,7 @@ const { findOne } = require('../../models/cart')
 //   }
 // };
 
+
 exports.addAminUser = async (req, res, next) => {
   try {
     const { adminId, password, name, role, permissions } = req.body
@@ -129,17 +130,23 @@ exports.loginAdminUser = async (req, res, next) => {
   try {
     const { adminId, password } = req.body
     const admin = await Admin.findOne({ adminId: adminId })
-   
+    if (!admin) {
+      return res.status(400).json({
+         message:"No admin exists with this id"
+       });
+    }
+   console.log("password",password)
     const isMatch = await bcrypt.compare(password, admin.password)
     console.log(isMatch)
     if (isMatch) {
-      var token = jwt.sign({ adminId: adminId,permissions:admin.permissions}, jwtkey.secretJwtKey)
+      var token = jwt.sign({ adminId: adminId,permissions:admin.permissions}, jwtkey.secretJwtKey,{expiresIn:'2d'})
       res.cookie('token', token,{secure: true, httpOnly: true })
       return res.status(200).json({ success:true,message:"Login successful" })
     } else {
       return res.status(500).json('error')
     }
   } catch (err) {
+    console.log(err)
     const error = new Error(err)
     error.httpStatusCode = 500
     return next(err)

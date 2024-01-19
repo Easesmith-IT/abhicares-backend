@@ -81,7 +81,7 @@ cartSchema.methods.deleteFromCart = function (prod,type) {
   let updatedCartItems = [...this.items];
   if (type == "product") {
     const cartProductIndex = this.items.findIndex(
-      (cp) => cp.productId.toString() === prod._id.toString()
+      (cp) => cp.productId?.toString() === prod._id.toString()
     );
     let quantity = updatedCartItems[cartProductIndex].quantity;
     if (quantity > 1) {

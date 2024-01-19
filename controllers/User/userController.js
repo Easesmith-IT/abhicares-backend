@@ -1,35 +1,35 @@
-const userModel = require('../../models/user')
-const bcrypt = require('bcryptjs')
-const session = require('express-session')
-const otpGenerator = require('otp-generator')
-const nodemailer = require('nodemailer')
-const jwt = require('jsonwebtoken')
-const cartModel = require('../../models/cart')
-const productModel = require('../../models/product')
-const AppError = require('../User/errorController')
-const packageModel = require('../../models/packages')
+const userModel = require("../../models/user");
+const bcrypt = require("bcryptjs");
+const session = require("express-session");
+const otpGenerator = require("otp-generator");
+const nodemailer = require("nodemailer");
+const jwt = require("jsonwebtoken");
+const cartModel = require("../../models/cart");
+const productModel = require("../../models/product");
+const AppError = require("../User/errorController");
+const packageModel = require("../../models/packages");
 // const otpStore = {}
 // const myData = {}
 exports.generateOtpUser = async (req, res, next) => {
   try {
-    const { phoneNumber } = req.body
+    const { phoneNumber } = req.body;
     // Generate a 6-digit OTP
     const otp = otpGenerator.generate(6, {
       digits: true,
       lowerCaseAlphabets: false,
       upperCaseAlphabets: false,
-      specialChars: false
-    })
+      specialChars: false,
+    });
     const user = await userModel
       .findOne({ phone: phoneNumber })
-      .select('-password')
-    console.log(user)
+      .select("-password");
+    console.log(user);
     if (!user) {
-      res.status(400).json({ success: false, message: 'User does not exist' })
+      res.status(400).json({ success: false, message: "User does not exist" });
     } else {
-      user
-      user.otp = otp
-      await user.save()
+      user;
+      user.otp = otp;
+      await user.save();
       // console.log("jwt-secret", process.env.JWT_SECRET);
       // jwt.sign(
       //   { userId: id, otp: otp },
@@ -83,74 +83,86 @@ exports.generateOtpUser = async (req, res, next) => {
       //     }
       //   }
       // );
-      res.status(200).json({ message: 'otp sent successful', otp: otp })
+      res.status(200).json({ message: "otp sent successful", otp: otp });
     }
 
     // Send the OTP (you would typically send it via SMS, email, etc.)
   } catch (err) {
-    console.log(err)
-    next(err)
+    console.log(err);
+    next(err);
   }
-}
+};
 
 exports.verifyUserOtp = async (req, res, next) => {
   try {
-    const { enteredOTP, phoneNumber } = req.body
+    const { enteredOTP, phoneNumber } = req.body;
     const user = await userModel
       .findOne({ phone: phoneNumber, otp: enteredOTP })
-      .select('-password')
+      .select("-password");
     if (!user) {
       return res
         .status(400)
-        .json({ success: false, message: 'User does not exist' })
+        .json({ success: false, message: "User does not exist" });
     }
     // user.otp = null;
-    await user.save()
-    const payload = { id: user._id }
-    const token = jwt.sign(payload, process.env.JWT_SECRET)
-    const userCart = await cartModel.findById(user.cartId)
-    if (req.cookies['guestCart']) {
-      const guestCart = JSON.parse(req.cookies['guestCart'])
-      const carItems = guestCart.items
-      console.log('cart items == ', carItems)
+    await user.save();
+    const payload = { id: user._id };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: "2d",
+    });
+    const userCart = await cartModel.findById(user.cartId);
+    if (req.cookies["guestCart"]) {
+      const guestCart = JSON.parse(req.cookies["guestCart"]);
+      const carItems = guestCart.items;
+
       for (const guestCartItem of carItems) {
-        var prod, pack
-        if (guestCartItem.type == 'product') {
-          prod = await productModel.findById(guestCartItem.productId._id)
-        } else if (guestCartItem.type == 'package') {
-          pack = await packageModel.findById(guestCartItem.packageId._id)
-        }
-        if (guestCartItem.type == 'product') {
+        // var prod, pack
+        // if (guestCartItem.type == 'product') {
+        //   prod = await productModel.findById(guestCartItem.productId._id)
+        // } else if (guestCartItem.type == 'package') {
+        //   pack = await packageModel.findById(guestCartItem.packageId._id)
+        // }
+
+        console.log("guestCartItem", guestCartItem);
+        if (guestCartItem.type == "product") {
           const existingCartItem = userCart.items.find(
-            item => item.productId === guestCartItem.productId
-          )
+            (item) => item.productId?.toString() === guestCartItem.productId
+          );
+
           if (existingCartItem) {
-            existingCartItem.quantity += guestCartItem.quantity
+            existingCartItem.quantity += guestCartItem.quantity;
           } else {
-            userCart.items.push(guestCartItem)
+            console.log("pushing the cart item");
+            userCart.items.push(guestCartItem);
           }
-        } else if (guestCartItem.type == 'package') {
+        }
+        
+        
+        else if (guestCartItem.type == "package") {
           const existingCartItem = userCart.items.find(
-            item => item.packageId === guestCartItem.packageId
-          )
+            (item) => item.packageId?.toString() === guestCartItem.packageId
+          );
+          console.log("existingCartItem", existingCartItem);
           if (existingCartItem) {
-            existingCartItem.quantity += guestCartItem.quantity
+            existingCartItem.quantity += guestCartItem.quantity;
           } else {
-            userCart.items.push(guestCartItem)
+            userCart.items.push(guestCartItem);
           }
         }
       }
-      userCart.totalPrice += guestCart.totalPrice
-      await userCart.save()
+
+      userCart.totalPrice += guestCart.totalPrice;
+      console.log('cart',userCart)
+      await userCart.save();
     }
-    res.clearCookie('guestCart')
-    res.cookie('token', token,{secure: true, httpOnly: true })
+    res.clearCookie("guestCart");
+    res.cookie("token", token, { secure: true, httpOnly: true });
     res.status(200).json({
-      message: 'Logged In',
+      message: "Logged In",
       success: true,
-      userName:user.name,
-      userPhone:user.phone
-    })
+      userName: user.name,
+      userPhone: user.phone,
+    });
     // jwt.verify(tokenData, process.env.JWT_SECRET, async (err, authData) => {
     //   if (err) {
     //     res
@@ -220,230 +232,230 @@ exports.verifyUserOtp = async (req, res, next) => {
     //   }
     // });
   } catch (err) {
-    console.log('err--->', err)
-    next(err)
+    console.log("err--->", err);
+    next(err);
   }
-}
+};
 
 exports.signupOtp = async (req, res, next) => {
   try {
-    const { name, phone } = req.body
+    const { name, phone } = req.body;
     if (!name || !phone) {
       res
         .status(400)
-        .json({ success: false, message: 'All the fields are required' })
+        .json({ success: false, message: "All the fields are required" });
     } else {
-      const resultData = await userModel.findOne({ phone: phone })
+      const resultData = await userModel.findOne({ phone: phone });
       if (resultData) {
         res.status(400).json({
           success: true,
-          message: 'User already exists, Please Login!'
-        })
+          message: "User already exists, Please Login!",
+        });
       } else {
         const otp = otpGenerator.generate(6, {
           digits: true,
           lowerCaseAlphabets: false,
           upperCaseAlphabets: false,
-          specialChars: false
-        })
-        console.log(otp)
-        var payload = { phone: phone, otp: otp, name: name }
-        var token = jwt.sign(payload, process.env.JWT_SECRET)
+          specialChars: false,
+        });
+        console.log(otp);
+        var payload = { phone: phone, otp: otp, name: name };
+        var token = jwt.sign(payload, process.env.JWT_SECRET);
         res
           .status(200)
-          .cookie('tempVerf', token, { httpOnly: true })
-          .json({ otp: otp, message: 'user otp' })
+          .cookie("tempVerf", token, { httpOnly: true })
+          .json({ otp: otp, message: "user otp" });
       }
       // }
     }
   } catch (err) {
-    console.log(err)
-    next(err)
+    console.log(err);
+    next(err);
   }
-}
+};
 
 exports.createUser = async (req, res, next) => {
   try {
-    const { enteredOTP, phone } = req.body
-    if (!req.cookies['tempVerf']) {
+    const { enteredOTP, phone } = req.body;
+    if (!req.cookies["tempVerf"]) {
       res.status(400).json({
         success: false,
-        message: 'No signup request available'
-      })
+        message: "No signup request available",
+      });
     } else if (!enteredOTP || !phone) {
       res
         .status(400)
-        .json({ success: false, message: 'All the fields are required' })
+        .json({ success: false, message: "All the fields are required" });
     } else {
       try {
         const decoded = jwt.verify(
-          req.cookies['tempVerf'],
+          req.cookies["tempVerf"],
           process.env.JWT_SECRET
-        )
+        );
         if (decoded.otp == enteredOTP.toString() && decoded.phone == phone) {
-          var user = await userModel({ name: decoded.name, phone: phone })
-          await user.save()
-          var userCart = await cartModel({ userId: user._id })
-          await userCart.save()
-          user.cartId = userCart._id
-          await user.save()
-          const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
-          if (req.cookies['guestCart']) {
-            const guestCart = JSON.parse(req.cookies['guestCart'])
-            const carItems = guestCart.items
+          var user = await userModel({ name: decoded.name, phone: phone });
+          await user.save();
+          var userCart = await cartModel({ userId: user._id });
+          await userCart.save();
+          user.cartId = userCart._id;
+          await user.save();
+          const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+          if (req.cookies["guestCart"]) {
+            const guestCart = JSON.parse(req.cookies["guestCart"]);
+            const carItems = guestCart.items;
             for (const guestCartItem of carItems) {
-              var prod, pack
-              if (guestCartItem.type == 'product') {
-                prod = await productModel.findById(guestCartItem.productId._id)
-              } else if (guestCartItem.type == 'package') {
-                pack = await packageModel.findById(guestCartItem.packageId._id)
-              }
-              if (guestCartItem.type == 'product') {
+              // var prod, pack;
+              // if (guestCartItem.type == "product") {
+              //   prod = await productModel.findById(guestCartItem.productId._id);
+              // } else if (guestCartItem.type == "package") {
+              //   pack = await packageModel.findById(guestCartItem.packageId._id);
+              // }
+              if (guestCartItem.type == "product") {
                 const existingCartItem = userCart.items.find(
-                  item => item.productId === guestCartItem.productId
-                )
+                  (item) => item.productId?.toString() === guestCartItem.productId
+                );
                 if (existingCartItem) {
-                  existingCartItem.quantity += guestCartItem.quantity
+                  existingCartItem.quantity += guestCartItem.quantity;
                 } else {
-                  userCart.items.push(guestCartItem)
+                  userCart.items.push(guestCartItem);
                 }
-              } else if (guestCartItem.type == 'package') {
+              } else if (guestCartItem.type == "package") {
                 const existingCartItem = userCart.items.find(
-                  item => item.packageId === guestCartItem.packageId
-                )
+                  (item) => item.packageId?.toString() === guestCartItem.packageId
+                );
                 if (existingCartItem) {
-                  existingCartItem.quantity += guestCartItem.quantity
+                  existingCartItem.quantity += guestCartItem.quantity;
                 } else {
-                  userCart.items.push(guestCartItem)
+                  userCart.items.push(guestCartItem);
                 }
               }
             }
-            userCart.totalPrice += guestCart.totalPrice
-            await userCart.save()
+            userCart.totalPrice += guestCart.totalPrice;
+            await userCart.save();
           }
-          res.clearCookie('guestCart')
-          res.clearCookie('tempVerf')
-          res.cookie('token', token,{secure: true, httpOnly: true })
+          res.clearCookie("guestCart");
+          res.clearCookie("tempVerf");
+          res.cookie("token", token, { secure: true, httpOnly: true });
           return res.status(200).json({
-            message: 'Logged In',
+            message: "Logged In",
             success: true,
-            userName:user.name,
-            userPhone:user.phone
-          })
+            userName: user.name,
+            userPhone: user.phone,
+          });
         } else {
-          return res.status(400).json({ message: 'OTP in Invalid' })
+          return res.status(400).json({ message: "OTP in Invalid" });
         }
       } catch (err) {
-        return res.status(400).json({ message: 'OTP in Invalid' })
+        return res.status(400).json({ message: "OTP in Invalid" });
       }
     }
   } catch (err) {
-    console.log(err)
-    next(err)
+    console.log(err);
+    next(err);
   }
-}
+};
 
 exports.getAllUser = async (req, res, next) => {
   try {
-    var page = 1
+    var page = 1;
     if (req.query.page) {
-      page = req.query.page
+      page = req.query.page;
     }
-    var limit = 20
-    const allUser = await userModel.count()
-    var num = allUser / limit
-    var fixedNum = num.toFixed()
-    var totalPage = fixedNum
+    var limit = 20;
+    const allUser = await userModel.count();
+    var num = allUser / limit;
+    var fixedNum = num.toFixed();
+    var totalPage = fixedNum;
     if (num > fixedNum) {
-      totalPage++
+      totalPage++;
     }
 
     const userData = await userModel
       .find()
       .limit(limit * 1)
       .skip((page - 1) * limit)
-      .exec()
+      .exec();
     res.status(200).json({
       success: true,
-      message: 'This is all the user list',
+      message: "This is all the user list",
       data: userData,
-      totalPage: totalPage
-    })
+      totalPage: totalPage,
+    });
   } catch (err) {
-    next(err)
+    next(err);
   }
-}
+};
 
 // this only for admin not for general user
 exports.updateUserByAdmin = async (req, res, next) => {
   try {
-    const id = req.params.id // this is object id
-    const { name, phone } = req.body
+    const id = req.params.id; // this is object id
+    const { name, phone } = req.body;
     if (!name || !phone) {
-      throw new AppError(400, 'All the fields are required')
+      throw new AppError(400, "All the fields are required");
     } else {
-      var result = await userModel.findOne({ _id: id })
-      result.name = name
-      result.phone = phone
-      await result.save()
+      var result = await userModel.findOne({ _id: id });
+      result.name = name;
+      result.phone = phone;
+      await result.save();
       res
         .status(200)
-        .json({ success: true, message: 'user updated successful' })
+        .json({ success: true, message: "user updated successful" });
     }
   } catch (err) {
-    next(err)
+    next(err);
   }
-}
+};
 
 exports.deleteUser = async (req, res, next) => {
   try {
-    const id = req.params.id // this is object id
-    await userModel.findByIdAndDelete({ _id: id }) //passing object id
-    res.status(200).json({ success: true, message: 'user deleted successful' })
+    const id = req.params.id; // this is object id
+    await userModel.findByIdAndDelete({ _id: id }); //passing object id
+    res.status(200).json({ success: true, message: "user deleted successful" });
   } catch (err) {
-    next(err)
+    next(err);
   }
-}
+};
 
 exports.searchUser = async (req, res, next) => {
   try {
-    var search = ''
-    var page = 1
+    var search = "";
+    var page = 1;
     if (req.query.search) {
-      search = req.query.search
-      page = req.query.page
+      search = req.query.search;
+      page = req.query.page;
     }
 
-    var limit = 20
-    const allUser = await userModel.count()
-    var num = allUser / limit
-    var fixedNum = num.toFixed()
-    var totalPage = fixedNum
+    var limit = 20;
+    const allUser = await userModel.count();
+    var num = allUser / limit;
+    var fixedNum = num.toFixed();
+    var totalPage = fixedNum;
     if (num > fixedNum) {
-      totalPage++
+      totalPage++;
     }
 
     const userData = await userModel
       .find({
         $or: [
-          { phone: { $regex: '.*' + search + '.*', $options: 'i' } },
-          { name: { $regex: '.*' + search + '.*', $options: 'i' } }
-        ]
+          { phone: { $regex: ".*" + search + ".*", $options: "i" } },
+          { name: { $regex: ".*" + search + ".*", $options: "i" } },
+        ],
       })
       .limit(limit * 1)
       .skip((page - 1) * limit)
-      .exec()
+      .exec();
 
     res.status(200).json({
       success: true,
-      message: 'user data',
+      message: "user data",
       data: userData,
-      totalPage: totalPage
-    })
+      totalPage: totalPage,
+    });
   } catch (err) {
-    next(err)
+    next(err);
   }
-}
+};
 
 // exports.changeUserStatus = async (req, res, next) => {
 //   try {
@@ -460,9 +472,9 @@ exports.searchUser = async (req, res, next) => {
 // }
 exports.logoutUser = async (req, res, next) => {
   try {
-    res.clearCookie("token")
-    return res.json({ success: true, message: 'Logout successful' })
+    res.clearCookie("token");
+    return res.json({ success: true, message: "Logout successful" });
   } catch (err) {
-    next(err)
+    next(err);
   }
-}
+};

@@ -10,6 +10,7 @@ exports.addItemToCart = async (req, res, next) => {
   try {
     const user = req.user
     const { itemId, type } = req.body // item id
+    console.log("itemId",itemId)
     var cart
     var prod, pack
     if (type == 'product') {
