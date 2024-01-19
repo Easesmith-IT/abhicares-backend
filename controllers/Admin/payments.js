@@ -312,10 +312,7 @@ async function getUserInvoice(order) {
 
 exports.getAllUserOrders = async (req, res, next) => {
   try {
-    if (req.perm.payments === "write" || req.perm.payments === "read") {
-      // if(req.perm.bookings!="write"){
-      //   throw new AppError(400, 'You are not authorized')
-      //  }
+
       const id = req.user._id;
       const result = await Order.find({ "user.userId": id }).populate({
         path: "items",
@@ -333,9 +330,7 @@ exports.getAllUserOrders = async (req, res, next) => {
       res
         .status(200)
         .json({ success: true, message: "Your all orders", data: result });
-    } else {
-      throw new AppError(400, "You are not authorized");
-    }
+
   } catch (err) {
     console.log("err---->", err);
     next(err);
@@ -343,9 +338,7 @@ exports.getAllUserOrders = async (req, res, next) => {
 };
 
 exports.createOrderInvoice = async (req, res, next) => {
-  // if(req.perm.bookings!="write"){
-  //   throw new AppError(400, 'You are not authorized')
-  //  }
+
   try {
     const id = req.params.id;
     const result = await Order.findOne({ _id: id }).populate({
@@ -371,7 +364,7 @@ exports.createOrderInvoice = async (req, res, next) => {
 
 exports.updateOrderStatus = async (req, res, next) => {
   try {
-    if (req.perm.payments === "write") {
+
       const id = req.params.id; // order id
       const status = req.body.status;
       var result = await Order.findOne({ _id: id });
@@ -380,9 +373,7 @@ exports.updateOrderStatus = async (req, res, next) => {
       res
         .status(200)
         .json({ success: true, message: "Order status changed successfull" });
-    } else {
-      throw new AppError(400, "You are not authorized");
-    }
+    
   } catch (err) {
     next(err);
   }
@@ -390,7 +381,6 @@ exports.updateOrderStatus = async (req, res, next) => {
 
 exports.getAllOrders = async (req, res, next) => {
   try {
-    if (req.perm.payments === "write" || req.perm.payments === "read") {
       var page = 1;
       if (req.query.page) {
         page = req.query.page;
@@ -427,17 +417,54 @@ exports.getAllOrders = async (req, res, next) => {
         data: result,
         totalPage: totalPage,
       });
-    } else {
-      throw new AppError(400, "You are not authorized");
-    }
   } catch (err) {
     next(err);
   }
 };
 
+exports.getRecentOrders = async (req, res, next) => {
+  try {
+    const limit = 10; 
+    const page = req.query.page || 1;
+
+
+    const result = await Order.find()
+      .sort({ createdAt: -1 }) 
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .populate({
+        path: "items",
+        populate: {
+          path: "package",
+          populate: {
+            path: "products",
+            populate: {
+              path: "productId",
+              model: "Product",
+            },
+          },
+        },
+      })
+      .populate("couponId")
+      .exec();
+
+    const totalPage = Math.ceil((await Order.countDocuments()) / limit);
+
+    res.status(201).json({
+      success: true,
+      message: "List of recent orders",
+      data: result,
+      totalPage: totalPage,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 exports.getMolthlyOrder = async (req, res, next) => {
   try {
-    if (req.perm.payments === "write" || req.perm.payments === "read") {
+
       const { month, year } = req.body;
       if (!month || !year) {
         throw new AppError(400, "All the fields are required");
@@ -468,9 +495,6 @@ exports.getMolthlyOrder = async (req, res, next) => {
           .status(200)
           .json({ success: true, message: "Orders list", data: result });
       }
-    } else {
-      throw new AppError(400, "You are not authorized");
-    }
   } catch (err) {
     console.log("err--->", err);
     next(err);

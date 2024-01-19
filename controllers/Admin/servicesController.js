@@ -2,7 +2,6 @@ const serviceModel = require('../../models/service')
 const AppError = require('../Admin/errorController')
 exports.createService = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write') {
       var {
         name,
         startingPrice,
@@ -40,9 +39,7 @@ exports.createService = async (req, res, next) => {
           .status(201)
           .json({ success: true, message: 'Service created successful' })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+     
   } catch (err) {
     next(err)
   }
@@ -50,16 +47,13 @@ exports.createService = async (req, res, next) => {
 
 exports.getAllService = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write' || req.perm.services === 'read') {
       const result = await serviceModel.find()
       res.status(200).json({
         success: true,
         message: 'These are all services',
         data: result
       })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+   
   } catch (err) {
     next(err)
   }
@@ -67,7 +61,6 @@ exports.getAllService = async (req, res, next) => {
 
 exports.getCategoryService = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write' || req.perm.services === 'read') {
       const id = req.params.id
       const result = await serviceModel.find({ categoryId: id })
       res
@@ -77,9 +70,7 @@ exports.getCategoryService = async (req, res, next) => {
           message: 'These are all services',
           data: result
         })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
@@ -87,7 +78,6 @@ exports.getCategoryService = async (req, res, next) => {
 
 exports.updateService = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write') {
       console.log(req.files)
       const id = req.params.id //service id
       const { name, startingPrice, description, appHomepage, webHomepage } =
@@ -117,9 +107,7 @@ exports.updateService = async (req, res, next) => {
           .status(201)
           .json({ success: true, message: 'Service updated successful' })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+     
   } catch (err) {
     console.log(err)
     next(err)
@@ -128,17 +116,13 @@ exports.updateService = async (req, res, next) => {
 
 exports.deleteCategoryService = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write') {
-     
-   
+
     const id = req.params.id
     await serviceModel.findByIdAndDelete({ _id: id })
     res
       .status(200)
       .json({ success: true, message: 'service deleted successful' })
-    }else{
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }

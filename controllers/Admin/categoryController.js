@@ -17,7 +17,6 @@ const AppError = require('../Admin/errorController')
 
 exports.postCreateCategory = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write') {
       const { name } = req.body
       if (!name) {
         // res.status(400).json({success:false,message:"All the fields are required"})
@@ -29,9 +28,7 @@ exports.postCreateCategory = async (req, res, next) => {
           .status(200)
           .json({ success: true, message: 'Category created successful' })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+ 
   } catch (err) {
     next(err)
   }
@@ -39,23 +36,19 @@ exports.postCreateCategory = async (req, res, next) => {
 
 exports.getAllCategory = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write' || req.perm.services === 'read') {
       const result = await Category.find()
       res.status(200).json({
         success: true,
         message: 'These are all the categories',
         data: result
       })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
 }
 exports.updateCategory = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write') {
       const id = req.params.id
       const { name, totalServices } = req.body
       if (!name || !totalServices) {
@@ -69,9 +62,7 @@ exports.updateCategory = async (req, res, next) => {
           .status(200)
           .json({ success: true, message: 'category updated successful' })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
@@ -79,15 +70,12 @@ exports.updateCategory = async (req, res, next) => {
 
 exports.deleteCategory = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write') {
       const id = req.params.id
       await Category.findByIdAndDelete({ _id: id })
       res
         .status(200)
         .json({ success: true, message: 'categories deleted successful' })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
@@ -95,7 +83,7 @@ exports.deleteCategory = async (req, res, next) => {
 
 exports.postAddService = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write') {
+    
       const {
         categoryId,
         name,
@@ -113,17 +101,14 @@ exports.postAddService = async (req, res, next) => {
       })
       await service.save()
       return res.status(200).json({ service: service, message: 'Success' })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
-  } catch (err) {
+    } 
+   catch (err) {
     next(err)
   }
 }
 
 exports.postAddProduct = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write') {
       const { serviceId, name, description, price, offerPrice } = req.body
       var product = await Product({
         serviceId: serviceId,
@@ -134,9 +119,7 @@ exports.postAddProduct = async (req, res, next) => {
       })
       await product.save()
       return res.status(200).json({ product: product, message: 'Success' })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+  
   } catch (err) {
     next(err)
   }
@@ -144,7 +127,6 @@ exports.postAddProduct = async (req, res, next) => {
 
 exports.AddPackage = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write') {
       const { categoryId, name, description, price, offerPrice, products } =
         req.body
       var prods = []
@@ -168,9 +150,7 @@ exports.AddPackage = async (req, res, next) => {
       package.products = prods
       await package.save()
       return res.status(200).json({ package: package, message: 'Success' })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+     
   } catch (err) {
     next(err)
   }
@@ -178,12 +158,9 @@ exports.AddPackage = async (req, res, next) => {
 
 exports.getOrders = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write' || req.perm.services === 'read') {
       const orders = await Order.find()
       return res.status(200).json({ orders: orders })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }

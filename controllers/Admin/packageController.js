@@ -5,7 +5,6 @@ const AppError = require('../Admin/errorController')
 
 exports.createPackage = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write') {
       const { name, price, offerPrice, products, serviceId } = req.body
       let imageUrl = []
       req.files.find(data => {
@@ -26,9 +25,7 @@ exports.createPackage = async (req, res, next) => {
           .status(201)
           .json({ success: true, message: 'package created successful' })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+     
   } catch (err) {
     next(err)
   }
@@ -36,7 +33,6 @@ exports.createPackage = async (req, res, next) => {
 
 exports.updatePackage = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write') {
       const id = req.params.id // this is package id
 
       const { name, price, offerPrice, products } = req.body
@@ -61,9 +57,7 @@ exports.updatePackage = async (req, res, next) => {
           .status(201)
           .json({ success: true, message: 'package updated successful' })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
@@ -71,15 +65,12 @@ exports.updatePackage = async (req, res, next) => {
 
 exports.getServicePackage = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write' || req.perm.services === 'read') {
       const id = req.params.id
       const result = await packageModel.find({ serviceId: id })
       res
         .status(200)
         .json({ success: true, message: 'package list', data: result })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
@@ -87,7 +78,6 @@ exports.getServicePackage = async (req, res, next) => {
 
 exports.getPackageProduct = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write' || req.perm.services === 'read') {
       const id = req.params.id
 
       const result = await packageModel.aggregate([
@@ -110,9 +100,7 @@ exports.getPackageProduct = async (req, res, next) => {
       res
         .status(200)
         .json({ success: true, message: 'package list', data: result })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     console.log(err)
     next(err)
@@ -121,15 +109,13 @@ exports.getPackageProduct = async (req, res, next) => {
 
 exports.deletePackage = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write' || req.perm.services === 'read') {
+
       const id = req.params.id
       await packageModel.findByIdAndDelete({ _id: id })
       res
         .status(200)
         .json({ success: true, message: 'package deleted successful' })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }

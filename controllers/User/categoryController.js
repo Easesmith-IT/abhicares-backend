@@ -17,9 +17,7 @@ const AppError = require("../User/errorController");
 
 exports.postCreateCategory = async (req, res, next) => {
   try {
-    // if(req.perm.bookings!="write"){
-    //   throw new AppError(400, 'You are not authorized')
-    //  }
+
     const { name } = req.body;
     if (!name) {
       // res.status(400).json({success:false,message:"All the fields are required"})
