@@ -37,7 +37,6 @@ router.post(
 router.get(
   "/get-all-category",
   isAdminAuth,
-  authorize("services", "read"),
   category_controller.getAllCategory
 );
 router.patch(
@@ -73,7 +72,6 @@ router.get(
 router.get(
   "/get-category-service/:id",
   isAdminAuth,
-  authorize("services", "read"),
   service_controller.getCategoryService
 ); // passing category id
 router.patch(
