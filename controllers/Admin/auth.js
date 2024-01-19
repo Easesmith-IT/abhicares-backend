@@ -1,11 +1,10 @@
-const User = require('../../models/user')
-const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken')
+const User = require("../../models/user");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
-const Admin = require('../../models/admin')
-const authHelper = require('../../util/authHelper')
-const jwtkey = require('../../util/jwtkey')
-const { findOne } = require('../../models/cart')
+const Admin = require("../../models/admin");
+const authHelper = require("../../util/authHelper");
+const jwtkey = require("../../util/jwtkey");
 
 // exports.getUser = async (req, res, next) => {
 //   console.log("inside user fn");
@@ -64,23 +63,37 @@ const { findOne } = require('../../models/cart')
 //   }
 // };
 
+exports.getSubAdmins = async (req, res, next) => {
+  try {
+    const admins = await Admin.find();
 
+    return res.status(200).json({
+      success: true,
+      admins,
+    });
+  } catch (err) {
+    console.log("err====>", err);
+    next(err);
+  }
+};
 exports.addAminUser = async (req, res, next) => {
   try {
-    const { adminId, password, name, role, permissions } = req.body
+    const { adminId, password, name, role, permissions } = req.body;
     const {
       dashboard,
       banners,
-      cms,
       bookings,
+      orders,
       services,
       partners,
       customers,
       offers,
       availableCities,
       payments,
-      enquiry
-    } = permissions
+      enquiry,
+      helpCenter,
+      settings,
+    } = permissions;
     if (
       !adminId ||
       !password ||
@@ -88,7 +101,7 @@ exports.addAminUser = async (req, res, next) => {
       !role ||
       !dashboard ||
       !banners ||
-      !cms ||
+      !orders ||
       !bookings ||
       !services ||
       !partners ||
@@ -96,71 +109,106 @@ exports.addAminUser = async (req, res, next) => {
       !offers ||
       !availableCities ||
       !payments ||
-      !enquiry
+      !enquiry ||
+      !helpCenter ||
+      !settings
     ) {
       res
         .status(400)
-        .json({ success: false, message: 'All the fields are required' })
+        .json({ success: false, message: "All the fields are required" });
     } else {
-      const result = await Admin.findOne({ adminId: adminId })
+      const result = await Admin.findOne({ adminId: adminId });
       if (result) {
-        res.status(400).json({ success: false, message: 'User already exist' })
+        res.status(400).json({ success: false, message: "User already exist" });
       } else {
-        var bsalt = await bcrypt.genSalt(10)
-        console.log('Salt: ', bsalt)
-        var hashPsw = await bcrypt.hash(password, bsalt)
+        var bsalt = await bcrypt.genSalt(10);
+        console.log("Salt: ", bsalt);
+        var hashPsw = await bcrypt.hash(password, bsalt);
         var admin = await new Admin({
           adminId: adminId,
           password: hashPsw,
           name: name,
           role: role,
-          permissions: permissions
-        })
-        await admin.save()
-        return res.status(200).json('admin created successful')
+          permissions: permissions,
+        });
+        await admin.save();
+        return res.status(200).json("admin created successful");
       }
     }
   } catch (err) {
-    console.log("err====>",err)
-   next(err)
+    console.log("err====>", err);
+    next(err);
   }
-}
+};
+
+exports.updateAdminUser = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const { adminId, name, permissions } = req.body;
+    console.log(permissions);
+
+    if (!adminId || !name || !permissions) {
+      res
+        .status(400)
+        .json({ success: false, message: "All the fields are required" });
+    } else {
+      const result = await Admin.findById(id);
+
+      result.adminId = adminId;
+      result.name = name;
+      result.permissions = permissions;
+      await result.save();
+      res.status(200).json({ success: true, message: "Updated successfully!" });
+    }
+  } catch (err) {
+    console.log("err====>", err);
+    next(err);
+  }
+};
 
 exports.loginAdminUser = async (req, res, next) => {
   try {
-    const { adminId, password } = req.body
-    const admin = await Admin.findOne({ adminId: adminId })
+    const { adminId, password } = req.body;
+    const admin = await Admin.findOne({ adminId: adminId });
     if (!admin) {
       return res.status(400).json({
-         message:"No admin exists with this id"
-       });
+        message: "No admin exists with this id",
+      });
     }
-   console.log("password",password)
-    const isMatch = await bcrypt.compare(password, admin.password)
-    console.log(isMatch)
+    console.log("password", password);
+    const isMatch = await bcrypt.compare(password, admin.password);
+    console.log(isMatch);
     if (isMatch) {
-      var token = jwt.sign({ adminId: adminId,permissions:admin.permissions}, jwtkey.secretJwtKey,{expiresIn:'2d'})
-      res.cookie('token', token,{secure: true, httpOnly: true })
-      return res.status(200).json({ success:true,message:"Login successful" })
+      var token = jwt.sign(
+        { adminId: adminId, permissions: admin.permissions },
+        jwtkey.secretJwtKey,
+        { expiresIn: "2d" }
+      );
+      res.cookie("admtoken", token, { secure: true, httpOnly: true });
+      return res.status(200).json({
+        success: true,
+        message: "Login successful",
+        perm: admin.permissions,
+      });
     } else {
-      return res.status(500).json('error')
+      return res.status(500).json("error");
     }
   } catch (err) {
-    console.log(err)
-    const error = new Error(err)
-    error.httpStatusCode = 500
-    return next(err)
+    console.log(err);
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(err);
   }
-}
+};
 
 exports.logoutAdmin = async (req, res, next) => {
   try {
-    res.clearCookie("token")
-    return res.json({ success: true, message: 'Logout successful' })
+    res.clearCookie("token");
+    return res.json({ success: true, message: "Logout successful" });
   } catch (err) {
-    next(err)
+    next(err);
   }
-}
+};
 
 // exports.postAddUser = async (req, res, next) => {
 //   try {

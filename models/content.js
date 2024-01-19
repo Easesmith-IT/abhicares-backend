@@ -17,6 +17,18 @@ const schema = new mongoose.Schema(
       required: true,
     },
 
+    categoryId: {
+      type: mongoose.Types.ObjectId,
+      ref: "Category",
+    },
+
+    seoTitle: {
+      type: String,
+    },
+    seoDescription: {
+      type: String,
+    },
+
     content: {
       type: String,
       // required: true,
@@ -27,8 +39,8 @@ const schema = new mongoose.Schema(
     },
 
     image: {
-      type: String, 
-      default: null, 
+      type: String,
+      default: null,
     },
   },
   {

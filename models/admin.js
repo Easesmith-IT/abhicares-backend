@@ -31,17 +31,64 @@ const userSchema = new Schema(
       default: true,
     },
     permissions: {
-      dashboard: { type: String, enum: ['read', 'write', 'none'],required:true },
-      banners: { type: String, enum: ['read', 'write', 'none'],required:true },
-      cms: { type: String, enum: ['read', 'write', 'none'],required:true },
-      bookings: { type: String, enum: ['read', 'write', 'none'],required:true },
-      services: { type: String, enum: ['read', 'write', 'none'],required:true },
-      partners: { type: String, enum: ['read', 'write', 'none'],required:true },
-      customers: { type: String, enum: ['read', 'write', 'none'],required:true },
-      offers: { type: String, enum: ['read', 'write', 'none'],required:true },
-      availableCities: { type: String, enum: ['read', 'write', 'none'],required:true },
-      payments: { type: String, enum: ['read', 'write', 'none'],required:true },
-      enquiry: { type: String, enum: ['read', 'write', 'none'],required:true },
+      dashboard: {
+        type: String,
+        enum: ["read", "write", "none"],
+        required: true,
+      },
+      banners: {
+        type: String,
+        enum: ["read", "write", "none"],
+        required: true,
+      },
+
+      bookings: {
+        type: String,
+        enum: ["read", "write", "none"],
+        required: true,
+      },
+      orders: { type: String, enum: ["read", "write", "none"], required: true },
+      services: {
+        type: String,
+        enum: ["read", "write", "none"],
+        required: true,
+      },
+      partners: {
+        type: String,
+        enum: ["read", "write", "none"],
+        required: true,
+      },
+      customers: {
+        type: String,
+        enum: ["read", "write", "none"],
+        required: true,
+      },
+      offers: { type: String, enum: ["read", "write", "none"], required: true },
+      availableCities: {
+        type: String,
+        enum: ["read", "write", "none"],
+        required: true,
+      },
+      payments: {
+        type: String,
+        enum: ["read", "write", "none"],
+        required: true,
+      },
+      enquiry: {
+        type: String,
+        enum: ["read", "write", "none"],
+        required: true,
+      },
+      helpCenter: {
+        type: String,
+        enum: ["read", "write", "none"],
+        required: true,
+      },
+      settings: {
+        type: String,
+        enum: ["read", "write", "none"],
+        required: true,
+      },
     },
   },
   { timestamps: true }

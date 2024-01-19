@@ -3,15 +3,12 @@ const AppError = require('../Admin/errorController')
 
 exports.deleteBooking = async (req, res, next) => {
   try {
-    if (req.perm.bookings === 'write') {
       const id = req.params.id // booking item id
       await bookingModel.findByIdAndDelete({ _id: id })
       res
         .status(200)
         .json({ success: true, message: 'Booking deleted successful' })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
@@ -21,7 +18,6 @@ exports.deleteBooking = async (req, res, next) => {
 
 exports.getAllBooking = async (req, res, next) => {
   try {
-    if (req.perm.bookings === 'write' || req.perm.bookings === 'read') {
       const result = await bookingModel.find().populate({
         path: 'package',
         populate: {
@@ -37,9 +33,7 @@ exports.getAllBooking = async (req, res, next) => {
         message: 'All booking list',
         data: result
       })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     console.log(err)
     next(err)
@@ -48,7 +42,6 @@ exports.getAllBooking = async (req, res, next) => {
 
 exports.updateBookingStatus = async (req, res, next) => {
   try {
-    if (req.perm.bookings === 'write') {
       const id = req.params.id // booking item id
       const {status}=req.body
 
@@ -59,9 +52,7 @@ exports.updateBookingStatus = async (req, res, next) => {
         success: true,
         message: 'Booking status changed successful'
       })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
@@ -70,7 +61,6 @@ exports.updateBookingStatus = async (req, res, next) => {
 
 exports.getBookingDetails= async (req, res, next) => {
   try {
-    if (req.perm.bookings === 'write' || req.perm.bookings === 'read') {
       const id=req.params.id
       const result = await bookingModel.findOne({_id:id}).populate({
         path: 'package',
@@ -87,9 +77,7 @@ exports.getBookingDetails= async (req, res, next) => {
         message: 'Booking details getting successful',
         bookingDetails: result
       })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     console.log(err)
     next(err)

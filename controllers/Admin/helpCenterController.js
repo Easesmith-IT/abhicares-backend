@@ -3,7 +3,6 @@ const AppError = require('../Admin/errorController')
 
 exports.createHelpCenter = async (req, res, next) => {
   try {
-    if (req.perm.helpCenter === 'write') {
       const id = req.user._id
       const { description, issue, others } = req.body
       if (!description) {
@@ -19,16 +18,14 @@ exports.createHelpCenter = async (req, res, next) => {
           .status(201)
           .json({ success: true, message: 'help center created successful' })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+   
   } catch (err) {
     next(err)
   }
 }
 exports.getAllHelpCenter = async (req, res, next) => {
   try {
-    if (req.perm.helpCenter === 'write' || req.perm.helpCenter === 'read') {
+
       let status = 'in-review'
       if (req.body.status) {
         status = req.body.status
@@ -61,9 +58,7 @@ exports.getAllHelpCenter = async (req, res, next) => {
           data: result,
           totalPage: totalPage
         })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+   
   } catch (err) {
     console.log("err--->",err)
     next(err)
@@ -71,16 +66,14 @@ exports.getAllHelpCenter = async (req, res, next) => {
 }
 exports.deleteHelpCenter = async (req, res, next) => {
   try {
-    if (req.perm.helpCenter === 'write') {
+
       const id = req.params.id
 
       await helpCenterModel.findByIdAndDelete({ _id: id })
       res
         .status(201)
         .json({ success: true, message: 'data deleted successful' })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
@@ -88,7 +81,7 @@ exports.deleteHelpCenter = async (req, res, next) => {
 
 exports.updateHelpCenter = async (req, res, next) => {
   try {
-    if (req.perm.helpCenter != 'write' || req.perm.helpCenter != 'read') {
+
       const id = req.params.id
       const { resolution } = req.body
       if (!resolution) {
@@ -102,9 +95,7 @@ exports.updateHelpCenter = async (req, res, next) => {
           .status(201)
           .json({ success: true, message: 'data updated successful' })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
@@ -112,7 +103,7 @@ exports.updateHelpCenter = async (req, res, next) => {
 
 exports.getUserHelpCenter = async (req, res, next) => {
   try {
-    if (req.perm.helpCenter === 'write' || req.perm.helpCenter === 'read') {
+
       const id = req.user._id
       const result = await helpCenterModel.find({ userId: id })
       if (result.length == 0) {
@@ -124,9 +115,7 @@ exports.getUserHelpCenter = async (req, res, next) => {
           data: result
         })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+   
   } catch (err) {
     next(err)
   }
