@@ -4,11 +4,14 @@ const { userAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
-const serviceAppController = require("../controllers/User/service_app_controller");
+//controllers
+const serviceAppController = require("../controllers/service app/service_app_controller");
 const paymentController = require("../controllers/User/payments");
 const service_controller = require("../controllers/User/servicesController");
 const seller_controller = require("../controllers/Admin/sellerController");
 const authController = require("../controllers/User/auth");
+const traceOrder_controller = require("../controllers/User/traceOrderController");
+const bookingControler = require("../controllers/service app/bookings_controller");
 //homepage route
 router.get(
   "/get-homepage-hero-banners",
@@ -29,25 +32,35 @@ router.get(
 );
 // router.get("/get-product/:productId", serviceAppController.getProductDetails);
 
-router.get("/get-user/:userId", serviceAppController.getUser);
-router.get("/get-partner/:id", serviceAppController.getPartner);
+// seller authentication
+router.post("/create-seller", serviceAppController.createSeller);
 router.post("/login", serviceAppController.login);
-router.post("/signup", serviceAppController.createUser);
-//
-router.post("/add-address", serviceAppController.AddUserAddress);
-router.get("/get-address/:userId", serviceAppController.getUserAddress);
-////
-router.post("/create-order", paymentController.appCodOrder);
-router.get(
-  "/get-upcoming-order/:userId",
-  serviceAppController.geUpcomingOrders
-);
-router.get("/get-complete-order", serviceAppController.getCompletedOrders);
+router.get("/get-partner/:id", serviceAppController.getPartner);
 
 router.get("/get-services/:catId", serviceAppController.getServices);
+//bookings
+router.get("/get-booking-history/:id", bookingControler.getSellerOrderHistory);
+router.get("/get-upcoming-order/:id", bookingControler.getSellerUpcomingOrder);
+router.get(
+  "/get-completed-order/:id",
+  bookingControler.getSellerCompletedOrder
+);
+
+router.get("/get-booking/:id", bookingControler.getBooking);
+router.get("/get-today-booking/:id", bookingControler.getSellerTodayOrder);
+router.get("/start-booking/:id", bookingControler.getStartBooking);
+router.get("/get-running-booking/:id", bookingControler.getSellerRunningOrder);
+
+//wallet
+router.get("/get-wallet/:id", serviceAppController.getSellerWallet);
+//tickets
 router.get("/get-tickets/:userId", serviceAppController.getUserTickets);
 router.post("/raise-ticket", serviceAppController.raiseTicket);
-router.post("/create-seller", serviceAppController.createSeller);
-router.patch("/update-seller/:id", serviceAppController.updateSeller); // passing object id
 
+// Trace order routes
+router.post(
+  "/add-booking-location/:id",
+  traceOrder_controller.addLocationToDatabase
+); // passing booking id
+router.get("/get-booking-location/:id", traceOrder_controller.getOrderLocation); // passing booking id
 module.exports = router;

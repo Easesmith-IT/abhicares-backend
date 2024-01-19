@@ -5,13 +5,14 @@ const Product = require("../../models/product");
 const Service = require("../../models/service");
 const User = require("../../models/user");
 const UserAddress = require("../../models/useraddress");
+const SellerWallet = require("../../models/sellerWallet");
 const Order = require("../../models/order");
 const Content = require("../../models/content");
 const HelpCentre = require("../../models/helpCenter");
 const mongoose = require("mongoose");
 const { auth } = require("../../middleware/auth");
 const jwt = require("jsonwebtoken");
-const sellerModel = require("../../models/seller");
+const SellerModel = require("../../models/seller");
 var bcrypt = require("bcryptjs");
 const AppError = require("../Admin/errorController");
 /////////////////////////////////////////////////////////////////////////////
@@ -176,7 +177,7 @@ exports.login = async (req, res, next) => {
   try {
     const phoneNumber = req.body.phone;
     console.log(phoneNumber);
-    var partner = await sellerModel.findOne({ phone: phoneNumber });
+    var partner = await SellerModel.findOne({ phone: phoneNumber });
     console.log(partner);
     if (!partner) {
       return res.status(404).json({ error: "No partner Found" });
@@ -193,38 +194,12 @@ exports.login = async (req, res, next) => {
 exports.getPartner = async (req, res, next) => {
   try {
     const partnerId = req.params.id;
-    var partner = await sellerModel.findById(partnerId).populate("categoryId");
+    var partner = await SellerModel.findById(partnerId).populate("categoryId");
     console.log(partner);
     if (!partner) {
       return res.status(404).json({ error: "No partner Found" });
     } else {
       return res.status(200).json({ partner });
-    }
-  } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
-  }
-};
-
-exports.createUser = async (req, res, next) => {
-  try {
-    const phoneNumber = req.body.phone;
-    const name = req.body.name;
-    const psw = "password";
-    var user = await User.findOne({ phone: phoneNumber });
-    if (user) {
-      return res.status(403).json({ message: "User already exist" });
-    } else {
-      user = await User({
-        phone: phoneNumber,
-        name: name,
-        password: psw,
-        gender: "notDefined",
-      });
-      user.save();
-      console.log(user);
-      return res.status(200).json({ user });
     }
   } catch (err) {
     const error = new Error(err);
@@ -365,7 +340,8 @@ exports.createSeller = async (req, res, next) => {
               .json({ success: false, message: "password enctyption error" });
           } else {
             req.body.password = hash;
-            var seller = await sellerModel.create(req.body);
+            var seller = await SellerModel.create(req.body);
+            await SellerWallet.create({ sellerId: seller._id });
             res.status(201).json({
               success: true,
               message: "Seller created successful",
@@ -389,7 +365,7 @@ exports.getAllSeller = async (req, res, next) => {
         page = req.query.page;
       }
       var limit = 20;
-      const allSeller = await sellerModel.count();
+      const allSeller = await SellerModel.count();
       var num = allSeller / limit;
       var fixedNum = num.toFixed();
       var totalPage = fixedNum;
@@ -397,8 +373,7 @@ exports.getAllSeller = async (req, res, next) => {
         totalPage++;
       }
 
-      const result = await sellerModel
-        .find()
+      const result = await SellerModel.find()
         .populate("categoryId")
         .populate({
           path: "services",
@@ -450,7 +425,7 @@ exports.updateSeller = async (req, res, next) => {
     ) {
       throw new AppError(400, "All the fields are required");
     } else {
-      var result = await sellerModel.findOne({ _id: id });
+      var result = await SellerModel.findOne({ _id: id });
       result.name = name;
       result.legalName = legalName;
       result.gstNumber = gstNumber;
@@ -474,4 +449,10 @@ exports.updateSeller = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+exports.getSellerWallet = async (req, res, next) => {
+  const id = req.params.id;
+  var wallet = await SellerWallet.findOne({ sellerId: id });
+  return res.json(wallet);
 };
