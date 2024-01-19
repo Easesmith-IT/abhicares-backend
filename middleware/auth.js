@@ -73,12 +73,12 @@ exports.userAuthForCart = async (req, res, next) => {
 exports.isAdminAuth = async (req, res, next) => {
   try {
     // console.log('token inside', req.header('Authorization'))
-    const token = req.cookies["token"];
+    const token = req.cookies["admtoken"];
 
     jwt.verify(token, jwtkey.secretJwtKey, function (err, authData) {
       if (err) {
-        if ((err.name = "TokenExpiredError")) {
-          res.clearCookie("token");
+        if (err.name = "TokenExpiredError") {
+          res.clearCookie("admtoken");
           return res.status(400).json({
             message: "Token expired",
             tokenExpired: true,

@@ -292,9 +292,7 @@ exports.appCodOrder = async (req, res, next) => {
 
 exports.getAllUserOrders = async (req, res, next) => {
   try {
-    // if(req.perm.bookings!="write"){
-    //   throw new AppError(400, 'You are not authorized')
-    //  }
+
     const id = req.user._id
     const result = await Order.find({ 'user.userId': id })
       .populate({
@@ -320,9 +318,6 @@ exports.getAllUserOrders = async (req, res, next) => {
 }
 
 exports.createOrderInvoice = async (req, res, next) => {
-  // if(req.perm.bookings!="write"){
-  //   throw new AppError(400, 'You are not authorized')
-  //  }
   try {
     const id = req.params.id
     const result = await Order.findOne({ _id: id }).populate({
@@ -347,9 +342,7 @@ exports.createOrderInvoice = async (req, res, next) => {
 }
 
 exports.updateOrderStatus = async (req, res, next) => {
-  // if(req.perm.bookings!="write"){
-  //   throw new AppError(400, 'You are not authorized')
-  //  }
+
   try {
     const id = req.params.id // order id
     const status = req.body.status
@@ -366,9 +359,7 @@ exports.updateOrderStatus = async (req, res, next) => {
 
 exports.getAllOrders = async (req, res, next) => {
   try {
-    // if(req.perm.dashboard!="write"){
-    //   throw new AppError(400, 'You are not authorized')
-    //  }
+ 
 
     console.log('Hello--->')
     // let status="in-review"
@@ -418,9 +409,7 @@ exports.getAllOrders = async (req, res, next) => {
 
 exports.getMolthlyOrder = async (req, res, next) => {
   try {
-    //  if(req.perm.dashboard!="write"){
-    //   throw new AppError(400, 'You are not authorized')
-    //  }
+
     const { month, year } = req.body
     if (!month || !year) {
       throw new AppError(400, 'All the fields are required')

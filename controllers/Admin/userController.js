@@ -322,7 +322,6 @@ exports.createUser = async (req, res, next) => {
 
 exports.getAllUser = async (req, res, next) => {
   try {
-    if (req.perm.customers === 'write' || req.perm.customers === 'read') {
       var page = 1
       if (req.query.page) {
         page = req.query.page
@@ -347,9 +346,6 @@ exports.getAllUser = async (req, res, next) => {
         data: userData,
         totalPage: totalPage
       })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
   } catch (err) {
     next(err)
   }
@@ -357,7 +353,6 @@ exports.getAllUser = async (req, res, next) => {
 
 exports.getAllAddressesByUserId = async (req, res, next) => {
   try {
-    if (req.perm.customers === "write" || req.perm.customers === "read") {
 
     const id = req.params.id
     console.log(id)
@@ -375,9 +370,7 @@ exports.getAllAddressesByUserId = async (req, res, next) => {
         success: true,
         addresses: addresses,
       });
-    } else {
-      throw new AppError(400, "You are not authorized");
-    }
+
   } catch (err) {
     console.log(err)
     next(err);
@@ -387,7 +380,7 @@ exports.getAllAddressesByUserId = async (req, res, next) => {
 // this only for admin not for general user
 exports.updateUserByAdmin = async (req, res, next) => {
   try {
-    if (req.perm.customers != 'write') {
+
       const id = req.params.id // this is object id
       const { name, phone } = req.body
       if (!name || !phone) {
@@ -401,9 +394,7 @@ exports.updateUserByAdmin = async (req, res, next) => {
           .status(200)
           .json({ success: true, message: 'user updated successful' })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+
   } catch (err) {
     next(err)
   }
@@ -411,15 +402,12 @@ exports.updateUserByAdmin = async (req, res, next) => {
 
 exports.deleteUser = async (req, res, next) => {
   try {
-    if (req.perm.customers === 'write') {
       const id = req.params.id // this is object id
       await userModel.findByIdAndDelete({ _id: id }) //passing object id
       res
         .status(200)
         .json({ success: true, message: 'user deleted successful' })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+
   } catch (err) {
     next(err)
   }

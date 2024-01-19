@@ -3,7 +3,6 @@ var bcrypt = require('bcryptjs')
 const AppError = require('../Admin/errorController')
 exports.createSeller = async (req, res, next) => {
   try {
-    if (req.perm.partners === 'write') {
       var {
         name,
         legalName,
@@ -47,9 +46,6 @@ exports.createSeller = async (req, res, next) => {
           })
         })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
   } catch (err) {
     console.log('error--->', err)
     next(err)
@@ -58,7 +54,6 @@ exports.createSeller = async (req, res, next) => {
 
 exports.getAllSeller = async (req, res, next) => {
   try {
-    if (req.perm.partners === 'write' || req.perm.partners === 'read') {
       var page = 1
       if (req.query.page) {
         page = req.query.page
@@ -91,9 +86,6 @@ exports.getAllSeller = async (req, res, next) => {
         data: result,
         totalPage: totalPage
       })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
   } catch (err) {
     next(err)
   }
@@ -101,7 +93,6 @@ exports.getAllSeller = async (req, res, next) => {
 
 exports.updateSeller = async (req, res, next) => {
   try {
-    if (req.perm.partners === 'write') {
       const id = req.params.id
       const {
         name,
@@ -146,9 +137,6 @@ exports.updateSeller = async (req, res, next) => {
           .status(200)
           .json({ success: true, message: 'Seller updated successful' })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
   } catch (err) {
     next(err)
   }
@@ -156,15 +144,11 @@ exports.updateSeller = async (req, res, next) => {
 
 exports.deleteSeller = async (req, res, next) => {
   try {
-    if (req.perm.partners === 'write') {
       const id = req.params.id
       await sellerModel.findOneAndDelete({ _id: id })
       res
         .status(200)
         .json({ success: true, message: 'Seller deleted successful' })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
   } catch (err) {
     next(err)
   }
@@ -212,7 +196,6 @@ exports.searchSeller = async (req, res, next) => {
 
 exports.changeSellerStatus = async (req, res, next) => {
   try {
-    if (req.perm.partners === 'write') {
       const id = req.params.id
       const { status } = req.body
 
@@ -222,9 +205,6 @@ exports.changeSellerStatus = async (req, res, next) => {
       res
         .status(200)
         .json({ success: true, message: 'Data updated successful' })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
   } catch (err) {
     next(err)
   }
@@ -232,7 +212,6 @@ exports.changeSellerStatus = async (req, res, next) => {
 
 exports.getSellerByLocation = async (req, res, next) => {
   try {
-    if (req.perm.partners === 'write' || req.perm.partners === 'read') {
       const { latitude, longitude, distance } = req.body
 
       if (!latitude || !longitude || !distance) {
@@ -254,9 +233,6 @@ exports.getSellerByLocation = async (req, res, next) => {
       res
         .status(200)
         .json({ success: true, message: 'near sellers', sellerList: result })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
   } catch (err) {
     next(err)
   }
@@ -264,21 +240,13 @@ exports.getSellerByLocation = async (req, res, next) => {
 
 exports.getInReviewSeller = async (req, res, next) => {
   try {
-    if (req.perm.partners === 'write' || req.perm.partners === 'read') {
-      // const {type}=req.body.type
-      // if(!type){
-      //   throw new AppError(400, "All the fields are required");
-      // }else{
+
       const result = await sellerModel.find({ status: 'in-review' })
       res.status(200).json({
         success: false,
         message: 'In-review seller list',
         data: result
       })
-      // }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
   } catch (err) {
     next(err)
   }

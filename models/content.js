@@ -17,6 +17,13 @@ const schema = new mongoose.Schema(
       required: true,
     },
 
+    seoTitle: {
+      type: String,
+    },
+    seoDescription: {
+      type: String,
+    },
+
     content: {
       type: String,
       // required: true,
@@ -27,8 +34,8 @@ const schema = new mongoose.Schema(
     },
 
     image: {
-      type: String, 
-      default: null, 
+      type: String,
+      default: null,
     },
   },
   {

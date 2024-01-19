@@ -2,7 +2,6 @@ const availableCitiesModel = require('../../models/availableCities')
 const AppError = require('../Admin/errorController')
 exports.createAvailableCities = async (req, res, next) => {
   try {
-    if (req.perm.availableCities === 'write') {
       const { city, state, pinCode } = req.body
 
       if (!city || !state || !pinCode) {
@@ -22,9 +21,7 @@ exports.createAvailableCities = async (req, res, next) => {
             .json({ success: true, message: 'Data inserted successful' })
         }
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+     
   } catch (err) {
     next(err)
   }
@@ -32,15 +29,12 @@ exports.createAvailableCities = async (req, res, next) => {
 
 exports.deleteAvailableCities = async (req, res, next) => {
   try {
-    if (req.perm.availableCities === 'write') {
       const id = req.params.id // this is object id
       await availableCitiesModel.findByIdAndDelete({ _id: id })
       res
         .status(200)
         .json({ success: true, message: 'data deleted successful' })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
@@ -48,7 +42,6 @@ exports.deleteAvailableCities = async (req, res, next) => {
 
 exports.updateAvailableCities = async (req, res, next) => {
   try {
-    if (req.perm.availableCities === 'write') {
       const { city, state, pinCode } = req.body
       const id = req.params.id // this is object id of available city
 
@@ -64,9 +57,7 @@ exports.updateAvailableCities = async (req, res, next) => {
           .status(200)
           .json({ success: true, message: 'Data updated successful' })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
@@ -74,10 +65,7 @@ exports.updateAvailableCities = async (req, res, next) => {
 
 exports.getAvailableCities = async (req, res, next) => {
   try {
-    if (
-      req.perm.availableCities === 'write' ||
-      req.perm.availableCities === 'read'
-    ) {
+
       const result = await availableCitiesModel.find()
       res
         .status(200)
@@ -86,9 +74,7 @@ exports.getAvailableCities = async (req, res, next) => {
           message: 'List of all available cities',
           data: result
         })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }

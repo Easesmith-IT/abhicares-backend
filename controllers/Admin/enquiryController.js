@@ -3,7 +3,6 @@ const AppError = require('../Admin/errorController')
 
 exports.createEnquiry = async (req, res, next) => {
   try {
-    if (req.perm.enquiry === 'write') {
       const { name, phone, serviceType, city, state } = req.body
       if (!name || !phone || !serviceType || !city || !state) {
         throw new AppError(400, 'All the fields are required')
@@ -19,16 +18,13 @@ exports.createEnquiry = async (req, res, next) => {
       res
         .status(201)
         .json({ success: true, message: 'enquiry created successful' })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
 }
 exports.getAllEnquiry = async (req, res, next) => {
   try {
-    if (req.perm.enquiry === 'read' || req.perm.enquiry === 'write') {
       var page = 1
       if (req.params.page) {
         page = page
@@ -55,9 +51,7 @@ exports.getAllEnquiry = async (req, res, next) => {
           data: result,
           totalPage: totalPage
         })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+   
   } catch (err) {
     next(err)
   }
@@ -65,15 +59,12 @@ exports.getAllEnquiry = async (req, res, next) => {
 
 exports.deleteEnquiry = async (req, res, next) => {
   try {
-    if (req.perm.enquiry === 'write') {
+
       const id = req.params.id
       await enquiryModel.findByIdAndDelete({ _id: id })
       res
         .status(200)
         .json({ success: true, message: 'data deleted successful' })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
   } catch (err) {
     next(err)
   }

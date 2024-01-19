@@ -2,7 +2,6 @@ const productModel = require('../../models/product')
 const AppError = require('../Admin/errorController')
 exports.createProduct = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write') {
       var { name, price, offerPrice, description, serviceId } = req.body
 
       let imageUrl = []
@@ -32,9 +31,7 @@ exports.createProduct = async (req, res, next) => {
           .status(201)
           .json({ success: true, message: 'product created successful' })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+     
   } catch (err) {
     next(err)
   }
@@ -42,7 +39,6 @@ exports.createProduct = async (req, res, next) => {
 
 exports.getAllProduct = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write' || req.perm.services === 'read') {
       var page = 1
       if (req.query.page) {
         page = req.query.page
@@ -67,9 +63,7 @@ exports.getAllProduct = async (req, res, next) => {
         data: result,
         totalPages: totalPage
       })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
@@ -77,7 +71,6 @@ exports.getAllProduct = async (req, res, next) => {
 
 exports.getServiceProduct = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write' || req.perm.services === 'read') {
       const id = req.params.id // service id
       var page = 1
       if (req.query.page) {
@@ -105,9 +98,7 @@ exports.getServiceProduct = async (req, res, next) => {
         data: result,
         totalPage: totalPage
       })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+     
   } catch (err) {
     next(err)
   }
@@ -115,7 +106,6 @@ exports.getServiceProduct = async (req, res, next) => {
 
 exports.updateProduct = async (req, res, next) => {
   try {
-    if (req.perm.services === 'write') {
       const id = req.params.id // object id
       const { name, price, offerPrice, description } = req.body
       let imageUrl = []
@@ -144,9 +134,7 @@ exports.updateProduct = async (req, res, next) => {
           .status(200)
           .json({ success: true, message: 'product updated successful' })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }
@@ -154,15 +142,12 @@ exports.updateProduct = async (req, res, next) => {
 
 exports.deleteServiceProduct = async (req, res, next) => {
   try {
-    if (req.perm.services == 'write') {
       const id = req.params.id // object id
       await productModel.findByIdAndDelete({ _id: id })
       res
         .status(200)
         .json({ success: true, message: 'product deleted successful' })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     next(err)
   }

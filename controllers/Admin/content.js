@@ -3,9 +3,6 @@ const AppError = require('../Admin/errorController')
 
 exports.uploadBanners = async (req, res, next) => {
   try {
-    console.log('Hello')
-    console.log(req.perm.banners);
-    if (req.perm.banners === 'write') {
       const { type, section, page } = req.body
 
       const image = req.files[0].filename
@@ -40,9 +37,7 @@ exports.uploadBanners = async (req, res, next) => {
           data: newDoc
         })
       }
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     console.log(err)
     next(err)
@@ -82,7 +77,7 @@ exports.getBanners = async (req, res, next) => {
 
 exports.updateContent = async (req, res) => {
   try {
-    if (req.perm.banners === 'write') {
+
       const id = req.params.id
       const content = await Content.findOne({ _id: id })
 
@@ -119,9 +114,6 @@ exports.updateContent = async (req, res) => {
       res.status(200).json({
         message: 'updated successfully'
       })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
   } catch (err) {
     return res.status(500).json({
       message: 'Error while updating content',
@@ -132,7 +124,6 @@ exports.updateContent = async (req, res) => {
 
 exports.getContent = async (req, res) => {
   try {
-    if (req.perm.banners === 'write' || req.perm.content === 'read') {
       const title = req.query.title
       const content = await Content.findOne({ title: title })
       if (!content) {
@@ -143,9 +134,7 @@ exports.getContent = async (req, res) => {
       res.status(200).json({
         content: content
       })
-    } else {
-      throw new AppError(400, 'You are not authorized')
-    }
+    
   } catch (err) {
     return res.status(500).json({
       message: 'Error fetching addresses',
