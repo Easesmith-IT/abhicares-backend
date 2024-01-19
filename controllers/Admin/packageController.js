@@ -43,9 +43,9 @@ exports.updatePackage = async (req, res, next) => {
       if (!name || !price || !offerPrice || !products) {
         throw new AppError(400, 'All the fields are required')
       } else {
-        let result = await packageModel.findOne({ _id: id })
+        let result = await packageModel.findOne({ _id: id });
 
-        ;(result.name = name),
+        (result.name = name),
           (result.price = price),
           (result.offerPrice = offerPrice),
           (result.imageUrl = imageUrl),

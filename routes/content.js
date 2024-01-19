@@ -9,7 +9,8 @@ const { authorize } = require("../middleware/authorization.js");
 
 router.post("/upload-banners",isAdminAuth,authorize("banners","write"), image_middleware,sharpUpload.sharpUpload, contentController.uploadBanners);
 
-
+router.get("/get-seo-by-page",contentController.getSeoByPage)
+router.patch("/update-seo-by-page",isAdminAuth,authorize("settings","write"),contentController.updateSeo)
 router.get("/get-banners", contentController.getBanners);
 
 
