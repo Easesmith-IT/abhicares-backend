@@ -1,0 +1,31 @@
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
+
+const sellerCashoutSchema = new Schema(
+  {
+    sellerWalletId: {
+      type: mongoose.ObjectId,
+      ref: "SellerWallet",
+      required: true,
+    },
+    value: {
+      type: String,
+      required: true,
+    },
+    status: {
+      type: Boolean,
+      default: true,
+    },
+    accountDetails: {
+      date: {
+        type: String,
+      },
+      paymentId: {
+        type: String,
+      },
+    },
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("SellerCashout", sellerCashoutSchema);

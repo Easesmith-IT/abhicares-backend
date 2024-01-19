@@ -4,7 +4,7 @@ const User = require("../models/user");
 const { isAdminAuth } = require("../middleware/auth");
 
 const router = express.Router();
-const sharpUpload=require("../middleware/sharpImage")
+const sharpUpload = require("../middleware/sharpImage");
 
 const img_upload = require("../middleware/imageMiddleware");
 
@@ -16,14 +16,14 @@ const user_controller = require("../controllers/Admin/userController");
 const enquiry_controller = require("../controllers/Admin/enquiryController");
 const package_controller = require("../controllers/Admin/packageController");
 const auth_controller = require("../controllers/Admin/auth");
-const payments_controller=require("../controllers/Admin/payments")
-const helpCenter_controller=require("../controllers/Admin/helpCenterController")
-const availableCities_controller = require("../controllers/Admin/availableCitiesController")
-const sellerOrder_controller=require("../controllers/Admin/sellerOrderController")
-const booking_controller=require("../controllers/Admin/bookingController")
+const payments_controller = require("../controllers/Admin/payments");
+const helpCenter_controller = require("../controllers/Admin/helpCenterController");
+const availableCities_controller = require("../controllers/Admin/availableCitiesController");
+const sellerOrder_controller = require("../controllers/Admin/sellerOrderController");
+const booking_controller = require("../controllers/Admin/bookingController");
 
-const coupon_controller = require("../controllers/Admin/couponController")
-const faq_controller=require("../controllers/Admin/faqController")
+const coupon_controller = require("../controllers/Admin/couponController");
+const faq_controller = require("../controllers/Admin/faqController");
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // Category Routes
 
@@ -124,21 +124,32 @@ router.patch(
   isAdminAuth,
   seller_controller.changeSellerStatus
 ); // passing object id
-router.get("/in-review-seller",isAdminAuth,seller_controller.getInReviewSeller)
-router.post("/get-seller-by-location",isAdminAuth,seller_controller.getSellerByLocation)
-
+router.get(
+  "/in-review-seller",
+  isAdminAuth,
+  seller_controller.getInReviewSeller
+);
+router.post(
+  "/get-seller-by-location",
+  isAdminAuth,
+  seller_controller.getSellerByLocation
+);
 
 // User Routes
 
 router.post("/create-user", isAdminAuth, user_controller.createUser);
 router.get("/get-all-user", isAdminAuth, user_controller.getAllUser);
-router.get("/get-all-addresses/:id",isAdminAuth ,user_controller.getAllAddressesByUserId);
+router.get(
+  "/get-all-addresses/:id",
+  isAdminAuth,
+  user_controller.getAllAddressesByUserId
+);
 router.patch(
   "/update-user/:id",
   isAdminAuth,
   user_controller.updateUserByAdmin
 ); // passing object id
-router
+router;
 router.delete("/delete-user/:id", isAdminAuth, user_controller.deleteUser); // passing object id
 router.get("/search-user", isAdminAuth, user_controller.searchUser);
 
@@ -176,58 +187,115 @@ router.delete(
   package_controller.deletePackage
 ); //passing object id
 
-
 // Available Cities Routes
-   router.post("/create-availabe-city",isAdminAuth,availableCities_controller.createAvailableCities)
-   router.delete("/delete-availabe-city/:id",isAdminAuth,availableCities_controller.deleteAvailableCities) // passing object id
-   router.patch("/update-availabe-city/:id",isAdminAuth,availableCities_controller.updateAvailableCities)   // passing object id
-router.get("/get-availabe-city", isAdminAuth, availableCities_controller.getAvailableCities)
-   
+router.post(
+  "/create-availabe-city",
+  isAdminAuth,
+  availableCities_controller.createAvailableCities
+);
+router.delete(
+  "/delete-availabe-city/:id",
+  isAdminAuth,
+  availableCities_controller.deleteAvailableCities
+); // passing object id
+router.patch(
+  "/update-availabe-city/:id",
+  isAdminAuth,
+  availableCities_controller.updateAvailableCities
+); // passing object id
+router.get(
+  "/get-availabe-city",
+  isAdminAuth,
+  availableCities_controller.getAvailableCities
+);
 
 // coupons Routes
-   router.post("/create-coupon", isAdminAuth, coupon_controller.createCoupon);
-   router.delete(
-     "/delete-coupon/:id",
-     isAdminAuth,
-     coupon_controller.deleteCoupon
-   ); // passing object id
-   router.patch(
-     "/update-coupon/:id",
-     isAdminAuth,
-     coupon_controller.updateCoupon
-   );   // passing object id
-   router.get("/get-coupons", isAdminAuth, coupon_controller.getAllCoupons);
+router.post("/create-coupon", isAdminAuth, coupon_controller.createCoupon);
+router.delete(
+  "/delete-coupon/:id",
+  isAdminAuth,
+  coupon_controller.deleteCoupon
+); // passing object id
+router.patch("/update-coupon/:id", isAdminAuth, coupon_controller.updateCoupon); // passing object id
+router.get("/get-coupons", isAdminAuth, coupon_controller.getAllCoupons);
 
 // Orders Routes
 
-router.post("/change-order-status/:id",isAdminAuth,payments_controller.updateOrderStatus) // passing order id
-router.get("/get-all-orders",isAdminAuth,payments_controller.getAllOrders)
-router.post("/get-monthly-orders",isAdminAuth,payments_controller.getMolthlyOrder)
+router.post(
+  "/change-order-status/:id",
+  isAdminAuth,
+  payments_controller.updateOrderStatus
+); // passing order id
+router.get("/get-all-orders", isAdminAuth, payments_controller.getAllOrders);
+router.post(
+  "/get-monthly-orders",
+  isAdminAuth,
+  payments_controller.getMolthlyOrder
+);
 
 // FAQ Routes
 
-router.post("/create-faq",isAdminAuth,faq_controller.createFaq)
-router.get("/get-all-faq",isAdminAuth,faq_controller.getAllFaq)
-router.patch("/update-faq/:id",isAdminAuth,faq_controller.updateFaq)
-router.delete("/delete-faq/:id",isAdminAuth,faq_controller.deleteFaq)
+router.post("/create-faq", isAdminAuth, faq_controller.createFaq);
+router.get("/get-all-faq", isAdminAuth, faq_controller.getAllFaq);
+router.patch("/update-faq/:id", isAdminAuth, faq_controller.updateFaq);
+router.delete("/delete-faq/:id", isAdminAuth, faq_controller.deleteFaq);
 
 //Help Center Routes
-router.post("/get-all-help-list",isAdminAuth,helpCenter_controller.getAllHelpCenter)
-router.delete("/delete-help-list/:id",isAdminAuth,helpCenter_controller.deleteHelpCenter) // passing object id
-router.patch("/update-help-list/:id",isAdminAuth,helpCenter_controller.updateHelpCenter) // passing object id
+router.post(
+  "/get-all-help-list",
+  isAdminAuth,
+  helpCenter_controller.getAllHelpCenter
+);
+router.delete(
+  "/delete-help-list/:id",
+  isAdminAuth,
+  helpCenter_controller.deleteHelpCenter
+); // passing object id
+router.patch(
+  "/update-help-list/:id",
+  isAdminAuth,
+  helpCenter_controller.updateHelpCenter
+); // passing object id
 
 //Seller order Routes
-router.get("/get-seller-list/:id",isAdminAuth,sellerOrder_controller.getSellerList)  // passing service id
-router.patch("/allot-seller-order/:id",isAdminAuth,sellerOrder_controller.allotSeller) // passing seller id
-router.patch("/update-seller-order-status/:id",isAdminAuth,sellerOrder_controller.updateSellerOrderStatus) // passing booking id
-router.get("/get-seller-order-list/:id",isAdminAuth,sellerOrder_controller.getSellerOrder) // passing seller id
-router.post("/get-seller-order-by-status/:id",isAdminAuth,sellerOrder_controller.getSellerOrderByStatus) // passing seller id
-
+router.get(
+  "/get-seller-list/:id",
+  isAdminAuth,
+  sellerOrder_controller.getSellerList
+); // passing service id
+router.patch(
+  "/allot-seller-order/:id",
+  isAdminAuth,
+  sellerOrder_controller.allotSeller
+); // passing seller id
+router.patch(
+  "/update-seller-order-status/:id",
+  isAdminAuth,
+  sellerOrder_controller.updateSellerOrderStatus
+); // passing booking id
+router.get(
+  "/get-seller-order-list/:id",
+  isAdminAuth,
+  sellerOrder_controller.getSellerOrder
+); // passing seller id
+router.post(
+  "/get-seller-order-by-status/:id",
+  isAdminAuth,
+  sellerOrder_controller.getSellerOrderByStatus
+); // passing seller id
 
 //Booking Routes
-router.get("/get-booking-details/:id",isAdminAuth,booking_controller.getBookingDetails) // passing booking id
-router.get("/get-booking-list",isAdminAuth,booking_controller.getAllBooking)
-router.delete("/delete-booking/:id",isAdminAuth,booking_controller.deleteBooking) // passing booking id
+router.get(
+  "/get-booking-details/:id",
+  isAdminAuth,
+  booking_controller.getBookingDetails
+); // passing booking id
+router.get("/get-booking-list", isAdminAuth, booking_controller.getAllBooking);
+router.delete(
+  "/delete-booking/:id",
+  isAdminAuth,
+  booking_controller.deleteBooking
+); // passing booking id
 
 //Admin Routes
 router.get("/check-token-expiration", isAdminAuth);
@@ -237,6 +305,5 @@ router.get("/logout-Admin", auth_controller.logoutAdmin);
 
 // //Sharp test Routes
 // router.post("/sharp-test",img_upload,sharpUpload.sharpUpload)
-
 
 module.exports = router;
