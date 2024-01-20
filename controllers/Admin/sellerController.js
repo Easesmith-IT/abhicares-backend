@@ -40,7 +40,8 @@ exports.createSeller = async (req, res, next) => {
               .json({ success: false, message: "password enctyption error" });
           } else {
             req.body.password = hash;
-            await sellerModel.create(req.body);
+            var seller = await sellerModel.create(req.body);
+            await sellerWallet.create({ sellerId: seller._id });
             res
               .status(201)
               .json({ success: true, message: "Seller created successful" });
