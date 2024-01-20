@@ -257,7 +257,7 @@ exports.getSellerWallet = async (req, res, next) => {
   try {
     const id = req.params.id;
 
-    const wallet = await sellerWallet.findById(id);
+    const wallet = await sellerWallet.findOne({ sellerId: id });
 
     if (!wallet) {
       return res.status(404).json({
@@ -284,7 +284,7 @@ exports.getCashoutRequests = async (req, res, next) => {
       .find({ sellerWalletId: id })
       .skip((page - 1) * limit)
       .limit(limit * 1)
-      .sort(-1);
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -299,12 +299,33 @@ exports.approveSellerCashout = async (req, res, next) => {
   try {
     const id = req.params.id;
     const { status, description, date, paymentId } = req.body;
-    const data = { status, description, date, paymentId };
-    const updatedCashout = await sellerCashout.findByIdAndUpdate(
-      id,
-      data,
-      { new: true }
+
+    const cashout = await sellerCashout.findById(id);
+
+    if (!cashout) {
+      return res.status(404).json({
+        message: "No cashout found",
+      });
+    }
+    const wallet = await sellerWallet.findById(
+      cashout.sellerWalletId.toString()
     );
+
+
+    let data;
+    if (status === "completed") {
+      data = { status, description, date, paymentId };
+          wallet.balance = wallet.balance - cashout.value;
+          await wallet.save();
+    }
+    //cancelled
+    else {
+      data = { status, description };
+    }
+
+    const updatedCashout = await sellerCashout.findByIdAndUpdate(id, data, {
+      new: true,
+    });
 
     res.status(200).json({
       success: true,
