@@ -201,12 +201,13 @@ exports.websiteCodOrder = async (req, res, next) => {
   }
 };
 
-exports.appCodOrder = async (req, res, next) => {
+exports.appOrder = async (req, res, next) => {
   try {
     const userId = req.body.userId;
     const userAddressId = req.body.userAddressId;
     const user = await User.findById(userId);
     const cart = req.body.cart;
+    const payId = req.body.payId;
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -262,6 +263,9 @@ exports.appCodOrder = async (req, res, next) => {
         },
       },
     });
+    if (payId) {
+      order.payId = payId;
+    }
 
     await order.save();
     await order.save();

@@ -34,7 +34,7 @@ router.post("/signup", appController.createUser);
 router.post("/add-address", appController.AddUserAddress);
 router.get("/get-address/:userId", appController.getUserAddress);
 ////
-router.post("/create-order", paymentController.appCodOrder);
+router.post("/create-order", paymentController.appOrder);
 router.get("/get-upcoming-order/:userId", appController.geUpcomingOrders);
 router.get("/get-complete-order", appController.getCompletedOrders);
 

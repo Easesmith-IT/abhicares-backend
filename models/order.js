@@ -1,6 +1,6 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
-const Schema = mongoose.Schema
+const Schema = mongoose.Schema;
 
 const orderSchema = new Schema(
   {
@@ -8,6 +8,9 @@ const orderSchema = new Schema(
       type: String,
       required: true,
       default: "app",
+    },
+    payId: {
+      type: String,
     },
     orderValue: {
       type: Number,
@@ -103,4 +106,4 @@ const orderSchema = new Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('Order', orderSchema)
+module.exports = mongoose.model("Order", orderSchema);
