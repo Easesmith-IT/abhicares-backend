@@ -35,7 +35,7 @@ const bookingSchema = new mongoose.Schema(
       },
       location: {
         type: Object,
-        required: true,
+        // required: true,
       },
     },
     product: {
