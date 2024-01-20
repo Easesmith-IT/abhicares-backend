@@ -212,22 +212,41 @@ exports.appCodOrder = async (req, res, next) => {
     }
 
     // Extract cart data from the user's cart
-    const products = cart["products"];
+    const products = cart["items"];
     // // Create an array to store order items
     const orderItems = [];
     for (const productItem of products) {
-      orderItems.push({
-        product: productItem["prod"],
-        quantity: productItem["quantity"],
-        bookingDate: productItem["bookDate"],
-        bookingTime: productItem["bookTime"],
-      });
+      let prod, pack;
+      if (productItem.type == "product") {
+        prod = productItem;
+      } else if (productItem.type == "package") {
+        pack = productItem;
+      }
+
+      if (prod) {
+        orderItems.push({
+          product: productItem["prod"],
+          quantity: productItem["quantity"],
+          bookingDate: productItem["bookDate"],
+          bookingTime: productItem["bookTime"],
+        });
+      } else if (pack) {
+        orderItems.push({
+          package: productItem["prod"],
+          quantity: productItem["quantity"],
+          bookingDate: productItem["bookDate"],
+          bookingTime: productItem["bookTime"],
+        });
+      }
     }
     const userAddress = await UserAddress.findById(userAddressId);
-
+    console.log(cart);
     const order = new Order({
       paymentType: cart["paymentType"],
       orderValue: cart["totalAmount"],
+      itemTotal: cart["totalvalue"],
+      discount: 0,
+      tax: cart["totalAmount"] - cart["totalvalue"],
       items: orderItems,
       orderPlatform: "app",
       user: {
@@ -245,67 +264,48 @@ exports.appCodOrder = async (req, res, next) => {
     });
 
     await order.save();
+    await order.save();
+    ///booking creation
+    for (const orderItem of orderItems) {
+      if (orderItem.product) {
+        var booking = new Booking({
+          order: order._id,
+          userId: user._id,
+          userAddress: {
+            addressLine: userAddress.addressLine,
+            pincode: userAddress.pincode,
+            landmark: userAddress.landmark,
+            city: userAddress.city,
+            location: userAddress.location,
+          },
+          product: orderItem.product,
+          quantity: orderItem.quantity,
+          bookingDate: orderItem.bookingDate,
+          bookingTime: orderItem.bookingTime,
+          orderValue: orderItem.product.offerPrice * orderItem.quantity,
+        });
+        await booking.save();
+      } else if (orderItem.package) {
+        var booking = new Booking({
+          order: order._id,
+          userId: user._id,
+          userAddress: {
+            addressLine: userAddress.addressLine,
+            pincode: userAddress.pincode,
+            landmark: userAddress.landmark,
+            city: userAddress.city,
+            location: userAddress.location,
+          },
+          package: orderItem.package,
+          quantity: orderItem.quantity,
+          bookingDate: orderItem.bookingDate,
+          bookingTime: orderItem.bookingTime,
+          orderValue: orderItem.package.offerPrice * orderItem.quantity,
+        });
+        await booking.save();
+      }
+    }
     return res.status(200).json(order);
-    // const newNurseryIds = [
-    //   ...new Set(orderItems.map((item) => item.product.nurseryId.toString())),
-    // ];
-    // console.log(
-    //   "nurseryIds ==== ",
-    //   newNurseryIds,
-    //   "count -- ",
-    //   newNurseryIds.length
-    // );
-    // const productItems = orderItems
-    //   // .filter((item) => item.type === "Plant")
-    //   .map((item) => ({
-    //     type: item.type,
-    //     product: item.product,
-    //     quantity: item.quantity,
-    //   }));
-
-    // // console.log("productItems ====== ", productItems);
-
-    // for (const id of newNurseryIds) {
-    //   let productDetails = [];
-    //   const orderedProduct = productItems.filter(
-    //     (ele) => ele.product.nurseryId.toString() === id
-    //   );
-    //   console.log("orderedProduct === ", orderedProduct);
-    //   const totalPrice = orderedProduct.reduce(
-    //     (total, item) => total + item.product.price * item.quantity,
-    //     0
-    //   );
-    //   // console.log("totalPrice ===== ", totalPrice);
-    //   const newValue1 = orderedProduct.map((item) => ({
-    //     type: item.type,
-    //     plantId: item.product._id,
-    //     quantity: item.quantity,
-    //   }));
-    //   // console.log(newValue1);
-    //   productDetails = {
-    //     orderId: order._id,
-    //     products: newValue1,
-    //     nurseryId: new mongoose.Types.ObjectId(id),
-    //     totalPrice: totalPrice,
-    //   };
-    //   trackUserOrder(productDetails);
-    //   console.log("seller order == ", productDetails);
-    // }
-
-    // // retrieving quantity price and name of he product
-
-    // const pdf = await getUserInvoice(order);
-    // // console.log(pdf)
-    // // Clear the user's cart after creating the order
-    // cart.items = [];
-    // cart.totalValue = 0;
-    // await cart.save();
-
-    // return res.status(200).json({
-    //   success: true,
-    //   order: order,
-    //   invoice: pdf,
-    // });
   } catch (err) {
     console.log(err);
     return { message: "error", error: err };

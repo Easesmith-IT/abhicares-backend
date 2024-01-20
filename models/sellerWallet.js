@@ -8,7 +8,7 @@ const sellerWalletSchema = new Schema(
       ref: "Seller",
       required: true,
     },
-    Balance: {
+    balance: {
       type: Number,
       default: 0,
     },

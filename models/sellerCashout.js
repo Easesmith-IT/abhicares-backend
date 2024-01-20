@@ -9,12 +9,15 @@ const sellerCashoutSchema = new Schema(
       required: true,
     },
     value: {
-      type: String,
+      type: Number,
       required: true,
     },
     status: {
-      type: Boolean,
+      type: String,
       default: true,
+    },
+    description: {
+      type: String,
     },
     accountDetails: {
       date: {
