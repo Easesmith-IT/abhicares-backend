@@ -32,6 +32,7 @@ router.patch(
 // shop content routes
 router.get("/get-banners", contentController.getBanners);
 router.get("/get-seo/:id", contentController.getSeoByCategoryId);
+router.get('/get-seo-by-page-user-side',contentController.getSeoByPage)
 
 // router.patch("/update/:id", contentController.updateContent);
 // router.get("/get-content/by-title",contentController.getContent);

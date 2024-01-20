@@ -1,4 +1,4 @@
-const {server} = require("../server");
+const {app:server} = require("../server");
 ///Importing Routes
 
 const adminRoute = require("../routes/admin");

@@ -1,12 +1,10 @@
 const express = require("express");
+const http = require('http')
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const multer = require("multer");
 const path = require("path");
-const crypto = require("crypto");
 const session = require("express-session");
-const otpGenerator = require("otp-generator");
 require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const rateLimit = require('express-rate-limit');
@@ -14,40 +12,8 @@ const hpp = require('hpp');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 
+const initializeSocket = require('./connection/socket.js')
 
-const server = express();
-
-// const fileStorage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, "images");
-//   },
-//   filename: (req, file, cb) => {
-//     cb(
-//       null,
-//       new Date().getMonth().toString() +
-//         "-" +
-//         new Date().getDate().toString() +
-//         "-" +
-//         Math.random() +
-//         "-" +
-//         crypto.randomBytes(16).toString("hex") +
-//         "-" +
-//         file.originalname.replaceAll(/\s/g, "")
-//     );
-//   },
-// });
-
-// const fileFilter = (req, file, cb) => {
-//   if (
-//     file.mimetype === "images/png" ||
-//     file.mimetype === "images/jpg" ||
-//     file.mimetype === "images/jpeg"
-//   ) {
-//     cb(null, false);
-//   } else {
-//     cb(null, true);
-//   }
-// };
 
 // Define a rate limiter with certain options
 const limiter = rateLimit({
@@ -56,14 +22,21 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again later.',
 });
 
+const app = express();
+const server = http.createServer(app);
+
+// initialize socket.io
+
+const io = initializeSocket(server)
+
 // Apply the rate limiter to all requests
-server.use(limiter);
-// server.use(helmet());
-server.use(hpp());
-server.use(mongoSanitize());
+app.use(limiter);
+// app.use(helmet());
+app.use(hpp());
+app.use(mongoSanitize());
 
 // Use session middleware
-server.use(
+app.use(
   session({
     secret: "your-secret-key",
     resave: false,
@@ -74,21 +47,19 @@ server.use(
   })
 );
 
-server.use(bodyParser.json({ limit: "50mb" }));
-server.use(express.urlencoded({ extended: true }));
-server.use(express.static(path.join(__dirname, "build")));
-server.use(express.static(path.join(__dirname, "admin")));
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "build")));
+app.use(express.static(path.join(__dirname, "admin")));
 
-server.use(cookieParser());
+app.use(cookieParser());
 
-// server.use(
-//   multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
-// );
-server.use("/uploads", express.static(path.join(__dirname, "uploads")));
-server.use("/newUpload", express.static(path.join(__dirname, "newUpload")));
-// express.static(path.join(__dirname, "..));
 
-server.use(
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/newUpload", express.static(path.join(__dirname, "newUpload")));
+
+
+app.use(
   cors({
     origin: "http://localhost:3000",
     credentials: true,
@@ -97,7 +68,7 @@ server.use(
 
 
 
-server.use((req, res, next) => {
+app.use((req, res, next) => {
   console.log(
     "Server received a request\n with method:",
     req.method,
@@ -128,10 +99,10 @@ mongoose
 
 const port = process.env.PORT || 5000;
 
-const socketConnection=server.listen(port, function () {
+server.listen(port, function () {
   console.log(`Server is running on port http://localhost:${port}`);
 });
 
-const io = require('socket.io')(socketConnection)
 
-module.exports = {server,io};
+
+module.exports = {app,io};

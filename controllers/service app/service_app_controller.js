@@ -1,4 +1,9 @@
+const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
+var bcrypt = require("bcryptjs");
 // const Nursery = require("../models/nursery");
+
+//models
 const Category = require("../../models/category");
 const Package = require("../../models/package");
 const Product = require("../../models/product");
@@ -9,12 +14,14 @@ const SellerWallet = require("../../models/sellerWallet");
 const Order = require("../../models/order");
 const Content = require("../../models/content");
 const HelpCentre = require("../../models/helpCenter");
-const mongoose = require("mongoose");
-const { auth } = require("../../middleware/auth");
-const jwt = require("jsonwebtoken");
 const SellerModel = require("../../models/seller");
-var bcrypt = require("bcryptjs");
+const SellerCashOut = require("../../models/sellerCashout");
+
+//controller
 const AppError = require("../Admin/errorController");
+
+//middleware
+const { auth } = require("../../middleware/auth");
 /////////////////////////////////////////////////////////////////////////////
 //app routes
 
@@ -452,7 +459,76 @@ exports.updateSeller = async (req, res, next) => {
 };
 
 exports.getSellerWallet = async (req, res, next) => {
-  const id = req.params.id;
-  var wallet = await SellerWallet.findOne({ sellerId: id });
+  try {
+    const id = req.params.id;
+    var wallet = await SellerWallet.findOne({ sellerId: id });
+    return res.status(200).json(wallet);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.postCashout = async (req, res, next) => {
+  try {
+    const id = req.body.id;
+    const value = req.body.value;
+    var wallet = await SellerWallet.findById(id);
+    if (value > wallet.balance) {
+      return res.status(200).json({
+        status: false,
+        message: "money more than in account cannot be cashout",
+      });
+    } else {
+      var transaction = await SellerCashOut.create({
+        sellerWalletId: id,
+        value: value,
+        status: "created",
+      });
+      return res.status(200).json({ status: true, cashout: transaction });
+    }
+  } catch (err) {
+    next(err);
+  }
+  let.findOne({ sellerId: id });
+  return res.json(wallet);
+};
+
+exports.postSellerCashout = async (req, res, next) => {
+  try {
+    const id = req.body.id;
+    const value = req.body.value;
+    var wallet = await SellerWallet.findById(id);
+    if (value > wallet.balance) {
+      return res.status(200).json({
+        status: false,
+        message: "money more than in account cannot be cashout",
+      });
+    } else {
+      var transaction = await SellerCashOut.create({
+        sellerWalletId: id,
+        value: value,
+        status: "created",
+      });
+      return res.status(200).json({ status: true, cashout: transaction });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getSellerCashout = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    var cashout = await SellerCashOut.find({
+      sellerWalletId: id,
+    });
+    console.log(cashout);
+    return res
+      .status(200)
+      .json({ status: true, cashout: cashout, length: cashout.length });
+  } catch (err) {
+    next(err);
+  }
+  let.findOne({ sellerId: id });
   return res.json(wallet);
 };
