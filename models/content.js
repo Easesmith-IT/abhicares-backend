@@ -17,6 +17,11 @@ const schema = new mongoose.Schema(
       required: true,
     },
 
+    categoryId: {
+      type: mongoose.Types.ObjectId,
+      ref: "Category",
+    },
+
     seoTitle: {
       type: String,
     },

@@ -3,7 +3,7 @@ const router = express.Router();
 // middleware
 const { userAuth, userAuthForCart } = require("../middleware/auth");
 const img_upload = require("../middleware/imageMiddleware");
-const isCity=require("../middleware/availableCity")
+const isCity = require("../middleware/availableCity");
 
 // controllers
 const category_controller = require("../controllers/User/categoryController");
@@ -17,16 +17,11 @@ const userAddress_controller = require("../controllers/User/useraddress");
 const cmsHome_controller = require("../controllers/User/cmsHomeController");
 const review_controller = require("../controllers/User/reviewController");
 const payments_controller = require("../controllers/User/payments");
-
 const booking_controller = require("../controllers/User/bookingController");
-const faq_controller=require("../controllers/User/faqController")
+const faq_controller = require("../controllers/User/faqController");
 const auth_controller = require("../controllers/User/auth");
-const helpCenter_controller=require("../controllers/User/helpCenterController")
-const coupon_controller=require("../controllers/User/couponController")
-
-const traceOrder_controller=require("../controllers/User/traceOrderController")
-
-
+const helpCenter_controller = require("../controllers/User/helpCenterController");
+const coupon_controller = require("../controllers/User/couponController");
 
 // Category routes
 router.get("/get-all-category", category_controller.getAllCategory);
@@ -63,7 +58,6 @@ router.post("/verify-signup", user_controller.createUser);
 router.get("/logout-user", user_controller.logoutUser);
 // special routes
 // router.post("/get-user-by-token", auth_controller.getUserByToken);
-
 // User Address Routes
 router.post(
   "/create-user-address",
@@ -87,8 +81,7 @@ router.patch(
 ); // passing address id
 // CMS Routes
 router.get("/get-cms-data/:id", cmsHome_controller.getCmsProduct);
-router.get("/get-category-services/:id",service_controller.getCategoryService)
-
+router.get("/get-category-services/:id", service_controller.getCategoryService);
 
 // Review Routes
 router.post(
@@ -110,24 +103,36 @@ router.patch(
 // review id
 router.post("/get-product-review/:id", review_controller.getProductReview); // find product review by product id
 router.post(
-  "/get-user-product-review/:id",userAuth,
+  "/get-user-product-review/:id",
+  userAuth,
   review_controller.getUserProductReview
 );
 
 //order Routes
-router.post("/place-cod-order", userAuth,isCity.isCityAvailable, payments_controller.websiteCodOrder);
-router.get(
-  "/get-user-orders",
+router.post(
+  "/place-cod-order",
   userAuth,
-  payments_controller.getAllUserOrders
+  isCity.isCityAvailable,
+  payments_controller.websiteCodOrder
 );
-router.get("/get-product-invoice/:id",userAuth,payments_controller.createOrderInvoice)
-router.post("/change-order-status/:id",userAuth,payments_controller.updateOrderStatus) // passing order id
-router.post("/create-online-order",userAuth,payments_controller.checkout)
-router.post("/payment-verification",userAuth,payments_controller.paymentVerification)
-router.post("/get-api-key",userAuth,payments_controller.getApiKey)
-
-
+router.get("/get-user-orders", userAuth, payments_controller.getAllUserOrders);
+router.get(
+  "/get-product-invoice/:id",
+  userAuth,
+  payments_controller.createOrderInvoice
+);
+router.post(
+  "/change-order-status/:id",
+  userAuth,
+  payments_controller.updateOrderStatus
+); // passing order id
+router.post("/create-online-order", userAuth, payments_controller.checkout);
+router.post(
+  "/payment-verification",
+  userAuth,
+  payments_controller.paymentVerification
+);
+router.post("/get-api-key", userAuth, payments_controller.getApiKey);
 
 // Booking Routes
 // router.post(
@@ -143,17 +148,13 @@ router.delete(
 router.get("/get-user-bookings", userAuth, booking_controller.getUsersBooking); // passing user id
 
 // FAQ Routes
-router.get("/get-all-faq",userAuth,faq_controller.getAllFaq)
+router.get("/get-all-faq", userAuth, faq_controller.getAllFaq);
 
 // Help Center Routes
-router.post("/create-help",userAuth,helpCenter_controller.createHelpCenter)
-router.get("/get-user-help",userAuth,helpCenter_controller.getUserHelpCenter)
+router.post("/create-help", userAuth, helpCenter_controller.createHelpCenter);
+router.get("/get-user-help", userAuth, helpCenter_controller.getUserHelpCenter);
 
 // Coupon routes
-router.post("/get-coupon-details",userAuth,coupon_controller.getCouponByName)
-
-// Trace order routes
-router.post("/add-booking-location/:id",traceOrder_controller.addLocationToDatabase) // passing booking id
-router.get("/get-booking-location/:id",traceOrder_controller.getOrderLocation) // passing booking id
+router.post("/get-coupon-details", userAuth, coupon_controller.getCouponByName);
 
 module.exports = router;
