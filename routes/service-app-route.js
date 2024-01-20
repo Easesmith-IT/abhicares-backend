@@ -53,6 +53,9 @@ router.get("/get-running-booking/:id", bookingControler.getSellerRunningOrder);
 
 //wallet
 router.get("/get-wallet/:id", serviceAppController.getSellerWallet);
+router.post("/post-cashout", serviceAppController.postSellerCashout);
+router.get("/get-cashout/:id", serviceAppController.getSellerCashout);
+
 //tickets
 router.get("/get-tickets/:userId", serviceAppController.getUserTickets);
 router.post("/raise-ticket", serviceAppController.raiseTicket);
