@@ -295,8 +295,28 @@ exports.getCashoutRequests = async (req, res, next) => {
   }
 };
 
+exports.getRecentCashoutRequests = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+
+
+    const cashouts = await sellerCashout
+      .find({ sellerWalletId: id })
+      .sort({ createdAt: -1 })
+      .limit(3)
+
+    res.status(200).json({
+      success: true,
+      cashouts,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.approveSellerCashout = async (req, res, next) => {
   try {
+    console.log(req.body)
     const id = req.params.id;
     const { status, description, date, paymentId } = req.body;
 
@@ -314,7 +334,7 @@ exports.approveSellerCashout = async (req, res, next) => {
 
     let data;
     if (status === "completed") {
-      data = { status, description, date, paymentId };
+      data = { status, description, accountDetails: { date, paymentId } };
           wallet.balance = wallet.balance - cashout.value;
           await wallet.save();
     }
@@ -323,6 +343,7 @@ exports.approveSellerCashout = async (req, res, next) => {
       data = { status, description };
     }
 
+    console.log('data',data)
     const updatedCashout = await sellerCashout.findByIdAndUpdate(id, data, {
       new: true,
     });
