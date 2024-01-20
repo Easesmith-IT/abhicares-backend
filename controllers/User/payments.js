@@ -616,6 +616,7 @@ exports.paymentVerification = async (req, res, next) => {
       await order.save();
 
       ///booking creation
+      console.log('ADD',result.user.address)
       const orderItems = result.items;
       for (const orderItem of orderItems) {
         if (orderItem.product) {
@@ -627,6 +628,7 @@ exports.paymentVerification = async (req, res, next) => {
               pincode: result.user.address.pincode,
               landmark: result.user.address.landmark,
               city: result.user.address.city,
+              location: result.address.location,
             },
             product: orderItem.product,
             quantity: orderItem.quantity,
@@ -644,6 +646,7 @@ exports.paymentVerification = async (req, res, next) => {
               pincode: result.user.address.pincode,
               landmark: result.user.address.landmark,
               city: result.user.address.city,
+              location: result.address.location,
             },
             package: orderItem.package,
             quantity: orderItem.quantity,
