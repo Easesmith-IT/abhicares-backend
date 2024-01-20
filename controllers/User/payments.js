@@ -1,10 +1,9 @@
 const Razorpay = require("razorpay");
 var crypto = require("crypto");
-const mongoose = require("mongoose");
-// const { configDotenv } = require("dotenv");
+
 const { configDotenv } = require("dotenv");
 configDotenv({ path: "../config/config.env" });
-const fs = require("fs");
+
 const AppError = require("../User/errorController");
 
 require("dotenv").config();
@@ -27,6 +26,7 @@ const {
 } = require("../../util/invoiceData");
 const easyinvoice = require("easyinvoice");
 const order = require("../../models/order");
+const { io } = require("../../server");
 // test credentials
 const razorPayKeyId = "rzp_test_XtC1VoPYosmoCP";
 const razorKeySecret = "olIq40GreBPUaEz80552bG2f";
@@ -109,6 +109,7 @@ exports.websiteCodOrder = async (req, res, next) => {
         });
       }
     }
+
     const userAddress = await UserAddress.findById(userAddressId);
     const order = new Order({
       orderPlatform: "website",
@@ -136,8 +137,9 @@ exports.websiteCodOrder = async (req, res, next) => {
     await order.save();
     ///booking creation
     for (const orderItem of orderItems) {
+      let booking;
       if (orderItem.product) {
-        var booking = new Booking({
+         booking = new Booking({
           order: order._id,
           userId: user._id,
           userAddress: {
@@ -154,8 +156,12 @@ exports.websiteCodOrder = async (req, res, next) => {
           orderValue: orderItem.product.offerPrice * orderItem.quantity,
         });
         await booking.save();
-      } else if (orderItem.package) {
-        var booking = new Booking({
+
+        console.log("booking created", booking);
+      }
+      
+      else if (orderItem.package) {
+         booking = new Booking({
           order: order._id,
           userId: user._id,
           userAddress: {
@@ -173,6 +179,17 @@ exports.websiteCodOrder = async (req, res, next) => {
         });
         await booking.save();
       }
+
+      
+      if (booking?._id) {
+        const location = [20.011,44.12]
+        io.emit("location", {
+          bookingId: booking._id,
+          location: booking.currentLocation.location,
+        });
+      }
+
+
     }
     cart.items = [];
     cart.totalPrice = 0;
