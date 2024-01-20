@@ -494,6 +494,13 @@ router.get(
   seller_controller.getCashoutRequests
 );
 
+router.get(
+  "/get-seller-wallet-recent-cashout-requests/:id", //passing wallet id
+  isAdminAuth,
+  authorize("partners", "read"),
+  seller_controller.getRecentCashoutRequests
+);
+
 router.patch(
   "/approve-cashout/:id", //passing seller-cashout id
   isAdminAuth,
