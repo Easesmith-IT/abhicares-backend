@@ -472,7 +472,38 @@ router.get(
 router.post("/login-Admin", auth_controller.loginAdminUser);
 router.get("/logout-Admin", auth_controller.logoutAdmin);
 
-// //Sharp test Routes
-// router.post("/sharp-test",img_upload,sharpUpload.sharpUpload)
+// seller wallet routes (inside partners)
+
+router.get(
+  "/get-seller-wallet/:id",
+  isAdminAuth,
+  authorize("partners", "read"),
+  seller_controller.getSellerWallet
+);
+
+router.get(
+  "/get-seller-wallet-cashout-requests/:id",//passing wallet id
+  isAdminAuth,
+  authorize("partners", "read"),
+  seller_controller.getCashoutRequests
+);
+
+router.get(
+  "/get-seller-wallet-recent-cashout-requests/:id", //passing wallet id
+  isAdminAuth,
+  authorize("partners", "read"),
+  seller_controller.getRecentCashoutRequests
+);
+
+router.patch(
+  "/approve-cashout/:id", //passing seller-cashout id
+  isAdminAuth,
+  authorize("partners", "write"),
+  seller_controller.approveSellerCashout
+);
+
+
+
+
 
 module.exports = router;

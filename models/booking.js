@@ -36,7 +36,7 @@ const bookingSchema = new mongoose.Schema(
       },
       location: {
         type: Object,
-        required: true,
+        // required: true,
       },
     },
     product: {
@@ -73,7 +73,8 @@ const bookingSchema = new mongoose.Schema(
         default: "booking-placed",
       },
       location: {
-        type: Object,
+        type: [Number], // Array of [longitude, latitude]
+        default: [0, 0],
       },
     },
   },

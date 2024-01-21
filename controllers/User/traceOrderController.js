@@ -14,6 +14,11 @@ exports.addLocationToDatabase = async (req, res, next) => {
       result.currentLocation.status = status
       result.currentLocation.location = location
       await result.save()
+
+      io.emit("location", {
+        bookingId: result._id,
+        location: result.currentLocation.location,
+      });
       return res
         .status(200)
         .json({ success: true, message: 'Location updated successful' })
@@ -25,8 +30,7 @@ exports.addLocationToDatabase = async (req, res, next) => {
   }
 }
 
-
-
+// not required
 exports.getOrderLocation = async (req, res, next) => {
     try {
       const id = req.params.id // booking id

@@ -70,6 +70,11 @@ exports.getSellerOrder = async (req, res, next) => {
         },
       },
     });
+
+    res.status(200).json({
+      success: true,
+      sellerOrders: result,
+    });
   } catch (err) {
     next(err);
   }
