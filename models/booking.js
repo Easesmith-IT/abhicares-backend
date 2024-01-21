@@ -14,6 +14,7 @@ const bookingSchema = new mongoose.Schema(
     orderId: {
       type: mongoose.Types.ObjectId,
       ref: "Order",
+      required: true,
     },
 
     userAddress: {

@@ -138,7 +138,7 @@ exports.websiteCodOrder = async (req, res, next) => {
     for (const orderItem of orderItems) {
       if (orderItem.product) {
         var booking = new Booking({
-          order: order._id,
+          orderId: order._id,
           userId: user._id,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -156,7 +156,7 @@ exports.websiteCodOrder = async (req, res, next) => {
         await booking.save();
       } else if (orderItem.package) {
         var booking = new Booking({
-          order: order._id,
+          orderId: order._id,
           userId: user._id,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -256,7 +256,7 @@ exports.appOrder = async (req, res, next) => {
     for (const orderItem of orderItems) {
       if (orderItem.product) {
         var booking = new Booking({
-          order: order._id,
+          orderId: order._id,
           userId: user._id,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -274,7 +274,7 @@ exports.appOrder = async (req, res, next) => {
         await booking.save();
       } else if (orderItem.package) {
         var booking = new Booking({
-          order: order._id,
+          orderId: order._id,
           userId: user._id,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -603,7 +603,7 @@ exports.paymentVerification = async (req, res, next) => {
       for (const orderItem of orderItems) {
         if (orderItem.product) {
           var booking = new Booking({
-            order: order._id,
+            orderId: order._id,
             userId: result.user.userId,
             userAddress: {
               addressLine: result.user.address.addressLine,
@@ -620,7 +620,7 @@ exports.paymentVerification = async (req, res, next) => {
           await booking.save();
         } else if (orderItem.package) {
           var booking = new Booking({
-            order: order._id,
+            orderId: order._id,
             userId: result.user.userId,
             userAddress: {
               addressLine: result.user.address.addressLine,
