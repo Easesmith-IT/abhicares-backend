@@ -216,21 +216,27 @@ exports.createUser = async (req, res, next) => {
 
 exports.AddUserAddress = async (req, res, next) => {
   try {
+    console.log(req.body);
     const addressLine = req.body.addressLine;
     const pincode = req.body.pincode;
     const city = req.body.city;
     const userId = req.body.userId;
     const landmark = req.body.landmark;
+    const lat = req.body.lat;
+    const long = req.body.long;
     var address = await UserAddress({
       addressLine: addressLine,
       pincode: pincode,
       landmark: landmark,
       city: city,
       userId: userId,
+      location: {
+        coordinates: [lat, long],
+      },
     });
 
     address.save();
-    console.log(address);
+    console.log("address", address);
     return res.status(200).json({ address });
   } catch (err) {
     const error = new Error(err);

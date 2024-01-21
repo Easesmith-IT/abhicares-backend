@@ -37,6 +37,8 @@ router.get("/get-address/:userId", appController.getUserAddress);
 router.post("/create-order", paymentController.appOrder);
 router.get("/get-upcoming-order/:userId", appController.geUpcomingOrders);
 router.get("/get-complete-order", appController.getCompletedOrders);
+//booking
+router.post("/complete-booking", appController.getCompletedOrders);
 
 router.get("/search-service", service_controller.searchService);
 router.get("/get-tickets/:userId", appController.getUserTickets);

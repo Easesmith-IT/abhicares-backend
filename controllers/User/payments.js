@@ -139,8 +139,8 @@ exports.websiteCodOrder = async (req, res, next) => {
     for (const orderItem of orderItems) {
       let booking;
       if (orderItem.product) {
-         booking = new Booking({
-          order: order._id,
+        var booking = new Booking({
+          orderId: order._id,
           userId: user._id,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -156,13 +156,9 @@ exports.websiteCodOrder = async (req, res, next) => {
           orderValue: orderItem.product.offerPrice * orderItem.quantity,
         });
         await booking.save();
-
-        console.log("booking created", booking);
-      }
-      
-      else if (orderItem.package) {
-         booking = new Booking({
-          order: order._id,
+      } else if (orderItem.package) {
+        var booking = new Booking({
+          orderId: order._id,
           userId: user._id,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -180,16 +176,13 @@ exports.websiteCodOrder = async (req, res, next) => {
         await booking.save();
       }
 
-      
       if (booking?._id) {
-        const location = [20.011,44.12]
+        const location = [20.011, 44.12];
         io.emit("location", {
           bookingId: booking._id,
           location: booking.currentLocation.location,
         });
       }
-
-
     }
     cart.items = [];
     cart.totalPrice = 0;
@@ -273,7 +266,7 @@ exports.appOrder = async (req, res, next) => {
     for (const orderItem of orderItems) {
       if (orderItem.product) {
         var booking = new Booking({
-          order: order._id,
+          orderId: order._id,
           userId: user._id,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -291,7 +284,7 @@ exports.appOrder = async (req, res, next) => {
         await booking.save();
       } else if (orderItem.package) {
         var booking = new Booking({
-          order: order._id,
+          orderId: order._id,
           userId: user._id,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -616,12 +609,12 @@ exports.paymentVerification = async (req, res, next) => {
       await order.save();
 
       ///booking creation
-      console.log('ADD',result.user.address)
+      console.log("ADD", result.user.address);
       const orderItems = result.items;
       for (const orderItem of orderItems) {
         if (orderItem.product) {
           var booking = new Booking({
-            order: order._id,
+            orderId: order._id,
             userId: result.user.userId,
             userAddress: {
               addressLine: result.user.address.addressLine,
@@ -639,7 +632,7 @@ exports.paymentVerification = async (req, res, next) => {
           await booking.save();
         } else if (orderItem.package) {
           var booking = new Booking({
-            order: order._id,
+            orderId: order._id,
             userId: result.user.userId,
             userAddress: {
               addressLine: result.user.address.addressLine,
