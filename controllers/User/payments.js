@@ -137,7 +137,7 @@ exports.websiteCodOrder = async (req, res, next) => {
     await order.save();
     ///booking creation
     for (const orderItem of orderItems) {
-      let booking;
+      // let booking;
       if (orderItem.product) {
         var booking = new Booking({
           orderId: order._id,
@@ -176,13 +176,13 @@ exports.websiteCodOrder = async (req, res, next) => {
         await booking.save();
       }
 
-      if (booking?._id) {
-        const location = [20.011, 44.12];
-        io.emit("location", {
-          bookingId: booking._id,
-          location: booking.currentLocation.location,
-        });
-      }
+      // if (booking?._id) {
+      //   const location = [20.011, 44.12];
+      //   io.emit("location", {
+      //     bookingId: booking._id,
+      //     location: booking.currentLocation.location,
+      //   });
+      // }
     }
     cart.items = [];
     cart.totalPrice = 0;
