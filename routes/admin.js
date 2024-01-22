@@ -459,20 +459,20 @@ router.get("/check-token-expiration", isAdminAuth);
 router.post(
   "/create-Admin",
   isAdminAuth,
-  // authorize("settings", "write"),
+  authorize("settings", "write"),
   auth_controller.addAminUser
 );
 router.patch(
   "/update-sub-admin/:id",
   isAdminAuth,
-  // authorize("settings", "write"),
+  authorize("settings", "write"),
   auth_controller.updateAdminUser
 );
 
 router.get(
   "/get-sub-admins",
-  // isAdminAuth,
-  // authorize("settings", "write"),
+  isAdminAuth,
+  authorize("settings", "write"),
   auth_controller.getSubAdmins
 );
 router.post("/login-Admin", auth_controller.loginAdminUser);

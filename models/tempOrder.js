@@ -75,6 +75,18 @@ const tempOrderSchema = new Schema(
           type: String,
           // required: true,
         },
+        location: {
+          type: {
+            type: String,
+            enum: ["Point"], // Only "Point" is allowed for type
+            default: "Point",
+          },
+          coordinates: {
+            type: [Number], // Array of [longitude, latitude]
+            default: [0, 0],
+          },
+        },
+
         pincode: {
           type: Number,
           // required: true,

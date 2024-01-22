@@ -1,12 +1,15 @@
-const sellerModel = require("../../models/seller");
-const bookingModel = require("../../models/booking");
+const SellerModel = require("../../models/seller");
+const BookingModel = require("../../models/booking");
 const AppError = require("../Admin/errorController");
+const UserModel = require("../../models/user");
 
 exports.getSellerOrderHistory = async (req, res, next) => {
   try {
     const id = req.params.id; // seller id
-    const result = await bookingModel
-      .find({ sellerId: id, status: "completed" })
+    const result = await BookingModel.find({
+      sellerId: id,
+      status: "completed",
+    })
       .populate({
         path: "package",
         populate: {
@@ -32,9 +35,10 @@ exports.getSellerOrderHistory = async (req, res, next) => {
 exports.getSellerUpcomingOrder = async (req, res, next) => {
   try {
     const id = req.params.id; // seller id
-    const result = await bookingModel
-      .find({ sellerId: id, status: "alloted" })
-      .populate("userId", "-password");
+    const result = await BookingModel.find({
+      sellerId: id,
+      status: "alloted",
+    }).populate("userId", "-password");
 
     res.status(200).json({
       success: true,
@@ -50,9 +54,10 @@ exports.getSellerUpcomingOrder = async (req, res, next) => {
 exports.getSellerCompletedOrder = async (req, res, next) => {
   try {
     const id = req.params.id; // seller id
-    const result = await bookingModel
-      .find({ sellerId: id, status: "completed" })
-      .populate("userId", "-password");
+    const result = await BookingModel.find({
+      sellerId: id,
+      status: "completed",
+    }).populate("userId", "-password");
 
     res.status(200).json({
       success: true,
@@ -68,8 +73,7 @@ exports.getSellerCompletedOrder = async (req, res, next) => {
 exports.getBooking = async (req, res, next) => {
   try {
     const id = req.params.id; // seller id
-    const result = await bookingModel
-      .findById(id)
+    const result = await BookingModel.findById(id)
       .populate({
         path: "package",
         populate: {
@@ -92,16 +96,74 @@ exports.getBooking = async (req, res, next) => {
   }
 };
 
-exports.getStartBooking = async (req, res, next) => {
+exports.postStartBooking = async (req, res, next) => {
   try {
-    const id = req.params.id; // seller id
-    const result = await bookingModel.findById(id);
-
-    result.status = "started";
-    result.save();
+    const id = req.body.id; // seller id
+    const lat = req.body.lat;
+    const long = req.body.long;
+    const booking = await BookingModel.findById(id);
+    booking.status = "started";
+    booking.currentLocation.status = "onTheWay";
+    booking.currentLocation.location = [lat, long];
+    booking.save();
     res.status(200).json({
       success: true,
-      booking: result,
+      booking: booking,
+    });
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+};
+
+exports.postUpdateLiveLocation = async (req, res, next) => {
+  try {
+    const id = req.body.id; // seller id
+    const lat = req.body.lat;
+    const long = req.body.long;
+    const booking = await BookingModel.findById(id);
+    booking.currentLocation.location = [lat, long];
+    booking.save();
+    res.status(200).json({
+      success: true,
+      booking: booking,
+    });
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+};
+
+exports.postLocationReached = async (req, res, next) => {
+  try {
+    const id = req.body.id; // seller id
+    const lat = req.body.lat;
+    const long = req.body.long;
+    const booking = await BookingModel.findById(id);
+    booking.currentLocation.location = [lat, long];
+    booking.currentLocation.status = "reached";
+    booking.save();
+    const user = await UserModel.findById(booking.userId);
+    res.status(200).json({
+      success: true,
+      booking: booking,
+      user: user,
+    });
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+};
+
+exports.postBookingCompletionReq = async (req, res, next) => {
+  try {
+    const id = req.body.id; // seller id
+    const booking = await BookingModel.findById(id);
+    booking.currentLocation.status = "completeReq";
+    booking.save();
+    res.status(200).json({
+      success: true,
+      booking: booking,
     });
   } catch (err) {
     console.log(err);
@@ -112,9 +174,10 @@ exports.getStartBooking = async (req, res, next) => {
 exports.getSellerRunningOrder = async (req, res, next) => {
   try {
     const id = req.params.id; // seller id
-    const result = await bookingModel
-      .findOne({ sellerId: id, status: "started" })
-      .populate("userId", "-password");
+    const result = await BookingModel.findOne({
+      sellerId: id,
+      status: "started",
+    }).populate("userId", "-password");
     console.log(result);
     res.status(200).json({
       success: true,
@@ -132,9 +195,11 @@ exports.getSellerTodayOrder = async (req, res, next) => {
     var todayDate = new Date().toISOString().slice(0, 10);
     console.log(todayDate);
     const id = req.params.id; // seller id
-    const result = await bookingModel
-      .find({ sellerId: id, status: "alloted", bookingDate: todayDate })
-      .populate("userId", "-password");
+    const result = await BookingModel.find({
+      sellerId: id,
+      status: "alloted",
+      bookingDate: todayDate,
+    }).populate("userId", "-password");
     res.status(200).json({
       success: true,
       message: "Your order list",

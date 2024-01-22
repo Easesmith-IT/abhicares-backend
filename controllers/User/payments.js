@@ -137,10 +137,10 @@ exports.websiteCodOrder = async (req, res, next) => {
     await order.save();
     ///booking creation
     for (const orderItem of orderItems) {
-      let booking;
+      // let booking;
       if (orderItem.product) {
-         booking = new Booking({
-          order: order._id,
+        var booking = new Booking({
+          orderId: order._id,
           userId: user._id,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -156,13 +156,9 @@ exports.websiteCodOrder = async (req, res, next) => {
           orderValue: orderItem.product.offerPrice * orderItem.quantity,
         });
         await booking.save();
-
-        console.log("booking created", booking);
-      }
-      
-      else if (orderItem.package) {
-         booking = new Booking({
-          order: order._id,
+      } else if (orderItem.package) {
+        var booking = new Booking({
+          orderId: order._id,
           userId: user._id,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -180,16 +176,13 @@ exports.websiteCodOrder = async (req, res, next) => {
         await booking.save();
       }
 
-      
-      if (booking?._id) {
-        const location = [20.011,44.12]
-        io.emit("location", {
-          bookingId: booking._id,
-          location: booking.currentLocation.location,
-        });
-      }
-
-
+      // if (booking?._id) {
+      //   const location = [20.011, 44.12];
+      //   io.emit("location", {
+      //     bookingId: booking._id,
+      //     location: booking.currentLocation.location,
+      //   });
+      // }
     }
     cart.items = [];
     cart.totalPrice = 0;
@@ -201,12 +194,13 @@ exports.websiteCodOrder = async (req, res, next) => {
   }
 };
 
-exports.appCodOrder = async (req, res, next) => {
+exports.appOrder = async (req, res, next) => {
   try {
     const userId = req.body.userId;
     const userAddressId = req.body.userAddressId;
     const user = await User.findById(userId);
     const cart = req.body.cart;
+    const payId = req.body.payId;
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -262,6 +256,9 @@ exports.appCodOrder = async (req, res, next) => {
         },
       },
     });
+    if (payId) {
+      order.payId = payId;
+    }
 
     await order.save();
     await order.save();
@@ -269,7 +266,7 @@ exports.appCodOrder = async (req, res, next) => {
     for (const orderItem of orderItems) {
       if (orderItem.product) {
         var booking = new Booking({
-          order: order._id,
+          orderId: order._id,
           userId: user._id,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -287,7 +284,7 @@ exports.appCodOrder = async (req, res, next) => {
         await booking.save();
       } else if (orderItem.package) {
         var booking = new Booking({
-          order: order._id,
+          orderId: order._id,
           userId: user._id,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -612,17 +609,19 @@ exports.paymentVerification = async (req, res, next) => {
       await order.save();
 
       ///booking creation
+      console.log("ADD", result.user.address);
       const orderItems = result.items;
       for (const orderItem of orderItems) {
         if (orderItem.product) {
           var booking = new Booking({
-            order: order._id,
+            orderId: order._id,
             userId: result.user.userId,
             userAddress: {
               addressLine: result.user.address.addressLine,
               pincode: result.user.address.pincode,
               landmark: result.user.address.landmark,
               city: result.user.address.city,
+              location: result.address.location,
             },
             product: orderItem.product,
             quantity: orderItem.quantity,
@@ -633,13 +632,14 @@ exports.paymentVerification = async (req, res, next) => {
           await booking.save();
         } else if (orderItem.package) {
           var booking = new Booking({
-            order: order._id,
+            orderId: order._id,
             userId: result.user.userId,
             userAddress: {
               addressLine: result.user.address.addressLine,
               pincode: result.user.address.pincode,
               landmark: result.user.address.landmark,
               city: result.user.address.city,
+              location: result.address.location,
             },
             package: orderItem.package,
             quantity: orderItem.quantity,
