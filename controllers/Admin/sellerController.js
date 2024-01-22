@@ -3,6 +3,7 @@ const sellerWallet = require("../../models/sellerWallet");
 const sellerCashout = require("../../models/sellerCashout");
 var bcrypt = require("bcryptjs");
 const AppError = require("../Admin/errorController");
+const category = require("../../models/category");
 exports.createSeller = async (req, res, next) => {
   try {
     var {
@@ -71,7 +72,7 @@ exports.getAllSeller = async (req, res, next) => {
     }
 
     const result = await sellerModel
-      .find()
+      .find({ status: "active" })
       .populate("categoryId")
       .populate({
         path: "services",
@@ -241,13 +242,36 @@ exports.getSellerByLocation = async (req, res, next) => {
 
 exports.getInReviewSeller = async (req, res, next) => {
   try {
-    const result = await sellerModel.find({ status: "in-review" });
+    const results = await sellerModel
+      .find({ status: "in-review" })
+      .populate({ path: "categoryId", model: "Category" })
+      .populate({
+        path: "services",
+        populate: {
+          path: "serviceId",
+          model: "Service",
+        },
+      });
+
+    const sellers = results.map((seller) => ({
+      _id: seller._id,
+      name: seller.name,
+      phone: seller.phone,
+      status: seller.status,
+      category: seller?.categoryId?.name,
+      services: seller?.services?.map((service) => ({
+        _id: service?.serviceId?._id,
+        name: service?.serviceId?.name,
+      })),
+    }));
+    // console.log("in-review sellers", result);
     res.status(200).json({
-      success: false,
+      success: true,
       message: "In-review seller list",
-      data: result,
+      data: sellers,
     });
   } catch (err) {
+    console.log(err)
     next(err);
   }
 };
@@ -299,11 +323,10 @@ exports.getRecentCashoutRequests = async (req, res, next) => {
   try {
     const id = req.params.id;
 
-
     const cashouts = await sellerCashout
       .find({ sellerWalletId: id })
       .sort({ createdAt: -1 })
-      .limit(3)
+      .limit(3);
 
     res.status(200).json({
       success: true,
@@ -316,7 +339,7 @@ exports.getRecentCashoutRequests = async (req, res, next) => {
 
 exports.approveSellerCashout = async (req, res, next) => {
   try {
-    console.log(req.body)
+    console.log(req.body);
     const id = req.params.id;
     const { status, description, date, paymentId } = req.body;
 
@@ -331,19 +354,18 @@ exports.approveSellerCashout = async (req, res, next) => {
       cashout.sellerWalletId.toString()
     );
 
-
     let data;
     if (status === "completed") {
       data = { status, description, accountDetails: { date, paymentId } };
-          wallet.balance = wallet.balance - cashout.value;
-          await wallet.save();
+      wallet.balance = wallet.balance - cashout.value;
+      await wallet.save();
     }
     //cancelled
     else {
       data = { status, description };
     }
 
-    console.log('data',data)
+    console.log("data", data);
     const updatedCashout = await sellerCashout.findByIdAndUpdate(id, data, {
       new: true,
     });
