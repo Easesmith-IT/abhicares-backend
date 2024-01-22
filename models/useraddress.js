@@ -14,9 +14,9 @@ const addressSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    city:{
-     type:String,
-     required:true
+    city: {
+      type: String,
+      required: true,
     },
     location: {
       type: {
@@ -43,5 +43,5 @@ const addressSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-addressSchema.index({ "location": "2dsphere" });
+addressSchema.index({ location: "2dsphere" });
 module.exports = mongoose.model("userAddress", addressSchema);

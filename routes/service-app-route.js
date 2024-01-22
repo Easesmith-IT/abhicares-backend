@@ -48,7 +48,14 @@ router.get(
 
 router.get("/get-booking/:id", bookingControler.getBooking);
 router.get("/get-today-booking/:id", bookingControler.getSellerTodayOrder);
-router.get("/start-booking/:id", bookingControler.getStartBooking);
+router.post("/start-booking", bookingControler.postStartBooking);
+router.post("/update-live-location", bookingControler.postUpdateLiveLocation);
+router.post("/reached-on-location", bookingControler.postLocationReached);
+router.post(
+  "/complete-booking-request",
+  bookingControler.postBookingCompletionReq
+);
+
 router.get("/get-running-booking/:id", bookingControler.getSellerRunningOrder);
 
 //wallet
