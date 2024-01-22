@@ -98,6 +98,7 @@ exports.getAllSeller = async (req, res, next) => {
 exports.updateSeller = async (req, res, next) => {
   try {
     const id = req.params.id;
+    console.log('req.body',req.body.services[0].serviceId)
     const {
       name,
       legalName,
@@ -105,6 +106,8 @@ exports.updateSeller = async (req, res, next) => {
       phone,
       status,
       address,
+      categoryId,
+      services,
       contactPerson,
     } = req.body;
     // const {state,city,addressLine,pincode,location}=address
@@ -117,7 +120,9 @@ exports.updateSeller = async (req, res, next) => {
       !phone ||
       !status ||
       !address ||
-      !contactPerson
+      !contactPerson ||
+            !categoryId ||
+      !services
     ) {
       throw new AppError(400, "All the fields are required");
     } else {
@@ -127,6 +132,7 @@ exports.updateSeller = async (req, res, next) => {
       result.gstNumber = gstNumber;
       result.phone = phone;
       result.status = status;
+      result.categoryId = categoryId;
       result.address.state = address.state;
       result.address.city = address.city;
       result.address.addressLine = address.addressLine;
@@ -135,6 +141,10 @@ exports.updateSeller = async (req, res, next) => {
       result.contactPerson.name = contactPerson.name;
       result.contactPerson.phone = contactPerson.phone;
       result.contactPerson.email = contactPerson.email;
+      
+      let updatedServices = services.map((service) => ({ serviceId: service.serviceId }))
+      result.services = updatedServices
+
       await result.save();
 
       res
@@ -142,6 +152,7 @@ exports.updateSeller = async (req, res, next) => {
         .json({ success: true, message: "Seller updated successful" });
     }
   } catch (err) {
+    console.log(err)
     next(err);
   }
 };
