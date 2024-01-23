@@ -3,7 +3,7 @@ const sellerWallet = require("../../models/sellerWallet");
 const sellerCashout = require("../../models/sellerCashout");
 var bcrypt = require("bcryptjs");
 const AppError = require("../Admin/errorController");
-const axios = require("axios")
+const axios = require("axios");
 const category = require("../../models/category");
 exports.createSeller = async (req, res, next) => {
   try {
@@ -99,7 +99,7 @@ exports.getAllSeller = async (req, res, next) => {
 exports.updateSeller = async (req, res, next) => {
   try {
     const id = req.params.id;
-    console.log('req.body',req.body.services[0].serviceId)
+    console.log("req.body", req.body.services[0].serviceId);
     const {
       name,
       legalName,
@@ -122,7 +122,7 @@ exports.updateSeller = async (req, res, next) => {
       !status ||
       !address ||
       !contactPerson ||
-            !categoryId ||
+      !categoryId ||
       !services
     ) {
       throw new AppError(400, "All the fields are required");
@@ -142,9 +142,11 @@ exports.updateSeller = async (req, res, next) => {
       result.contactPerson.name = contactPerson.name;
       result.contactPerson.phone = contactPerson.phone;
       result.contactPerson.email = contactPerson.email;
-      
-      let updatedServices = services.map((service) => ({ serviceId: service.serviceId }))
-      result.services = updatedServices
+
+      let updatedServices = services.map((service) => ({
+        serviceId: service.serviceId,
+      }));
+      result.services = updatedServices;
 
       await result.save();
 
@@ -153,7 +155,7 @@ exports.updateSeller = async (req, res, next) => {
         .json({ success: true, message: "Seller updated successful" });
     }
   } catch (err) {
-    console.log(err)
+    console.log(err);
     next(err);
   }
 };
@@ -291,7 +293,7 @@ exports.getInReviewSeller = async (req, res, next) => {
       data: sellers,
     });
   } catch (err) {
-    console.log(err)
+    console.log(err);
     next(err);
   }
 };
@@ -399,7 +401,6 @@ exports.approveSellerCashout = async (req, res, next) => {
   }
 };
 
-
 exports.getDistance = async (req, res) => {
   try {
     const apiKey = "AIzaSyB_ZhYrt0hw7zB74UYGhh4Wt_IkltFzo-I";
@@ -415,3 +416,20 @@ exports.getDistance = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+exports.getPath = async (req, res) => {
+  try {
+    const apiKey = "AIzaSyB_ZhYrt0hw7zB74UYGhh4Wt_IkltFzo-I";
+    const { sourceCoordinates, destinationCoordinates } = req.query;
+
+    const response = await axios.get(
+      `https://maps.googleapis.com/maps/api/directions/json?destination=${destinationCoordinates}&origin=${sourceCoordinates}&mode=driving&units=metric&key=${apiKey}`
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
