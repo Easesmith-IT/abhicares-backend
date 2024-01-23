@@ -3,6 +3,7 @@ const sellerWallet = require("../../models/sellerWallet");
 const sellerCashout = require("../../models/sellerCashout");
 var bcrypt = require("bcryptjs");
 const AppError = require("../Admin/errorController");
+const axios = require("axios")
 const category = require("../../models/category");
 exports.createSeller = async (req, res, next) => {
   try {
@@ -193,6 +194,14 @@ exports.searchSeller = async (req, res, next) => {
           { "address.city": { $regex: ".*" + search + ".*", $options: "i" } },
           { name: { $regex: ".*" + search + ".*", $options: "i" } },
         ],
+      })
+      .populate("categoryId")
+      .populate({
+        path: "services",
+        populate: {
+          path: "serviceId",
+          model: "Service",
+        },
       })
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -387,5 +396,22 @@ exports.approveSellerCashout = async (req, res, next) => {
     });
   } catch (err) {
     next(err);
+  }
+};
+
+
+exports.getDistance = async (req, res) => {
+  try {
+    const apiKey = "AIzaSyB_ZhYrt0hw7zB74UYGhh4Wt_IkltFzo-I";
+    const { origins, destinations } = req.query;
+
+    const response = await axios.get(
+      `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=${origins}&destinations=${destinations}&key=${apiKey}`
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };

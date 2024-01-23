@@ -258,8 +258,8 @@ router.patch(
 );
 router.get(
   "/get-service-package/:id",
-  isAdminAuth,
-  authorize("services", "read"),
+  // isAdminAuth,
+  // authorize("services", "read"),
   package_controller.getServicePackage
 ); //passing service id
 router.delete(
@@ -501,6 +501,8 @@ router.patch(
   authorize("partners", "write"),
   seller_controller.approveSellerCashout
 );
+
+router.get('/get-the-distance-routes',seller_controller.getDistance)
 
 
 module.exports = router;
