@@ -71,7 +71,10 @@ exports.getBookingDetails= async (req, res, next) => {
             model: 'Product'
           }
         }
-      }).populate("sellerId")
+      }).populate("sellerId").populate({
+        path: "userId",
+        model:"User"
+      })
       res.status(200).json({
         success: true,
         message: 'Booking details getting successful',
