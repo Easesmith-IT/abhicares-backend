@@ -16,7 +16,7 @@ exports.addToFavorite = async(req, res)=>{
 
         const product = await Product.findOne({ _id: productId });
         const user = await User.findOne({ _id: userId });
-        console.log("product == ", product)
+        // console.log("product == ", product)
         console.log("user == ", user)
         if(!product || !user){
             return res.status(400).json({
