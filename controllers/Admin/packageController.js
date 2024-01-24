@@ -66,7 +66,10 @@ exports.updatePackage = async (req, res, next) => {
 exports.getServicePackage = async (req, res, next) => {
   try {
       const id = req.params.id
-      const result = await packageModel.find({ serviceId: id })
+    const result = await packageModel.find({ serviceId: id }).populate({
+      path: "products.productId",
+      model:"Product"
+      })
       res
         .status(200)
         .json({ success: true, message: 'package list', data: result })

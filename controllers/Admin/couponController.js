@@ -42,16 +42,17 @@ exports.deleteCoupon = async (req, res, next) => {
 
 exports.updateCoupon = async (req, res, next) => {
   try {
-      const { name, offPercentage, description } = req.body
+      const { name, offPercentage, description,status } = req.body
       const id = req.params.id // this is object id of available city
 
-      if (!name || !offPercentage || !description) {
+      if (!name || !offPercentage || !description || !status) {
         throw new AppError(400, 'All the fields are required')
       } else {
         const result = await Coupon.findOne({ _id: id })
         result.name = name
         result.offPercentage = offPercentage
         result.description = description
+        result.status = status;
         await result.save()
         res
           .status(200)

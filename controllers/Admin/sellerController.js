@@ -3,6 +3,8 @@ const sellerWallet = require("../../models/sellerWallet");
 const sellerCashout = require("../../models/sellerCashout");
 var bcrypt = require("bcryptjs");
 const AppError = require("../Admin/errorController");
+const axios = require("axios");
+const category = require("../../models/category");
 exports.createSeller = async (req, res, next) => {
   try {
     var {
@@ -71,7 +73,7 @@ exports.getAllSeller = async (req, res, next) => {
     }
 
     const result = await sellerModel
-      .find()
+      .find({ status: "active" })
       .populate("categoryId")
       .populate({
         path: "services",
@@ -97,6 +99,7 @@ exports.getAllSeller = async (req, res, next) => {
 exports.updateSeller = async (req, res, next) => {
   try {
     const id = req.params.id;
+    console.log("req.body", req.body.services[0].serviceId);
     const {
       name,
       legalName,
@@ -104,6 +107,8 @@ exports.updateSeller = async (req, res, next) => {
       phone,
       status,
       address,
+      categoryId,
+      services,
       contactPerson,
     } = req.body;
     // const {state,city,addressLine,pincode,location}=address
@@ -116,7 +121,9 @@ exports.updateSeller = async (req, res, next) => {
       !phone ||
       !status ||
       !address ||
-      !contactPerson
+      !contactPerson ||
+      !categoryId ||
+      !services
     ) {
       throw new AppError(400, "All the fields are required");
     } else {
@@ -126,6 +133,7 @@ exports.updateSeller = async (req, res, next) => {
       result.gstNumber = gstNumber;
       result.phone = phone;
       result.status = status;
+      result.categoryId = categoryId;
       result.address.state = address.state;
       result.address.city = address.city;
       result.address.addressLine = address.addressLine;
@@ -134,6 +142,12 @@ exports.updateSeller = async (req, res, next) => {
       result.contactPerson.name = contactPerson.name;
       result.contactPerson.phone = contactPerson.phone;
       result.contactPerson.email = contactPerson.email;
+
+      let updatedServices = services.map((service) => ({
+        serviceId: service.serviceId,
+      }));
+      result.services = updatedServices;
+
       await result.save();
 
       res
@@ -141,6 +155,7 @@ exports.updateSeller = async (req, res, next) => {
         .json({ success: true, message: "Seller updated successful" });
     }
   } catch (err) {
+    console.log(err);
     next(err);
   }
 };
@@ -181,6 +196,14 @@ exports.searchSeller = async (req, res, next) => {
           { "address.city": { $regex: ".*" + search + ".*", $options: "i" } },
           { name: { $regex: ".*" + search + ".*", $options: "i" } },
         ],
+      })
+      .populate("categoryId")
+      .populate({
+        path: "services",
+        populate: {
+          path: "serviceId",
+          model: "Service",
+        },
       })
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -241,13 +264,36 @@ exports.getSellerByLocation = async (req, res, next) => {
 
 exports.getInReviewSeller = async (req, res, next) => {
   try {
-    const result = await sellerModel.find({ status: "in-review" });
+    const results = await sellerModel
+      .find({ status: "in-review" })
+      .populate({ path: "categoryId", model: "Category" })
+      .populate({
+        path: "services",
+        populate: {
+          path: "serviceId",
+          model: "Service",
+        },
+      });
+
+    const sellers = results.map((seller) => ({
+      _id: seller._id,
+      name: seller.name,
+      phone: seller.phone,
+      status: seller.status,
+      category: seller?.categoryId?.name,
+      services: seller?.services?.map((service) => ({
+        _id: service?.serviceId?._id,
+        name: service?.serviceId?.name,
+      })),
+    }));
+    // console.log("in-review sellers", result);
     res.status(200).json({
-      success: false,
+      success: true,
       message: "In-review seller list",
-      data: result,
+      data: sellers,
     });
   } catch (err) {
+    console.log(err);
     next(err);
   }
 };
@@ -299,11 +345,10 @@ exports.getRecentCashoutRequests = async (req, res, next) => {
   try {
     const id = req.params.id;
 
-
     const cashouts = await sellerCashout
       .find({ sellerWalletId: id })
       .sort({ createdAt: -1 })
-      .limit(3)
+      .limit(3);
 
     res.status(200).json({
       success: true,
@@ -316,7 +361,7 @@ exports.getRecentCashoutRequests = async (req, res, next) => {
 
 exports.approveSellerCashout = async (req, res, next) => {
   try {
-    console.log(req.body)
+    console.log(req.body);
     const id = req.params.id;
     const { status, description, date, paymentId } = req.body;
 
@@ -331,19 +376,18 @@ exports.approveSellerCashout = async (req, res, next) => {
       cashout.sellerWalletId.toString()
     );
 
-
     let data;
     if (status === "completed") {
       data = { status, description, accountDetails: { date, paymentId } };
-          wallet.balance = wallet.balance - cashout.value;
-          await wallet.save();
+      wallet.balance = wallet.balance - cashout.value;
+      await wallet.save();
     }
     //cancelled
     else {
       data = { status, description };
     }
 
-    console.log('data',data)
+    console.log("data", data);
     const updatedCashout = await sellerCashout.findByIdAndUpdate(id, data, {
       new: true,
     });
@@ -356,3 +400,36 @@ exports.approveSellerCashout = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getDistance = async (req, res) => {
+  try {
+    const apiKey = "AIzaSyB_ZhYrt0hw7zB74UYGhh4Wt_IkltFzo-I";
+    const { origins, destinations } = req.query;
+
+    const response = await axios.get(
+      `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=${origins}&destinations=${destinations}&key=${apiKey}`
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.getPath = async (req, res) => {
+  try {
+    const apiKey = "AIzaSyB_ZhYrt0hw7zB74UYGhh4Wt_IkltFzo-I";
+    const { sourceCoordinates, destinationCoordinates } = req.query;
+
+    const response = await axios.get(
+      `https://maps.googleapis.com/maps/api/directions/json?destination=${destinationCoordinates}&origin=${sourceCoordinates}&mode=driving&units=metric&key=${apiKey}`
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+

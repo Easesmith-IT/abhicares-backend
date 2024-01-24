@@ -43,7 +43,7 @@ const sellerSchema = new Schema(
       location: {
         type: {
           type: String,
-          enum: ["Point"], // Only "Point" is allowed for type
+          // enum: ["Point"], // Only "Point" is allowed for type
           default: "Point",
         },
         coordinates: {

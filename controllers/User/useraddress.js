@@ -41,7 +41,6 @@ exports.updateUserAddress = async (req, res,next) => {
       result.pincode = pincode;
       result.landmark = landmark;
       result.city=city;
-      result.location=location;
       result.defaultAddress = defaultAddress;
       await result.save();
 
