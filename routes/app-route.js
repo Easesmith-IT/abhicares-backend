@@ -39,6 +39,9 @@ router.get("/get-upcoming-order/:userId", appController.geUpcomingOrders);
 router.get("/get-complete-order", appController.getCompletedOrders);
 //booking
 router.post("/complete-booking", appController.getCompletedOrders);
+router.post("/track-booking", appController.posttrackBooking);
+router.get("/get-order-booking/:id", appController.getOrderBooking);
+router.post("/complete-order-booking", appController.postOrderBooking);
 
 router.get("/search-service", service_controller.searchService);
 router.get("/get-tickets/:userId", appController.getUserTickets);

@@ -11,6 +11,9 @@ const HelpCentre = require("../../models/helpCenter");
 const mongoose = require("mongoose");
 const { auth } = require("../../middleware/auth");
 const jwt = require("jsonwebtoken");
+const BookingModel = require("../../models/booking");
+const { contentSecurityPolicy } = require("helmet");
+const ReviewModel = require("../../models/review");
 
 /////////////////////////////////////////////////////////////////////////////
 //app routes
@@ -145,6 +148,74 @@ exports.getOrders = async (req, res, next) => {
     console.log("orderrs", orders);
     return res.status(200).json({ orders });
   } catch (err) {
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(err);
+  }
+};
+
+exports.posttrackBooking = async (req, res, next) => {
+  try {
+    const orderId = req.body.orderId;
+    const prodId = req.body.prodId;
+    const packageId = req.body.packId;
+    var bookings = await BookingModel.find({
+      orderId: orderId,
+    });
+    var booking;
+    for (var i in bookings) {
+      if (bookings[i]["product"]["_id"].toString() == prodId) {
+        booking = bookings[i];
+      }
+    }
+    console.log("booking", booking);
+    return res.status(200).json({ booking });
+  } catch (err) {
+    console.log(err);
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(err);
+  }
+};
+
+exports.getOrderBooking = async (req, res, next) => {
+  try {
+    const orderId = req.params.id;
+    var bookings = await BookingModel.find({
+      orderId: orderId,
+    });
+    return res.status(200).json({ bookings });
+  } catch (err) {
+    console.log(err);
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(err);
+  }
+};
+exports.postOrderBooking = async (req, res, next) => {
+  try {
+    const userId = req.body.userId;
+    const productId = req.body.productId;
+    const packId = req.body.packageId;
+    const bookingId = req.body.bookingId;
+    const rating = req.body.rating;
+    const orderId = req.body.orderId;
+    const content = req.body.content;
+    console.log(req.body);
+    const review = await ReviewModel({
+      rating: rating,
+      content: content,
+      productId: productId,
+      orderId: orderId,
+      userId: userId,
+    });
+    review.save();
+    const booking = await BookingModel.findById(bookingId);
+    booking.status = "completed";
+    booking.save();
+    return res.status(200).json({ review });
+  } catch (err) {
+    console.log(err);
     const error = new Error(err);
     error.httpStatusCode = 500;
     return next(err);

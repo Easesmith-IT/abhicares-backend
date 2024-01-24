@@ -69,7 +69,13 @@ const bookingSchema = new mongoose.Schema(
     currentLocation: {
       status: {
         type: String,
-        enum: ["booking-placed", "out-of-delivery", "reached", "completed"],
+        enum: [
+          "booking-placed",
+          "out-of-delivery",
+          "reached",
+          "completed",
+          "completeReq",
+        ],
         default: "booking-placed",
       },
       location: {
