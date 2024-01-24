@@ -9,6 +9,16 @@ const tempOrderSchema = new Schema(
       required: true,
       default: "app",
     },
+    paymentInfo: {
+      status: {
+        type: String,
+        enum: ["completed", "pending"],
+      },
+
+      paymentId: {
+        type: String,
+      },
+    },
     orderValue: {
       type: Number,
       required: true,
@@ -110,6 +120,10 @@ const tempOrderSchema = new Schema(
       required: true,
       type: String,
       default: "Your oder has been placed",
+    },
+    No_of_left_bookings: {
+      type: Number,
+      required: true,
     },
   },
   { timestamps: true }

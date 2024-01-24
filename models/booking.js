@@ -17,6 +17,11 @@ const bookingSchema = new mongoose.Schema(
       required: true,
     },
 
+    paymentStatus: {
+      type: String,
+      enum: ["completed", "pending"],
+    },
+
     userAddress: {
       addressLine: {
         type: String,

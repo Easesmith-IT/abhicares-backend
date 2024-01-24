@@ -1,5 +1,6 @@
 const sellerModel = require("../../models/seller");
 const bookingModel = require("../../models/booking");
+const orderModel = require("../../models/order")
 const AppError = require("../Admin/errorController");
 
 exports.getSellerList = async (req, res, next) => {
@@ -46,6 +47,19 @@ exports.updateSellerOrderStatus = async (req, res, next) => {
     const id = req.params.id; // booking id
     const { status } = req.body;
     var result = await bookingModel.findOne({ _id: id });
+    const order = await orderModel.findById(result.orderId);
+
+    if (result.status !== "completed" && status === "completed") {
+            order.No_of_left_bookings = order.No_of_left_bookings - 1;
+            await order.save();
+    }
+
+
+    if (order.No_of_left_bookings === 0) {
+      order.status = "completed";
+      await order.save();
+    }
+
     result.status = status;
     await result.save();
 

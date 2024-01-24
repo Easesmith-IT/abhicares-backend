@@ -3,12 +3,12 @@ const Schema = mongoose.Schema;
 
 const paymentSchema = new Schema(
   {
-    user: {
+    userId: {
       type: Schema.Types.ObjectId,
       ref: "User", // Replace with the actual name of your User model
       required: true,
     },
-    order: {
+    orderId: {
       type: Schema.Types.ObjectId,
       ref: "Order", // Replace with the actual name of your Order model
       required: true,

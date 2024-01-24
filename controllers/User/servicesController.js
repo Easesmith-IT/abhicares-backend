@@ -1,6 +1,6 @@
 const serviceModel = require("../../models/service");
 const AppError = require("../User/errorController");
-
+const productModel = require("../../models/product")
 
 exports.getAllService = async (req, res, next) => {
   try {
@@ -16,14 +16,30 @@ exports.getAllService = async (req, res, next) => {
 exports.getCategoryService = async (req, res, next) => {
   try {
     const id = req.params.id;
-    const result = await serviceModel.find({ categoryId: id });
-    res
-      .status(200)
-      .json({ success: true, message: "These are all services", data: result });
+    const services = await serviceModel.find({ categoryId: id });
+
+    const serviceIds = services.map((service) => service._id.toString());
+
+    const uniqueServiceIds = [...new Set(serviceIds)];
+
+    // Use Promise.all to wait for all promises to resolve
+    const productsPromises = uniqueServiceIds.map(async (serviceId) => {
+      return await productModel.find({ serviceId: serviceId });
+    });
+
+    // Wait for all promises to resolve
+    const productsArrays = await Promise.all(productsPromises);
+
+    // Flatten the array of arrays into a single array
+    const products = productsArrays.flat();
+
+    console.log("products", products);
+    res.status(200).json({ success: true, data: products });
   } catch (err) {
-    next(err)
+    next(err);
   }
 };
+
 
 
 

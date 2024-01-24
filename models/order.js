@@ -9,8 +9,15 @@ const orderSchema = new Schema(
       required: true,
       default: "app",
     },
-    payId: {
-      type: String,
+    paymentInfo: {
+      status: {
+        type: String,
+        enum: ["completed", "pending"],
+      },
+
+      paymentId: {
+        type: String,
+      },
     },
     orderValue: {
       type: Number,
@@ -113,6 +120,12 @@ const orderSchema = new Schema(
       required: true,
       type: String,
       default: "Your oder has been placed",
+    },
+
+    No_of_left_bookings: {
+      type: Number,
+      required: true,
+
     },
   },
   { timestamps: true }

@@ -76,6 +76,7 @@ exports.getSubAdmins = async (req, res, next) => {
     next(err);
   }
 };
+
 exports.addAminUser = async (req, res, next) => {
   try {
     const { adminId, password, name, role, permissions } = req.body;
@@ -191,7 +192,9 @@ exports.loginAdminUser = async (req, res, next) => {
         perm: admin.permissions,
       });
     } else {
-      return res.status(500).json("error");
+      return res.status(500).json({
+        message:"Incorrect Password!"
+      });
     }
   } catch (err) {
     console.log(err);
@@ -206,6 +209,46 @@ exports.logoutAdmin = async (req, res, next) => {
     res.clearCookie("token");
     return res.json({ success: true, message: "Logout successful" });
   } catch (err) {
+    next(err);
+  }
+};
+
+exports.updateAdminPassword = async (req, res, next) => {
+  try {
+    let adminId;
+    if (req.body?.adminId) {
+      adminId = req.body.adminId;;
+    }
+    else {
+    adminId = req.adminId;
+    }
+
+
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      res
+        .status(400)
+        .json({ success: false, message: "All the fields are required" });
+    }
+
+    const admin = await Admin.findOne({ adminId });
+    const isMatch = await bcrypt.compare(currentPassword, admin.password);
+
+    console.log('isMatch',isMatch)
+
+    if (isMatch) {
+      var bsalt = await bcrypt.genSalt(10);
+      var hashPswd = await bcrypt.hash(newPassword, bsalt);
+      admin.password = hashPswd;
+      await admin.save();
+
+      res.status(200).json({ success: true, message: "Updated successfully!" });
+    } else {
+      res.status(400).json({ success: false, message: "Incorrect password!" });
+    }
+  } catch (err) {
+    console.log("err====>", err);
     next(err);
   }
 };

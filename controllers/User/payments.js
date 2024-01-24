@@ -114,6 +114,7 @@ exports.websiteCodOrder = async (req, res, next) => {
     const order = new Order({
       orderPlatform: "website",
       paymentType: "COD",
+      No_of_left_bookings: bookings.length,
       orderValue: total,
       itemTotal,
       discount,
@@ -239,6 +240,7 @@ exports.appOrder = async (req, res, next) => {
       paymentType: cart["paymentType"],
       orderValue: cart["totalAmount"],
       itemTotal: cart["totalvalue"],
+      No_of_left_bookings: orderItems.length,
       discount: 0,
       tax: cart["totalAmount"] - cart["totalvalue"],
       items: orderItems,
@@ -261,7 +263,7 @@ exports.appOrder = async (req, res, next) => {
     }
 
     await order.save();
-    await order.save();
+   
     ///booking creation
     for (const orderItem of orderItems) {
       if (orderItem.product) {
@@ -462,6 +464,8 @@ exports.checkout = async (req, res, next) => {
     const userAddressId = req.body.userAddressId;
     const user = req.user;
     const bookings = req.body.bookings;
+
+    console.log('bookings - checkout',bookings)
     const { itemTotal, discount, tax, total } = req.body;
     let couponId = null;
     if (req.body.couponId) {
@@ -525,12 +529,17 @@ exports.checkout = async (req, res, next) => {
       }
     }
     const userAddress = await UserAddress.findById(userAddressId);
-    console.log("userAddress 123", userAddress);
+    // console.log("userAddress 123", userAddress);
     orderPrice = cart.totalPrice;
     const order = new tempOrder({
       orderPlatform: "Online",
       paymentType: "Online",
       orderValue: total,
+      No_of_left_bookings: bookings.length,
+      paymentInfo: {
+        status: "pending",
+        paymentId: null,
+      },
       itemTotal,
       discount,
       tax,
@@ -581,6 +590,8 @@ exports.paymentVerification = async (req, res, next) => {
       productId,
     } = req.body;
 
+    console.log('req.body - verifi',req.body)
+
     const body = razorpay_order_id + "|" + razorpay_payment_id;
 
     const expectedSignature = crypto
@@ -593,31 +604,37 @@ exports.paymentVerification = async (req, res, next) => {
     if (isAuthentic) {
       const result = await tempOrder.findOne({ _id: productId });
 
-      console.log('tempOrder',result)
+      console.log("tempOrder", result);
 
       const order = new Order({
         orderPlatform: result.orderPlatform,
         paymentType: result.paymentType,
         orderValue: result.orderValue,
+        No_of_left_bookings: result.No_of_left_bookings,
+        paymentInfo: {
+          status: "completed",
+          paymentId: razorpay_payment_id,
+        },
         itemTotal: result.itemTotal,
         discount: result.discount,
         tax: result.tax,
         items: result.items,
         couponId: result.couponId,
         user: result.user,
-        razorpay_payment_id,
       });
 
       await order.save();
 
       ///booking creation
-      // console.log("ADD", result.user.address);
+      console.log("order-id", order._id);
+
       const orderItems = result.items;
       for (const orderItem of orderItems) {
         if (orderItem.product) {
           var booking = new Booking({
             orderId: order._id,
             userId: result.user.userId,
+            paymentStatus:'completed',
             userAddress: {
               addressLine: result.user.address.addressLine,
               pincode: result.user.address.pincode,
@@ -632,9 +649,11 @@ exports.paymentVerification = async (req, res, next) => {
             orderValue: orderItem.product.offerPrice * orderItem.quantity,
           });
           await booking.save();
-        } else if (orderItem.package) {
+        }
+        else if (orderItem.package) {
           var booking = new Booking({
             orderId: order._id,
+            paymentStatus: "completed",
             userId: result.user.userId,
             userAddress: {
               addressLine: result.user.address.addressLine,
@@ -654,6 +673,18 @@ exports.paymentVerification = async (req, res, next) => {
       }
 
       await tempOrder.findByIdAndDelete({ _id: productId });
+
+      //payment creation
+      const payment = new Payment({
+        userId: result.user.userId,
+        orderId: order._id,
+        razorpay_order_id: razorpay_order_id,
+        razorpay_payment_id: razorpay_payment_id,
+        razorpay_signature: razorpay_signature,
+        amount: result.orderValue,
+      });
+
+      await payment.save()
 
       res
         .status(200)

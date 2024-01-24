@@ -192,6 +192,7 @@ exports.getOrderBooking = async (req, res, next) => {
     return next(err);
   }
 };
+
 exports.postOrderBooking = async (req, res, next) => {
   try {
     const userId = req.body.userId;
@@ -201,7 +202,7 @@ exports.postOrderBooking = async (req, res, next) => {
     const rating = req.body.rating;
     const orderId = req.body.orderId;
     const content = req.body.content;
-    console.log(req.body);
+
     const review = await ReviewModel({
       rating: rating,
       content: content,
@@ -209,10 +210,22 @@ exports.postOrderBooking = async (req, res, next) => {
       orderId: orderId,
       userId: userId,
     });
-    review.save();
+    await review.save();
     const booking = await BookingModel.findById(bookingId);
+
+
+    const order = await Order.findById(orderId);
+    order.No_of_left_bookings = order.No_of_left_bookings - 1;
+    await order.save()
+
+    if (order.No_of_left_bookings === 0) {
+      order.status = "completed";
+      await order.save();
+    }
+
+    
     booking.status = "completed";
-    booking.save();
+    await booking.save();
     return res.status(200).json({ review });
   } catch (err) {
     console.log(err);

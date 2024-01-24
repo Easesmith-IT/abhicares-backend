@@ -347,6 +347,13 @@ router.get(
   authorize("dashboard", "read"),
   payments_controller.getRecentOrders
 );
+
+router.get(
+  "/get-order-by-id",
+  isAdminAuth,
+  authorize("orders", "read"),
+  payments_controller.getOrderById
+);
 router.post(
   "/get-monthly-orders",
   isAdminAuth,
@@ -463,6 +470,12 @@ router.post(
   auth_controller.addAminUser
 );
 router.patch(
+  "/update-admin-password",
+  isAdminAuth,
+  authorize("settings", "write"),
+  auth_controller.updateAdminPassword
+);
+router.patch(
   "/update-sub-admin/:id",
   isAdminAuth,
   authorize("settings", "write"),
@@ -508,9 +521,27 @@ router.patch(
   seller_controller.approveSellerCashout
 );
 
-router.get('/get-the-distance-routes', seller_controller.getDistance)
-router.get("/get-the-path-from-source-to-destination", seller_controller.getPath);
+router.get(
+  "/get-the-distance-routes",
+  isAdminAuth,
+  authorize("bookings", "read"),
+  seller_controller.getDistance
+);
+router.get(
+  "/get-the-path-from-source-to-destination",
+  isAdminAuth,
+  authorize("bookings", "read"),
+  seller_controller.getPath
+);
 
+//payments routes
+
+router.get(
+  "/get-all-payments",
+  isAdminAuth,
+  authorize("payments", "read"),
+  payments_controller.getAllPayments
+);
 
 
 

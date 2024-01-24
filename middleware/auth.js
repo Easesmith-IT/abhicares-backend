@@ -90,7 +90,9 @@ exports.isAdminAuth = async (req, res, next) => {
           success: false,
         });
       } else {
+        console.log('authData',authData)
         req.perm = authData.permissions;
+        req.adminId = authData.adminId; 
         next();
       }
     });
