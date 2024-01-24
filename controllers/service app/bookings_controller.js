@@ -103,10 +103,10 @@ exports.postStartBooking = async (req, res, next) => {
     const long = req.body.long;
     const booking = await BookingModel.findById(id);
     booking.status = "started";
-    booking.currentLocation.status = "onTheWay";
+    booking.currentLocation.status = "out-of-delivery";
     booking.currentLocation.location = [lat, long];
     booking.save();
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       booking: booking,
     });
@@ -121,10 +121,12 @@ exports.postUpdateLiveLocation = async (req, res, next) => {
     const id = req.body.id; // seller id
     const lat = req.body.lat;
     const long = req.body.long;
+    console.log(req.body);
     const booking = await BookingModel.findById(id);
+    // console.log(booking);
     booking.currentLocation.location = [lat, long];
-    booking.save();
-    res.status(200).json({
+    await booking.save();
+    return res.status(200).json({
       success: true,
       booking: booking,
     });
@@ -143,11 +145,9 @@ exports.postLocationReached = async (req, res, next) => {
     booking.currentLocation.location = [lat, long];
     booking.currentLocation.status = "reached";
     booking.save();
-    const user = await UserModel.findById(booking.userId);
     res.status(200).json({
       success: true,
       booking: booking,
-      user: user,
     });
   } catch (err) {
     console.log(err);

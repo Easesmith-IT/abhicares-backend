@@ -4,19 +4,23 @@ const reviewSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      default:""
+      default: "",
     },
     content: {
       type: String,
-      default:""
+      default: "",
     },
     rating: {
       type: Number,
-      required:true
+      required: true,
     },
     productId: {
       type: mongoose.Types.ObjectId,
       ref: "Product",
+    },
+    orderId: {
+      type: mongoose.Types.ObjectId,
+      ref: "Order",
     },
     packageId: {
       type: mongoose.Types.ObjectId,
@@ -25,10 +29,10 @@ const reviewSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Types.ObjectId,
       ref: "User",
-      required:true
+      required: true,
     },
   },
   { timestamps: true }
 );
 
-module.exports=mongoose.model("Review", reviewSchema);
+module.exports = mongoose.model("Review", reviewSchema);

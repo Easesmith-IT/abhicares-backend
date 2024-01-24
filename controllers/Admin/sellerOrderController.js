@@ -9,6 +9,7 @@ exports.getSellerList = async (req, res, next) => {
       status: "active",
       "services.serviceId": id,
     });
+    console.log(result);
     res.status(200).json({
       success: true,
       message: "Active seller list",

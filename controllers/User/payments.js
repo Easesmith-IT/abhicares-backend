@@ -139,7 +139,7 @@ exports.websiteCodOrder = async (req, res, next) => {
     for (const orderItem of orderItems) {
       // let booking;
       if (orderItem.product) {
-        var booking = new Booking({
+        booking = new Booking({
           orderId: order._id,
           userId: user._id,
           userAddress: {
@@ -157,7 +157,7 @@ exports.websiteCodOrder = async (req, res, next) => {
         });
         await booking.save();
       } else if (orderItem.package) {
-        var booking = new Booking({
+        booking = new Booking({
           orderId: order._id,
           userId: user._id,
           userAddress: {
