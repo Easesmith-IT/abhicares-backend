@@ -13,6 +13,17 @@ exports.getAllService = async (req, res, next) => {
   }
 };
 
+exports.getServicesByCategoryId = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const services = await serviceModel.find({ categoryId: id });
+
+    res.status(200).json({ success: true, data: services });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.getCategoryService = async (req, res, next) => {
   try {
     const id = req.params.id;

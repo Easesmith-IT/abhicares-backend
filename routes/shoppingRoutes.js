@@ -26,7 +26,7 @@ const coupon_controller = require("../controllers/User/couponController");
 // Category routes
 router.get("/get-all-category", category_controller.getAllCategory);
 // Service routes
-router.get("/get-all-service/:id", service_controller.getCategoryService); //passing category id
+router.get("/get-all-service/:id", service_controller.getServicesByCategoryId); //passing category id
 router.get("/search-service", service_controller.searchService); // search and pagination both are added
 
 // Product routes
