@@ -143,6 +143,7 @@ exports.websiteCodOrder = async (req, res, next) => {
         booking = new Booking({
           orderId: order._id,
           userId: user._id,
+          paymentStatus: "pending",
           userAddress: {
             addressLine: userAddress.addressLine,
             pincode: userAddress.pincode,
@@ -161,6 +162,7 @@ exports.websiteCodOrder = async (req, res, next) => {
         booking = new Booking({
           orderId: order._id,
           userId: user._id,
+          paymentStatus: "pending",
           userAddress: {
             addressLine: userAddress.addressLine,
             pincode: userAddress.pincode,
@@ -261,15 +263,21 @@ exports.appOrder = async (req, res, next) => {
     if (payId) {
       order.payId = payId;
     }
-
     await order.save();
-   
+    var paymentStatus;
+    if (cart["paymentType"] == "online") {
+      paymentStatus = "completed";
+    } else {
+      paymentStatus = "pending";
+    }
     ///booking creation
     for (const orderItem of orderItems) {
       if (orderItem.product) {
         var booking = new Booking({
           orderId: order._id,
           userId: user._id,
+          paymentStatus: paymentStatus,
+          paymentType: cart["paymentType"],
           userAddress: {
             addressLine: userAddress.addressLine,
             pincode: userAddress.pincode,
@@ -288,6 +296,8 @@ exports.appOrder = async (req, res, next) => {
         var booking = new Booking({
           orderId: order._id,
           userId: user._id,
+          paymentStatus: paymentStatus,
+          paymentType: cart["paymentType"],
           userAddress: {
             addressLine: userAddress.addressLine,
             pincode: userAddress.pincode,
@@ -465,7 +475,7 @@ exports.checkout = async (req, res, next) => {
     const user = req.user;
     const bookings = req.body.bookings;
 
-    console.log('bookings - checkout',bookings)
+    console.log("bookings - checkout", bookings);
     const { itemTotal, discount, tax, total } = req.body;
     let couponId = null;
     if (req.body.couponId) {
@@ -590,7 +600,7 @@ exports.paymentVerification = async (req, res, next) => {
       productId,
     } = req.body;
 
-    console.log('req.body - verifi',req.body)
+    console.log("req.body - verifi", req.body);
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
 
@@ -634,7 +644,8 @@ exports.paymentVerification = async (req, res, next) => {
           var booking = new Booking({
             orderId: order._id,
             userId: result.user.userId,
-            paymentStatus:'completed',
+            paymentStatus: "completed",
+            paymentType: "online",
             userAddress: {
               addressLine: result.user.address.addressLine,
               pincode: result.user.address.pincode,
@@ -649,11 +660,11 @@ exports.paymentVerification = async (req, res, next) => {
             orderValue: orderItem.product.offerPrice * orderItem.quantity,
           });
           await booking.save();
-        }
-        else if (orderItem.package) {
+        } else if (orderItem.package) {
           var booking = new Booking({
             orderId: order._id,
             paymentStatus: "completed",
+            paymentType: "online",
             userId: result.user.userId,
             userAddress: {
               addressLine: result.user.address.addressLine,
@@ -684,7 +695,7 @@ exports.paymentVerification = async (req, res, next) => {
         amount: result.orderValue,
       });
 
-      await payment.save()
+      await payment.save();
 
       res
         .status(200)
