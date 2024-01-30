@@ -102,7 +102,10 @@ exports.getHomePageContents = async (req, res, next) => {
 exports.geUpcomingOrders = async (req, res, next) => {
   try {
     const userId = req.params.userId;
-    var order = await Order.find({ "user.userId": userId, status: "pending" });
+    var order = await Order.find({
+      "user.userId": userId,
+      status: "pending",
+    });
     return res.status(200).json({ order: order });
   } catch (err) {
     const error = new Error(err);
@@ -184,6 +187,7 @@ exports.getOrderBooking = async (req, res, next) => {
     var bookings = await BookingModel.find({
       orderId: orderId,
     });
+    console.log(bookings);
     return res.status(200).json({ bookings });
   } catch (err) {
     console.log(err);
@@ -198,11 +202,13 @@ exports.postOrderBooking = async (req, res, next) => {
     const userId = req.body.userId;
     const productId = req.body.productId;
     const packId = req.body.packageId;
+    const paymentType = req.body.paymentType;
     const bookingId = req.body.bookingId;
     const rating = req.body.rating;
     const orderId = req.body.orderId;
     const content = req.body.content;
-
+    console.log(paymentType);
+    console.log(req.body);
     const review = await ReviewModel({
       rating: rating,
       content: content,
@@ -213,18 +219,20 @@ exports.postOrderBooking = async (req, res, next) => {
     await review.save();
     const booking = await BookingModel.findById(bookingId);
 
-
     const order = await Order.findById(orderId);
+
     order.No_of_left_bookings = order.No_of_left_bookings - 1;
-    await order.save()
+    await order.save();
 
     if (order.No_of_left_bookings === 0) {
       order.status = "completed";
       await order.save();
     }
-
-    
     booking.status = "completed";
+    if (paymentType) {
+      booking.paymentStatus = "completed";
+      booking.paymentType = paymentType;
+    }
     await booking.save();
     return res.status(200).json({ review });
   } catch (err) {

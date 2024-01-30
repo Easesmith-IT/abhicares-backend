@@ -21,7 +21,10 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       enum: ["completed", "pending"],
     },
-
+    paymentType: {
+      type: String,
+      enum: ["online", "cash", "onlineCod"],
+    },
     userAddress: {
       addressLine: {
         type: String,
