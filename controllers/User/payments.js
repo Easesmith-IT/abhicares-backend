@@ -272,12 +272,12 @@ exports.appOrder = async (req, res, next) => {
     }
     ///booking creation
     for (const orderItem of orderItems) {
+      var booking;
       if (orderItem.product) {
-        var booking = new Booking({
+        booking = new Booking({
           orderId: order._id,
           userId: user._id,
           paymentStatus: paymentStatus,
-          paymentType: cart["paymentType"],
           userAddress: {
             addressLine: userAddress.addressLine,
             pincode: userAddress.pincode,
@@ -293,11 +293,10 @@ exports.appOrder = async (req, res, next) => {
         });
         await booking.save();
       } else if (orderItem.package) {
-        var booking = new Booking({
+        booking = new Booking({
           orderId: order._id,
           userId: user._id,
           paymentStatus: paymentStatus,
-          paymentType: cart["paymentType"],
           userAddress: {
             addressLine: userAddress.addressLine,
             pincode: userAddress.pincode,
@@ -311,8 +310,11 @@ exports.appOrder = async (req, res, next) => {
           bookingTime: orderItem.bookingTime,
           orderValue: orderItem.package.offerPrice * orderItem.quantity,
         });
-        await booking.save();
       }
+      if (paymentStatus == "completed") {
+        booking.paymentType = cart["paymentType"];
+      }
+      await booking.save();
     }
     return res.status(200).json(order);
   } catch (err) {
