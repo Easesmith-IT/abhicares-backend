@@ -31,36 +31,37 @@ exports.addProductReview = async (req, res, next) => {
 
     orders.forEach((order) => {
       order.items.forEach((item) => {
-        if (item.product)
-          items.push({ _id: product._id.toString(), type: "product" });
-        if (item.package)
-          items.push({ _id: package._id.toString(), type: "package" });
+        console.log("item", item);
+        if (item?.product)
+          items.push({ _id: item?.product._id.toString(), type: "product" });
+        if (item?.package)
+          items.push({ _id: item?.package._id.toString(), type: "package" });
       });
     });
 
     const flag = items.some((item) => item._id === id);
 
-    
+
     if (flag) {
       const findedItem = items.find((item) => item._id === id);
-      let reviewObj 
-      if(findedItem.type==='product'){
-        reviewObj= {
+      let reviewObj
+      if (findedItem.type === 'product') {
+        reviewObj = {
           title,
           content,
           rating,
           userId: req.user._id,
-          productId:id
+          productId: id
         }
       }
 
-      if(findedItem.type==='package'){
-        reviewObj= {
+      if (findedItem.type === 'package') {
+        reviewObj = {
           title,
           content,
           rating,
           userId: req.user._id,
-          packageId:id
+          packageId: id
         }
       }
 
@@ -69,16 +70,17 @@ exports.addProductReview = async (req, res, next) => {
         res.status(200).json({
           message: "Review added successfully",
         })
-       
+
       );
     }
 
-    else{
+    else {
       return res.status(400).json({
-        message:"You can't add this review"
+        message: "You can't add this review"
       })
     }
   } catch (err) {
+    console.log("add review error", err);
     next(err);
   }
 };
@@ -124,52 +126,44 @@ exports.deleteProductReview = async (req, res, next) => {
 exports.getProductReview = async (req, res, next) => {
   try {
     const id = req.params.id; // product id
+    const userId = req?.user?._id ? req?.user._id : null;
     const { type } = req.query; // product or package
     if (!type) {
       throw new AppError(400, "package/product type is required");
     }
-
     let allReviews;
-
-    if(type==='package'){
-       allReviews = reviewModel.find({packageId:id})
+    if (type === 'package') {
+      allReviews = await reviewModel.find({ packageId: id }).lean();
     }
-
-    if(type==='product'){
-       allReviews = reviewModel.find({productId:id})
+    if (type === 'product') {
+      allReviews = await reviewModel.find({ productId: id }).lean();
     }
-
-    if(!req.user){
+    if (userId === null) {
       return res.status(200).json({
-        reviews:allReviews
-      })
+        reviews: allReviews
+      });
     }
-
-    
-   
-
-    let flag = false;
-
-    allReviews.forEach((review)=>{
-      if(review.userId===req.user._id) flag = true;
-    })
-
-    allReviews.sort((a, b) => {
-      if (a.userId === req.user._id) {
-        return -1; // Place reviews added by the logged-in user first
-      } else if (b.userId === req.user._id) {
-        return 1; // Place reviews added by the logged-in user first
-      } else {
-        return 0; // Maintain the original order for other reviews
-      }
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "These all are product review",
-      flag,
-      data: allReviews,
-    });
+    if (userId) {
+      let flag = false;
+      allReviews.forEach((review) => {
+        if (review.userId === req.user._id) flag = true;
+      });
+      allReviews.sort((a, b) => {
+        if (a.userId === req.user._id) {
+          return -1; // Place reviews added by the logged-in user first
+        } else if (b.userId === req.user._id) {
+          return 1; // Place reviews added by the logged-in user first
+        } else {
+          return 0; // Maintain the original order for other reviews
+        }
+      });
+      res.status(200).json({
+        success: true,
+        message: "These all are product review",
+        flag,
+        data: allReviews,
+      });
+    }
   } catch (err) {
     next(err);
   }
