@@ -120,39 +120,15 @@ exports.deleteProductReview = async (req, res, next) => {
   }
 };
 
-// get product review by product id
+// get user product review
 exports.getProductReview = async (req, res, next) => {
   try {
-    const id = req.params.id; // product or package id
-    const { type } = req.body; // product or package
-    if (!type) {
-      throw new AppError(400, "product/package type is required");
-    }
-    let result;
-    if (type == "package") {
-      result = await reviewModel.find({ packageId: id }).populate("userId");
-    } else if (type == "product") {
-      result = await reviewModel.find({ productId: id }).populate("userId");
-    }
-    res.status(200).json({
-      success: true,
-      message: "These all are product review",
-      data: result,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-// get user product review
-exports.getUserProductReview = async (req, res, next) => {
-  try {
     const id = req.params.id; // product id
-    const { type } = req.body; // product or package
+    const { type } = req.query; // product or package
     if (!type) {
       throw new AppError(400, "package/product type is required");
     }
-    
+
     let allReviews;
 
     if(type==='package'){
@@ -162,6 +138,15 @@ exports.getUserProductReview = async (req, res, next) => {
     if(type==='product'){
        allReviews = reviewModel.find({productId:id})
     }
+
+    if(!req.user){
+      return res.status(200).json({
+        reviews:allReviews
+      })
+    }
+
+    
+   
 
     let flag = false;
 
