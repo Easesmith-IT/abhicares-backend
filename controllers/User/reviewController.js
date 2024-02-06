@@ -156,12 +156,18 @@ exports.getUserProductReview = async (req, res, next) => {
     let allReviews;
 
     if(type==='package'){
-       allReviews = reviewModel.find({userId:req.user._id,packageId:id})
+       allReviews = reviewModel.find({packageId:id})
     }
 
     if(type==='product'){
-       allReviews = reviewModel.find({userId:req.user._id,productId:id})
+       allReviews = reviewModel.find({productId:id})
     }
+
+    let flag = false;
+
+    allReviews.forEach((review)=>{
+      if(review.userId===req.user._id) flag = true;
+    })
 
     allReviews.sort((a, b) => {
       if (a.userId === req.user._id) {
@@ -176,6 +182,7 @@ exports.getUserProductReview = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "These all are product review",
+      flag,
       data: allReviews,
     });
   } catch (err) {
