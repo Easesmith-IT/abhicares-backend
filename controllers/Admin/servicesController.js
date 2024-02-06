@@ -1,4 +1,5 @@
 const serviceModel = require('../../models/service')
+const categoryModel = require('../../models/category')
 const AppError = require('../Admin/errorController')
 exports.createService = async (req, res, next) => {
   try {
@@ -34,7 +35,12 @@ exports.createService = async (req, res, next) => {
           webHomepage: webHomepage,
           categoryId: categoryId
         })
-        console.log(serviceModel)
+       
+        const category = await categoryModel.findById(categoryId)
+
+        category.totalServices=category.totalServices+1;
+
+        await category.save()
         res
           .status(201)
           .json({ success: true, message: 'Service created successful' })
@@ -120,6 +126,13 @@ exports.deleteCategoryService = async (req, res, next) => {
 
     const id = req.params.id
     await serviceModel.findByIdAndDelete({ _id: id })
+
+    const service = await serviceModel.findById(id)
+    const category = await categoryModel.findById(service.categoryId.toString())
+
+    category.totalServices=category.totalServices+1;
+
+    await category.save()
     res
       .status(200)
       .json({ success: true, message: 'service deleted successful' })

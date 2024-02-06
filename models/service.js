@@ -20,6 +20,10 @@ const ServiceSchema = new Schema(
       type: String,
       required: true,
     },
+
+    icon: {
+      type: String,
+    },
     appHomepage: {
       type: Boolean,
       default: true,
