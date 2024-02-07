@@ -101,10 +101,11 @@ router.patch(
   review_controller.updateProductReview
 );
 // review id
-// router.post("/get-product-review/:id", review_controller.getProductReview); // find product review by product id
+router.get("/get-product-review/:id", review_controller.getProductReview); 
 router.get(
-  "/get-product-review/:id",
-  review_controller.getProductReview
+  "/get-product-review-logged-user/:id",
+  userAuth,
+  review_controller.getProductReviewLoggedUser
 );
 
 //order Routes

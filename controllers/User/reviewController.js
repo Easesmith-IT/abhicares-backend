@@ -31,9 +31,9 @@ exports.addProductReview = async (req, res, next) => {
 
     orders.forEach((order) => {
       order.items.forEach((item) => {
-        if (item.product)
+        if (item?.product)
           items.push({ _id: product._id.toString(), type: "product" });
-        if (item.package)
+        if (item?.package)
           items.push({ _id: package._id.toString(), type: "package" });
       });
     });
@@ -131,33 +131,52 @@ exports.getProductReview = async (req, res, next) => {
 
     let allReviews;
 
-    if(type==='package'){
-       allReviews = reviewModel.find({packageId:id})
+    if (type === 'package') {
+      allReviews = await reviewModel.find({ packageId: id }).lean(); 
     }
 
-    if(type==='product'){
-       allReviews = reviewModel.find({productId:id})
+    if (type === 'product') {
+      allReviews = await reviewModel.find({ productId: id }).lean(); 
     }
 
-    if(!req.user){
-      return res.status(200).json({
-        reviews:allReviews
-      })
+
+       res.status(200).json({
+        reviews: allReviews
+      });
+
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getProductReviewLoggedUser = async (req, res, next) => {
+  try {
+    const id = req.params.id; // product id
+    const { type } = req.query; // product or package
+    if (!type) {
+      throw new AppError(400, "package/product type is required");
     }
 
-    
-   
+    let allReviews;
+
+    if (type === 'package') {
+      allReviews = await reviewModel.find({ packageId: id }).lean(); 
+    }
+
+    if (type === 'product') {
+      allReviews = await reviewModel.find({ productId: id }).lean(); 
+    }
 
     let flag = false;
 
-    allReviews.forEach((review)=>{
-      if(review.userId===req.user._id) flag = true;
-    })
+    allReviews.forEach((review) => {
+      if (review.userId.toString() === req.user._id) flag = true;
+    });
 
     allReviews.sort((a, b) => {
-      if (a.userId === req.user._id) {
+      if (a.userId.toString() === req.user._id) {
         return -1; // Place reviews added by the logged-in user first
-      } else if (b.userId === req.user._id) {
+      } else if (b.userId.toString() === req.user._id) {
         return 1; // Place reviews added by the logged-in user first
       } else {
         return 0; // Maintain the original order for other reviews
@@ -174,3 +193,4 @@ exports.getProductReview = async (req, res, next) => {
     next(err);
   }
 };
+
