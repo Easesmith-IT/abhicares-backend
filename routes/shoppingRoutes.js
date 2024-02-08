@@ -103,9 +103,9 @@ router.patch(
 // review id
 router.get("/get-product-review/:id", review_controller.getProductReview); 
 router.get(
-  "/get-product-review-logged-user/:id",
+  "/get-product-review/:id",
   userAuth,
-  review_controller.getProductReviewLoggedUser
+  review_controller.getProductReview
 );
 
 //order Routes
