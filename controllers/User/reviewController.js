@@ -36,6 +36,7 @@ exports.addProductReview = async (req, res, next) => {
           items.push({ _id: item?.product._id.toString(), type: "product" });
         if (item?.package)
           items.push({ _id: item?.package._id.toString(), type: "package" });
+
       });
     });
 
@@ -164,7 +165,9 @@ exports.getProductReview = async (req, res, next) => {
         data: allReviews,
       });
     }
+
   } catch (err) {
     next(err);
   }
 };
+
