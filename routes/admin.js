@@ -64,6 +64,15 @@ router.post(
   sharpUpload.sharpUpload,
   service_controller.createService
 );
+
+router.post(
+  "/upload-service-icon/:serviceId",
+  isAdminAuth,
+  authorize("services", "write"),
+  img_upload,
+  sharpUpload.sharpUpload,
+  service_controller.uploadServiceIcon
+);
 router.get(
   "/get-all-service",
   isAdminAuth,
