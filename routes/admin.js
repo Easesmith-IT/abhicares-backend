@@ -4,7 +4,7 @@ const User = require("../models/user");
 const { isAdminAuth } = require("../middleware/auth");
 
 const router = express.Router();
-const sharpUpload=require("../middleware/sharpImage")
+const sharpUpload = require("../middleware/sharpImage");
 
 const img_upload = require("../middleware/imageMiddleware");
 
@@ -16,22 +16,22 @@ const user_controller = require("../controllers/Admin/userController");
 const enquiry_controller = require("../controllers/Admin/enquiryController");
 const package_controller = require("../controllers/Admin/packageController");
 const auth_controller = require("../controllers/Admin/auth");
-const payments_controller=require("../controllers/Admin/payments")
-const helpCenter_controller=require("../controllers/Admin/helpCenterController")
-const availableCities_controller = require("../controllers/Admin/availableCitiesController")
-const sellerOrder_controller=require("../controllers/Admin/sellerOrderController")
-const booking_controller=require("../controllers/Admin/bookingController")
+const payments_controller = require("../controllers/Admin/payments");
+const helpCenter_controller = require("../controllers/Admin/helpCenterController");
+const availableCities_controller = require("../controllers/Admin/availableCitiesController");
+const sellerOrder_controller = require("../controllers/Admin/sellerOrderController");
+const booking_controller = require("../controllers/Admin/bookingController");
 
-const coupon_controller = require("../controllers/Admin/couponController")
-const faq_controller = require("../controllers/Admin/faqController")
-const {authorize} = require("../middleware/authorization")
+const coupon_controller = require("../controllers/Admin/couponController");
+const faq_controller = require("../controllers/Admin/faqController");
+const { authorize } = require("../middleware/authorization");
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // Category Routes
 
 router.post(
   "/create-category",
   isAdminAuth,
-  authorize("services",'write'),
+  authorize("services", "write"),
   category_controller.postCreateCategory
 );
 router.get(
@@ -65,6 +65,38 @@ router.post(
   service_controller.createService
 );
 
+// service-feature routes
+router.post(
+  "/add-service-feature/:serviceId",
+  isAdminAuth,
+  authorize("services", "write"),
+  img_upload,
+  sharpUpload.sharpUpload,
+  service_controller.addServiceFeature
+);
+
+router.patch(
+  "/update-service-feature/:serviceId",
+  isAdminAuth,
+  authorize("services", "write"),
+  img_upload,
+  sharpUpload.sharpUpload,
+  service_controller.updateServiceFeature
+);
+
+router.post(
+  "/delete-service-feature/:serviceId",
+  isAdminAuth,
+  authorize("services", "write"),
+  service_controller.deleteServiceFeature
+);
+
+router.get(
+  "/get-service-details/:serviceId",
+  isAdminAuth,
+  authorize("services", "read"),
+  service_controller.getServiceDetails
+);
 router.post(
   "/upload-service-icon/:serviceId",
   isAdminAuth,
@@ -196,7 +228,6 @@ router.post(
   seller_controller.getSellerByLocation
 );
 
-
 // User Routes
 
 router.post(
@@ -223,7 +254,7 @@ router.patch(
   authorize("customers", "write"),
   user_controller.updateUserByAdmin
 ); // passing object id
-router
+router;
 router.delete(
   "/delete-user/:id",
   isAdminAuth,
@@ -281,14 +312,13 @@ router.delete(
   package_controller.deletePackage
 ); //passing object id
 
-
 // Available Cities Routes
-   router.post(
-     "/create-availabe-city",
-     isAdminAuth,
-     authorize("availableCities", "write"),
-     availableCities_controller.createAvailableCities
-   );
+router.post(
+  "/create-availabe-city",
+  isAdminAuth,
+  authorize("availableCities", "write"),
+  availableCities_controller.createAvailableCities
+);
 router.delete(
   "/delete-availabe-city/:id",
   isAdminAuth,
@@ -300,40 +330,39 @@ router.patch(
   isAdminAuth,
   authorize("availableCities", "write"),
   availableCities_controller.updateAvailableCities
-);   // passing object id
+); // passing object id
 router.get(
   "/get-availabe-city",
   isAdminAuth,
   authorize("availableCities", "read"),
   availableCities_controller.getAvailableCities
 );
-   
 
 // coupons Routes
-   router.post(
-     "/create-coupon",
-     isAdminAuth,
-     authorize("offers", "write"),
-     coupon_controller.createCoupon
-   );
-   router.delete(
-     "/delete-coupon/:id",
-     isAdminAuth,
-     authorize("offers", "write"),
-     coupon_controller.deleteCoupon
-   ); // passing object id
-   router.patch(
-     "/update-coupon/:id",
-     isAdminAuth,
-     authorize("offers", "write"),
-     coupon_controller.updateCoupon
-   );   // passing object id
-   router.get(
-     "/get-coupons",
-     isAdminAuth,
-     authorize("offers", "read"),
-     coupon_controller.getAllCoupons
-   );
+router.post(
+  "/create-coupon",
+  isAdminAuth,
+  authorize("offers", "write"),
+  coupon_controller.createCoupon
+);
+router.delete(
+  "/delete-coupon/:id",
+  isAdminAuth,
+  authorize("offers", "write"),
+  coupon_controller.deleteCoupon
+); // passing object id
+router.patch(
+  "/update-coupon/:id",
+  isAdminAuth,
+  authorize("offers", "write"),
+  coupon_controller.updateCoupon
+); // passing object id
+router.get(
+  "/get-coupons",
+  isAdminAuth,
+  authorize("offers", "read"),
+  coupon_controller.getAllCoupons
+);
 
 // Orders Routes
 
@@ -423,7 +452,7 @@ router.get(
   isAdminAuth,
   authorize("bookings", "read"),
   sellerOrder_controller.getSellerList
-);  // passing service id
+); // passing service id
 router.patch(
   "/allot-seller-order/:id",
   isAdminAuth,
@@ -448,7 +477,6 @@ router.post(
   authorize("partners", "read"),
   sellerOrder_controller.getSellerOrderByStatus
 ); // passing seller id
-
 
 //Booking Routes
 router.get(
@@ -510,7 +538,7 @@ router.get(
 );
 
 router.get(
-  "/get-seller-wallet-cashout-requests/:id",//passing wallet id
+  "/get-seller-wallet-cashout-requests/:id", //passing wallet id
   isAdminAuth,
   authorize("partners", "read"),
   seller_controller.getCashoutRequests
@@ -551,9 +579,5 @@ router.get(
   authorize("payments", "read"),
   payments_controller.getAllPayments
 );
-
-
-
-
 
 module.exports = router;

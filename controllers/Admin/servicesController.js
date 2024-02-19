@@ -85,6 +85,20 @@ exports.getAllService = async (req, res, next) => {
   }
 };
 
+exports.getServiceDetails = async (req, res, next) => {
+  try {
+    const serviceId = req.params.serviceId
+    const result = await serviceModel.findById(serviceId);
+    res.status(200).json({
+      success: true,
+      message: "service sent",
+      service: result,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.getCategoryService = async (req, res, next) => {
   try {
     const id = req.params.id;
@@ -191,6 +205,76 @@ exports.searchService = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
+    next(err);
+  }
+};
+
+// service-feature routes
+
+exports.addServiceFeature = async (req, res, next) => {
+  try {
+  
+    const serviceId = req.params.serviceId;
+   const {title,description} = req.body
+   let imageUrl = "";
+   imageUrl = req?.files[0]?.filename;
+    const service = await serviceModel.findById(serviceId);
+     service.features.push({title,description,image:imageUrl})
+
+    await service.save()
+  
+    res
+      .status(200)
+      .json({ success: true, message: "feature added successful" });
+  } catch (err) {
+    console.log(err)
+    next(err);
+  }
+};
+
+exports.updateServiceFeature = async (req, res, next) => {
+  try {
+    console.log('inside update')
+    const serviceId = req.params.serviceId;
+   const {title,description,index} = req.body
+
+    const service = await serviceModel.findById(serviceId);
+    console.log('service.features[index]',service.features[index])
+
+  service.features[index].title = title;
+  service.features[index].description = description;
+  if(req?.files[0]?.filename){
+    service.features[index].image = req?.files[0]?.filename;
+
+  }
+    await service.save()
+  
+    res
+      .status(200)
+      .json({ success: true, message: "feature updated successful" });
+  } catch (err) {
+    console.log(err)
+    next(err);
+  }
+};
+
+exports.deleteServiceFeature = async (req, res, next) => {
+  try {
+    const serviceId = req.params.serviceId;
+    const title = req.query.title;
+    const service = await serviceModel.findById(serviceId);
+
+    const updatedFeatures = service.features.map((feature)=>feature.title!==title);
+
+    service.features = updatedFeatures;
+
+    await service.save()
+  
+    res
+      .status(200)
+      .json({ success: true, message: "feature deleted successful" });
+  } catch (err) {
+    console.log(err)
     next(err);
   }
 };

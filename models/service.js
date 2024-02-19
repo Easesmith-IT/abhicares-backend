@@ -39,7 +39,19 @@ const ServiceSchema = new Schema(
     },
     totalProducts:{
       type:Number
-    }
+    },
+    
+    features:[{
+      title:{
+        type:String,
+      },
+      image:{
+        type:String,
+      },
+      description:{
+        type:String,
+      },
+    }]
 
   },
   { timestamps: true }
