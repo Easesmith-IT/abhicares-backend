@@ -20,6 +20,15 @@ const config = {
 exports.generateOtpUser = async (req, res, next) => {
   try {
     const { phoneNumber } = req.body;
+    const user = await userModel
+      .findOne({ phone: phoneNumber })
+      .select("-password");
+    console.log(user);
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User does not exist" });
+    }
     const otp = Math.floor(Math.random() * 900000) + 100000;
     const text = `${otp} is your OTP of AbhiCares, OTP is only valid for 10 mins, do not share it with anyone. - Azadkart private limited`;
     await axios.post(
@@ -41,44 +50,35 @@ exports.generateOtpUser = async (req, res, next) => {
     //   upperCaseAlphabets: false,
     //   specialChars: false,
     // });
-    const user = await userModel
-      .findOne({ phone: phoneNumber })
-      .select("-password");
-    console.log(user);
-    if (!user) {
-      res.status(400).json({ success: false, message: "User does not exist" });
+
+    const expirationTimeframe = 5 * 60 * 1000; // 5 minutes in milliseconds
+    const currentTime = new Date(); // Current time
+    const otpExpiresAt = new Date(currentTime.getTime() + expirationTimeframe);
+    const existingOtpDoc = await userOtpLinkModel.findOne({
+      userId: user._id.toString(),
+      phone: user.phone,
+    });
+
+    if (existingOtpDoc) {
+      existingOtpDoc.otp = otp;
+      existingOtpDoc.otpExpiresAt = otpExpiresAt;
+
+      await existingOtpDoc.save();
     } else {
-      const expirationTimeframe = 5 * 60 * 1000; // 5 minutes in milliseconds
-      const currentTime = new Date(); // Current time
-      const otpExpiresAt = new Date(
-        currentTime.getTime() + expirationTimeframe
-      );
-      const existingOtpDoc = await userOtpLinkModel.findOne({
-        userId: user._id.toString(),
+      const otpDoc = new userOtpLinkModel({
         phone: user.phone,
+        userId: user._id,
+        otp: otp,
+        otpExpiresAt: otpExpiresAt,
       });
 
-      if (existingOtpDoc) {
-        existingOtpDoc.otp = otp;
-        existingOtpDoc.otpExpiresAt = otpExpiresAt;
-
-        await existingOtpDoc.save();
-      } else {
-        const otpDoc = new userOtpLinkModel({
-          phone: user.phone,
-          userId: user._id,
-          otp: otp,
-          otpExpiresAt: otpExpiresAt,
-        });
-
-        await otpDoc.save();
-      }
-
-      // user.otp = otp;
-
-      // await user.save();
-      res.status(200).json({ message: "otp sent successful" });
+      await otpDoc.save();
     }
+
+    // user.otp = otp;
+
+    // await user.save();
+    res.status(200).json({ message: "otp sent successful" });
   } catch (err) {
     console.log(err);
     next(err);
@@ -275,9 +275,8 @@ exports.signupOtp = async (req, res, next) => {
         res
           .status(200)
           .cookie("tempVerf", token, { httpOnly: true })
-          .json({  message: "otp sent successfully" });
+          .json({ message: "otp sent successfully" });
       }
-
     }
   } catch (err) {
     console.log(err);
@@ -310,7 +309,7 @@ exports.createUser = async (req, res, next) => {
           await userCart.save();
           user.cartId = userCart._id;
           await user.save();
-          const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+          const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET,{expiresIn:"2d"});
           if (req.cookies["guestCart"]) {
             const guestCart = JSON.parse(req.cookies["guestCart"]);
             const carItems = guestCart.items;
