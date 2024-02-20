@@ -62,7 +62,7 @@ exports.uploadServiceIcon = async (req, res, next) => {
       const service = await serviceModel.findById(serviceId);
       service.icon = imageUrl;
       await service.save();
-      
+
       res
         .status(200)
         .json({ success: true, message: "Service icon updated successful" });
@@ -213,16 +213,16 @@ exports.searchService = async (req, res, next) => {
 
 exports.addServiceFeature = async (req, res, next) => {
   try {
-  
+
     const serviceId = req.params.serviceId;
-   const {title,description} = req.body
-   let imageUrl = "";
-   imageUrl = req?.files[0]?.filename;
+    const { title, description } = req.body
+    let imageUrl = "";
+    imageUrl = req?.files[0]?.filename;
     const service = await serviceModel.findById(serviceId);
-     service.features.push({title,description,image:imageUrl})
+    service.features.push({ title, description, image: imageUrl })
 
     await service.save()
-  
+
     res
       .status(200)
       .json({ success: true, message: "feature added successful" });
@@ -236,19 +236,19 @@ exports.updateServiceFeature = async (req, res, next) => {
   try {
     console.log('inside update')
     const serviceId = req.params.serviceId;
-   const {title,description,index} = req.body
+    let { title, description, index } = req.body
 
     const service = await serviceModel.findById(serviceId);
-    console.log('service.features[index]',service.features[index])
+    console.log('service.features[index]', service.features[index])
 
-  service.features[index].title = title;
-  service.features[index].description = description;
-  if(req?.files[0]?.filename){
-    service.features[index].image = req?.files[0]?.filename;
+    service.features[index].title = title;
+    service.features[index].description = description;
+    if (req?.files[0]?.filename) {
+      service.features[index].image = req?.files[0]?.filename;
 
-  }
+    }
     await service.save()
-  
+
     res
       .status(200)
       .json({ success: true, message: "feature updated successful" });
@@ -264,12 +264,20 @@ exports.deleteServiceFeature = async (req, res, next) => {
     const title = req.query.title;
     const service = await serviceModel.findById(serviceId);
 
-    const updatedFeatures = service.features.map((feature)=>feature.title!==title);
+    console.log("service", service);
+    console.log("service features", service.features);
+   
+    const updatedFeatures = service.features.filter((feature) => {
+      console.log("feature",feature);
+      if (feature && feature.title !== title) return { ...feature };
+    });
+
+    console.log("updated features", updatedFeatures);
 
     service.features = updatedFeatures;
 
     await service.save()
-  
+
     res
       .status(200)
       .json({ success: true, message: "feature deleted successful" });
