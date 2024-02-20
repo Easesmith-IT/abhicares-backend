@@ -1,25 +1,47 @@
 const userModel = require("../../models/user");
-const bcrypt = require("bcryptjs");
-const session = require("express-session");
+const userOtpLinkModel = require("../../models/userOtpLink");
 const otpGenerator = require("otp-generator");
-const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const cartModel = require("../../models/cart");
-const productModel = require("../../models/product");
 const AppError = require("../User/errorController");
-const packageModel = require("../../models/packages");
-// const otpStore = {}
-// const myData = {}
+const axios = require("axios");
+
 exports.generateOtpUser = async (req, res, next) => {
   try {
+    const authKey = "T1PhA56LPJysMHFZ62B5";
+    const authToken = "8S2pMXV8IRpZP6P37p4SWrVErk2N6CzSEa458pt1";
+    const credentials = `${authKey}:${authToken}`;
+
+    // Encode the concatenated string into base64
+    const encodedCredentials = Buffer.from(credentials).toString("base64");
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Basic ${encodedCredentials}`,
+      },
+    };
     const { phoneNumber } = req.body;
+    const otp = Math.floor(Math.random() * 900000) + 100000;
+    const text = `${otp} is your OTP of AbhiCares, OTP is only valid for 10 mins, do not share it with anyone. - Azadkart private limited`;
+    await axios.post(
+      `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
+      {
+        Text: text,
+        Number: phoneNumber,
+        SenderId: "AZKART",
+        DRNotifyUrl: "https://www.domainname.com/notifyurl",
+        DRNotifyHttpMethod: "POST",
+        Tool: "API",
+      },
+      config
+    );
     // Generate a 6-digit OTP
-    const otp = otpGenerator.generate(6, {
-      digits: true,
-      lowerCaseAlphabets: false,
-      upperCaseAlphabets: false,
-      specialChars: false,
-    });
+    // const otp = otpGenerator.generate(6, {
+    //   digits: true,
+    //   lowerCaseAlphabets: false,
+    //   upperCaseAlphabets: false,
+    //   specialChars: false,
+    // });
     const user = await userModel
       .findOne({ phone: phoneNumber })
       .select("-password");
@@ -27,66 +49,34 @@ exports.generateOtpUser = async (req, res, next) => {
     if (!user) {
       res.status(400).json({ success: false, message: "User does not exist" });
     } else {
-      user;
-      user.otp = otp;
-      await user.save();
-      // console.log("jwt-secret", process.env.JWT_SECRET);
-      // jwt.sign(
-      //   { userId: id, otp: otp },
-      //   process.env.JWT_SECRET,
-      //   {},
-      //   function (err, token) {
-      //     if (err) {
-      //       res.status(400).json({
-      //         success: false,
-      //         message: "getting error generating token",
-      //       });
-      //     } else {
-      //       const transporter = nodemailer.createTransport({
-      //         service: "gmail",
-      //         auth: {
-      //           user: "generaluser2003@gmail.com",
-      //           pass: "aevm hfgp mizf aypu",
-      //         },
-      //       });
+      const expirationTimeframe = 5 * 60 * 1000; // 5 minutes in milliseconds
+      const currentTime = new Date(); // Current time
+      const otpExpiresAt = new Date(currentTime.getTime() + expirationTimeframe);
+      const existingOtpDoc = await userOtpLinkModel.findOne({userId:user._id.toString(),phone:user.phone})
 
-      //       // Define the email message
-      //       const mailOptions = {
-      //         from: "generaluser2003@gmail.com",
-      //         to: "lifegameraryan@gmail.com",
-      //         subject: "Test Email",
-      //         text: `this is otp for testing abhicares ${otp}`,
-      //       };
+      if(existingOtpDoc){
+        existingOtpDoc.otp = otp
+        existingOtpDoc.otpExpiresAt = otpExpiresAt
 
-      //       // Send the email
-      //       transporter.sendMail(mailOptions, (error, info) => {
-      //         if (error) {
-      //           console.error("Error:", error);
-      //         } else {
-      //           console.log("Email sent:", info.response);
+        await existingOtpDoc.save()
+      }
 
-      //           console.log(`Sending OTP ${otp} to ${phoneNumber}`);
-      //           // req.session.otp = otp
-      //           // req.session.cart = []
-      //           // if (!req.session.cart) {
-      //           //   req.session.cart = []
-      //           // }
-      //           var myCart = [];
-      //           res
-      //             .cookie("token", token, "cart", myCart, {
-      //               maxAge: 900000,
-      //               httpOnly: true,
-      //             })
-      //             .json({ message: "otp sent successful" });
-      //         }
-      //       });
-      //     }
-      //   }
-      // );
-      res.status(200).json({ message: "otp sent successful", otp: otp });
+      else{
+        const otpDoc = new userOtpLinkModel({
+          phone:user.phone,
+          userId:user._id,
+          otp:otp,
+          otpExpiresAt:otpExpiresAt
+        })
+
+        await otpDoc.save()
+      }
+
+      // user.otp = otp;
+    
+      // await user.save();
+      res.status(200).json({ message: "otp sent successful" });
     }
-
-    // Send the OTP (you would typically send it via SMS, email, etc.)
   } catch (err) {
     console.log(err);
     next(err);
@@ -97,15 +87,30 @@ exports.verifyUserOtp = async (req, res, next) => {
   try {
     const { enteredOTP, phoneNumber } = req.body;
     const user = await userModel
-      .findOne({ phone: phoneNumber, otp: enteredOTP })
+      .findOne({ phone: phoneNumber })
       .select("-password");
     if (!user) {
       return res
         .status(400)
         .json({ success: false, message: "User does not exist" });
     }
-    // user.otp = null;
-    await user.save();
+
+    const otpDoc = await userOtpLinkModel.findOne({userId:user._id}).lean()
+    console.log('otpDoc',otpDoc)
+
+    if (enteredOTP * 1 !== otpDoc.otp) {
+      return res
+        .status(400)
+        .json({ success: false, message: "OTP does not match" });
+    }
+
+    const currentTime = new Date().getTime(); // Current time
+    if (currentTime > otpDoc.otpExpiresAt.getTime()) {
+      return res
+        .status(400)
+        .json({ success: false, message: "OTP has expired!" });
+    }
+    otpDoc.otp = null;
     const payload = { id: user._id };
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "2d",
@@ -116,13 +121,6 @@ exports.verifyUserOtp = async (req, res, next) => {
       const carItems = guestCart.items;
 
       for (const guestCartItem of carItems) {
-        // var prod, pack
-        // if (guestCartItem.type == 'product') {
-        //   prod = await productModel.findById(guestCartItem.productId._id)
-        // } else if (guestCartItem.type == 'package') {
-        //   pack = await packageModel.findById(guestCartItem.packageId._id)
-        // }
-
         console.log("guestCartItem", guestCartItem);
         if (guestCartItem.type == "product") {
           const existingCartItem = userCart.items.find(
@@ -135,10 +133,7 @@ exports.verifyUserOtp = async (req, res, next) => {
             console.log("pushing the cart item");
             userCart.items.push(guestCartItem);
           }
-        }
-        
-        
-        else if (guestCartItem.type == "package") {
+        } else if (guestCartItem.type == "package") {
           const existingCartItem = userCart.items.find(
             (item) => item.packageId?.toString() === guestCartItem.packageId
           );
@@ -152,7 +147,7 @@ exports.verifyUserOtp = async (req, res, next) => {
       }
 
       userCart.totalPrice += guestCart.totalPrice;
-      console.log('cart',userCart)
+      console.log("cart", userCart);
       await userCart.save();
     }
     res.clearCookie("guestCart");
@@ -312,7 +307,8 @@ exports.createUser = async (req, res, next) => {
               // }
               if (guestCartItem.type == "product") {
                 const existingCartItem = userCart.items.find(
-                  (item) => item.productId?.toString() === guestCartItem.productId
+                  (item) =>
+                    item.productId?.toString() === guestCartItem.productId
                 );
                 if (existingCartItem) {
                   existingCartItem.quantity += guestCartItem.quantity;
@@ -321,7 +317,8 @@ exports.createUser = async (req, res, next) => {
                 }
               } else if (guestCartItem.type == "package") {
                 const existingCartItem = userCart.items.find(
-                  (item) => item.packageId?.toString() === guestCartItem.packageId
+                  (item) =>
+                    item.packageId?.toString() === guestCartItem.packageId
                 );
                 if (existingCartItem) {
                   existingCartItem.quantity += guestCartItem.quantity;

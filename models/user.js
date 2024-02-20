@@ -28,9 +28,9 @@ const userSchema = new Schema(
     otp: {
       type: Number,
     },
-    // otpExpiresAt:{
-    //     type: Date,
-    // },
+    otpExpiresAt:{
+        type: Date,
+    },
     cartId: {
       type: Schema.Types.ObjectId,
       ref: "Cart",
