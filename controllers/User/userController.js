@@ -4,12 +4,15 @@ const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
 const cartModel = require("../../models/cart");
 const AppError = require("../User/errorController");
+
+
+// Encode the concatenated string into base64
 const axios = require("axios");
+const { generateOTP, verifyOTP } = require("../../util/otpHandler");
 const authKey = "T1PhA56LPJysMHFZ62B5";
 const authToken = "8S2pMXV8IRpZP6P37p4SWrVErk2N6CzSEa458pt1";
 const credentials = `${authKey}:${authToken}`;
 
-// Encode the concatenated string into base64
 const encodedCredentials = Buffer.from(credentials).toString("base64");
 const config = {
   headers: {
@@ -29,20 +32,7 @@ exports.generateOtpUser = async (req, res, next) => {
         .status(400)
         .json({ success: false, message: "User does not exist" });
     }
-    const otp = Math.floor(Math.random() * 900000) + 100000;
-    const text = `${otp} is your OTP of AbhiCares, OTP is only valid for 10 mins, do not share it with anyone. - Azadkart private limited`;
-    await axios.post(
-      `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
-      {
-        Text: text,
-        Number: phoneNumber,
-        SenderId: "AZKART",
-        DRNotifyUrl: "https://www.domainname.com/notifyurl",
-        DRNotifyHttpMethod: "POST",
-        Tool: "API",
-      },
-      config
-    );
+
     // Generate a 6-digit OTP
     // const otp = otpGenerator.generate(6, {
     //   digits: true,
@@ -51,33 +41,8 @@ exports.generateOtpUser = async (req, res, next) => {
     //   specialChars: false,
     // });
 
-    const expirationTimeframe = 5 * 60 * 1000; // 5 minutes in milliseconds
-    const currentTime = new Date(); // Current time
-    const otpExpiresAt = new Date(currentTime.getTime() + expirationTimeframe);
-    const existingOtpDoc = await userOtpLinkModel.findOne({
-      userId: user._id.toString(),
-      phone: user.phone,
-    });
-
-    if (existingOtpDoc) {
-      existingOtpDoc.otp = otp;
-      existingOtpDoc.otpExpiresAt = otpExpiresAt;
-
-      await existingOtpDoc.save();
-    } else {
-      const otpDoc = new userOtpLinkModel({
-        phone: user.phone,
-        userId: user._id,
-        otp: otp,
-        otpExpiresAt: otpExpiresAt,
-      });
-
-      await otpDoc.save();
-    }
-
-    // user.otp = otp;
-
-    // await user.save();
+    generateOTP(phoneNumber,user)
+  
     res.status(200).json({ message: "otp sent successful" });
   } catch (err) {
     console.log(err);
@@ -97,22 +62,7 @@ exports.verifyUserOtp = async (req, res, next) => {
         .json({ success: false, message: "User does not exist" });
     }
 
-    const otpDoc = await userOtpLinkModel.findOne({ userId: user._id }).lean();
-    console.log("otpDoc", otpDoc);
-
-    if (enteredOTP * 1 !== otpDoc.otp) {
-      return res
-        .status(400)
-        .json({ success: false, message: "OTP does not match" });
-    }
-
-    const currentTime = new Date().getTime(); // Current time
-    if (currentTime > otpDoc.otpExpiresAt.getTime()) {
-      return res
-        .status(400)
-        .json({ success: false, message: "OTP has expired!" });
-    }
-    otpDoc.otp = null;
+    verifyOTP(phoneNumber,enteredOTP,user,res)
     const payload = { id: user._id };
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "2d",
