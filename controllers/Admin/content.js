@@ -4,7 +4,7 @@ const AppError = require("../Admin/errorController");
 
 exports.uploadBanners = async (req, res, next) => {
   try {
-    const { type, section, page } = req.body;
+    const { type, section, page,serviceId } = req.body;
 
     const image = req.files[0].filename;
 
@@ -18,6 +18,7 @@ exports.uploadBanners = async (req, res, next) => {
       // Update images array in the existing document
       console.log("existing document", existingDoc.image);
       existingDoc.image = image;
+      if(serviceId)existingDoc.serviceId = serviceId;
       await existingDoc.save();
 
       res.status(200).json({
@@ -26,13 +27,17 @@ exports.uploadBanners = async (req, res, next) => {
     } else {
       // Create a new document if not found
       console.log("creating new document");
-      const newDoc = await Content.create({
+      let newContent = {
         type: type,
         page: page,
         section: section,
         image: image,
-      });
-
+      }
+      if(serviceId){
+        newContent.serviceId = serviceId
+      }
+      
+      const newDoc = await Content.create(newContent);
       res.status(200).json({
         message: "Content added successfully",
         data: newDoc,
@@ -61,7 +66,7 @@ exports.getBanners = async (req, res, next) => {
       doc = await Content.findOne({ type, section, page });
       res.status(200).json({
         success: true,
-        banners: doc.image,
+        banners: {image:doc.image,serviceId:doc.serviceId|| null},
       });
     }
 

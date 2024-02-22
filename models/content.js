@@ -22,6 +22,11 @@ const schema = new mongoose.Schema(
       ref: "Category",
     },
 
+    serviceId: {
+      type: mongoose.Types.ObjectId,
+      ref: "Service",
+    },
+
     seoTitle: {
       type: String,
     },
