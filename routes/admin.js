@@ -61,7 +61,7 @@ router.post(
   isAdminAuth,
   authorize("services", "write"),
   img_upload,
-  sharpUpload.sharpUpload,
+  // sharpUpload.sharpUpload,
   service_controller.createService
 );
 
@@ -71,7 +71,7 @@ router.post(
   isAdminAuth,
   authorize("services", "write"),
   img_upload,
-  sharpUpload.sharpUpload,
+  // sharpUpload.sharpUpload,
   service_controller.addServiceFeature
 );
 
@@ -80,7 +80,7 @@ router.patch(
   isAdminAuth,
   authorize("services", "write"),
   img_upload,
-  sharpUpload.sharpUpload,
+  // sharpUpload.sharpUpload,
   service_controller.updateServiceFeature
 );
 
@@ -102,7 +102,7 @@ router.post(
   isAdminAuth,
   authorize("services", "write"),
   img_upload,
-  sharpUpload.sharpUpload,
+  // sharpUpload.sharpUpload,
   service_controller.uploadServiceIcon
 );
 router.get(
@@ -122,7 +122,7 @@ router.patch(
   isAdminAuth,
   authorize("services", "write"),
   img_upload,
-  sharpUpload.sharpUpload,
+  // sharpUpload.sharpUpload,
   service_controller.updateService
 ); // passing object id
 router.delete(
@@ -146,7 +146,7 @@ router.post(
   isAdminAuth,
   authorize("services", "write"),
   img_upload,
-  sharpUpload.sharpUpload,
+  // sharpUpload.sharpUpload,
   product_controller.createProduct
 );
 router.get(
@@ -166,7 +166,7 @@ router.patch(
   isAdminAuth,
   authorize("services", "write"),
   img_upload,
-  sharpUpload.sharpUpload,
+  // sharpUpload.sharpUpload,
   product_controller.updateProduct
 ); // passing object id
 router.delete(
@@ -288,7 +288,7 @@ router.post(
   isAdminAuth,
   authorize("services", "write"),
   img_upload,
-  sharpUpload.sharpUpload,
+  // sharpUpload.sharpUpload,
   package_controller.createPackage
 );
 router.patch(
@@ -296,7 +296,7 @@ router.patch(
   isAdminAuth,
   authorize("services", "write"),
   img_upload,
-  sharpUpload.sharpUpload,
+  // sharpUpload.sharpUpload,
   package_controller.updatePackage
 );
 router.get(
