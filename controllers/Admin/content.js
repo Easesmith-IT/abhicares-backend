@@ -1,3 +1,4 @@
+const { uploadFileToGCS } = require("../../middleware/imageMiddleware");
 const Content = require("../../models/content");
 const Service = require("../../models/service");
 const AppError = require("../Admin/errorController");
@@ -6,7 +7,13 @@ exports.uploadBanners = async (req, res, next) => {
   try {
     const { type, section, page, serviceId } = req.body;
 
-    const image = req.files[0].filename;
+    let image = ''
+    if (req?.files) {
+      const ext = req.files[0].originalname.split(".").pop();
+      const ret = await uploadFileToGCS(req.files[0].buffer, ext);
+      const fileUrl = ret.split("/").pop();
+      image = fileUrl;
+    }
 
     if (!type || !section || !page) {
       throw new AppError(400, "All the fields are required");

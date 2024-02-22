@@ -41,7 +41,7 @@ exports.generateOtpUser = async (req, res, next) => {
     //   specialChars: false,
     // });
 
-    generateOTP(phoneNumber,user)
+    await generateOTP(phoneNumber,user)
   
     res.status(200).json({ message: "otp sent successful" });
   } catch (err) {
@@ -62,7 +62,7 @@ exports.verifyUserOtp = async (req, res, next) => {
         .json({ success: false, message: "User does not exist" });
     }
 
-    verifyOTP(phoneNumber,enteredOTP,user,res)
+    await verifyOTP(phoneNumber,enteredOTP,user,res)
     const payload = { id: user._id };
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "2d",

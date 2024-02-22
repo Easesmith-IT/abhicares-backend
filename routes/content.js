@@ -11,7 +11,7 @@ router.post(
   "/upload-banners",
   isAdminAuth,
   authorize("banners", "write"),
-  image_middleware,
+  image_middleware.upload,
   // sharpUpload.sharpUpload,
   contentController.uploadBanners
 );

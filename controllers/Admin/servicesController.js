@@ -1,6 +1,7 @@
 const serviceModel = require("../../models/service");
 const categoryModel = require("../../models/category");
 const AppError = require("../Admin/errorController");
+const { uploadFileToGCS } = require("../../middleware/imageMiddleware");
 exports.createService = async (req, res, next) => {
   try {
     var {
@@ -11,15 +12,23 @@ exports.createService = async (req, res, next) => {
       webHomepage,
       categoryId,
     } = req.body;
-    var imageUrl = "";
-    imageUrl = req.files[0].filename;
 
-    console.log(imageUrl);
+
+    let imageUrl = "";
+
+    if (req?.files) {
+      const ext = req.files[0].originalname.split(".").pop();
+      const ret = await uploadFileToGCS(req.files[0].buffer, ext);
+      const fileUrl = ret.split("/").pop();
+      imageUrl = fileUrl;
+    }
+ 
+
     if (
       !name ||
       !startingPrice ||
       !description ||
-      !imageUrl ||
+      // !imageUrl ||
       !categoryId ||
       !appHomepage ||
       !webHomepage
@@ -46,6 +55,7 @@ exports.createService = async (req, res, next) => {
         .json({ success: true, message: "Service created successful" });
     }
   } catch (err) {
+    console.log(err)
     next(err);
   }
 };
@@ -54,7 +64,14 @@ exports.uploadServiceIcon = async (req, res, next) => {
   try {
     const serviceId = req.params.serviceId;
     var imageUrl = "";
-    imageUrl = req.files[0].filename;
+    if (req?.files) {
+      const ext = req.files[0].originalname.split(".").pop();
+      const ret = await uploadFileToGCS(req.files[0].buffer, ext);
+      const fileUrl = ret.split("/").pop();
+      imageUrl = fileUrl;
+    }
+
+    console.log(imageUrl)
 
     if (!imageUrl) {
       throw new AppError(400, "All the fields are required");
@@ -116,17 +133,14 @@ exports.getCategoryService = async (req, res, next) => {
 
 exports.updateService = async (req, res, next) => {
   try {
-    console.log(req.files);
     const id = req.params.id; //service id
     const { name, startingPrice, description, appHomepage, webHomepage } =
       req.body;
-    var imageUrl = "";
-    imageUrl = req.files[0].filename;
+
     if (
       !name ||
       !startingPrice ||
       !description ||
-      !imageUrl ||
       !appHomepage ||
       !webHomepage
     ) {
@@ -136,7 +150,15 @@ exports.updateService = async (req, res, next) => {
       result.name = name;
       result.startingPrice = startingPrice;
       result.description = description;
-      result.imageUrl = imageUrl;
+       let imageUrl = result.imageUrl
+       if (req?.files[0]) {
+        console.log(req.files[0])
+        const ext = req.files[0].originalname.split(".").pop();
+        const ret = await uploadFileToGCS(req.files[0].buffer, ext);
+        const fileUrl = ret.split("/").pop();
+        result.imageUrl = fileUrl;
+      }
+     
       result.appHomepage = appHomepage;
       result.webHomepage = webHomepage;
 
@@ -217,7 +239,13 @@ exports.addServiceFeature = async (req, res, next) => {
     const serviceId = req.params.serviceId;
     const { title, description } = req.body
     let imageUrl = "";
-    imageUrl = req?.files[0]?.filename;
+    if (req?.files) {
+      const ext = req.files[0].originalname.split(".").pop();
+      const ret = await uploadFileToGCS(req.files[0].buffer, ext);
+      const fileUrl = ret.split("/").pop();
+      imageUrl = fileUrl;
+    }
+    console.log('imageUrl',imageUrl)
     const service = await serviceModel.findById(serviceId);
     service.features.push({ title, description, image: imageUrl })
 
@@ -243,9 +271,13 @@ exports.updateServiceFeature = async (req, res, next) => {
 
     service.features[index].title = title;
     service.features[index].description = description;
-    if (req?.files[0]?.filename) {
-      service.features[index].image = req?.files[0]?.filename;
-
+ 
+    if (req?.files) {
+      const ext = req.files[0].originalname.split(".").pop();
+      const ret = await uploadFileToGCS(req.files[0].buffer, ext);
+      const fileUrl = ret.split("/").pop();
+      service.features[index].image = fileUrl;
+      console.log(fileUrl)
     }
     await service.save()
 

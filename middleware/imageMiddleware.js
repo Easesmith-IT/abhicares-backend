@@ -1,78 +1,67 @@
-const multer = require("multer");
-const { v4: uuidv4 } = require("uuid");
+// const multer = require("multer");
+// const { v4: uuidv4 } = require("uuid");
 // const storage = multer.memoryStorage();
 
-storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads");
-  },
-  filename: function (req, file, cb) {
-    let fileName = file.fieldname + "_" + Date.now() + ".jpg";
-    cb(null, fileName);
-  },
+// storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, "uploads");
+//   },
+//   filename: function (req, file, cb) {
+//     let fileName = file.fieldname + "_" + Date.now() + ".jpg";
+//     cb(null, fileName);
+//   },
+// });
+// const upload = multer({ storage: storage }).array("img", 5);
+
+// module.exports = upload;
+
+const multer = require("multer");
+const { Storage } = require("@google-cloud/storage");
+
+
+const storageClient = new Storage({
+  projectId: "abhicares-backend",
+  keyFilename: "./config/abhicares-backend-a59bded84a4f.json",
 });
-const upload = multer({ storage: storage }).array("img", 5);
+const bucketName = "abhicares-backend-bucket"
 
-module.exports = upload;
+async function makeBucketPublic() {
+  await storageClient.bucket(bucketName).makePublic();
 
-
-
-/*
-
-const multer = require('multer')
-const { Storage } = require('@google-cloud/storage')
-
-// Multer configuration
-const storage = multer.memoryStorage()
-exports.upload = multer({ storage: storage }).array('img', 5)
-
-exports.myFun =async (req, res, next) => {
-  const files = req.files
-      // Google Cloud Storage configuration
-     
-       const storageClient = new Storage({
-          projectId: 'abhicares-backend',
-          keyFilename: './config/abhicares-backend-a59bded84a4f.json'
-        })
-       const bucket = storageClient.bucket('abhicares-backend-bucket')
-        var temp=0
-       const uploadPromises = files.map(async file => {
-        console.log(file)
-        const fileName = `${Date.now()}-${file.originalname}`
-        req.files[temp].originalname=fileName
-        temp++
-        const destination = `uploads/${fileName}`
-    
-        // Create a writable stream to the destination in the bucket
-        const uploadStream = bucket.file(destination).createWriteStream({
-          metadata: {
-            contentType: file.mimetype
-          }
-        })
-    
-        // Pipe the file buffer to the upload stream
-        uploadStream.end(file.buffer)
-    
-        // Wait for the upload to complete
-        await new Promise((resolve, reject) => {
-          uploadStream.on('finish', resolve)
-          uploadStream.on('error', reject)
-        })
-    
-        return destination
-      })
-    
-      try {
-        const uploadedFiles = await Promise.all(uploadPromises)
-        console.log("file uploaded successful")
-        next()
-        // res.json({ success: true, uploadedFiles })
-      } catch (error) {
-        console.error('Error uploading files:', error)
-        res.status(500).json({ success: false, error: 'Internal Server Error' })
-      } 
-     
+  console.log(`Bucket ${bucketName} is now publicly readable`);
 }
 
+makeBucketPublic().catch(console.error);
 
-*/
+exports.upload = multer({ storage: multer.memoryStorage() }).array("img", 5);
+
+
+exports.uploadFileToGCS = async (fileBuffer,ext) => {
+  try {
+
+    const fileOutputName = `file_${Date.now()}.${ext}`;
+
+    const bucket = storageClient.bucket(bucketName);
+
+    const fileStream = bucket.file(fileOutputName).createWriteStream();
+
+    fileStream.end(fileBuffer);
+
+    return new Promise((resolve, reject) => {
+      fileStream.on('finish', () => {
+        resolve(`gs://${bucketName}/${fileOutputName}`)
+      })
+
+      fileStream.on('error', (err) => {
+        console.log('Error uploading to GCS', err);
+        reject(err)
+      })
+    });
+
+    
+  } catch (err) {
+    console.log('Error GCS :', err);
+    throw err;
+    
+  }
+}

@@ -4,7 +4,7 @@ const User = require("../models/user");
 const { isAdminAuth } = require("../middleware/auth");
 
 const router = express.Router();
-const sharpUpload = require("../middleware/sharpImage");
+// const sharpUpload = require("../middleware/sharpImage");
 
 const img_upload = require("../middleware/imageMiddleware");
 
@@ -60,7 +60,7 @@ router.post(
   "/create-service",
   isAdminAuth,
   authorize("services", "write"),
-  img_upload,
+  img_upload.upload,
   // sharpUpload.sharpUpload,
   service_controller.createService
 );
@@ -70,7 +70,7 @@ router.post(
   "/add-service-feature/:serviceId",
   isAdminAuth,
   authorize("services", "write"),
-  img_upload,
+  img_upload.upload,
   // sharpUpload.sharpUpload,
   service_controller.addServiceFeature
 );
@@ -79,7 +79,7 @@ router.patch(
   "/update-service-feature/:serviceId",
   isAdminAuth,
   authorize("services", "write"),
-  img_upload,
+  img_upload.upload,
   // sharpUpload.sharpUpload,
   service_controller.updateServiceFeature
 );
@@ -101,7 +101,7 @@ router.post(
   "/upload-service-icon/:serviceId",
   isAdminAuth,
   authorize("services", "write"),
-  img_upload,
+  img_upload.upload,
   // sharpUpload.sharpUpload,
   service_controller.uploadServiceIcon
 );
@@ -121,7 +121,7 @@ router.patch(
   "/update-service/:id",
   isAdminAuth,
   authorize("services", "write"),
-  img_upload,
+  img_upload.upload,
   // sharpUpload.sharpUpload,
   service_controller.updateService
 ); // passing object id
@@ -145,7 +145,7 @@ router.post(
   "/create-product",
   isAdminAuth,
   authorize("services", "write"),
-  img_upload,
+  img_upload.upload,
   // sharpUpload.sharpUpload,
   product_controller.createProduct
 );
@@ -165,7 +165,7 @@ router.patch(
   "/update-product/:id",
   isAdminAuth,
   authorize("services", "write"),
-  img_upload,
+  img_upload.upload,
   // sharpUpload.sharpUpload,
   product_controller.updateProduct
 ); // passing object id
@@ -287,7 +287,7 @@ router.post(
   "/create-package",
   isAdminAuth,
   authorize("services", "write"),
-  img_upload,
+  img_upload.upload,
   // sharpUpload.sharpUpload,
   package_controller.createPackage
 );
@@ -295,7 +295,7 @@ router.patch(
   "/update-package/:id",
   isAdminAuth,
   authorize("services", "write"),
-  img_upload,
+  img_upload.upload,
   // sharpUpload.sharpUpload,
   package_controller.updatePackage
 );
