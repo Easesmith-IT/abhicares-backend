@@ -4,7 +4,7 @@ const AppError = require("../Admin/errorController");
 
 exports.uploadBanners = async (req, res, next) => {
   try {
-    const { type, section, page,serviceId } = req.body;
+    const { type, section, page, serviceId } = req.body;
 
     const image = req.files[0].filename;
 
@@ -18,7 +18,7 @@ exports.uploadBanners = async (req, res, next) => {
       // Update images array in the existing document
       console.log("existing document", existingDoc.image);
       existingDoc.image = image;
-      if(serviceId)existingDoc.serviceId = serviceId;
+      if (serviceId) existingDoc.serviceId = serviceId;
       await existingDoc.save();
 
       res.status(200).json({
@@ -32,11 +32,11 @@ exports.uploadBanners = async (req, res, next) => {
         page: page,
         section: section,
         image: image,
+      };
+      if (serviceId) {
+        newContent.serviceId = serviceId || null
       }
-      if(serviceId){
-        newContent.serviceId = serviceId
-      }
-      
+
       const newDoc = await Content.create(newContent);
       res.status(200).json({
         message: "Content added successfully",
@@ -56,7 +56,16 @@ exports.getBanners = async (req, res, next) => {
     if (heroBanners) {
       doc = await Content.find({ section, page });
 
-      const banners = doc.map((doc) => doc.image);
+      const banners = [];
+
+      for (const singleDoc of doc) {
+        let serviceId = null;
+        if (singleDoc.serviceId) {
+          serviceId = await Service.findById(singleDoc.serviceId);
+        }
+
+        banners.push({ image: singleDoc.image, serviceId });
+      }
 
       res.status(200).json({
         success: true,
@@ -64,9 +73,13 @@ exports.getBanners = async (req, res, next) => {
       });
     } else {
       doc = await Content.findOne({ type, section, page });
+      let serviceId = null
+      if(doc.serviceId){
+        serviceId = await Service.findById(doc.serviceId);
+      }
       res.status(200).json({
         success: true,
-        banners: {image:doc.image,serviceId:doc.serviceId|| null},
+        banners: { image: doc.image, serviceId},
       });
     }
 
