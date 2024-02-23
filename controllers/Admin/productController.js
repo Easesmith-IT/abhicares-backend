@@ -116,7 +116,7 @@ exports.getServiceProduct = async (req, res, next) => {
 exports.updateProduct = async (req, res, next) => {
   try {
     const id = req.params.id; // object id
-    const { name, price, offerPrice, description,imageUrl } = req.body;
+    let { name, price, offerPrice, description, imageUrl } = req.body;
     let newImageUrls = [];
 
     if (req?.files) {
@@ -127,7 +127,6 @@ exports.updateProduct = async (req, res, next) => {
         newImageUrls.push(fileUrl)
       }
     }
-
     if (!name || !price || !offerPrice || !description) {
       throw new AppError(400, "All the fields are required");
     } else {
@@ -136,29 +135,26 @@ exports.updateProduct = async (req, res, next) => {
       result.price = price;
       result.offerPrice = offerPrice;
       result.description = description;
-
       // delete files
       const deleteFilesArr = [];
-
-      result.imageUrl.map((url)=>{
-        const temp = imageUrl.find((r)=>r===url);
-        if(!temp)deleteFilesArr.push(url)
+      imageUrl = JSON.parse(imageUrl);
+      result.imageUrl.map((url) => {
+        const temp = imageUrl.find((r) => r === url);
+        if (!temp) deleteFilesArr.push(url)
       })
-
-      if(deleteFilesArr.length>0){
-        for(const file of deleteFilesArr){
+      if (deleteFilesArr.length > 0) {
+        for (const file of deleteFilesArr) {
           await deleteFileFromGCS(file)
         }
       }
-
-      result.imageUrl = [...imageUrl,...newImageUrls]
-
+      result.imageUrl = [...imageUrl, ...newImageUrls]
       await result.save();
       res
         .status(200)
         .json({ success: true, message: "product updated successful" });
     }
   } catch (err) {
+    console.log("error",err);
     next(err);
   }
 };

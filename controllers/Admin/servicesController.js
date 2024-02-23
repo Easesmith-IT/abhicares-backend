@@ -152,9 +152,8 @@ exports.updateService = async (req, res, next) => {
       result.name = name;
       result.startingPrice = startingPrice;
       result.description = description;
-       let imageUrl = result.imageUrl
        if (req?.files[0]) {
-        console.log(req.files[0])
+        await deleteFileFromGCS(result.imageUrl)
         const ext = req.files[0].originalname.split(".").pop();
         const ret = await uploadFileToGCS(req.files[0].buffer, ext);
         const fileUrl = ret.split("/").pop();
@@ -264,22 +263,20 @@ exports.addServiceFeature = async (req, res, next) => {
 
 exports.updateServiceFeature = async (req, res, next) => {
   try {
-    console.log('inside update')
     const serviceId = req.params.serviceId;
     let { title, description, index } = req.body
 
     const service = await serviceModel.findById(serviceId);
-    console.log('service.features[index]', service.features[index])
 
     service.features[index].title = title;
     service.features[index].description = description;
  
     if (req?.files) {
+      await deleteFileFromGCS(service.features[index].image)
       const ext = req.files[0].originalname.split(".").pop();
       const ret = await uploadFileToGCS(req.files[0].buffer, ext);
       const fileUrl = ret.split("/").pop();
       service.features[index].image = fileUrl;
-      console.log(fileUrl)
     }
     await service.save()
 
