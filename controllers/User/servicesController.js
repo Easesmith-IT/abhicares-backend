@@ -35,7 +35,8 @@ exports.getCategoryService = async (req, res, next) => {
 
     // Use Promise.all to wait for all promises to resolve
     const productsPromises = uniqueServiceIds.map(async (serviceId) => {
-      return await productModel.find({ serviceId: serviceId });
+      return await productModel.find({ serviceId: serviceId }).populate({path:'serviceId',model
+    :'Service'})
     });
 
     // Wait for all promises to resolve
