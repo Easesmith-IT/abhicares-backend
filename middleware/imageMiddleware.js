@@ -65,3 +65,13 @@ exports.uploadFileToGCS = async (fileBuffer,ext) => {
     
   }
 }
+
+exports.deleteFileFromGCS = async (fileName) => {
+  try{
+    await storageClient.bucket(bucketName).file(fileName).delete()
+    console.log('File successfully deleted');
+  }catch(err){
+    console.log('Error deleting file: ',err)
+  }
+}
+

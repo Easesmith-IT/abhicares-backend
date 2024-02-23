@@ -1,4 +1,4 @@
-const { uploadFileToGCS } = require("../../middleware/imageMiddleware");
+const { uploadFileToGCS, deleteFileFromGCS } = require("../../middleware/imageMiddleware");
 const productModel = require("../../models/product");
 const AppError = require("../Admin/errorController");
 exports.createProduct = async (req, res, next) => {
@@ -116,15 +116,15 @@ exports.getServiceProduct = async (req, res, next) => {
 exports.updateProduct = async (req, res, next) => {
   try {
     const id = req.params.id; // object id
-    const { name, price, offerPrice, description } = req.body;
-    let imageUrl = [];
+    const { name, price, offerPrice, description,imageUrl } = req.body;
+    let newImageUrls = [];
 
     if (req?.files) {
       for (const file of req.files) {
         const ext = file.originalname.split(".").pop();
         const ret = await uploadFileToGCS(file.buffer, ext);
         const fileUrl = ret.split("/").pop();
-        imageUrl.push(fileUrl)
+        newImageUrls.push(fileUrl)
       }
     }
 
@@ -137,9 +137,21 @@ exports.updateProduct = async (req, res, next) => {
       result.offerPrice = offerPrice;
       result.description = description;
 
-      if (req.files.length > 0) {
-        result.imageUrl = imageUrl;
+      // delete files
+      const deleteFilesArr = [];
+
+      result.imageUrl.map((url)=>{
+        const temp = imageUrl.find((r)=>r===url);
+        if(!temp)deleteFilesArr.push(url)
+      })
+
+      if(deleteFilesArr.length>0){
+        for(const file of deleteFilesArr){
+          await deleteFileFromGCS(file)
+        }
       }
+
+      result.imageUrl = [...imageUrl,...newImageUrls]
 
       await result.save();
       res

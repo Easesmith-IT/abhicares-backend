@@ -41,6 +41,7 @@ exports.generateOTP = async (phoneNumber,user) => {
 
     await existingOtpDoc.save();
   } else {
+     await userOtpLinkModel.findOneAndDelete({phone:user.phone})
     const otpDoc = new userOtpLinkModel({
       phone: user.phone,
       userId: user._id,

@@ -1,7 +1,7 @@
 const serviceModel = require("../../models/service");
 const categoryModel = require("../../models/category");
 const AppError = require("../Admin/errorController");
-const { uploadFileToGCS } = require("../../middleware/imageMiddleware");
+const { uploadFileToGCS, deleteFileFromGCS } = require("../../middleware/imageMiddleware");
 exports.createService = async (req, res, next) => {
   try {
     var {
@@ -22,6 +22,8 @@ exports.createService = async (req, res, next) => {
       const fileUrl = ret.split("/").pop();
       imageUrl = fileUrl;
     }
+
+    await deleteFileFromGCS('file_1708611458635.png')
  
 
     if (
