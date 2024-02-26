@@ -12,6 +12,8 @@ const seller_controller = require("../controllers/Admin/sellerController");
 const authController = require("../controllers/User/auth");
 const traceOrder_controller = require("../controllers/User/traceOrderController");
 const bookingControler = require("../controllers/service app/bookings_controller");
+const serviceAuthController = require("../controllers/service app/service_app_auth_controller");
+
 //homepage route
 router.get(
   "/get-homepage-hero-banners",
@@ -34,7 +36,8 @@ router.get(
 
 // seller authentication
 router.post("/create-seller", serviceAppController.createSeller);
-router.post("/login", serviceAppController.login);
+router.post("/login-otp", serviceAuthController.generateOtpseller);
+router.post("/login", serviceAuthController.verifySellerOtp);
 router.get("/get-partner/:id", serviceAppController.getPartner);
 
 router.get("/get-services/:catId", serviceAppController.getServices);
