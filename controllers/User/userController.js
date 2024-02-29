@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const cartModel = require("../../models/cart");
 const AppError = require("../User/errorController");
 
-
 // Encode the concatenated string into base64
 const axios = require("axios");
 const { generateOTP, verifyOTP } = require("../../util/otpHandler");
@@ -41,8 +40,8 @@ exports.generateOtpUser = async (req, res, next) => {
     //   specialChars: false,
     // });
 
-    await generateOTP(phoneNumber,user)
-  
+    await generateOTP(phoneNumber, user);
+
     res.status(200).json({ message: "otp sent successful" });
   } catch (err) {
     console.log(err);
@@ -62,7 +61,7 @@ exports.verifyUserOtp = async (req, res, next) => {
         .json({ success: false, message: "User does not exist" });
     }
 
-    await verifyOTP(phoneNumber,enteredOTP,user,res)
+    await verifyOTP(phoneNumber, enteredOTP, user, res);
     const payload = { id: user._id };
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "2d",
@@ -107,6 +106,7 @@ exports.verifyUserOtp = async (req, res, next) => {
     res.status(200).json({
       message: "Logged In",
       success: true,
+      user: user,
       userName: user.name,
       userPhone: user.phone,
     });
@@ -259,7 +259,9 @@ exports.createUser = async (req, res, next) => {
           await userCart.save();
           user.cartId = userCart._id;
           await user.save();
-          const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET,{expiresIn:"2d"});
+          const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: "2d",
+          });
           if (req.cookies["guestCart"]) {
             const guestCart = JSON.parse(req.cookies["guestCart"]);
             const carItems = guestCart.items;

@@ -8,8 +8,7 @@ const router = express.Router();
 const appController = require("../controllers/User/app-controller");
 const paymentController = require("../controllers/User/payments");
 const service_controller = require("../controllers/User/servicesController");
-
-const authController = require("../controllers/User/auth");
+const user_controller = require("../controllers/User/userController");
 // const orderController = require("../controllers/order");
 //////////////////////////////////////////////////////////////////
 
@@ -28,7 +27,8 @@ router.get("/get-Package-details/:packageId", appController.getPackageDetails);
 // router.get("/get-product/:productId", appController.getProductDetails);
 
 router.get("/get-user/:userId", appController.getUser);
-router.post("/login", appController.login);
+router.post("/login", user_controller.verifyUserOtp);
+router.post("/login-otp", user_controller.generateOtpUser);
 router.post("/signup", appController.createUser);
 //
 router.post("/add-address", appController.AddUserAddress);
