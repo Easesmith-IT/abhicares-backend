@@ -1,6 +1,4 @@
 const userModel = require("../../models/user");
-const userOtpLinkModel = require("../../models/userOtpLink");
-const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
 const cartModel = require("../../models/cart");
 const AppError = require("../User/errorController");
@@ -350,6 +348,25 @@ exports.getAllUser = async (req, res, next) => {
   }
 };
 
+
+exports.updateEmail = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const email = req.body.email;
+
+    const user = await userModel.findById(userId);
+    user.email = email;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Email updated successfully!",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // this only for admin not for general user
 exports.updateUserByAdmin = async (req, res, next) => {
   try {
@@ -421,19 +438,6 @@ exports.searchUser = async (req, res, next) => {
   }
 };
 
-// exports.changeUserStatus = async (req, res, next) => {
-//   try {
-//     const id = req.params.id
-//     const { status } = req.body
-
-//     var result = await userModel.findOne({ _id: id })
-//     result.status = status
-//     result.save()
-//     res.status(200).json({ success: true, message: 'Data updated successful' })
-//   } catch (err) {
-//    next(err)
-//   }
-// }
 exports.logoutUser = async (req, res, next) => {
   try {
     res.clearCookie("token");

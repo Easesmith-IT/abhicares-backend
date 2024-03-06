@@ -157,4 +157,9 @@ router.get("/get-user-help", userAuth, helpCenter_controller.getUserHelpCenter);
 // Coupon routes
 router.post("/get-coupon-details", userAuth, coupon_controller.getCouponByName);
 
+// user profile routes
+router.post('/update-email',userAuth,user_controller.updateEmail)
+
+
+
 module.exports = router;
