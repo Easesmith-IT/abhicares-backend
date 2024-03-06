@@ -453,6 +453,37 @@ exports.searchUser = async (req, res, next) => {
   }
 }
 
+exports.getUserData = async (req, res, next) => {
+  try {
+
+    const users = await userModel.find();
+
+    const arr = []
+    
+    for(const user of users){
+      let add = null
+      addresses = await userAddressModel.find({userId:user._id});
+
+      if(addresses.length>0){
+        const defaultAdd = addresses.find((add)=>add.defaultAddress===true);
+        
+        if(defaultAdd)add = {city:defaultAdd.city,pincode:defaultAdd.pincode};
+        else add ={city:addresses[0].city,pincode:addresses[0].pincode};
+      } 
+
+      arr.push({userInfo:user,add:add})
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'user data',
+      users: arr,
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
 // exports.changeUserStatus = async (req, res, next) => {
 //   try {
 //     const id = req.params.id

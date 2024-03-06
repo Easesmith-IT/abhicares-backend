@@ -6,6 +6,7 @@ const AppError = require("../User/errorController");
 // Encode the concatenated string into base64
 const axios = require("axios");
 const { generateOTP, verifyOTP } = require("../../util/otpHandler");
+const userAddressModel = require("../../models/useraddress");
 const authKey = "T1PhA56LPJysMHFZ62B5";
 const authToken = "8S2pMXV8IRpZP6P37p4SWrVErk2N6CzSEa458pt1";
 const credentials = `${authKey}:${authToken}`;
@@ -361,6 +362,24 @@ exports.updateEmail = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Email updated successfully!",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.userInfo = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    const user = await userModel.findById(userId);
+    const userAddresses = await userAddressModel.find({userId})
+
+
+    res.status(200).json({
+      success: true,
+      userInfo:{user,userAddresses},
+      message: "User Profile sent!",
     });
   } catch (err) {
     next(err);

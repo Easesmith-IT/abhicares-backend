@@ -159,6 +159,7 @@ router.post("/get-coupon-details", userAuth, coupon_controller.getCouponByName);
 
 // user profile routes
 router.post('/update-email',userAuth,user_controller.updateEmail)
+router.get('/user-info',userAuth,user_controller.userInfo)
 
 
 

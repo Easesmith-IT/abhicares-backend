@@ -254,7 +254,6 @@ router.patch(
   authorize("customers", "write"),
   user_controller.updateUserByAdmin
 ); // passing object id
-router;
 router.delete(
   "/delete-user/:id",
   isAdminAuth,
@@ -266,6 +265,13 @@ router.get(
   isAdminAuth,
   authorize("customers", "read"),
   user_controller.searchUser
+);
+
+router.get(
+  "/get-users-data",
+  isAdminAuth,
+  authorize("customers", "read"),
+  user_controller.getUserData
 );
 
 // Enquiry Routes
