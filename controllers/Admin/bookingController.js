@@ -1,5 +1,5 @@
 const bookingModel = require('../../models/booking')
-const AppError = require('../Admin/errorController')
+const AppError = require("../errorController");
 
 exports.deleteBooking = async (req, res, next) => {
   try {

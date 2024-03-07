@@ -3,7 +3,7 @@ const router = express.Router();
 
 //controllers
 const serviceAppController = require("../controllers/service app/service_app_controller");
-const traceOrder_controller = require("../controllers/User/traceOrderController");
+const traceOrder_controller = require("../controllers/traceOrderController");
 const bookingControler = require("../controllers/service app/bookings_controller");
 const serviceAuthController = require("../controllers/service app/service_app_auth_controller");
 

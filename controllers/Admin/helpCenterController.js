@@ -1,5 +1,5 @@
 const helpCenterModel = require('../../models/helpCenter')
-const AppError = require('../Admin/errorController')
+const AppError = require("../errorController");
 
 exports.createHelpCenter = async (req, res, next) => {
   try {

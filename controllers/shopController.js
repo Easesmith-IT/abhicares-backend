@@ -2,7 +2,7 @@ const Category = require("../models/category");
 const Product = require("../models/product");
 const Service = require("../models/service");
 const Enquiry = require("../models/enquiry");
-const Package = require("../models/package");
+const Package = require("../models/packages");
 const Cart = require("../models/cart");
 const Review = require("../models/review");
 const Order = require("../models/order");
@@ -172,26 +172,18 @@ exports.getPackageProduct = async (req, res, next) => {
   try {
     const id = req.params.id;
 
-    const result = await Package.aggregate([
-      {
-        $match: { _id: new mongoose.Types.ObjectId(id) },
-      },
-      {
-        $lookup: {
-          from: "products",
-          let: { pid: "$products.productId" },
-          pipeline: [
-            { $match: { $expr: { $in: ["$_id", "$$pid"] } } },
-            // Add additional stages here
-          ],
-          as: "productObjects",
-        },
-      },
-    ]);
+  const package = await Package.findById(id);
+
+  const productIds = package.products.map((prod)=>prod.productId.toString())
+  console.log('productIds',productIds)
+
+  const products = await Product.find({_id:{$in:productIds}})
+
+  console.log('products',products)
 
     res
       .status(200)
-      .json({ success: true, message: "package list", data: result });
+      .json({ success: true, message: "products list", data: products });
   } catch (err) {
     console.log(err);
     next(err);
@@ -517,20 +509,6 @@ exports.updateItemQuantity = async (req, res, next) => {
   }
 };
 
-exports.getCmsProduct = async (req, res, next) => {
-  try {
-    const id = req.params.id; // this is service id
-
-    const result = await Product.find({ serviceId: id });
-    res
-      .status(200)
-      .json({ success: true, message: "service product", data: result });
-  } catch (err) {
-    next(err);
-  }
-};
-
-//review controllers
 
 exports.addProductReview = async (req, res, next) => {
     try {
@@ -699,21 +677,6 @@ exports.addProductReview = async (req, res, next) => {
   };
 
 
-// get user bookings
-  exports.getUsersBooking = async (req, res, next) => {
-    try {
-      const id = req.user._id; // user id
-      // const userId=req.body.userId  // user id
-      const result = await Booking.find({ userId: id });
-      res.status(200).json({
-        success: true,
-        message: "These all are your booking",
-        data: result,
-      });
-    } catch (err) {
-      next(err);
-    }
-  };
 
 
 // faq

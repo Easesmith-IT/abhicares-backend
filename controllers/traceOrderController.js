@@ -1,6 +1,6 @@
-const { io } = require('../../server')
-const AppError = require('../errorController')
-const bookingModel=require("../../models/booking")
+const { io } = require('../server')
+const AppError = require('../controllers/errorController')
+const bookingModel=require("../models/booking")
 
 exports.addLocationToDatabase = async (req, res, next) => {
   try {

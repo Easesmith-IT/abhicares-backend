@@ -1,5 +1,5 @@
 const enquiryModel = require('../../models/enquiry')
-const AppError = require('../Admin/errorController')
+const AppError = require("../errorController");
 
 exports.createEnquiry = async (req, res, next) => {
   try {

@@ -1,7 +1,6 @@
-const SellerModel = require("../../models/seller");
+
 const BookingModel = require("../../models/booking");
-const AppError = require("../Admin/errorController");
-const UserModel = require("../../models/user");
+
 
 exports.getSellerOrderHistory = async (req, res, next) => {
   try {

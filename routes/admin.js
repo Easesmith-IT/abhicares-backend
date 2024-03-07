@@ -1,15 +1,14 @@
 const express = require("express");
-// const { check, isAdminAuth, body } = require("express-validator");
-const User = require("../models/user");
 const { isAdminAuth } = require("../middleware/auth");
+const { authorize } = require("../middleware/authorization");
 
 const router = express.Router();
-// const sharpUpload = require("../middleware/sharpImage");
-
 const img_upload = require("../middleware/imageMiddleware");
 
-const category_controller = require("../controllers/Admin/categoryController");
-const service_controller = require("../controllers/Admin/servicesController");
+const adminController = require("../controllers/adminController")
+
+// const category_controller = require("../controllers/Admin/categoryController");
+// const service_controller = require("../controllers/Admin/servicesController");
 const product_controller = require("../controllers/Admin/productController");
 const seller_controller = require("../controllers/Admin/sellerController");
 const user_controller = require("../controllers/Admin/userController");
@@ -24,7 +23,7 @@ const booking_controller = require("../controllers/Admin/bookingController");
 
 const coupon_controller = require("../controllers/Admin/couponController");
 const faq_controller = require("../controllers/Admin/faqController");
-const { authorize } = require("../middleware/authorization");
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // Category Routes
 
@@ -32,25 +31,25 @@ router.post(
   "/create-category",
   isAdminAuth,
   authorize("services", "write"),
-  category_controller.postCreateCategory
+  adminController.postCreateCategory
 );
 router.get(
   "/get-all-category",
   isAdminAuth,
   authorize("services", "read"),
-  category_controller.getAllCategory
+  adminController.getAllCategory
 );
 router.patch(
   "/update-category/:id",
   isAdminAuth,
   authorize("services", "write"),
-  category_controller.updateCategory
+  adminController.updateCategory
 ); // passing object id
 router.delete(
   "/delete-category/:id",
   isAdminAuth,
   authorize("services", "write"),
-  category_controller.deleteCategory
+  adminController.deleteCategory
 ); // passing object id
 
 ///////////////////////////////////////////////////
@@ -62,7 +61,7 @@ router.post(
   authorize("services", "write"),
   img_upload.upload,
   // sharpUpload.sharpUpload,
-  service_controller.createService
+  adminController.createService
 );
 
 // service-feature routes
@@ -72,7 +71,7 @@ router.post(
   authorize("services", "write"),
   img_upload.upload,
   // sharpUpload.sharpUpload,
-  service_controller.addServiceFeature
+  adminController.addServiceFeature
 );
 
 router.patch(
@@ -81,21 +80,21 @@ router.patch(
   authorize("services", "write"),
   img_upload.upload,
   // sharpUpload.sharpUpload,
-  service_controller.updateServiceFeature
+  adminController.updateServiceFeature
 );
 
 router.post(
   "/delete-service-feature/:serviceId",
   isAdminAuth,
   authorize("services", "write"),
-  service_controller.deleteServiceFeature
+  adminController.deleteServiceFeature
 );
 
 router.get(
   "/get-service-details/:serviceId",
   isAdminAuth,
   authorize("services", "read"),
-  service_controller.getServiceDetails
+  adminController.getServiceDetails
 );
 router.post(
   "/upload-service-icon/:serviceId",
@@ -103,19 +102,19 @@ router.post(
   authorize("services", "write"),
   img_upload.upload,
   // sharpUpload.sharpUpload,
-  service_controller.uploadServiceIcon
+  adminController.uploadServiceIcon
 );
 router.get(
   "/get-all-service",
   isAdminAuth,
   authorize("services", "read"),
-  service_controller.getAllService
+  adminController.getAllService
 );
 router.get(
   "/get-category-service/:id",
   isAdminAuth,
   authorize("services", "read"),
-  service_controller.getCategoryService
+  adminController.getCategoryService
 ); // passing category id
 router.patch(
   "/update-service/:id",
@@ -123,19 +122,19 @@ router.patch(
   authorize("services", "write"),
   img_upload.upload,
   // sharpUpload.sharpUpload,
-  service_controller.updateService
+  adminController.updateService
 ); // passing object id
 router.delete(
   "/delete-service/:id",
   isAdminAuth,
   authorize("services", "write"),
-  service_controller.deleteCategoryService
+  adminController.deleteCategoryService
 ); // passing object id
 router.get(
   "/search-service",
   isAdminAuth,
   authorize("services", "read"),
-  service_controller.searchService
+  adminController.searchService
 );
 
 /////////////////////////////////////////////////

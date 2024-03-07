@@ -2,7 +2,7 @@ const sellerModel = require("../../models/seller");
 const sellerWallet = require("../../models/sellerWallet");
 const sellerCashout = require("../../models/sellerCashout");
 var bcrypt = require("bcryptjs");
-const AppError = require("../Admin/errorController");
+const AppError = require("../errorController");
 const axios = require("axios");
 const category = require("../../models/category");
 exports.createSeller = async (req, res, next) => {

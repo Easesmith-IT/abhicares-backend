@@ -1,6 +1,6 @@
 const serviceModel = require("../../models/service");
 const categoryModel = require("../../models/category");
-const AppError = require("../Admin/errorController");
+const AppError = require("../errorController");
 const { uploadFileToGCS, deleteFileFromGCS } = require("../../middleware/imageMiddleware");
 exports.createService = async (req, res, next) => {
   try {

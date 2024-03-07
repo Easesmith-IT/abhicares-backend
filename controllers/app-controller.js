@@ -1,19 +1,19 @@
 // const Nursery = require("../models/nursery");
-const Category = require("../../models/category");
-const Package = require("../../models/package");
-const Product = require("../../models/product");
-const Service = require("../../models/service");
-const User = require("../../models/user");
-const UserAddress = require("../../models/useraddress");
-const Order = require("../../models/order");
-const Content = require("../../models/content");
-const HelpCentre = require("../../models/helpCenter");
+const Category = require("../models/category");
+const Package = require("../models/packages");
+const Product = require("../models/product");
+const Service = require("../models/service");
+const User = require("../models/user");
+const UserAddress = require("../models/useraddress");
+const Order = require("../models/order");
+const Content = require("../models/content");
+const HelpCentre = require("../models/helpCenter");
 const mongoose = require("mongoose");
-const { auth } = require("../../middleware/auth");
+const { auth } = require("../middleware/auth");
 const jwt = require("jsonwebtoken");
-const BookingModel = require("../../models/booking");
+const BookingModel = require("../models/booking");
 const { contentSecurityPolicy } = require("helmet");
-const ReviewModel = require("../../models/review");
+const ReviewModel = require("../models/review");
 
 /////////////////////////////////////////////////////////////////////////////
 //app routes

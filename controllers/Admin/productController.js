@@ -1,6 +1,6 @@
 const { uploadFileToGCS, deleteFileFromGCS } = require("../../middleware/imageMiddleware");
 const productModel = require("../../models/product");
-const AppError = require("../Admin/errorController");
+const AppError = require("../errorController");
 exports.createProduct = async (req, res, next) => {
   try {
     var { name, price, offerPrice, description, serviceId } = req.body;

@@ -1,7 +1,7 @@
 const { default: mongoose } = require("mongoose");
 const packageModel = require("../../models/packages");
 const productModel = require("../../models/product");
-const AppError = require("../Admin/errorController");
+const AppError = require("../errorController");
 const { uploadFileToGCS, deleteFileFromGCS } = require("../../middleware/imageMiddleware");
 
 exports.createPackage = async (req, res, next) => {

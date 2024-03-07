@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 const { configDotenv } = require("dotenv");
 configDotenv({ path: "../config/config.env" });
 const fs = require("fs");
-const AppError = require("../Admin/errorController");
+const AppError = require("../errorController");
 
 //Importing Models
 const UserAddress = require("../../models/useraddress");

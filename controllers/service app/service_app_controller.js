@@ -5,7 +5,7 @@ var bcrypt = require("bcryptjs");
 
 //models
 const Category = require("../../models/category");
-const Package = require("../../models/package");
+const Package = require("../../models/packages");
 const Product = require("../../models/product");
 const Service = require("../../models/service");
 const User = require("../../models/user");
@@ -18,7 +18,7 @@ const SellerModel = require("../../models/seller");
 const SellerCashOut = require("../../models/sellerCashout");
 
 //controller
-const AppError = require("../Admin/errorController");
+const AppError = require("../errorController");
 
 //middleware
 const { auth } = require("../../middleware/auth");

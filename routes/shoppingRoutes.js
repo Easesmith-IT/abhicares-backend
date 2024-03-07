@@ -5,18 +5,9 @@ const isCity = require("../middleware/availableCity");
 
 // controllers
 const shoppingController = require('../controllers/shopController')
-
 const authController = require('../controllers/authController')
-
 const paymentController = require("../controllers/payments");
 
-// const review_controller = require("../controllers/User/reviewController");
-
-// const booking_controller = require("../controllers/User/bookingController");
-
-// const faq_controller = require("../controllers/User/faqController");
-// const helpCenter_controller = require("../controllers/User/helpCenterController");
-// const coupon_controller = require("../controllers/User/couponController");
 
 // Category routes
 router.get("/get-all-category", shoppingController.getAllCategory);
@@ -31,7 +22,7 @@ router.get("/get-all-product/:id", shoppingController.getServiceProduct); //pass
 router.post("/create-enquiry", shoppingController.createEnquiry);
 // Package Routes
 router.get("/get-service-package/:id", shoppingController.getServicePackage);
-router.get("/get-package-product/:id", shoppingController.getPackageProduct); //passing service id
+router.get("/get-package-product/:id", shoppingController.getPackageProduct); 
 
 
 //Cart Routes
@@ -77,7 +68,7 @@ router.patch(
   authController.updateUserAddress
 ); // passing address id
 // CMS Routes
-router.get("/get-cms-data/:id", shoppingController.getCmsProduct);
+
 router.get("/get-products-by-categoryId/:id", shoppingController.getCategoryService);
 
 // Review Routes
@@ -127,9 +118,6 @@ router.post(
 );
 router.post("/get-api-key", userAuth, paymentController.getApiKey);
 
-
-
-router.get("/get-user-bookings", userAuth, shoppingController.getUsersBooking); // passing user id
 
 // FAQ Routes
 router.get("/get-all-faq", userAuth, shoppingController.getAllFaq);

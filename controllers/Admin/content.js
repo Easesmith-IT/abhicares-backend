@@ -1,7 +1,7 @@
 const { uploadFileToGCS } = require("../../middleware/imageMiddleware");
 const Content = require("../../models/content");
 const Service = require("../../models/service");
-const AppError = require("../Admin/errorController");
+const AppError = require("../errorController");
 
 exports.uploadBanners = async (req, res, next) => {
   try {

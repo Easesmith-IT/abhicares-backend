@@ -1,7 +1,7 @@
 const sellerModel = require("../../models/seller");
 const bookingModel = require("../../models/booking");
 const orderModel = require("../../models/order")
-const AppError = require("../Admin/errorController");
+const AppError = require("../errorController");
 
 exports.getSellerList = async (req, res, next) => {
   try {

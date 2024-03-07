@@ -1,9 +1,3 @@
-//imports
-const bcrypt = require('bcryptjs')
-const fs = require('fs')
-const path = require('path')
-//Importing Helper Modules
-const fileHelper = require('../../util/file')
 
 //Importing Models
 const Category = require('../../models/category')
@@ -11,9 +5,9 @@ const Package = require('../../models/package')
 const Service = require('../../models/service')
 const Product = require('../../models/product')
 const Order = require('../../models/order')
-const Payments = require('../../models/payments')
 
-const AppError = require('../Admin/errorController')
+
+const AppError = require('../errorController')
 
 exports.postCreateCategory = async (req, res, next) => {
   try {
