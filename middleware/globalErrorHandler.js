@@ -1,8 +1,8 @@
-const AppErrorUser = require('../controllers/User/errorController')
-const AppErrorAdmin=require("../controllers/Admin/errorController")
+const AppError = require('../controllers/errorController')
+
 
 const errorHandler = (error, req, res, next) => {
-    if (error instanceof AppErrorUser) {
+    if (error instanceof AppError) {
         return res.status(error.statusCode).json({message:error.message})
     }
 

@@ -1,15 +1,8 @@
 const express = require("express");
-const { check, body } = require("express-validator");
-const { userAuth } = require("../middleware/auth");
-
 const router = express.Router();
 
 //controllers
 const serviceAppController = require("../controllers/service app/service_app_controller");
-const paymentController = require("../controllers/User/payments");
-const service_controller = require("../controllers/User/servicesController");
-const seller_controller = require("../controllers/Admin/sellerController");
-const authController = require("../controllers/User/auth");
 const traceOrder_controller = require("../controllers/User/traceOrderController");
 const bookingControler = require("../controllers/service app/bookings_controller");
 const serviceAuthController = require("../controllers/service app/service_app_auth_controller");

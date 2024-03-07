@@ -1,14 +1,11 @@
 const express = require("express");
 const { check, body } = require("express-validator");
-const User = require("../models/user");
-const { userAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
 const appController = require("../controllers/User/app-controller");
-const paymentController = require("../controllers/User/payments");
-const service_controller = require("../controllers/User/servicesController");
-const user_controller = require("../controllers/User/userController");
+const paymentController = require("../controllers/payments");
+const authController = require("../controllers/authController")
 // const orderController = require("../controllers/order");
 //////////////////////////////////////////////////////////////////
 
@@ -27,8 +24,8 @@ router.get("/get-Package-details/:packageId", appController.getPackageDetails);
 // router.get("/get-product/:productId", appController.getProductDetails);
 
 router.get("/get-user/:userId", appController.getUser);
-router.post("/login", user_controller.verifyUserOtp);
-router.post("/login-otp", user_controller.generateOtpUser);
+router.post("/login", authController.verifyUserOtp);
+router.post("/login-otp", authController.generateOtpUser);
 router.post("/signup", appController.createUser);
 //
 router.post("/add-address", appController.AddUserAddress);
@@ -44,7 +41,7 @@ router.get("/get-order-booking/:id", appController.getOrderBooking);
 
 router.post("/complete-order-booking", appController.postOrderBooking);
 
-router.get("/search-service", service_controller.searchService);
+router.get("/search-service", appController.searchService);
 router.get("/get-tickets/:userId", appController.getUserTickets);
 router.post("/raise-ticket", appController.raiseTicket);
 

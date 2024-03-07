@@ -6,62 +6,6 @@ const Admin = require("../../models/admin");
 const authHelper = require("../../util/authHelper");
 const jwtkey = require("../../util/jwtkey");
 
-// exports.getUser = async (req, res, next) => {
-//   console.log("inside user fn");
-//   try {
-//     const userId = req.params.userId;
-//     const user = await User.findOne({ _id: userId });
-
-//     console.log(user);
-
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     res.status(200).json({ user: user });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
-
-// exports.getUserByToken = async (req, res, next) => {
-//   console.log("REQ RECEIVED");
-//   const token = req.body.str;
-//   const SECURITY_CODE = process.env.SECURITY_CODE;
-
-//   const code = req.body.code;
-
-//   if (code !== SECURITY_CODE) {
-//     return res.status(400).json({
-//       success: false,
-//       message: "Invalid security code",
-//     });
-//   }
-
-//   try {
-//     // Verify the JWT token
-//     const validatedToken = await jwt.verify(token, process.env.JWT_SECRET);
-//     console.log(validatedToken);
-
-//     // Extract user ID from the validated token
-//     const userId = validatedToken.userId;
-//     console.log('from decoding the token',userId)
-
-//     // Send a successful response
-//     res.status(200).json({
-//       success: true,
-//       userId,
-//     });
-//   } catch (error) {
-//     // Handle JWT verification errors
-//     console.error(error.message);
-//     return res.status(401).json({
-//       success: false,
-//       message: 'Invalid token',
-//     });
-//   }
-// };
 
 exports.getSubAdmins = async (req, res, next) => {
   try {

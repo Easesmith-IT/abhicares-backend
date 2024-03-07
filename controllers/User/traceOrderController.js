@@ -1,5 +1,5 @@
 const { io } = require('../../server')
-const AppError = require('../User/errorController')
+const AppError = require('../errorController')
 const bookingModel=require("../../models/booking")
 
 exports.addLocationToDatabase = async (req, res, next) => {
