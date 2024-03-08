@@ -44,6 +44,7 @@ exports.generateOtpUser = async (req, res, next) => {
   
       res.status(200).json({ message: "otp sent successful" });
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       console.log(err);
       next(err);
     }
@@ -111,75 +112,8 @@ exports.generateOtpUser = async (req, res, next) => {
         userName: user.name,
         userPhone: user.phone,
       });
-      // jwt.verify(tokenData, process.env.JWT_SECRET, async (err, authData) => {
-      //   if (err) {
-      //     res
-      //       .status(400)
-      //       .json({ success: false, message: "token validation failed" });
-      //   } else {
-      //     // if (authData.otp === enteredOTP) {
-      //     if (10 === 10) {
-      //       if (req.session.name && req.session.phone) {
-      //         const result = await userModel.create({
-      //           name: req.session.name,
-      //           phone: req.session.phone,
-      //         });
-  
-      //         delete req.session.name;
-      //         delete req.session.phone;
-      //         // const cartItems = req.cookies['cart']
-      //         req.session.userId = result._id.toString();
-      //         if (req.cookies["cart"]) {
-      //           const cartCreated = await cartModel.create({
-      //             userId: result._id,
-      //             items: req.cookies["cart"],
-      //             // totalPrice: 0
-      //           });
-      //           res.clearCookie("cart").json({
-      //             success: true,
-      //             message: "User created successful",
-      //             data: authData.userId,
-      //           });
-      //         } else {
-      //           const cartCreated = await cartModel.create({
-      //             userId: result._id,
-      //             items: [],
-      //             totalPrice: 0,
-      //           });
-      //           res
-      //             .status(201)
-      //             .json({ message: "User created successful", data: result._id });
-      //         }
-      //       } else {
-      //         let cartItems;
-      //         if (req.cookies["cart"]) {
-      //           cartItems = req.cookies["cart"];
-      //         } else {
-      //           cartItems = [];
-      //         }
-  
-      //         const result = await cartModel.findOne({
-      //           userId: authData.userId,
-      //         });
-      //         // console.log("cartitems----->",cartItems)
-      //         // console.log("result------>",result.items)
-      //         if (result?.items.length === 0) {
-      //           result.items.push(...cartItems); // merging session cart to user cart
-      //           await result.save();
-      //         }
-      //         // req.session.userId = authData.userId
-      //         res.clearCookie("cart").json({
-      //           success: true,
-      //           message: "User loggedin successful",
-      //           data: authData.userId,
-      //         });
-      //       }
-      //     } else {
-      //       res.status(400).json({ success: false, message: "Invalid Otp" });
-      //     }
-      //   }
-      // });
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       console.log("err--->", err);
       next(err);
     }
@@ -231,6 +165,7 @@ exports.generateOtpUser = async (req, res, next) => {
         }
       }
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       console.log(err);
       next(err);
     }
@@ -269,12 +204,6 @@ exports.generateOtpUser = async (req, res, next) => {
               const guestCart = JSON.parse(req.cookies["guestCart"]);
               const carItems = guestCart.items;
               for (const guestCartItem of carItems) {
-                // var prod, pack;
-                // if (guestCartItem.type == "product") {
-                //   prod = await productModel.findById(guestCartItem.productId._id);
-                // } else if (guestCartItem.type == "package") {
-                //   pack = await packageModel.findById(guestCartItem.packageId._id);
-                // }
                 if (guestCartItem.type == "product") {
                   const existingCartItem = userCart.items.find(
                     (item) =>
@@ -317,6 +246,7 @@ exports.generateOtpUser = async (req, res, next) => {
         }
       }
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       console.log(err);
       next(err);
     }
@@ -345,6 +275,7 @@ exports.generateOtpUser = async (req, res, next) => {
         message: "Email updated successfully!",
       });
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       next(err);
     }
   };
@@ -364,6 +295,7 @@ exports.generateOtpUser = async (req, res, next) => {
         message: "User Profile sent!",
       });
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       next(err);
     }
   };
@@ -392,6 +324,7 @@ exports.generateOtpUser = async (req, res, next) => {
           .json({ success: true, message: "user address created successful" });
       }
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       console.log(err);
       next(err);
     }
@@ -417,6 +350,7 @@ exports.generateOtpUser = async (req, res, next) => {
           .json({ success: true, message: "user address updated successful" });
       }
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       console.log(err)
       next(err);
     }
@@ -438,6 +372,7 @@ exports.generateOtpUser = async (req, res, next) => {
         });
       }
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       next(err);
     }
   };
@@ -450,6 +385,7 @@ exports.generateOtpUser = async (req, res, next) => {
         .status(200)
         .json({ success: true, message: "address deleted successful" });
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       console.log(err)
       next(err);
     }

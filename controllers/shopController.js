@@ -21,6 +21,7 @@ exports.getAllCategory = async (req, res, next) => {
       data: result,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -53,6 +54,7 @@ exports.getServiceProduct = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -64,6 +66,7 @@ exports.getServicesByCategoryId = async (req, res, next) => {
 
     res.status(200).json({ success: true, data: services });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -100,6 +103,7 @@ exports.searchService = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -129,6 +133,7 @@ exports.getCategoryService = async (req, res, next) => {
 
     res.status(200).json({ success: true, data: products });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -151,6 +156,7 @@ exports.createEnquiry = async (req, res, next) => {
       .status(201)
       .json({ success: true, message: "enquiry created successful" });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -163,6 +169,7 @@ exports.getServicePackage = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "package list", data: result });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -184,6 +191,7 @@ exports.getPackageProduct = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "products list", data: products });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err);
     next(err);
   }
@@ -268,6 +276,7 @@ exports.getCart = async (req, res, next) => {
         totalOfferPrice: cart.totalPrice,
       });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err);
     next(err);
   }
@@ -350,6 +359,7 @@ exports.removeItemFromCart = async (req, res, next) => {
       });
     }
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err);
     next(err);
   }
@@ -433,6 +443,7 @@ exports.addItemToCart = async (req, res, next) => {
       });
     }
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err);
     next(err);
   }
@@ -503,6 +514,7 @@ exports.updateItemQuantity = async (req, res, next) => {
       }
     }
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err);
     next(err);
   }
@@ -572,7 +584,7 @@ exports.addProductReview = async (req, res, next) => {
           }
         }
   
-        const review = await Review.create(reviewObj);
+         await Review.create(reviewObj);
         return (
           res.status(200).json({
             message: "Review added successfully",
@@ -587,6 +599,7 @@ exports.addProductReview = async (req, res, next) => {
         })
       }
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       console.log("add review error", err);
       next(err);
     }
@@ -601,6 +614,7 @@ exports.addProductReview = async (req, res, next) => {
         .status(200)
         .json({ success: true, message: "Review deleted successful" });
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       next(err);
     }
   };
@@ -623,6 +637,7 @@ exports.addProductReview = async (req, res, next) => {
           .json({ success: true, message: "review updated successful" });
       }
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       next(err);
     }
   };
@@ -673,6 +688,7 @@ exports.addProductReview = async (req, res, next) => {
       }
   
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       next(err);
     }
   };
@@ -688,6 +704,7 @@ exports.addProductReview = async (req, res, next) => {
         .status(201)
         .json({ success: true, message: 'list of all faq', data: result })
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       next(err)
     }
   }
@@ -714,6 +731,7 @@ exports.addProductReview = async (req, res, next) => {
           .json({ success: true, message: 'help center created successful' })
       }
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       next(err)
     }
   }
@@ -735,6 +753,7 @@ exports.addProductReview = async (req, res, next) => {
           })
       }
     } catch (err) {
+      res.status(500).json({success:false,message:'Something went wrong:('})
       next(err)
     }
   }
@@ -745,7 +764,7 @@ exports.addProductReview = async (req, res, next) => {
            
           const {name}=req.body
         if(!name){
-         
+          res.status(400).json({success:false,message:'All Fields are required'})
         }else{
                 const result=await Coupon.find({name:name})
                 if(result.length==0){
@@ -756,6 +775,7 @@ exports.addProductReview = async (req, res, next) => {
                
         }
     }catch(err){
+      res.status(500).json({success:false,message:'Something went wrong:('})
       next(err)
     }
   }

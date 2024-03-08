@@ -12,7 +12,6 @@ const Cart = require("../models/cart");
 const Booking = require("../models/booking");
 const packageModel = require("../models/packages");
 const tempOrder = require("../models/tempOrder");
-const easyinvoice = require("easyinvoice");
 const { autoAssignBooking } = require("../util/autoAssignBooking");
 
 const instance = new Razorpay({
@@ -168,6 +167,7 @@ exports.getAllUserOrders = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "Your all orders", data: result });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -207,92 +207,11 @@ exports.updateOrderStatus = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "Order status changed successfull" });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
 
-exports.getAllOrders = async (req, res, next) => {
-  try {
-    console.log("Hello--->");
-    // let status="in-review"
-    // if(req.body.status){
-    //      status=req.body.status
-    // }
-    //  const {status}=req.body.status
-    var page = 1;
-    if (req.query.page) {
-      page = req.query.page;
-    }
-    var limit = 10;
-    const allList = await Order.find().count();
-    var num = allList / limit;
-    var fixedNum = num.toFixed();
-    var totalPage = fixedNum;
-    if (num > fixedNum) {
-      totalPage++;
-    }
-    const result = await Order.find()
-      .populate({
-        path: "items",
-        populate: {
-          path: "package",
-          populate: {
-            path: "products",
-            populate: {
-              path: "productId",
-              model: "Product",
-            },
-          },
-        },
-      })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .exec();
-    res.status(201).json({
-      success: true,
-      message: "List of all orders",
-      data: result,
-      totalPage: totalPage,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.getMolthlyOrder = async (req, res, next) => {
-  try {
-    const { month, year } = req.body;
-    if (!month || !year) {
-      throw new AppError(400, "All the fields are required");
-    } else {
-      const startDate = new Date(year, month - 1, 1); // Month is zero-based
-      const endDate = new Date(year, month, 0, 23, 59, 59);
-      const result = await Order.find({
-        createdAt: {
-          $gte: startDate,
-          $lte: endDate,
-        },
-      }).populate({
-        path: "items",
-        populate: {
-          path: "package",
-          populate: {
-            path: "products",
-            populate: {
-              path: "productId",
-              model: "Product",
-            },
-          },
-        },
-      });
-      res
-        .status(200)
-        .json({ success: true, message: "Orders list", data: result });
-    }
-  } catch (err) {
-    next(err);
-  }
-};
 
 const generateOrderItems = async (cartItems,bookings) => {
   const orderItems = [];
@@ -458,6 +377,7 @@ exports.websiteCodOrder = async (req, res, next) => {
     await cart.save();
     return res.status(200).json(order);
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err);
     return { message: "error", error: err };
   }
@@ -498,7 +418,7 @@ exports.checkout = async (req, res, next) => {
 
     const userAddress = await UserAddress.findById(userAddressId);
    
-    orderPrice = cart.totalPrice;
+   let orderPrice = cart.totalPrice;
     const order = new tempOrder({
       orderPlatform: "website",
       paymentType: "Online",
@@ -545,6 +465,7 @@ exports.checkout = async (req, res, next) => {
       order: order,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -619,6 +540,7 @@ exports.paymentVerification = async (req, res, next) => {
       });
     }
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log("err", err);
     next(err);
   }
