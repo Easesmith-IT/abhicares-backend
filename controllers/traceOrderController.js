@@ -7,7 +7,7 @@ exports.addLocationToDatabase = async (req, res, next) => {
     const {location,status} = req.body
     const id = req.params.id // booking id
    if(!location || !status){
-    throw new AppError(400, 'All the fields are required')
+    return next(new AppError(400, "All the fields are required"))
    }
     const result = await bookingModel.findOne({_id:id})
     if (result) {
@@ -23,7 +23,7 @@ exports.addLocationToDatabase = async (req, res, next) => {
         .status(200)
         .json({ success: true, message: 'Location updated successful' })
     } else {
-        throw new AppError(400, 'order not found')
+      return next(new AppError(400, 'order not found'))
     }
   } catch (err) {
     next(err)

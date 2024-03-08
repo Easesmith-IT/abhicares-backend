@@ -1,8 +1,8 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const axios = require("axios")
+const axios = require("axios");
 const jwtkey = require("../util/jwtkey");
-
+const { logger } = require("../server");
 
 const Category = require("../models/category");
 const Package = require("../models/packages");
@@ -22,7 +22,6 @@ const AvailableCity = require("../models/availableCities");
 const Booking = require("../models/booking");
 const Coupon = require("../models/offerCoupon");
 const Faq = require("../models/faq");
-
 
 const AppError = require("./errorController");
 const {
@@ -44,7 +43,9 @@ exports.postCreateCategory = async (req, res, next) => {
         .json({ success: true, message: "Category created successful" });
     }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -58,7 +59,9 @@ exports.getAllCategory = async (req, res, next) => {
       data: result,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -79,7 +82,9 @@ exports.updateCategory = async (req, res, next) => {
         .json({ success: true, message: "category updated successful" });
     }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -92,14 +97,16 @@ exports.deleteCategory = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "categories deleted successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
 
 // service controllers
 
-exports.createService = async (req, res,next) => {
+exports.createService = async (req, res, next) => {
   try {
     var {
       name,
@@ -128,7 +135,7 @@ exports.createService = async (req, res,next) => {
       !appHomepage ||
       !webHomepage
     ) {
-      return next((400, "All the fields are required"))
+      return next((400, "All the fields are required"));
     } else {
       await Service.create({
         name: name,
@@ -151,7 +158,9 @@ exports.createService = async (req, res,next) => {
     }
   } catch (err) {
     console.log(err);
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -177,7 +186,9 @@ exports.addServiceFeature = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "feature added successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     console.log(err);
     next(err);
   }
@@ -206,7 +217,9 @@ exports.updateServiceFeature = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "feature updated successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     console.log(err);
     next(err);
   }
@@ -230,7 +243,9 @@ exports.deleteServiceFeature = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "feature deleted successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     console.log(err);
     next(err);
   }
@@ -246,7 +261,9 @@ exports.getServiceDetails = async (req, res, next) => {
       service: result,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -263,7 +280,7 @@ exports.uploadServiceIcon = async (req, res, next) => {
     }
 
     if (!imageUrl) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     } else {
       const service = await Service.findById(serviceId);
       service.icon = imageUrl;
@@ -274,7 +291,9 @@ exports.uploadServiceIcon = async (req, res, next) => {
         .json({ success: true, message: "Service icon updated successful" });
     }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -288,7 +307,9 @@ exports.getAllService = async (req, res, next) => {
       data: result,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -303,7 +324,9 @@ exports.getCategoryService = async (req, res, next) => {
       data: result,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     console.log(err);
     next(err);
   }
@@ -322,7 +345,7 @@ exports.updateService = async (req, res, next) => {
       !appHomepage ||
       !webHomepage
     ) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     } else {
       var result = await Service.findOne({ _id: id });
       result.name = name;
@@ -345,7 +368,9 @@ exports.updateService = async (req, res, next) => {
         .json({ success: true, message: "Service updated successful" });
     }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     console.log(err);
     next(err);
   }
@@ -354,21 +379,21 @@ exports.updateService = async (req, res, next) => {
 exports.deleteCategoryService = async (req, res, next) => {
   try {
     const id = req.params.id;
-    
+
     const service = await Service.findById(id);
-    const category = await Category.findById(
-      service.categoryId.toString()
-      );
-      
-      category.totalServices = category.totalServices - 1;
-      
-      await category.save();
-      await Service.findByIdAndDelete({ _id: id });
+    const category = await Category.findById(service.categoryId.toString());
+
+    category.totalServices = category.totalServices - 1;
+
+    await category.save();
+    await Service.findByIdAndDelete({ _id: id });
     res
       .status(200)
       .json({ success: true, message: "service deleted successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -391,10 +416,9 @@ exports.searchService = async (req, res, next) => {
       totalPage++;
     }
 
-    const result = await Service
-      .find({
-        $or: [{ name: { $regex: ".*" + search + ".*", $options: "i" } }],
-      })
+    const result = await Service.find({
+      $or: [{ name: { $regex: ".*" + search + ".*", $options: "i" } }],
+    })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
@@ -406,7 +430,9 @@ exports.searchService = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -428,7 +454,6 @@ exports.createProduct = async (req, res, next) => {
       }
     }
 
-
     if (
       !name ||
       !price ||
@@ -437,7 +462,7 @@ exports.createProduct = async (req, res, next) => {
       !imageUrl ||
       !serviceId
     ) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     } else {
       await Product.create({
         name: name,
@@ -452,7 +477,9 @@ exports.createProduct = async (req, res, next) => {
         .json({ success: true, message: "product created successful" });
     }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -472,8 +499,7 @@ exports.getAllProduct = async (req, res, next) => {
       totalPage++;
     }
 
-    const result = await Product
-      .find()
+    const result = await Product.find()
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
@@ -484,7 +510,9 @@ exports.getAllProduct = async (req, res, next) => {
       totalPages: totalPage,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -505,8 +533,7 @@ exports.getServiceProduct = async (req, res, next) => {
       totalPage++;
     }
 
-    const result = await Product
-      .find({ serviceId: id })
+    const result = await Product.find({ serviceId: id })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
@@ -518,7 +545,9 @@ exports.getServiceProduct = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -538,7 +567,7 @@ exports.updateProduct = async (req, res, next) => {
       }
     }
     if (!name || !price || !offerPrice || !description) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     } else {
       const result = await Product.findOne({ _id: id });
       result.name = name;
@@ -565,7 +594,9 @@ exports.updateProduct = async (req, res, next) => {
     }
   } catch (err) {
     console.log("error", err);
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -578,7 +609,9 @@ exports.deleteServiceProduct = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "product deleted successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -598,7 +631,6 @@ exports.createSeller = async (req, res, next) => {
       categoryId,
     } = req.body;
 
-
     if (
       !name ||
       !legalName ||
@@ -609,7 +641,7 @@ exports.createSeller = async (req, res, next) => {
       !contactPerson ||
       !categoryId
     ) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     } else {
       bcrypt.genSalt(10, function (err, salt) {
         bcrypt.hash(password, salt, async function (err, hash) {
@@ -630,7 +662,9 @@ exports.createSeller = async (req, res, next) => {
     }
   } catch (err) {
     console.log("error--->", err);
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -650,8 +684,7 @@ exports.getAllSeller = async (req, res, next) => {
       totalPage++;
     }
 
-    const result = await Seller
-      .find({ status: "active" })
+    const result = await Seller.find({ status: "active" })
       .populate("categoryId")
       .populate({
         path: "services",
@@ -670,7 +703,9 @@ exports.getAllSeller = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -690,7 +725,6 @@ exports.updateSeller = async (req, res, next) => {
       contactPerson,
     } = req.body;
 
-
     if (
       !name ||
       !legalName ||
@@ -702,7 +736,7 @@ exports.updateSeller = async (req, res, next) => {
       !categoryId ||
       !services
     ) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     } else {
       var result = await Seller.findOne({ _id: id });
       result.name = name;
@@ -732,7 +766,9 @@ exports.updateSeller = async (req, res, next) => {
         .json({ success: true, message: "Seller updated successful" });
     }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     console.log(err);
     next(err);
   }
@@ -747,7 +783,9 @@ exports.deleteSeller = async (req, res, next) => {
       .json({ success: true, message: "Seller deleted successful" });
   } catch (err) {
     next(err);
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
   }
 };
 
@@ -769,13 +807,12 @@ exports.searchSeller = async (req, res, next) => {
       totalPage++;
     }
 
-    const userData = await Seller
-      .find({
-        $or: [
-          { "address.city": { $regex: ".*" + search + ".*", $options: "i" } },
-          { name: { $regex: ".*" + search + ".*", $options: "i" } },
-        ],
-      })
+    const userData = await Seller.find({
+      $or: [
+        { "address.city": { $regex: ".*" + search + ".*", $options: "i" } },
+        { name: { $regex: ".*" + search + ".*", $options: "i" } },
+      ],
+    })
       .populate("categoryId")
       .populate({
         path: "services",
@@ -795,7 +832,9 @@ exports.searchSeller = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -810,15 +849,16 @@ exports.changeSellerStatus = async (req, res, next) => {
     result.save();
     res.status(200).json({ success: true, message: "Data updated successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
 
 exports.getInReviewSeller = async (req, res, next) => {
   try {
-    const results = await Seller
-      .find({ status: "in-review" })
+    const results = await Seller.find({ status: "in-review" })
       .populate({ path: "categoryId", model: "Category" })
       .populate({
         path: "services",
@@ -847,7 +887,9 @@ exports.getInReviewSeller = async (req, res, next) => {
     });
   } catch (err) {
     console.log(err);
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -857,7 +899,7 @@ exports.getSellerByLocation = async (req, res, next) => {
     const { latitude, longitude, distance } = req.body;
 
     if (!latitude || !longitude || !distance) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     }
 
     const result = await Seller.find({
@@ -876,7 +918,9 @@ exports.getSellerByLocation = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "near sellers", sellerList: result });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -899,7 +943,9 @@ exports.getSellerWallet = async (req, res, next) => {
       wallet,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -910,8 +956,7 @@ exports.getCashoutRequests = async (req, res, next) => {
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
 
-    const cashouts = await SellerCashout
-      .find({ sellerWalletId: id })
+    const cashouts = await SellerCashout.find({ sellerWalletId: id })
       .skip((page - 1) * limit)
       .limit(limit * 1)
       .sort({ createdAt: -1 });
@@ -921,7 +966,9 @@ exports.getCashoutRequests = async (req, res, next) => {
       cashouts,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -930,8 +977,7 @@ exports.getRecentCashoutRequests = async (req, res, next) => {
   try {
     const id = req.params.id;
 
-    const cashouts = await SellerCashout
-      .find({ sellerWalletId: id })
+    const cashouts = await SellerCashout.find({ sellerWalletId: id })
       .sort({ createdAt: -1 })
       .limit(3);
 
@@ -940,7 +986,9 @@ exports.getRecentCashoutRequests = async (req, res, next) => {
       cashouts,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -983,7 +1031,9 @@ exports.approveSellerCashout = async (req, res, next) => {
       updatedCashout,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -998,7 +1048,9 @@ exports.getDistance = async (req, res) => {
 
     res.json(response.data);
   } catch (error) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(error);
   }
 };
 
@@ -1013,7 +1065,9 @@ exports.getPath = async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error(error);
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(error);
   }
 };
 
@@ -1021,226 +1075,223 @@ exports.getPath = async (req, res) => {
 
 exports.getAllUser = async (req, res, next) => {
   try {
-      var page = 1
-      if (req.query.page) {
-        page = req.query.page
-      }
-      var limit = 20
-      const allUser = await User.count()
-      var num = allUser / limit
-      var fixedNum = num.toFixed()
-      var totalPage = fixedNum
-      if (num > fixedNum) {
-        totalPage++
-      }
+    var page = 1;
+    if (req.query.page) {
+      page = req.query.page;
+    }
+    var limit = 20;
+    const allUser = await User.count();
+    var num = allUser / limit;
+    var fixedNum = num.toFixed();
+    var totalPage = fixedNum;
+    if (num > fixedNum) {
+      totalPage++;
+    }
 
-      const userData = await User
-        .find()
-        .limit(limit * 1)
-        .skip((page - 1) * limit)
-        .exec()
-      res.status(200).json({
-        success: true,
-        message: 'This is all the user list',
-        data: userData,
-        totalPage: totalPage
-      })
+    const userData = await User.find()
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+    res.status(200).json({
+      success: true,
+      message: "This is all the user list",
+      data: userData,
+      totalPage: totalPage,
+    });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
-  }
-}
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
 
-
-exports.getAllAddressesByUserId = async (req, res, next) => {
-  try {
-
-    const id = req.params.id
-    console.log(id)
-
-      const addresses = await UserAddress.find({ userId: id });
-      
-      if (!addresses) {
-        res.status(400).json({
-          success: false,
-          message:"No addresses found"
-        })
-      }
-
-      res.status(200).json({
-        success: true,
-        addresses: addresses,
-      });
-
-  } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    console.log(err)
+    logger.error(err);
     next(err);
   }
 };
 
+exports.getAllAddressesByUserId = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    console.log(id);
+
+    const addresses = await UserAddress.find({ userId: id });
+
+    if (!addresses) {
+      res.status(400).json({
+        success: false,
+        message: "No addresses found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      addresses: addresses,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    console.log(err);
+    next(err);
+  }
+};
 
 exports.updateUserByAdmin = async (req, res, next) => {
   try {
-
-      const id = req.params.id // this is object id
-      const { name, phone } = req.body
-      if (!name || !phone) {
-        throw new AppError(400, 'All the fields are required')
-      } else {
-        var result = await User.findOne({ _id: id })
-        result.name = name
-        result.phone = phone
-        await result.save()
-        res
-          .status(200)
-          .json({ success: true, message: 'user updated successful' })
-      }
-
+    const id = req.params.id; // this is object id
+    const { name, phone } = req.body;
+    if (!name || !phone) {
+      return next(new AppError(400, "All the fields are required"))
+    } else {
+      var result = await User.findOne({ _id: id });
+      result.name = name;
+      result.phone = phone;
+      await result.save();
+      res
+        .status(200)
+        .json({ success: true, message: "user updated successful" });
+    }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 exports.deleteUser = async (req, res, next) => {
   try {
-      const id = req.params.id // this is object id
-      await User.findByIdAndDelete({ _id: id }) //passing object id
-      res
-        .status(200)
-        .json({ success: true, message: 'user deleted successful' })
-
+    const id = req.params.id; // this is object id
+    await User.findByIdAndDelete({ _id: id }); //passing object id
+    res.status(200).json({ success: true, message: "user deleted successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 exports.searchUser = async (req, res, next) => {
   try {
-    var search = ''
-    var page = 1
+    var search = "";
+    var page = 1;
     if (req.query.search) {
-      search = req.query.search
-      page = req.query.page
+      search = req.query.search;
+      page = req.query.page;
     }
 
-    var limit = 20
-    const allUser = await User.count()
-    var num = allUser / limit
-    var fixedNum = num.toFixed()
-    var totalPage = fixedNum
+    var limit = 20;
+    const allUser = await User.count();
+    var num = allUser / limit;
+    var fixedNum = num.toFixed();
+    var totalPage = fixedNum;
     if (num > fixedNum) {
-      totalPage++
+      totalPage++;
     }
 
-    const userData = await User
-      .find({
-        $or: [
-          { phone: { $regex: '.*' + search + '.*', $options: 'i' } },
-          { name: { $regex: '.*' + search + '.*', $options: 'i' } }
-        ]
-      })
+    const userData = await User.find({
+      $or: [
+        { phone: { $regex: ".*" + search + ".*", $options: "i" } },
+        { name: { $regex: ".*" + search + ".*", $options: "i" } },
+      ],
+    })
       .limit(limit * 1)
       .skip((page - 1) * limit)
-      .exec()
+      .exec();
 
     res.status(200).json({
       success: true,
-      message: 'user data',
+      message: "user data",
       data: userData,
-      totalPage: totalPage
-    })
+      totalPage: totalPage,
+    });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 exports.getUserData = async (req, res, next) => {
   try {
-
     const users = await User.find();
 
-    const arr = []
-    
-    for(const user of users){
-      let add = null
-     let addresses = await UserAddress.find({userId:user._id});
+    const arr = [];
 
-      if(addresses.length>0){
-        const defaultAdd = addresses.find((add)=>add.defaultAddress===true);
-        
-        if(defaultAdd)add = {city:defaultAdd.city,pincode:defaultAdd.pincode};
-        else add ={city:addresses[0].city,pincode:addresses[0].pincode};
-      } 
+    for (const user of users) {
+      let add = null;
+      let addresses = await UserAddress.find({ userId: user._id });
 
-      arr.push({userInfo:user,add:add})
+      if (addresses.length > 0) {
+        const defaultAdd = addresses.find((add) => add.defaultAddress === true);
+
+        if (defaultAdd)
+          add = { city: defaultAdd.city, pincode: defaultAdd.pincode };
+        else add = { city: addresses[0].city, pincode: addresses[0].pincode };
+      }
+
+      arr.push({ userInfo: user, add: add });
     }
 
     res.status(200).json({
       success: true,
-      message: 'user data',
+      message: "user data",
       users: arr,
-    })
+    });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 // enquiry controllers
 
 exports.getAllEnquiry = async (req, res, next) => {
   try {
-      var page = 1
-      if (req.query.page) {
-        page = req.query.page
-      }
-      var limit = 12
-      const allEnq = await Enquiry.count()
-      var num = allEnq / limit
-      var fixedNum = num.toFixed()
-      var totalPage = fixedNum
-      if (num > fixedNum) {
-        totalPage++
-      }
+    var page = 1;
+    if (req.query.page) {
+      page = req.query.page;
+    }
+    var limit = 12;
+    const allEnq = await Enquiry.count();
+    var num = allEnq / limit;
+    var fixedNum = num.toFixed();
+    var totalPage = fixedNum;
+    if (num > fixedNum) {
+      totalPage++;
+    }
 
-      const result = await Enquiry
-        .find()
-        .limit(limit * 1)
-        .skip((page - 1) * limit)
-        .exec()
-      res
-        .status(200)
-        .json({
-          success: true,
-          message: 'These are all the enquiry list',
-          data: result,
-          totalPage: totalPage
-        })
-   
+    const result = await Enquiry.find()
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+    res.status(200).json({
+      success: true,
+      message: "These are all the enquiry list",
+      data: result,
+      totalPage: totalPage,
+    });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 exports.deleteEnquiry = async (req, res, next) => {
   try {
-
-      const id = req.params.id
-      await Enquiry.findByIdAndDelete({ _id: id })
-      res
-        .status(200)
-        .json({ success: true, message: 'data deleted successful' })
+    const id = req.params.id;
+    await Enquiry.findByIdAndDelete({ _id: id });
+    res.status(200).json({ success: true, message: "data deleted successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
-  }
-}
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
 
+    logger.error(err);
+    next(err);
+  }
+};
 
 // package controllers
 
@@ -1255,10 +1306,9 @@ exports.createPackage = async (req, res, next) => {
         const fileUrl = ret.split("/").pop();
         imageUrl.push(fileUrl);
       }
-
     }
     if (!name || !price || !offerPrice || !products || !serviceId) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     } else {
       await Package.create({
         name: name,
@@ -1273,7 +1323,9 @@ exports.createPackage = async (req, res, next) => {
         .json({ success: true, message: "package created successful" });
     }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1293,30 +1345,30 @@ exports.updatePackage = async (req, res, next) => {
       }
     }
     if (!name || !price || !offerPrice || !products) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     } else {
       let result = await Package.findOne({ _id: id });
 
-      result.name = name
-        result.price = price
-        result.offerPrice = offerPrice
-        // result.products= products
-        result.products = JSON.parse(products)
-              // delete files
-        const deleteFilesArr = [];
-        imageUrl = JSON.parse(imageUrl);
-        result.imageUrl.map((url) => {
-          const temp = imageUrl.find((r) => r === url);
-          if (!temp) deleteFilesArr.push(url)
-        })
+      result.name = name;
+      result.price = price;
+      result.offerPrice = offerPrice;
+      // result.products= products
+      result.products = JSON.parse(products);
+      // delete files
+      const deleteFilesArr = [];
+      imageUrl = JSON.parse(imageUrl);
+      result.imageUrl.map((url) => {
+        const temp = imageUrl.find((r) => r === url);
+        if (!temp) deleteFilesArr.push(url);
+      });
 
-        if (deleteFilesArr.length > 0) {
-          for (const file of deleteFilesArr) {
-            await deleteFileFromGCS(file)
-          }
+      if (deleteFilesArr.length > 0) {
+        for (const file of deleteFilesArr) {
+          await deleteFileFromGCS(file);
         }
+      }
 
-        result.imageUrl = [...imageUrl, ...newImageUrls]
+      result.imageUrl = [...imageUrl, ...newImageUrls];
       await result.save();
 
       res
@@ -1324,7 +1376,9 @@ exports.updatePackage = async (req, res, next) => {
         .json({ success: true, message: "package updated successful" });
     }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1340,7 +1394,9 @@ exports.getServicePackage = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "package list", data: result });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1353,7 +1409,9 @@ exports.deletePackage = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "package deleted successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1408,7 +1466,7 @@ exports.addAminUser = async (req, res, next) => {
         var bsalt = await bcrypt.genSalt(10);
 
         var hashPsw = await bcrypt.hash(password, bsalt);
-        var admin =  new Admin({
+        var admin = new Admin({
           adminId: adminId,
           password: hashPsw,
           name: name,
@@ -1421,7 +1479,9 @@ exports.addAminUser = async (req, res, next) => {
     }
   } catch (err) {
     console.log("err====>", err);
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1431,11 +1491,9 @@ exports.updateAdminPassword = async (req, res, next) => {
     let adminId;
     if (req.body?.adminId) {
       adminId = req.body.adminId;
+    } else {
+      adminId = req.adminId;
     }
-    else {
-    adminId = req.adminId;
-    }
-
 
     const { currentPassword, newPassword } = req.body;
 
@@ -1447,7 +1505,6 @@ exports.updateAdminPassword = async (req, res, next) => {
 
     const admin = await Admin.findOne({ adminId });
     const isMatch = await bcrypt.compare(currentPassword, admin.password);
-
 
     if (isMatch) {
       var bsalt = await bcrypt.genSalt(10);
@@ -1461,7 +1518,9 @@ exports.updateAdminPassword = async (req, res, next) => {
     }
   } catch (err) {
     console.log("err====>", err);
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1473,7 +1532,7 @@ exports.updateAdminUser = async (req, res, next) => {
     console.log(permissions);
 
     if (!adminId || !name || !permissions) {
-      res
+      return res
         .status(400)
         .json({ success: false, message: "All the fields are required" });
     } else {
@@ -1487,7 +1546,9 @@ exports.updateAdminUser = async (req, res, next) => {
     }
   } catch (err) {
     console.log("err====>", err);
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1502,7 +1563,9 @@ exports.getSubAdmins = async (req, res, next) => {
     });
   } catch (err) {
     console.log("err====>", err);
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1516,7 +1579,6 @@ exports.loginAdminUser = async (req, res, next) => {
         message: "No admin exists with this id",
       });
     }
-
 
     const isMatch = await bcrypt.compare(password, admin.password);
 
@@ -1534,11 +1596,13 @@ exports.loginAdminUser = async (req, res, next) => {
       });
     } else {
       return res.status(500).json({
-        message:"Incorrect Password!"
+        message: "Incorrect Password!",
       });
     }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     return next(err);
   }
 };
@@ -1548,7 +1612,9 @@ exports.logoutAdmin = async (req, res, next) => {
     res.clearCookie("admtoken");
     return res.json({ success: true, message: "Logout successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1566,7 +1632,9 @@ exports.updateOrderStatus = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "Order status changed successfull" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1599,7 +1667,7 @@ exports.getAllOrders = async (req, res, next) => {
           },
         },
       })
-      .populate("couponId")
+      .populate({path:"couponId",model:'Coupon'})
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
@@ -1610,7 +1678,9 @@ exports.getAllOrders = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1637,7 +1707,7 @@ exports.getRecentOrders = async (req, res, next) => {
           },
         },
       })
-      .populate("couponId")
+      .populate({path:"couponId",model:'Coupon'})
       .exec();
 
     const totalPage = Math.ceil((await Order.countDocuments()) / limit);
@@ -1649,33 +1719,33 @@ exports.getRecentOrders = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
 
 exports.getOrderById = async (req, res, next) => {
   try {
-
     const orderId = req.query.orderId;
-    const order = await Order.findById(orderId)
-    
+    const order = await Order.findById(orderId);
+
     if (!order) {
       res.status(404).json({
-        message:"No order found!"
-      })
+        message: "No order found!",
+      });
     }
-    
-
 
     res.status(200).json({
       success: true,
       data: order,
-      
     });
   } catch (err) {
-    console.log(err)
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    console.log(err);
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1684,7 +1754,7 @@ exports.getMolthlyOrder = async (req, res, next) => {
   try {
     const { month, year } = req.body;
     if (!month || !year) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     } else {
       const startDate = new Date(year, month - 1, 1); // Month is zero-based
       const endDate = new Date(year, month, 0, 23, 59, 59);
@@ -1713,7 +1783,9 @@ exports.getMolthlyOrder = async (req, res, next) => {
         .json({ success: true, message: "Orders list", data: result });
     }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1727,12 +1799,20 @@ exports.getAllPayments = async (req, res, next) => {
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(1 * limit);
-    
-    const paymentsLength = await Payment.find().count()
 
-    res.status(200).json({ success: true, payments: payments,docsLength:Math.ceil(paymentsLength/limit) });
+    const paymentsLength = await Payment.find().count();
+
+    res
+      .status(200)
+      .json({
+        success: true,
+        payments: payments,
+        docsLength: Math.ceil(paymentsLength / limit),
+      });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1741,170 +1821,165 @@ exports.getAllPayments = async (req, res, next) => {
 
 exports.getAllHelpCenter = async (req, res, next) => {
   try {
+    let status = "in-review";
+    if (req.body.status) {
+      status = req.body.status;
+    }
+    //  const {status}=req.body.status
+    var page = 1;
+    if (req.query.page) {
+      page = req.query.page;
+    }
+    var limit = 12;
+    const allList = await HelpCenter.find({ status: status }).count();
+    var num = allList / limit;
+    var fixedNum = num.toFixed();
+    var totalPage = fixedNum;
+    if (num > fixedNum) {
+      totalPage++;
+    }
+    const result = await HelpCenter.find({ status: status })
+      .populate("userId")
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
 
-      let status = 'in-review'
-      if (req.body.status) {
-        status = req.body.status
-      }
-      //  const {status}=req.body.status
-      var page = 1
-      if (req.query.page) {
-        page = req.query.page
-      }
-      var limit = 12
-      const allList = await HelpCenter.find({ status: status }).count()
-      var num = allList / limit
-      var fixedNum = num.toFixed()
-      var totalPage = fixedNum
-      if (num > fixedNum) {
-        totalPage++
-      }
-      const result = await HelpCenter
-        .find({ status: status })
-        .populate('userId')
-        .limit(limit * 1)
-        .skip((page - 1) * limit)
-        .exec()
-
-      res
-        .status(201)
-        .json({
-          success: true,
-          message: 'list of all help data',
-          data: result,
-          totalPage: totalPage
-        })
-   
+    res.status(201).json({
+      success: true,
+      message: "list of all help data",
+      data: result,
+      totalPage: totalPage,
+    });
   } catch (err) {
-    console.log("err--->",err)
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    console.log("err--->", err);
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 exports.deleteHelpCenter = async (req, res, next) => {
   try {
+    const id = req.params.id;
 
-      const id = req.params.id
-
-      await HelpCenter.findByIdAndDelete({ _id: id })
-      res
-        .status(201)
-        .json({ success: true, message: 'data deleted successful' })
-    
+    await HelpCenter.findByIdAndDelete({ _id: id });
+    res.status(201).json({ success: true, message: "data deleted successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 exports.updateHelpCenter = async (req, res, next) => {
   try {
-
-      const id = req.params.id
-      const { resolution } = req.body
-      if (!resolution) {
-        throw new AppError(400, 'Please provide resolution')
-      } else {
-        var result = await HelpCenter.findOne({ _id: id })
-        result.resolution = resolution
-        result.status = 'solved'
-        await result.save()
-        res
-          .status(201)
-          .json({ success: true, message: 'data updated successful' })
-      }
-    
+    const id = req.params.id;
+    const { resolution } = req.body;
+    if (!resolution) {
+      return next(new AppError(400, "Please provide resolution"))
+    } else {
+      var result = await HelpCenter.findOne({ _id: id });
+      result.resolution = resolution;
+      result.status = "solved";
+      await result.save();
+      res
+        .status(201)
+        .json({ success: true, message: "data updated successful" });
+    }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 // available city routes
 exports.createAvailableCities = async (req, res, next) => {
   try {
-      const { city, state, pinCode } = req.body
+    const { city, state, pinCode } = req.body;
 
-      if (!city || !state || !pinCode) {
-        throw new AppError(400, 'All the fields are required')
+    if (!city || !state || !pinCode) {
+      return next(new AppError(400, "All the fields are required"))
+    } else {
+      const result = await AvailableCity.find({ city: city });
+      if (result.length > 0) {
+        return next(new AppError(400, "City already exist"))
+
       } else {
-        const result = await AvailableCity.find({ city: city })
-        if (result.length > 0) {
-          throw new AppError(400, 'City already exist')
-        } else {
-          await AvailableCity.create({
-            city: city,
-            state: state,
-            pinCode: pinCode
-          })
-          res
-            .status(201)
-            .json({ success: true, message: 'Data inserted successful' })
-        }
+        await AvailableCity.create({
+          city: city,
+          state: state,
+          pinCode: pinCode,
+        });
+        res
+          .status(201)
+          .json({ success: true, message: "Data inserted successful" });
       }
-     
+    }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 exports.deleteAvailableCities = async (req, res, next) => {
   try {
-      const id = req.params.id // this is object id
-      await AvailableCity.findByIdAndDelete({ _id: id })
-      res
-        .status(200)
-        .json({ success: true, message: 'data deleted successful' })
-    
+    const id = req.params.id; // this is object id
+    await AvailableCity.findByIdAndDelete({ _id: id });
+    res.status(200).json({ success: true, message: "data deleted successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 exports.updateAvailableCities = async (req, res, next) => {
   try {
-      const { city, state, pinCode } = req.body
-      const id = req.params.id // this is object id of available city
+    const { city, state, pinCode } = req.body;
+    const id = req.params.id; // this is object id of available city
 
-      if (!city || !state || !pinCode) {
-        throw new AppError(400, 'All the fields are required')
-      } else {
-        const result = await AvailableCity.findOne({ _id: id })
-        result.city = city
-        result.state = state
-        result.pinCode = pinCode
-        await result.save()
-        res
-          .status(200)
-          .json({ success: true, message: 'Data updated successful' })
-      }
-    
+    if (!city || !state || !pinCode) {
+      return next(new AppError(400, "All the fields are required"))
+    } else {
+      const result = await AvailableCity.findOne({ _id: id });
+      result.city = city;
+      result.state = state;
+      result.pinCode = pinCode;
+      await result.save();
+      res
+        .status(200)
+        .json({ success: true, message: "Data updated successful" });
+    }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 exports.getAvailableCities = async (req, res, next) => {
   try {
-
-      const result = await AvailableCity.find()
-      res
-        .status(200)
-        .json({
-          success: true,
-          message: 'List of all available cities',
-          data: result
-        })
-    
+    const result = await AvailableCity.find();
+    res.status(200).json({
+      success: true,
+      message: "List of all available cities",
+      data: result,
+    });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 // seller order controllers
 exports.getSellerList = async (req, res, next) => {
@@ -1921,7 +1996,9 @@ exports.getSellerList = async (req, res, next) => {
       data: result,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1931,7 +2008,7 @@ exports.allotSeller = async (req, res, next) => {
     const id = req.params.id; // this is seller id
     const { bookingId } = req.body;
     if (!bookingId) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     }
     var bookingData = await Booking.findOne({ _id: bookingId });
     bookingData.sellerId = id;
@@ -1943,7 +2020,9 @@ exports.allotSeller = async (req, res, next) => {
     });
   } catch (err) {
     console.log("err", err);
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1956,10 +2035,9 @@ exports.updateSellerOrderStatus = async (req, res, next) => {
     const order = await Order.findById(result.orderId);
 
     if (result.status !== "completed" && status === "completed") {
-            order.No_of_left_bookings = order.No_of_left_bookings - 1;
-            await order.save();
+      order.No_of_left_bookings = order.No_of_left_bookings - 1;
+      await order.save();
     }
-
 
     if (order.No_of_left_bookings === 0) {
       order.status = "completed";
@@ -1974,7 +2052,9 @@ exports.updateSellerOrderStatus = async (req, res, next) => {
       message: "Seller order updated successful",
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -1998,7 +2078,9 @@ exports.getSellerOrder = async (req, res, next) => {
       sellerOrders: result,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -2008,10 +2090,9 @@ exports.getSellerOrderByStatus = async (req, res, next) => {
     const id = req.params.id; // seller id
     const { status } = req.body;
     if (!status) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     }
-    const result = await Booking
-      .find({ sellerId: id, status: status })
+    const result = await Booking.find({ sellerId: id, status: status })
       .populate({
         path: "package",
         populate: {
@@ -2030,239 +2111,251 @@ exports.getSellerOrderByStatus = async (req, res, next) => {
       sellerOrders: result,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
 
 // booking controllers
 
-exports.getBookingDetails= async (req, res, next) => {
+exports.getBookingDetails = async (req, res, next) => {
   try {
-      const id=req.params.id
-      const result = await Booking.findOne({_id:id}).populate({
-        path: 'package',
+    const id = req.params.id;
+    const result = await Booking.findOne({ _id: id })
+      .populate({
+        path: "package",
         populate: {
-          path: 'products',
+          path: "products",
           populate: {
-            path: 'productId',
-            model: 'Product'
-          }
-        }
-      }).populate("sellerId").populate({
+            path: "productId",
+            model: "Product",
+          },
+        },
+      })
+      .populate("sellerId")
+      .populate({
         path: "userId",
-        model:"User"
-      })
-      res.status(200).json({
-        success: true,
-        message: 'Booking details getting successful',
-        bookingDetails: result
-      })
-    
+        model: "User",
+      });
+    res.status(200).json({
+      success: true,
+      message: "Booking details getting successful",
+      bookingDetails: result,
+    });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    console.log(err)
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    console.log(err);
+    next(err);
   }
-}
+};
 
 exports.getAllBooking = async (req, res, next) => {
   try {
-      const result = await Booking.find().populate({
-        path: 'package',
+    const result = await Booking.find()
+      .populate({
+        path: "package",
         populate: {
-          path: 'products',
+          path: "products",
           populate: {
-            path: 'productId',
-            model: 'Product'
-          }
-        }
-      }).populate("sellerId")
-      res.status(200).json({
-        success: true,
-        message: 'All booking list',
-        data: result
+            path: "productId",
+            model: "Product",
+          },
+        },
       })
-    
+      .populate("sellerId");
+    res.status(200).json({
+      success: true,
+      message: "All booking list",
+      data: result,
+    });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    console.log(err)
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    console.log(err);
+    next(err);
   }
-}
+};
 
 exports.deleteBooking = async (req, res, next) => {
   try {
-      const id = req.params.id // booking item id
-      await Booking.findByIdAndDelete({ _id: id })
-      res
-        .status(200)
-        .json({ success: true, message: 'Booking deleted successful' })
-    
+    const id = req.params.id; // booking item id
+    await Booking.findByIdAndDelete({ _id: id });
+    res
+      .status(200)
+      .json({ success: true, message: "Booking deleted successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 // coupon controllers
 
 exports.createCoupon = async (req, res, next) => {
   try {
-      const { name, offPercentage, description } = req.body
+    const { name, offPercentage, description } = req.body;
 
-      if (!name || !offPercentage || !description) {
-        throw new AppError(400, 'All the fields are required')
+    if (!name || !offPercentage || !description) {
+      return next(new AppError(400, "All the fields are required"))
+    } else {
+      const result = await Coupon.find({ name: name });
+      if (result.length > 0) {
+        
+        return next( new AppError(400, "Coupon already exist"))
       } else {
-        const result = await Coupon.find({ name: name })
-        if (result.length > 0) {
-          throw new AppError(400, 'Coupon already exist')
-        } else {
-          await Coupon.create({
-            name,
-            offPercentage,
-            description
-          })
-          res
-            .status(201)
-            .json({ success: true, message: 'Data inserted successful' })
-        }
+        await Coupon.create({
+          name,
+          offPercentage,
+          description,
+        });
+        res
+          .status(201)
+          .json({ success: true, message: "Data inserted successful" });
       }
-    
+    }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 exports.deleteCoupon = async (req, res, next) => {
   try {
-      const id = req.params.id // this is object id
-      await Coupon.findByIdAndDelete({ _id: id })
-      res
-        .status(200)
-        .json({ success: true, message: 'data deleted successful' })
+    const id = req.params.id; // this is object id
+    await Coupon.findByIdAndDelete({ _id: id });
+    res.status(200).json({ success: true, message: "data deleted successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 exports.updateCoupon = async (req, res, next) => {
   try {
-      const { name, offPercentage, description,status } = req.body
-      const id = req.params.id // this is object id of available city
+    const { name, offPercentage, description, status } = req.body;
+    const id = req.params.id; // this is object id of available city
 
-      if (!name || !offPercentage || !description || !status) {
-        throw new AppError(400, 'All the fields are required')
-      } else {
-        const result = await Coupon.findOne({ _id: id })
-        result.name = name
-        result.offPercentage = offPercentage
-        result.description = description
-        result.status = status;
-        await result.save()
-        res
-          .status(200)
-          .json({ success: true, message: 'Data updated successful' })
-      }
-    
+    if (!name || !offPercentage || !description || !status) {
+      return next(new AppError(400, "All the fields are required"))
+    } else {
+      const result = await Coupon.findOne({ _id: id });
+      result.name = name;
+      result.offPercentage = offPercentage;
+      result.description = description;
+      result.status = status;
+      await result.save();
+      res
+        .status(200)
+        .json({ success: true, message: "Data updated successful" });
+    }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 exports.getAllCoupons = async (req, res, next) => {
   try {
-
-      const result = await Coupon.find()
-      res.status(200).json({
-        success: true,
-        message: 'List of all coupons',
-        data: result
-      })
-    
+    const result = await Coupon.find();
+    res.status(200).json({
+      success: true,
+      message: "List of all coupons",
+      data: result,
+    });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 // faq controllers
 
 exports.createFaq = async (req, res, next) => {
   try {
-      const { ques, ans } = req.body
-      if (!ques || !ans) {
-        throw new AppError(400, 'All the fields are required')
+    const { ques, ans } = req.body;
+    if (!ques || !ans) {
+      return next(new AppError(400, "All the fields are required"))
+    } else {
+      const result = await Faq.find({ ques: ques });
+      if (result.length > 0) {
+        return next( new AppError(400, "Question already exist"))
       } else {
-        const result = await Faq.find({ ques: ques })
-        if (result.length > 0) {
-          throw new AppError(400, 'Question already exist')
-        } else {
-          await Faq.create({
-            ques: ques,
-            ans: ans
-          })
-          res
-            .status(201)
-            .json({ success: true, message: 'FAQ created successful' })
-        }
+        await Faq.create({
+          ques: ques,
+          ans: ans,
+        });
+        res
+          .status(201)
+          .json({ success: true, message: "FAQ created successful" });
       }
-    
+    }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 exports.getAllFaq = async (req, res, next) => {
   try {
-
-      const result = await Faq.find()
-      res
-        .status(201)
-        .json({ success: true, message: 'list of all faq', data: result })
-    
+    const result = await Faq.find();
+    res
+      .status(201)
+      .json({ success: true, message: "list of all faq", data: result });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 exports.deleteFaq = async (req, res, next) => {
   try {
-
-      const id = req.params.id
-      await Faq.findByIdAndDelete({ _id: id })
-      res
-        .status(201)
-        .json({ success: true, message: 'data deleted successful' })
-   
+    const id = req.params.id;
+    await Faq.findByIdAndDelete({ _id: id });
+    res.status(201).json({ success: true, message: "data deleted successful" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};
 
 exports.updateFaq = async (req, res, next) => {
   try {
-
-      const id = req.params.id
-      const { ques, ans } = req.body
-      if (!ques || !ans) {
-        throw new AppError(400, 'All the fields are required')
-      } else {
-        var result = await Faq.findOne({ _id: id })
-        result.ques = ques
-        result.ans = ans
-        result.save()
-        res
-          .status(201)
-          .json({ success: true, message: 'FAQ updated successful' })
-      }
-    
+    const id = req.params.id;
+    const { ques, ans } = req.body;
+    if (!ques || !ans) {
+      return next(new AppError(400, "All the fields are required"))
+    } else {
+      var result = await Faq.findOne({ _id: id });
+      result.ques = ques;
+      result.ans = ans;
+      result.save();
+      res
+        .status(201)
+        .json({ success: true, message: "FAQ updated successful" });
+    }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
-    next(err)
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
   }
-}
+};

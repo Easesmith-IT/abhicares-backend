@@ -1,6 +1,6 @@
 const Razorpay = require("razorpay");
 var crypto = require("crypto");
-const AppError = require("./errorController");
+const { logger } = require("../server");
 
 //Importing Models
 const UserAddress = require("../models/useraddress");
@@ -162,12 +162,14 @@ exports.getAllUserOrders = async (req, res, next) => {
           },
         },
       })
-      .populate("couponId");
+      .populate({path:"couponId", model:"Coupon"});
     res
       .status(200)
       .json({ success: true, message: "Your all orders", data: result });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -207,13 +209,14 @@ exports.updateOrderStatus = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "Order status changed successfull" });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
 
-
-const generateOrderItems = async (cartItems,bookings) => {
+const generateOrderItems = async (cartItems, bookings) => {
   const orderItems = [];
 
   for (const item of cartItems) {
@@ -248,11 +251,18 @@ const generateOrderItems = async (cartItems,bookings) => {
     }
   }
 
-  return orderItems
+  return orderItems;
 };
 
-const generateBookings = async(orderItems,user,order,userAddress,paymentType,paymentStatus) =>{
-  console.log('orderItems',orderItems);
+const generateBookings = async (
+  orderItems,
+  user,
+  order,
+  userAddress,
+  paymentType,
+  paymentStatus
+) => {
+  console.log("orderItems", orderItems);
 
   for (const orderItem of orderItems) {
     if (orderItem.product) {
@@ -306,13 +316,14 @@ const generateBookings = async(orderItems,user,order,userAddress,paymentType,pay
       );
     }
   }
-}
+};
 
 exports.websiteCodOrder = async (req, res, next) => {
   try {
     const user = req.user;
-    
-    const { itemTotal, discount, tax, total,userAddressId,bookings } = req.body;
+
+    const { itemTotal, discount, tax, total, userAddressId, bookings } =
+      req.body;
 
     let couponId = null;
     if (req.body.couponId) {
@@ -338,10 +349,10 @@ exports.websiteCodOrder = async (req, res, next) => {
       return res.status(404).json({ message: "User not found." });
     }
     const items = cart.items;
-    const orderItems = await generateOrderItems(items,bookings);
+    const orderItems = await generateOrderItems(items, bookings);
 
     const userAddress = await UserAddress.findById(userAddressId);
-    
+
     const order = new Order({
       orderPlatform: "website",
       paymentType: "COD",
@@ -365,19 +376,27 @@ exports.websiteCodOrder = async (req, res, next) => {
         },
       },
     });
-   
+
     await order.save();
 
     // create and save bookings
-   await generateBookings(orderItems,user,order,userAddress,'cash','pending')
+    await generateBookings(
+      orderItems,
+      user,
+      order,
+      userAddress,
+      "cash",
+      "pending"
+    );
 
-  
     cart.items = [];
     cart.totalPrice = 0;
     await cart.save();
     return res.status(200).json(order);
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     console.log(err);
     return { message: "error", error: err };
   }
@@ -414,11 +433,10 @@ exports.checkout = async (req, res, next) => {
     }
     const items = cart.items;
 
-    const orderItems = await generateOrderItems(items,bookings)
+    const orderItems = await generateOrderItems(items, bookings);
 
     const userAddress = await UserAddress.findById(userAddressId);
-   
-   let orderPrice = cart.totalPrice;
+
     const order = new tempOrder({
       orderPlatform: "website",
       paymentType: "Online",
@@ -446,7 +464,7 @@ exports.checkout = async (req, res, next) => {
         },
       },
     });
-    
+
     await order.save();
 
     cart.items = [];
@@ -465,7 +483,9 @@ exports.checkout = async (req, res, next) => {
       order: order,
     });
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     next(err);
   }
 };
@@ -478,7 +498,6 @@ exports.paymentVerification = async (req, res, next) => {
       razorpay_signature,
       productId,
     } = req.body;
-
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
 
@@ -511,10 +530,16 @@ exports.paymentVerification = async (req, res, next) => {
 
       await order.save();
 
-      const user = await User.findById(result.user.userId)
+      const user = await User.findById(result.user.userId);
 
-     await generateBookings(result.items,user,order,result.user.address,'online','completed')
-
+      await generateBookings(
+        result.items,
+        user,
+        order,
+        result.user.address,
+        "online",
+        "completed"
+      );
 
       await tempOrder.findByIdAndDelete({ _id: productId });
 
@@ -540,7 +565,9 @@ exports.paymentVerification = async (req, res, next) => {
       });
     }
   } catch (err) {
-    res.status(500).json({success:false,message:'Something went wrong:('})
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
     console.log("err", err);
     next(err);
   }

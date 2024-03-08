@@ -76,7 +76,7 @@ exports.isAdminAuth = async (req, res, next) => {
 
     jwt.verify(token, jwtkey.secretJwtKey, function (err, authData) {
       if (err) {
-        if (err.name = "TokenExpiredError") {
+        if (err.name === "TokenExpiredError") {
           res.clearCookie("admtoken");
           return res.status(400).json({
             message: "Token expired",

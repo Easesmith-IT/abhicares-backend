@@ -337,7 +337,7 @@ exports.createSeller = async (req, res, next) => {
       // !contactPerson ||
       !categoryId
     ) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     } else {
       bcrypt.genSalt(10, function (err, salt) {
         bcrypt.hash(password, salt, async function (err, hash) {
@@ -430,7 +430,7 @@ exports.updateSeller = async (req, res, next) => {
       !address ||
       !contactPerson
     ) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     } else {
       var result = await SellerModel.findOne({ _id: id });
       result.name = name;
