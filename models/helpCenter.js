@@ -32,4 +32,4 @@ const helpCenterSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("helpCenter", helpCenterSchema);
+module.exports = mongoose.model("HelpCenter", helpCenterSchema);

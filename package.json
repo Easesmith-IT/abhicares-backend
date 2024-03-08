@@ -44,5 +44,8 @@
     "razorpay": "^2.9.2",
     "socket.io": "^4.7.3",
     "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
   }
 }

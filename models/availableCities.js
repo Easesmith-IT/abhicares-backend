@@ -15,4 +15,4 @@ const availableCitiesSchema=new mongoose.Schema({
       },
 },{timestamps:true})
 
-module.exports=mongoose.model("availableCities",availableCitiesSchema)
+module.exports=mongoose.model("AvailableCity",availableCitiesSchema)

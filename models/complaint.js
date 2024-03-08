@@ -51,8 +51,6 @@ const schema = new mongoose.Schema({
 }, {timestamps:true});
 
 
-// we can also add resolved by field = > admin, nursery
-
-const model = new mongoose.model('complaint', schema);
+const model = new mongoose.model('Complaint', schema);
 
 module.exports = model;

@@ -6,7 +6,6 @@ const Package = require("../models/packages");
 const Cart = require("../models/cart");
 const Review = require("../models/review");
 const Order = require("../models/order");
-const Booking = require("../models/booking");
 const Faq = require("../models/faq");
 const HelpCenter = require("../models/helpCenter");
 const Coupon = require("../models/offerCoupon");

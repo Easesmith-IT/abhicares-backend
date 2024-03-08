@@ -44,4 +44,4 @@ const addressSchema = new mongoose.Schema(
   }
 );
 addressSchema.index({ location: "2dsphere" });
-module.exports = mongoose.model("userAddress", addressSchema);
+module.exports = mongoose.model("UserAddress", addressSchema);

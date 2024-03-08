@@ -23,4 +23,4 @@ const offerCouponSchema=new mongoose.Schema({
      }
 },{timestamps:true})
 
-module.exports=mongoose.model("offerCoupon",offerCouponSchema)
+module.exports=mongoose.model("Coupon",offerCouponSchema)
