@@ -36,7 +36,7 @@ exports.postCreateCategory = async (req, res, next) => {
   try {
     const { name } = req.body;
     if (!name) {
-      throw new AppError(400, "All the fields are required");
+      return next((400, "All the fields are required"));
     } else {
       await Category.create(req.body);
       res
@@ -44,6 +44,7 @@ exports.postCreateCategory = async (req, res, next) => {
         .json({ success: true, message: "Category created successful" });
     }
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -57,6 +58,7 @@ exports.getAllCategory = async (req, res, next) => {
       data: result,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -66,7 +68,7 @@ exports.updateCategory = async (req, res, next) => {
     const id = req.params.id;
     const { name, totalServices } = req.body;
     if (!name || !totalServices) {
-      throw new AppError(400, "All the fields are required");
+      return next((400, "All the fields are required"));
     } else {
       var result = await Category.findOne({ _id: id });
       result.name = name;
@@ -77,6 +79,7 @@ exports.updateCategory = async (req, res, next) => {
         .json({ success: true, message: "category updated successful" });
     }
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -89,13 +92,14 @@ exports.deleteCategory = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "categories deleted successful" });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
 
 // service controllers
 
-exports.createService = async (req, res, next) => {
+exports.createService = async (req, res,next) => {
   try {
     var {
       name,
@@ -115,8 +119,6 @@ exports.createService = async (req, res, next) => {
       imageUrl = fileUrl;
     }
 
-    await deleteFileFromGCS("file_1708611458635.png");
-
     if (
       !name ||
       !startingPrice ||
@@ -126,7 +128,7 @@ exports.createService = async (req, res, next) => {
       !appHomepage ||
       !webHomepage
     ) {
-      throw new AppError(400, "All the fields are required");
+      return next((400, "All the fields are required"))
     } else {
       await Service.create({
         name: name,
@@ -149,6 +151,7 @@ exports.createService = async (req, res, next) => {
     }
   } catch (err) {
     console.log(err);
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -174,6 +177,7 @@ exports.addServiceFeature = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "feature added successful" });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err);
     next(err);
   }
@@ -202,6 +206,7 @@ exports.updateServiceFeature = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "feature updated successful" });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err);
     next(err);
   }
@@ -225,6 +230,7 @@ exports.deleteServiceFeature = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "feature deleted successful" });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err);
     next(err);
   }
@@ -240,6 +246,7 @@ exports.getServiceDetails = async (req, res, next) => {
       service: result,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -267,6 +274,7 @@ exports.uploadServiceIcon = async (req, res, next) => {
         .json({ success: true, message: "Service icon updated successful" });
     }
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -280,6 +288,7 @@ exports.getAllService = async (req, res, next) => {
       data: result,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -294,6 +303,7 @@ exports.getCategoryService = async (req, res, next) => {
       data: result,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err);
     next(err);
   }
@@ -335,6 +345,7 @@ exports.updateService = async (req, res, next) => {
         .json({ success: true, message: "Service updated successful" });
     }
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err);
     next(err);
   }
@@ -357,6 +368,7 @@ exports.deleteCategoryService = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "service deleted successful" });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -394,6 +406,7 @@ exports.searchService = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -439,6 +452,7 @@ exports.createProduct = async (req, res, next) => {
         .json({ success: true, message: "product created successful" });
     }
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -470,6 +484,7 @@ exports.getAllProduct = async (req, res, next) => {
       totalPages: totalPage,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -503,6 +518,7 @@ exports.getServiceProduct = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -549,6 +565,7 @@ exports.updateProduct = async (req, res, next) => {
     }
   } catch (err) {
     console.log("error", err);
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -561,6 +578,7 @@ exports.deleteServiceProduct = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "product deleted successful" });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -612,6 +630,7 @@ exports.createSeller = async (req, res, next) => {
     }
   } catch (err) {
     console.log("error--->", err);
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -651,6 +670,7 @@ exports.getAllSeller = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -712,6 +732,7 @@ exports.updateSeller = async (req, res, next) => {
         .json({ success: true, message: "Seller updated successful" });
     }
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err);
     next(err);
   }
@@ -726,6 +747,7 @@ exports.deleteSeller = async (req, res, next) => {
       .json({ success: true, message: "Seller deleted successful" });
   } catch (err) {
     next(err);
+    res.status(500).json({success:false,message:'Something went wrong:('})
   }
 };
 
@@ -773,6 +795,7 @@ exports.searchSeller = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -787,6 +810,7 @@ exports.changeSellerStatus = async (req, res, next) => {
     result.save();
     res.status(200).json({ success: true, message: "Data updated successful" });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -823,6 +847,7 @@ exports.getInReviewSeller = async (req, res, next) => {
     });
   } catch (err) {
     console.log(err);
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -851,6 +876,7 @@ exports.getSellerByLocation = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "near sellers", sellerList: result });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -873,6 +899,7 @@ exports.getSellerWallet = async (req, res, next) => {
       wallet,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -894,6 +921,7 @@ exports.getCashoutRequests = async (req, res, next) => {
       cashouts,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -912,6 +940,7 @@ exports.getRecentCashoutRequests = async (req, res, next) => {
       cashouts,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -954,6 +983,7 @@ exports.approveSellerCashout = async (req, res, next) => {
       updatedCashout,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -968,8 +998,7 @@ exports.getDistance = async (req, res) => {
 
     res.json(response.data);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({success:false,message:'Something went wrong:('})
   }
 };
 
@@ -984,7 +1013,7 @@ exports.getPath = async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({success:false,message:'Something went wrong:('})
   }
 };
 
@@ -1017,6 +1046,7 @@ exports.getAllUser = async (req, res, next) => {
         totalPage: totalPage
       })
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -1043,6 +1073,7 @@ exports.getAllAddressesByUserId = async (req, res, next) => {
       });
 
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err)
     next(err);
   }
@@ -1067,6 +1098,7 @@ exports.updateUserByAdmin = async (req, res, next) => {
       }
 
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -1080,6 +1112,7 @@ exports.deleteUser = async (req, res, next) => {
         .json({ success: true, message: 'user deleted successful' })
 
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -1120,6 +1153,7 @@ exports.searchUser = async (req, res, next) => {
       totalPage: totalPage
     })
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -1151,6 +1185,7 @@ exports.getUserData = async (req, res, next) => {
       users: arr,
     })
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -1187,6 +1222,7 @@ exports.getAllEnquiry = async (req, res, next) => {
         })
    
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -1200,6 +1236,7 @@ exports.deleteEnquiry = async (req, res, next) => {
         .status(200)
         .json({ success: true, message: 'data deleted successful' })
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -1236,6 +1273,7 @@ exports.createPackage = async (req, res, next) => {
         .json({ success: true, message: "package created successful" });
     }
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1286,6 +1324,7 @@ exports.updatePackage = async (req, res, next) => {
         .json({ success: true, message: "package updated successful" });
     }
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1301,6 +1340,7 @@ exports.getServicePackage = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "package list", data: result });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1313,6 +1353,7 @@ exports.deletePackage = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "package deleted successful" });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1380,6 +1421,7 @@ exports.addAminUser = async (req, res, next) => {
     }
   } catch (err) {
     console.log("err====>", err);
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1419,6 +1461,7 @@ exports.updateAdminPassword = async (req, res, next) => {
     }
   } catch (err) {
     console.log("err====>", err);
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1444,6 +1487,7 @@ exports.updateAdminUser = async (req, res, next) => {
     }
   } catch (err) {
     console.log("err====>", err);
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1458,6 +1502,7 @@ exports.getSubAdmins = async (req, res, next) => {
     });
   } catch (err) {
     console.log("err====>", err);
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1493,9 +1538,7 @@ exports.loginAdminUser = async (req, res, next) => {
       });
     }
   } catch (err) {
-    console.log(err);
-    const error = new Error(err);
-    error.httpStatusCode = 500;
+    res.status(500).json({success:false,message:'Something went wrong:('})
     return next(err);
   }
 };
@@ -1505,6 +1548,7 @@ exports.logoutAdmin = async (req, res, next) => {
     res.clearCookie("admtoken");
     return res.json({ success: true, message: "Logout successful" });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1522,6 +1566,7 @@ exports.updateOrderStatus = async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "Order status changed successfull" });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1565,6 +1610,7 @@ exports.getAllOrders = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1603,6 +1649,7 @@ exports.getRecentOrders = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1628,7 +1675,7 @@ exports.getOrderById = async (req, res, next) => {
     });
   } catch (err) {
     console.log(err)
-    res.status(404).json({ success: false, message: "No order found" });
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1666,7 +1713,7 @@ exports.getMolthlyOrder = async (req, res, next) => {
         .json({ success: true, message: "Orders list", data: result });
     }
   } catch (err) {
-    console.log("err--->", err);
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1685,7 +1732,7 @@ exports.getAllPayments = async (req, res, next) => {
 
     res.status(200).json({ success: true, payments: payments,docsLength:Math.ceil(paymentsLength/limit) });
   } catch (err) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1730,6 +1777,7 @@ exports.getAllHelpCenter = async (req, res, next) => {
    
   } catch (err) {
     console.log("err--->",err)
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -1745,6 +1793,7 @@ exports.deleteHelpCenter = async (req, res, next) => {
         .json({ success: true, message: 'data deleted successful' })
     
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -1767,6 +1816,7 @@ exports.updateHelpCenter = async (req, res, next) => {
       }
     
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -1795,6 +1845,7 @@ exports.createAvailableCities = async (req, res, next) => {
       }
      
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -1808,6 +1859,7 @@ exports.deleteAvailableCities = async (req, res, next) => {
         .json({ success: true, message: 'data deleted successful' })
     
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -1831,6 +1883,7 @@ exports.updateAvailableCities = async (req, res, next) => {
       }
     
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -1848,6 +1901,7 @@ exports.getAvailableCities = async (req, res, next) => {
         })
     
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -1867,6 +1921,7 @@ exports.getSellerList = async (req, res, next) => {
       data: result,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1888,6 +1943,7 @@ exports.allotSeller = async (req, res, next) => {
     });
   } catch (err) {
     console.log("err", err);
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1918,6 +1974,7 @@ exports.updateSellerOrderStatus = async (req, res, next) => {
       message: "Seller order updated successful",
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1941,6 +1998,7 @@ exports.getSellerOrder = async (req, res, next) => {
       sellerOrders: result,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -1972,6 +2030,7 @@ exports.getSellerOrderByStatus = async (req, res, next) => {
       sellerOrders: result,
     });
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err);
   }
 };
@@ -2001,6 +2060,7 @@ exports.getBookingDetails= async (req, res, next) => {
       })
     
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err)
     next(err)
   }
@@ -2025,6 +2085,7 @@ exports.getAllBooking = async (req, res, next) => {
       })
     
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     console.log(err)
     next(err)
   }
@@ -2039,6 +2100,7 @@ exports.deleteBooking = async (req, res, next) => {
         .json({ success: true, message: 'Booking deleted successful' })
     
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -2068,6 +2130,7 @@ exports.createCoupon = async (req, res, next) => {
       }
     
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -2080,6 +2143,7 @@ exports.deleteCoupon = async (req, res, next) => {
         .status(200)
         .json({ success: true, message: 'data deleted successful' })
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -2104,6 +2168,7 @@ exports.updateCoupon = async (req, res, next) => {
       }
     
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -2119,6 +2184,7 @@ exports.getAllCoupons = async (req, res, next) => {
       })
     
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -2146,6 +2212,7 @@ exports.createFaq = async (req, res, next) => {
       }
     
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -2158,6 +2225,7 @@ exports.getAllFaq = async (req, res, next) => {
         .json({ success: true, message: 'list of all faq', data: result })
     
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -2171,6 +2239,7 @@ exports.deleteFaq = async (req, res, next) => {
         .json({ success: true, message: 'data deleted successful' })
    
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
@@ -2193,6 +2262,7 @@ exports.updateFaq = async (req, res, next) => {
       }
     
   } catch (err) {
+    res.status(500).json({success:false,message:'Something went wrong:('})
     next(err)
   }
 }
