@@ -511,7 +511,7 @@ exports.updateItemQuantity = async (req, res, next) => {
 
 exports.addProductReview = async (req, res, next) => {
     try {
-      const id = req.params.id; // this is product id
+      const id = req.params.id; // this is product/package id
       const { title, content, rating } = req.body;
       if (!rating) {
         throw new AppError(400, "Please provide rating");
@@ -638,11 +638,13 @@ exports.addProductReview = async (req, res, next) => {
       }
       let allReviews;
       if (type === 'package') {
-        allReviews = await Review.find({ packageId: id }).lean();
+        allReviews = await Review.find({ packageId: id }).populate({path:'userId',model:'User'}).lean();
       }
       if (type === 'product') {
-        allReviews = await Review.find({ productId: id }).lean();
+        allReviews = await Review.find({ productId: id }).populate({path:'userId',model:'User'}).lean();
       }
+
+      
       if (userId === null) {
         return res.status(200).json({
           reviews: allReviews

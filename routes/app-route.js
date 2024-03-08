@@ -1,13 +1,11 @@
 const express = require("express");
-const { check, body } = require("express-validator");
 
 const router = express.Router();
 
 const appController = require("../controllers/app-controller");
 const paymentController = require("../controllers/payments");
 const authController = require("../controllers/authController")
-// const orderController = require("../controllers/order");
-//////////////////////////////////////////////////////////////////
+
 
 //homepage route
 router.get("/get-homepage-hero-banners", appController.getHomePageHeroBanners);
