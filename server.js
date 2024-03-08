@@ -1,5 +1,5 @@
 const express = require("express");
-const http = require('http')
+const http = require("http");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -7,19 +7,23 @@ const path = require("path");
 const session = require("express-session");
 require("dotenv").config();
 const cookieParser = require("cookie-parser");
-const rateLimit = require('express-rate-limit');
-const hpp = require('hpp');
-const helmet = require('helmet');
-const mongoSanitize = require('express-mongo-sanitize');
+const rateLimit = require("express-rate-limit");
+const hpp = require("hpp");
+const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
 
-const initializeSocket = require('./connection/socket.js')
+const initializeSocket = require("./connection/socket.js");
+const winston = require("winston");
 
+const logger = winston.createLogger({
+  transports: [new winston.transports.File({ filename: "abhicares.log" })],
+});
 
 // Define a rate limiter with certain options
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minutes
   max: 1000, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
+  message: "Too many requests from this IP, please try again later.",
 });
 
 const app = express();
@@ -27,7 +31,7 @@ const server = http.createServer(app);
 
 // initialize socket.io
 
-const io = initializeSocket(server)
+const io = initializeSocket(server);
 
 // Apply the rate limiter to all requests
 app.use(limiter);
@@ -54,10 +58,8 @@ app.use(express.static(path.join(__dirname, "admin")));
 
 app.use(cookieParser());
 
-
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/newUpload", express.static(path.join(__dirname, "newUpload")));
-
 
 app.use(
   cors({
@@ -66,23 +68,8 @@ app.use(
   })
 );
 
-
-
 app.use((req, res, next) => {
-  console.log(
-    "Server received a request\n with method:",
-    req.method,
-    "\nUrl:",
-    req.url,
-    "\nbody:",
-    req.method,
-    "\nparams:",
-    req.param,
-    "\nquerry:",
-    req.query,
-    "\nPath",
-    req.path
-  );
+  logger.info(`Request received on ${req.url} with method ${req.method}`);
   next();
 });
 
@@ -103,6 +90,4 @@ server.listen(port, function () {
   console.log(`Server is running on port http://localhost:${port}`);
 });
 
-
-
-module.exports = {app,io};
+module.exports = { app, io, logger };

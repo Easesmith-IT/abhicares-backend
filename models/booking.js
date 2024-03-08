@@ -60,7 +60,7 @@ const bookingSchema = new mongoose.Schema(
       default: 1,
     },
     bookingDate: {
-      type: String,
+      type: Date,
       required: true,
     },
     bookingTime: {

@@ -17,14 +17,11 @@ const userSchema = new Schema(
       required: true,
       default: "password",
     },
-    // razorPayOrderId: {
-    //     type: String,
-    //     // required: true,
-    // },
-    // gender:{
-    //     type: String,
-    //     required:true
-    // },
+
+    email:{
+      type:String,
+    },
+
     otp: {
       type: Number,
     },

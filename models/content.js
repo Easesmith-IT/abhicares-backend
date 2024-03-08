@@ -53,6 +53,6 @@ const schema = new mongoose.Schema(
   }
 );
 
-const model = new mongoose.model("content", schema);
+const model = new mongoose.model("Content", schema);
 
 module.exports = model;

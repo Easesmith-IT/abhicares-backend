@@ -1,7 +1,7 @@
-const { uploadFileToGCS } = require("../../middleware/imageMiddleware");
-const Content = require("../../models/content");
-const Service = require("../../models/service");
-const AppError = require("../Admin/errorController");
+const { uploadFileToGCS } = require("../middleware/imageMiddleware");
+const Content = require("../models/content");
+const Service = require("../models/service");
+const AppError = require("./errorController");
 
 exports.uploadBanners = async (req, res, next) => {
   try {
@@ -16,7 +16,7 @@ exports.uploadBanners = async (req, res, next) => {
     }
 
     if (!type || !section || !page) {
-      throw new AppError(400, "All the fields are required");
+      return next(new AppError(400, "All the fields are required"))
     }
 
     const existingDoc = await Content.findOne({ type, section, page });
@@ -51,6 +51,7 @@ exports.uploadBanners = async (req, res, next) => {
       });
     }
   } catch (err) {
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
     console.log(err);
     next(err);
   }
@@ -91,9 +92,10 @@ exports.getBanners = async (req, res, next) => {
     }
 
     if (!doc) {
-      throw new AppError(400, "Document does not exists");
+      return next(new AppError(400, "Document does not exists"))
     }
   } catch (err) {
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
     console.log(err);
     next(err);
   }
@@ -134,10 +136,7 @@ exports.updateContent = async (req, res) => {
       message: "updated successfully",
     });
   } catch (err) {
-    return res.status(500).json({
-      message: "Error while updating content",
-      error: err.message,
-    });
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
   }
 };
 
@@ -154,10 +153,7 @@ exports.getContent = async (req, res) => {
       content: content,
     });
   } catch (err) {
-    return res.status(500).json({
-      message: "Error fetching addresses",
-      error: err.message,
-    });
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
   }
 };
 
@@ -174,10 +170,7 @@ exports.getSeoByPage = async (req, res) => {
       seo: content,
     });
   } catch (err) {
-    return res.status(500).json({
-      message: "Error fetching seo",
-      error: err.message,
-    });
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
   }
 };
 
@@ -216,10 +209,7 @@ exports.updateSeo = async (req, res) => {
       message: "updated successfully",
     });
   } catch (err) {
-    return res.status(500).json({
-      message: "Error while updating content",
-      error: err.message,
-    });
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
   }
 };
 
@@ -247,6 +237,7 @@ exports.getSeoByCategoryId = async (req, res, next) => {
       seo: content,
     });
   } catch (err) {
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
     console.log(err);
     next(err);
   }
