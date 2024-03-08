@@ -319,6 +319,93 @@ exports.createUser = async (req, res, next) => {
   }
 };
 
+exports.appSignupOtp = async (req, res, next) => {
+  try {
+    const { name, phone } = req.body;
+    if (!name || !phone) {
+      res
+        .status(400)
+        .json({ success: false, message: "All the fields are required" });
+    } else {
+      const resultData = await userModel.findOne({ phone: phone });
+      if (resultData) {
+        res.status(400).json({
+          success: true,
+          message: "User already exists, Please Login!",
+        });
+      } else {
+        const otp = Math.floor(Math.random() * 900000) + 100000;
+        const text = `${otp} is your OTP of AbhiCares, OTP is only valid for 10 mins, do not share it with anyone. - Azadkart private limited`;
+        await axios.post(
+          `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
+          {
+            Text: text,
+            Number: phone,
+            SenderId: "AZKART",
+            DRNotifyUrl: "https://www.domainname.com/notifyurl",
+            DRNotifyHttpMethod: "POST",
+            Tool: "API",
+          },
+          config
+        );
+
+        var payload = { phone: phone, otp: otp, name: name };
+        var token = jwt.sign(payload, process.env.JWT_SECRET);
+        res
+          .status(200)
+          .json({ message: "otp sent successfully", tempVerf: token });
+      }
+    }
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+};
+
+exports.appCreateUser = async (req, res, next) => {
+  try {
+    const { enteredOTP, phone } = req.body;
+    if (!req.body["tempVerf"]) {
+      res.status(400).json({
+        success: false,
+        message: "No signup request available",
+      });
+    } else if (!enteredOTP || !phone) {
+      res
+        .status(400)
+        .json({ success: false, message: "All the fields are required" });
+    } else {
+      try {
+        const decoded = jwt.verify(
+          req.body["tempVerf"],
+          process.env.JWT_SECRET
+        );
+        if (decoded.otp == enteredOTP.toString() && decoded.phone == phone) {
+          var user = await userModel({ name: decoded.name, phone: phone });
+          await user.save();
+          var userCart = await cartModel({ userId: user._id });
+          await userCart.save();
+          user.cartId = userCart._id;
+          await user.save();
+          return res.status(200).json({
+            message: "Logged In",
+            success: true,
+            userName: user.name,
+            userPhone: user.phone,
+          });
+        } else {
+          return res.status(400).json({ message: "OTP in Invalid" });
+        }
+      } catch (err) {
+        return res.status(400).json({ message: "OTP in Invalid" });
+      }
+    }
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+};
+
 exports.getAllUser = async (req, res, next) => {
   try {
     var page = 1;
