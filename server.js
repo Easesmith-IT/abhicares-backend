@@ -63,7 +63,7 @@ app.use("/newUpload", express.static(path.join(__dirname, "newUpload")));
 
 app.use(
   cors({
-    origin: process.env.FRONT_END_BASE_URL,
+    origin: process.env.FrontEnd_URL,
     credentials: true,
   })
 );
