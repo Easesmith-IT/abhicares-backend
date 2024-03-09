@@ -154,7 +154,7 @@ exports.createEnquiry = async (req, res, next) => {
   try {
     const { name, phone, serviceType, city, state } = req.body;
     if (!name || !phone || !serviceType || !city || !state) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       await Enquiry.create({
         name: name,
@@ -313,7 +313,7 @@ exports.removeItemFromCart = async (req, res, next) => {
     }
     var cart;
     if (!prod && !pack) {
-      return next(new AppError(400, "Product does not exist"))
+      return next(new AppError(400, "Product does not exist"));
     } else if (user) {
       cart = await Cart.findById(user.cartId);
       if (type == "product") {
@@ -398,7 +398,7 @@ exports.addItemToCart = async (req, res, next) => {
       pack = await Package.findById(itemId);
     }
     if (!prod && !pack) {
-      return next(new AppError(400, "product not found"))
+      return next(new AppError(400, "product not found"));
     } else if (user) {
       cart = await Cart.findById(user.cartId);
 
@@ -545,7 +545,7 @@ exports.addProductReview = async (req, res, next) => {
     const id = req.params.id; // this is product/package id
     const { title, content, rating } = req.body;
     if (!rating) {
-      return next(new AppError(400, "Please provide rating"))
+      return next(new AppError(400, "Please provide rating"));
     }
     const reviewProd = await Review.findOne({
       productId: id,
@@ -640,7 +640,7 @@ exports.updateProductReview = async (req, res, next) => {
     const id = req.params.id; // review id
     const { title, content, rating } = req.body;
     if (!rating) {
-      return next(new AppError(400, "Please provide rating"))
+      return next(new AppError(400, "Please provide rating"));
     } else {
       const result = await Review.findOne({ _id: id });
       result.title = title;
@@ -665,7 +665,7 @@ exports.getProductReview = async (req, res, next) => {
     const userId = req?.user?._id ? req?.user._id : null;
     const { type } = req.query; // product or package
     if (!type) {
-      return next(new AppError(400, "package/product type is required"))
+      return next(new AppError(400, "package/product type is required"));
     }
     let allReviews;
     if (type === "package") {
@@ -735,7 +735,7 @@ exports.createHelpCenter = async (req, res, next) => {
     const id = req.user._id;
     const { description, issue, others } = req.body;
     if (!description) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       await HelpCenter.create({
         userId: id,
@@ -760,7 +760,7 @@ exports.getUserHelpCenter = async (req, res, next) => {
     const id = req.user._id;
     const result = await HelpCenter.find({ userId: id });
     if (result.length == 0) {
-      return next(new AppError(400, "Data not found"))
+      return next(new AppError(400, "Data not found"));
     } else {
       res.status(201).json({
         success: true,
@@ -779,21 +779,37 @@ exports.getUserHelpCenter = async (req, res, next) => {
 exports.getCouponByName = async (req, res, next) => {
   try {
     const { name } = req.body;
+    const userId = req.user._id;
     if (!name) {
-      res
+      return res
         .status(400)
         .json({ success: false, message: "All Fields are required" });
-    } else {
-      const result = await Coupon.find({ name: name });
-      if (result.length == 0) {
-        return next(new AppError(400, "Coupon not found"))
-      } else {
-        res
-          .status(200)
-          .json({ success: true, message: "Your coupon", data: result });
-      }
     }
+
+    const result = await Coupon.find({ name: name });
+    if (result.length===0) {
+      return next(new AppError(400, "Coupon not found"));
+    }
+
+    const orders = await Order.find({ "user.userId": userId });
+
+    let flag = false;
+
+    orders.forEach((order)=>{
+      if(order.couponId && order.couponId.toString()===result[0]._id.toString())flag=true
+    })
+
+    if(flag){
+      return res.status(400).json({success:false,message:'You have already used this coupon!'})
+    }else{
+      res
+      .status(200)
+      .json({ success: true, message: "Your coupon", data: result });
+    }
+
+
   } catch (err) {
+    console.log(err)
     res.status(500).json({ success: false, message: "Something went wrong:(" });
 
     logger.error(err);

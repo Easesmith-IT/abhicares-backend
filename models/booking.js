@@ -71,6 +71,11 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       default: "not-alloted",
     },
+
+    autoAssigned:{
+      type:Boolean,
+      default:false,
+    },
     orderValue: {
       type: Number,
     },

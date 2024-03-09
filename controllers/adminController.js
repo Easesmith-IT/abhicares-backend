@@ -2165,7 +2165,8 @@ exports.getAllBooking = async (req, res, next) => {
           },
         },
       })
-      .populate("sellerId");
+      .populate({path:"sellerId",model:'Seller'})
+      .sort({createdAt:-1})
     res.status(200).json({
       success: true,
       message: "All booking list",
