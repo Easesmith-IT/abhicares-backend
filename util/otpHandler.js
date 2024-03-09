@@ -43,7 +43,7 @@ exports.generateOTP = async (phoneNumber, user) => {
 
     await existingOtpDoc.save();
   } else {
-     await userOtpLinkModel.findOneAndDelete({phone:user.phone})
+    await userOtpLinkModel.findOneAndDelete({ phone: user.phone });
     const otpDoc = new userOtpLinkModel({
       phone: user.phone,
       userId: user._id,
@@ -60,18 +60,17 @@ exports.verifyOTP = async (phoneNumber, enteredOTP, user, res) => {
   console.log("otpDoc", otpDoc);
 
   if (enteredOTP * 1 !== otpDoc.otp) {
-    return res
-      .status(400)
-      .json({ success: false, message: "OTP does not match" });
+    res.status(400).json({ success: false, message: "OTP does not match" });
+    return false;
   }
 
   const currentTime = new Date().getTime(); // Current time
   if (currentTime > otpDoc.otpExpiresAt.getTime()) {
-    return res
-      .status(400)
-      .json({ success: false, message: "OTP has expired!" });
+    res.status(400).json({ success: false, message: "OTP has expired!" });
+    return false;
   }
   otpDoc.otp = null;
+  return true;
 };
 
 //// Seller

@@ -4,8 +4,8 @@ const router = express.Router();
 
 const appController = require("../controllers/app-controller");
 const paymentController = require("../controllers/payments");
-const authController = require("../controllers/authController")
-
+const authController = require("../controllers/authController");
+const contentController = require("../controllers/content");
 
 //homepage route
 router.get("/get-homepage-hero-banners", appController.getHomePageHeroBanners);
@@ -24,7 +24,18 @@ router.get("/get-Package-details/:packageId", appController.getPackageDetails);
 router.get("/get-user/:userId", appController.getUser);
 router.post("/login", authController.verifyUserOtp);
 router.post("/login-otp", authController.generateOtpUser);
-router.post("/signup", appController.createUser);
+router.post("/signup-otp", authController.appSignupOtp);
+router.post("/signup", authController.appCreateUser);
+
+// coupon api
+router.post("/get-coupon-details", appController.getCouponByName);
+
+// banner route
+router.get("/get-banners", contentController.getBanners);
+router.get("/get-prod-banners", contentController.getProdBanner);
+
+//get-banners?page=home-hero-banners&section=app-homepage&heroBanners=true
+
 //
 router.post("/add-address", appController.AddUserAddress);
 router.get("/get-address/:userId", appController.getUserAddress);

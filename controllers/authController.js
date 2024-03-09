@@ -65,7 +65,10 @@ exports.verifyUserOtp = async (req, res, next) => {
         .json({ success: false, message: "User does not exist" });
     }
 
-    await verifyOTP(phoneNumber, enteredOTP, user, res);
+    var verify = await verifyOTP(phoneNumber, enteredOTP, user, res);
+    if (!verify) {
+      return;
+    }
     const payload = { id: user._id };
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "2d",
@@ -115,6 +118,7 @@ exports.verifyUserOtp = async (req, res, next) => {
       userPhone: user.phone,
     });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ success: false, message: "Something went wrong:(" });
 
     logger.error(err);
@@ -165,6 +169,93 @@ exports.signupOtp = async (req, res, next) => {
           .status(200)
           .cookie("tempVerf", token, { httpOnly: true })
           .json({ message: "otp sent successfully" });
+      }
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    console.log(err);
+    next(err);
+  }
+};
+
+exports.appSignupOtp = async (req, res, next) => {
+  try {
+    const { name, phone } = req.body;
+    if (!name || !phone) {
+      res
+        .status(400)
+        .json({ success: false, message: "All the fields are required" });
+    } else {
+      const resultData = await userModel.findOne({ phone: phone });
+      if (resultData) {
+        res.status(403).json({
+          success: true,
+          message: "User already exists, Please Login!",
+        });
+      } else {
+        const otp = Math.floor(Math.random() * 900000) + 100000;
+        const text = `${otp} is your OTP of AbhiCares, OTP is only valid for 10 mins, do not share it with anyone. - Azadkart private limited`;
+        await axios.post(
+          `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
+          {
+            Text: text,
+            Number: phone,
+            SenderId: "AZKART",
+            DRNotifyUrl: "https://www.domainname.com/notifyurl",
+            DRNotifyHttpMethod: "POST",
+            Tool: "API",
+          },
+          config
+        );
+        var payload = { phone: phone, otp: otp, name: name };
+        var token = jwt.sign(payload, process.env.JWT_SECRET);
+        res
+          .status(200)
+          .json({ message: "otp sent successfully", tempVerf: token });
+      }
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    console.log(err);
+    next(err);
+  }
+};
+exports.appCreateUser = async (req, res, next) => {
+  try {
+    const { enteredOTP, phone, tempVerf } = req.body;
+    if (!tempVerf) {
+      res.status(400).json({
+        success: false,
+        message: "No signup request available",
+      });
+    } else if (!enteredOTP || !phone) {
+      res
+        .status(400)
+        .json({ success: false, message: "All the fields are required" });
+    } else {
+      try {
+        const decoded = jwt.verify(tempVerf, process.env.JWT_SECRET);
+        if (decoded.otp == enteredOTP.toString() && decoded.phone == phone) {
+          var user = await userModel({ name: decoded.name, phone: phone });
+          await user.save();
+          var userCart = await cartModel({ userId: user._id });
+          await userCart.save();
+          user.cartId = userCart._id;
+          await user.save();
+          return res.status(200).json({
+            message: "Logged In",
+            success: true,
+            user: user,
+          });
+        } else {
+          return res.status(400).json({ message: "OTP in Invalid" });
+        }
+      } catch (err) {
+        return res.status(400).json({ message: "OTP in Invalid" });
       }
     }
   } catch (err) {
@@ -317,7 +408,7 @@ exports.addUserAddress = async (req, res, next) => {
       req.body;
     const userId = req.user._id;
     if (!addressLine || !pincode || !landmark || !city || !userId) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       await userAddressModel.create({
         addressLine: addressLine,
@@ -344,10 +435,9 @@ exports.addUserAddress = async (req, res, next) => {
 exports.updateUserAddress = async (req, res, next) => {
   try {
     const id = req.params.id; // address id
-    const { addressLine, pincode, landmark, city, defaultAddress } =
-      req.body;
+    const { addressLine, pincode, landmark, city, defaultAddress } = req.body;
     if (!addressLine || !pincode || !landmark || !city) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       const result = await userAddressModel.findOne({ _id: id });
       result.addressLine = addressLine;
