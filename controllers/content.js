@@ -75,7 +75,46 @@ exports.getBanners = async (req, res, next) => {
 
         banners.push({ image: singleDoc.image, serviceId });
       }
+      console.log(banners);
+      res.status(200).json({
+        success: true,
+        banners: banners,
+      });
+    } else {
+      console.log("inside else");
+      doc = await Content.findOne({ type, section, page });
+      let serviceId = null;
+      if (doc?.serviceId) {
+        serviceId = await Service.findById(doc.serviceId);
+      }
+      res.status(200).json({
+        success: true,
+        banners: { image: doc.image, serviceId },
+      });
+    }
+    if (!doc) {
+      return next(new AppError(400, "Document does not exists"));
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+    console.log(err);
+    next(err);
+  }
+};
 
+exports.getHomePageBanners = async (req, res, next) => {
+  try {
+    var { type, section, page, heroBanners } = req.query;
+    let doc;
+    if (heroBanners) {
+      console.log("inside if");
+      doc = await Content.find({ section, page });
+
+      var banners = { homepage: doc, banner: [] };
+      page = "home-banners";
+      doc = await Content.find({ section, page });
+      banners.banner.push(...doc);
+      console.log(banners);
       res.status(200).json({
         success: true,
         banners: banners,

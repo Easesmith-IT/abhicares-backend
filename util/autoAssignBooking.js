@@ -73,7 +73,8 @@ exports.autoAssignBooking = async (serviceId, bookingId) => {
 
   // Update booking with assigned partner and status
   booking.sellerId = assignedPartner;
-  booking.status = "allotted";
+  booking.status = "alloted";
+  booking.autoAssigned = true
 
   // Save the updated booking
   await booking.save();
