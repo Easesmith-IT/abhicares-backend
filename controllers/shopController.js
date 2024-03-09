@@ -779,7 +779,7 @@ exports.getUserHelpCenter = async (req, res, next) => {
 exports.getCouponByName = async (req, res, next) => {
   try {
     const { name } = req.body;
-    const userId = req.user._id;
+    // const userId = req.user._id;
     if (!name) {
       return res
         .status(400)
@@ -787,29 +787,27 @@ exports.getCouponByName = async (req, res, next) => {
     }
 
     const result = await Coupon.find({ name: name });
-    if (result.length===0) {
+    if (result.length === 0) {
       return next(new AppError(400, "Coupon not found"));
     }
 
-    const orders = await Order.find({ "user.userId": userId });
+    //const orders = await Order.find({ "user.userId": userId });
 
-    let flag = false;
+    //let flag = false;
 
-    orders.forEach((order)=>{
-      if(order.couponId && order.couponId.toString()===result[0]._id.toString())flag=true
-    })
+    // orders.forEach((order)=>{
+    //   if(order.couponId && order.couponId.toString()===result[0]._id.toString())flag=true
+    // })
 
-    if(flag){
-      return res.status(400).json({success:false,message:'You have already used this coupon!'})
-    }else{
-      res
+    // if(flag){
+    //   return res.status(400).json({success:false,message:'You have already used this coupon!'})
+    // }
+
+    res
       .status(200)
       .json({ success: true, message: "Your coupon", data: result });
-    }
-
-
   } catch (err) {
-    console.log(err)
+    console.log(err);
     res.status(500).json({ success: false, message: "Something went wrong:(" });
 
     logger.error(err);
