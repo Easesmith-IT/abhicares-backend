@@ -3,6 +3,7 @@ const Category = require("../models/category");
 const Package = require("../models/packages");
 const Product = require("../models/product");
 const Service = require("../models/service");
+const Coupon = require("../models/offerCoupon");
 const User = require("../models/user");
 const UserAddress = require("../models/useraddress");
 const Order = require("../models/order");
@@ -36,10 +37,9 @@ exports.searchService = async (req, res, next) => {
       totalPage++;
     }
 
-    const result = await Service
-      .find({
-        $or: [{ name: { $regex: ".*" + search + ".*", $options: "i" } }],
-      })
+    const result = await Service.find({
+      $or: [{ name: { $regex: ".*" + search + ".*", $options: "i" } }],
+    })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
@@ -51,7 +51,7 @@ exports.searchService = async (req, res, next) => {
       totalPage: totalPage,
     });
   } catch (err) {
-   next(err)
+    next(err);
   }
 };
 
@@ -427,3 +427,34 @@ exports.raiseTicket = async (req, res, next) => {
     return next(err);
   }
 };
+
+// coupon controller
+
+exports.getCouponByName = async (req, res, next) => {
+  try {
+    const { name } = req.body;
+    console.log(name);
+    if (!name) {
+      return res
+        .status(400)
+        .json({ success: false, message: "All Fields are required" });
+    } else {
+      const result = await Coupon.findOne({ name: name });
+      if (!result) {
+        return res
+          .status(404)
+          .json({ success: false, message: "No Coupon Found" });
+      } else {
+        res
+          .status(200)
+          .json({ success: true, message: "Your coupon", data: result });
+      }
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+    next(err);
+  }
+};
+
+// discount = Math.ceil(cart.totalPrice * (Number(offPer)/100))
+// total = prevTotal - discount

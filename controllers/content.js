@@ -7,7 +7,7 @@ exports.uploadBanners = async (req, res, next) => {
   try {
     const { type, section, page, serviceId } = req.body;
 
-    let image = ''
+    let image = "";
     if (req?.files) {
       const ext = req.files[0].originalname.split(".").pop();
       const ret = await uploadFileToGCS(req.files[0].buffer, ext);
@@ -16,7 +16,7 @@ exports.uploadBanners = async (req, res, next) => {
     }
 
     if (!type || !section || !page) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     }
 
     const existingDoc = await Content.findOne({ type, section, page });
@@ -41,7 +41,7 @@ exports.uploadBanners = async (req, res, next) => {
         image: image,
       };
       if (serviceId) {
-        newContent.serviceId = serviceId || null
+        newContent.serviceId = serviceId || null;
       }
 
       const newDoc = await Content.create(newContent);
@@ -62,6 +62,7 @@ exports.getBanners = async (req, res, next) => {
     const { type, section, page, heroBanners } = req.query;
     let doc;
     if (heroBanners) {
+      console.log("inside if");
       doc = await Content.find({ section, page });
 
       const banners = [];
@@ -80,20 +81,44 @@ exports.getBanners = async (req, res, next) => {
         banners: banners,
       });
     } else {
+      console.log("inside else");
       doc = await Content.findOne({ type, section, page });
-      let serviceId = null
-      if(doc.serviceId){
+      let serviceId = null;
+      if (doc?.serviceId) {
         serviceId = await Service.findById(doc.serviceId);
       }
       res.status(200).json({
         success: true,
-        banners: { image: doc.image, serviceId},
+        banners: { image: doc.image, serviceId },
       });
     }
-
     if (!doc) {
-      return next(new AppError(400, "Document does not exists"))
+      return next(new AppError(400, "Document does not exists"));
     }
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+    console.log(err);
+    next(err);
+  }
+};
+
+exports.getProdBanner = async (req, res, next) => {
+  try {
+    var doc;
+    var type = "product-banner";
+    var section = "app-productpage";
+    var page = "product-banners";
+    console.log("inside else");
+    doc = await Content.findOne({ type, section, page });
+    // let serviceId = null;
+    // if (doc?.serviceId) {
+    //   serviceId = await Service.findById(doc.serviceId);
+    // }
+    console.log(doc);
+    res.status(200).json({
+      success: true,
+      banners: { image: doc.image },
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: "Something went wrong:(" });
     console.log(err);
