@@ -16,7 +16,8 @@ router.get(
   appController.getHomepageSpeciality
 );
 router.get("/get-categories", appController.getCategories);
-router.get("/get-services/:categoryId", appController.getServiceScreen);
+router.get("/get-services/:categoryId", appController.getServices);
+router.get("/get-service-screen/:serviceId", appController.getServiceScreen);
 router.get("/get-products/:serviceId", appController.getProducts);
 router.get("/get-Package-details/:packageId", appController.getPackageDetails);
 // router.get("/get-product/:productId", appController.getProductDetails);
@@ -31,7 +32,7 @@ router.post("/signup", authController.appCreateUser);
 router.post("/get-coupon-details", appController.getCouponByName);
 
 // banner route
-router.get("/get-banners", contentController.getBanners);
+router.get("/get-banners", contentController.getHomePageBanners);
 router.get("/get-prod-banners", contentController.getProdBanner);
 
 //get-banners?page=home-hero-banners&section=app-homepage&heroBanners=true

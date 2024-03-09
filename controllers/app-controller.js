@@ -73,11 +73,14 @@ exports.getServices = async (req, res, next) => {
 exports.getServiceScreen = async (req, res, next) => {
   try {
     console.log("reached");
-    const categoryId = req.params.categoryId;
-    const packages = await Package.findOne({ categoryId: categoryId });
-    const services = await Service.find({ categoryId: categoryId });
-    console.log(services, packages, "kxkjx");
-    res.status(200).json({ service: services, package: packages });
+    const serviceId = req.params.serviceId;
+    const service = await Service.findById(serviceId);
+    const products = await Product.find({ serviceId: serviceId });
+    const packages = await Package.find({ serviceId: serviceId });
+    console.log(service, packages, "kxkjx");
+    res
+      .status(200)
+      .json({ service: service, package: packages, products: products });
   } catch (error) {}
 };
 
