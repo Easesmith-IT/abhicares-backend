@@ -76,7 +76,9 @@ exports.getServiceScreen = async (req, res, next) => {
     const serviceId = req.params.serviceId;
     const service = await Service.findById(serviceId);
     const products = await Product.find({ serviceId: serviceId });
-    const packages = await Package.find({ serviceId: serviceId });
+    const packages = await Package.find({ serviceId: serviceId }).populate(
+      "products.productId"
+    );
     console.log(service, packages, "kxkjx");
     res
       .status(200)
