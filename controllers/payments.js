@@ -25,6 +25,11 @@ exports.appOrder = async (req, res, next) => {
     const userAddressId = req.body.userAddressId;
     const user = await User.findById(userId);
     const cart = req.body.cart;
+    const totalOrderval = cart.totalAmount;
+    const coupon = cart.coupon;
+    const discount = cart.discount;
+
+    const couponId = cart.couponId;
     const payId = req.body.payId;
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -59,15 +64,16 @@ exports.appOrder = async (req, res, next) => {
       }
     }
     const userAddress = await UserAddress.findById(userAddressId);
-    console.log(cart);
+    console.log(totalOrderval);
     const order = new Order({
       paymentType: cart["paymentType"],
-      orderValue: cart["totalAmount"],
+      orderValue: totalOrderval,
       itemTotal: cart["totalvalue"],
       No_of_left_bookings: orderItems.length,
       discount: 0,
-      tax: cart["totalAmount"] - cart["totalvalue"],
+      tax: (cart["totalvalue"] * 18) / 100,
       items: orderItems,
+
       orderPlatform: "app",
       user: {
         userId: user._id,
@@ -84,6 +90,10 @@ exports.appOrder = async (req, res, next) => {
     });
     if (payId) {
       order.payId = payId;
+    }
+    if (coupon) {
+      order.couponId = couponId;
+      order.discount = discount;
     }
     await order.save();
     var paymentStatus;
@@ -162,7 +172,7 @@ exports.getAllUserOrders = async (req, res, next) => {
           },
         },
       })
-      .populate({path:"couponId", model:"Coupon"});
+      .populate({ path: "couponId", model: "Coupon" });
     res
       .status(200)
       .json({ success: true, message: "Your all orders", data: result });
