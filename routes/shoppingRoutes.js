@@ -128,6 +128,7 @@ router.get("/get-user-help", userAuth, shoppingController.getUserHelpCenter);
 
 // Coupon routes
 router.post("/get-coupon-details", userAuth, shoppingController.getCouponByName);
+router.post("/get-referralCredits", userAuth, shoppingController.getReferralCredits);
 
 // user profile routes
 router.post('/update-email',userAuth,authController.updateEmail)

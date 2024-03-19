@@ -408,6 +408,8 @@ exports.checkout = async (req, res, next) => {
       req.body;
     const user = req.user;
 
+    console.log('couponId',req.body.couponId)
+
     let couponId = null;
     if (req.body.couponId) {
       couponId = req.body.couponId;

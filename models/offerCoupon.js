@@ -20,7 +20,11 @@ const offerCouponSchema=new mongoose.Schema({
      status:{
         type:String,
        default:"active"
+     },
+     noOfTimesPerUser:{
+      type:Number,
+      default:1
      }
 },{timestamps:true})
 
-module.exports=mongoose.model("Coupon",offerCouponSchema)
+module.exports=mongoose.model("Coupon",offerCouponSchema);

@@ -2,12 +2,14 @@ const userModel = require("../models/user");
 const jwt = require("jsonwebtoken");
 const cartModel = require("../models/cart");
 const AppError = require("../controllers/errorController");
+const shortid = require('shortid');
 const { logger } = require("../server");
 
 // Encode the concatenated string into base64
 const axios = require("axios");
 const { generateOTP, verifyOTP } = require("../util/otpHandler");
 const userAddressModel = require("../models/useraddress");
+const referAndEarnModel = require("../models/referAndEarn");
 
 const authKey = "T1PhA56LPJysMHFZ62B5";
 const authToken = "8S2pMXV8IRpZP6P37p4SWrVErk2N6CzSEa458pt1";
@@ -125,48 +127,47 @@ exports.verifyUserOtp = async (req, res, next) => {
 
 exports.signupOtp = async (req, res, next) => {
   try {
-    const { name, phone } = req.body;
+    const { name, phone, referralCode } = req.body;
     if (!name || !phone) {
-      res
+      return res
         .status(400)
         .json({ success: false, message: "All the fields are required" });
-    } else {
-      const resultData = await userModel.findOne({ phone: phone });
-      if (resultData) {
-        res.status(400).json({
-          success: true,
-          message: "User already exists, Please Login!",
-        });
-      } else {
-        // const otp = otpGenerator.generate(6, {
-        //   digits: true,
-        //   lowerCaseAlphabets: false,
-        //   upperCaseAlphabets: false,
-        //   specialChars: false,
-        // });
-        const otp = Math.floor(Math.random() * 900000) + 100000;
-        const text = `${otp} is your OTP of AbhiCares, OTP is only valid for 10 mins, do not share it with anyone. - Azadkart private limited`;
-        await axios.post(
-          `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
-          {
-            Text: text,
-            Number: phone,
-            SenderId: "AZKART",
-            DRNotifyUrl: "https://www.domainname.com/notifyurl",
-            DRNotifyHttpMethod: "POST",
-            Tool: "API",
-          },
-          config
-        );
-
-        var payload = { phone: phone, otp: otp, name: name };
-        var token = jwt.sign(payload, process.env.JWT_SECRET);
-        res
-          .status(200)
-          .cookie("tempVerf", token, { httpOnly: true })
-          .json({ message: "otp sent successfully" });
-      }
     }
+
+    const resultData = await userModel.findOne({ phone: phone });
+    if (resultData) {
+      return res.status(400).json({
+        success: true,
+        message: "User already exists, Please Login!",
+      });
+    }
+
+    const otp = Math.floor(Math.random() * 900000) + 100000;
+    const text = `${otp} is your OTP of AbhiCares, OTP is only valid for 10 mins, do not share it with anyone. - Azadkart private limited`;
+    await axios.post(
+      `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
+      {
+        Text: text,
+        Number: phone,
+        SenderId: "AZKART",
+        DRNotifyUrl: "https://www.domainname.com/notifyurl",
+        DRNotifyHttpMethod: "POST",
+        Tool: "API",
+      },
+      config
+    );
+
+    var payload = {
+      phone: phone,
+      otp: otp,
+      name: name,
+      referralCode: referralCode,
+    };
+    var token = jwt.sign(payload, process.env.JWT_SECRET);
+    res
+      .status(200)
+      .cookie("tempVerf", token, { httpOnly: true })
+      .json({ message: "otp sent successfully" });
   } catch (err) {
     res.status(500).json({ success: false, message: "Something went wrong:(" });
 
@@ -180,74 +181,82 @@ exports.createUser = async (req, res, next) => {
   try {
     const { enteredOTP, phone } = req.body;
     if (!req.cookies["tempVerf"]) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: "No signup request available",
       });
-    } else if (!enteredOTP || !phone) {
-      res
+    }
+
+    if (!enteredOTP || !phone) {
+      return res
         .status(400)
         .json({ success: false, message: "All the fields are required" });
-    } else {
-      try {
-        const decoded = jwt.verify(
-          req.cookies["tempVerf"],
-          process.env.JWT_SECRET
-        );
-        if (decoded.otp == enteredOTP.toString() && decoded.phone == phone) {
-          var user = await userModel({ name: decoded.name, phone: phone });
-          await user.save();
-          var userCart = await cartModel({ userId: user._id });
-          await userCart.save();
-          user.cartId = userCart._id;
-          await user.save();
-          const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-            expiresIn: "2d",
-          });
-          if (req.cookies["guestCart"]) {
-            const guestCart = JSON.parse(req.cookies["guestCart"]);
-            const carItems = guestCart.items;
-            for (const guestCartItem of carItems) {
-              if (guestCartItem.type == "product") {
-                const existingCartItem = userCart.items.find(
-                  (item) =>
-                    item.productId?.toString() === guestCartItem.productId
-                );
-                if (existingCartItem) {
-                  existingCartItem.quantity += guestCartItem.quantity;
-                } else {
-                  userCart.items.push(guestCartItem);
-                }
-              } else if (guestCartItem.type == "package") {
-                const existingCartItem = userCart.items.find(
-                  (item) =>
-                    item.packageId?.toString() === guestCartItem.packageId
-                );
-                if (existingCartItem) {
-                  existingCartItem.quantity += guestCartItem.quantity;
-                } else {
-                  userCart.items.push(guestCartItem);
-                }
-              }
-            }
-            userCart.totalPrice += guestCart.totalPrice;
-            await userCart.save();
-          }
-          res.clearCookie("guestCart");
-          res.clearCookie("tempVerf");
-          res.cookie("token", token, { secure: true, httpOnly: true });
-          return res.status(200).json({
-            message: "Logged In",
-            success: true,
-            userName: user.name,
-            userPhone: user.phone,
-          });
-        } else {
-          return res.status(400).json({ message: "OTP in Invalid" });
-        }
-      } catch (err) {
-        return res.status(400).json({ message: "OTP in Invalid" });
+    }
+
+    const decoded = jwt.verify(req.cookies["tempVerf"], process.env.JWT_SECRET);
+    if (decoded.otp == enteredOTP.toString() && decoded.phone == phone) {
+
+      const referralCode = shortid.generate();
+
+      var user = await userModel({ name: decoded.name, phone: phone,referralCode:referralCode });
+
+      var userCart = await cartModel({ userId: user._id });
+      await userCart.save();
+
+      user.cartId = userCart._id;
+
+      const enteredReferralCode = decoded.referralCode;
+      const referralUser = await userModel.findOne({referralCode:enteredReferralCode,status:true});
+
+      if(referralUser){
+        const referralAmt = await referAndEarnModel.find()
+        user.referralCredits = user.referralCredits + referralAmt.amount
       }
+
+
+      await user.save();
+
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "2d",
+      });
+      if (req.cookies["guestCart"]) {
+        const guestCart = JSON.parse(req.cookies["guestCart"]);
+        const carItems = guestCart.items;
+        for (const guestCartItem of carItems) {
+          if (guestCartItem.type == "product") {
+            const existingCartItem = userCart.items.find(
+              (item) => item.productId?.toString() === guestCartItem.productId
+            );
+            if (existingCartItem) {
+              existingCartItem.quantity += guestCartItem.quantity;
+            } else {
+              userCart.items.push(guestCartItem);
+            }
+          } else if (guestCartItem.type == "package") {
+            const existingCartItem = userCart.items.find(
+              (item) => item.packageId?.toString() === guestCartItem.packageId
+            );
+            if (existingCartItem) {
+              existingCartItem.quantity += guestCartItem.quantity;
+            } else {
+              userCart.items.push(guestCartItem);
+            }
+          }
+        }
+        userCart.totalPrice += guestCart.totalPrice;
+        await userCart.save();
+      }
+      res.clearCookie("guestCart");
+      res.clearCookie("tempVerf");
+      res.cookie("token", token, { secure: true, httpOnly: true });
+      return res.status(200).json({
+        message: "Logged In",
+        success: true,
+        userName: user.name,
+        userPhone: user.phone,
+      });
+    } else {
+      return res.status(400).json({ message: "OTP in Invalid" });
     }
   } catch (err) {
     res.status(500).json({ success: false, message: "Something went wrong:(" });
@@ -317,7 +326,7 @@ exports.addUserAddress = async (req, res, next) => {
       req.body;
     const userId = req.user._id;
     if (!addressLine || !pincode || !landmark || !city || !userId) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       await userAddressModel.create({
         addressLine: addressLine,
@@ -344,10 +353,9 @@ exports.addUserAddress = async (req, res, next) => {
 exports.updateUserAddress = async (req, res, next) => {
   try {
     const id = req.params.id; // address id
-    const { addressLine, pincode, landmark, city, defaultAddress } =
-      req.body;
+    const { addressLine, pincode, landmark, city, defaultAddress } = req.body;
     if (!addressLine || !pincode || !landmark || !city) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       const result = await userAddressModel.findOne({ _id: id });
       result.addressLine = addressLine;

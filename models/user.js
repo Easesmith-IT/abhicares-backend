@@ -36,6 +36,17 @@ const userSchema = new Schema(
       type: Boolean,
       default: true,
     },
+
+    referralCode:{
+      type:String,
+      unique:true,
+      required:true
+    },
+
+    referralCredits:{
+      type:Number,
+      default:0
+    },
   },
   { timestamps: true }
 );

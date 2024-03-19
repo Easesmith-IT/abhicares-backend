@@ -560,4 +560,8 @@ router.get(
   adminController.getAllPayments
 );
 
+
+router.get('/get-refer-and-earn-amount',isAdminAuth,authorize('settings','read'),adminController.getReferAndEarnAmt)
+router.post('/update-refer-and-earn-amount',isAdminAuth,authorize('settings','write'),adminController.updateReferAndEarnAmt);
+
 module.exports = router;

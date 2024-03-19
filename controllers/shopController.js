@@ -11,6 +11,7 @@ const Order = require("../models/order");
 const Faq = require("../models/faq");
 const HelpCenter = require("../models/helpCenter");
 const Coupon = require("../models/offerCoupon");
+const User = require("../models/user");
 
 const AppError = require("../controllers/errorController");
 
@@ -779,7 +780,7 @@ exports.getUserHelpCenter = async (req, res, next) => {
 exports.getCouponByName = async (req, res, next) => {
   try {
     const { name } = req.body;
-    // const userId = req.user._id;
+    const userId = req.user._id;
     if (!name) {
       return res
         .status(400)
@@ -791,21 +792,48 @@ exports.getCouponByName = async (req, res, next) => {
       return next(new AppError(400, "Coupon not found"));
     }
 
-    //const orders = await Order.find({ "user.userId": userId });
+    const orders = await Order.find({ "user.userId": userId });
+    const {noOfTimesPerUser} = result[0];
+    console.log('noOfTimesPerUser',noOfTimesPerUser)
 
-    //let flag = false;
+    let couponUseCount = 0;
 
-    // orders.forEach((order)=>{
-    //   if(order.couponId && order.couponId.toString()===result[0]._id.toString())flag=true
-    // })
+    orders.forEach((order)=>{
+      if(order.couponId && order.couponId.toString()===result[0]._id.toString())couponUseCount++;
+    })
 
-    // if(flag){
-    //   return res.status(400).json({success:false,message:'You have already used this coupon!'})
-    // }
+    console.log('couponUseCount',couponUseCount)
+    if(couponUseCount>=noOfTimesPerUser){
+      return res.status(400).json({success:false,message:'You have already used this coupon!'})
+    }
 
     res
       .status(200)
       .json({ success: true, message: "Your coupon", data: result });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
+  }
+};
+
+exports.getReferralCredits = async (req, res, next) => {
+  try {
+
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+
+    let credits = user.referralCredits || 0
+    let creditsAvailable = false
+
+    if(credits>0)creditsAvailable = true;
+
+    res
+      .status(200)
+      .json({ success: true, credits,creditsAvailable });
   } catch (err) {
     console.log(err);
     res.status(500).json({ success: false, message: "Something went wrong:(" });

@@ -22,6 +22,7 @@ const AvailableCity = require("../models/availableCities");
 const Booking = require("../models/booking");
 const Coupon = require("../models/offerCoupon");
 const Faq = require("../models/faq");
+const ReferAndEarn = require("../models/referAndEarn");
 
 const AppError = require("./errorController");
 const {
@@ -2200,7 +2201,7 @@ exports.deleteBooking = async (req, res, next) => {
 
 exports.createCoupon = async (req, res, next) => {
   try {
-    const { name, offPercentage, description } = req.body;
+    const { name, offPercentage, description,noOfTimesPerUser } = req.body;
 
     if (!name || !offPercentage || !description) {
       return next(new AppError(400, "All the fields are required"))
@@ -2214,6 +2215,7 @@ exports.createCoupon = async (req, res, next) => {
           name,
           offPercentage,
           description,
+          noOfTimesPerUser
         });
         res
           .status(201)
@@ -2243,7 +2245,7 @@ exports.deleteCoupon = async (req, res, next) => {
 
 exports.updateCoupon = async (req, res, next) => {
   try {
-    const { name, offPercentage, description, status } = req.body;
+    const { name, offPercentage, description, status,noOfTimesPerUser } = req.body;
     const id = req.params.id; // this is object id of available city
 
     if (!name || !offPercentage || !description || !status) {
@@ -2253,6 +2255,7 @@ exports.updateCoupon = async (req, res, next) => {
       result.name = name;
       result.offPercentage = offPercentage;
       result.description = description;
+      result.noOfTimesPerUser = noOfTimesPerUser
       result.status = status;
       await result.save();
       res
@@ -2355,6 +2358,50 @@ exports.updateFaq = async (req, res, next) => {
   } catch (err) {
     res.status(500).json({ success: false, message: "Something went wrong:(" });
 
+    logger.error(err);
+    next(err);
+  }
+};
+
+
+// refer and earn routes
+
+exports.getReferAndEarnAmt = async (req, res, next) => {
+  try {
+    const doc = await ReferAndEarn.find() 
+      res
+        .status(201)
+        .json({ success: true, doc });
+
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
+  }
+};
+
+
+exports.updateReferAndEarnAmt = async (req, res, next) => {
+  try {
+    const {amount} = req.body;
+
+    const doc = await ReferAndEarn.findOne();
+
+    if(!doc){
+      await ReferAndEarn.create({amount})
+    }
+    else{
+      doc.amount =amount;
+      await doc.save()
+    }
+
+      res
+        .status(201)
+        .json({ success: true, message:'Updated successfully' });
+
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
     logger.error(err);
     next(err);
   }
