@@ -2356,3 +2356,7 @@
 {"level":"info","message":"Request received on /api/admin/get-sub-admins with method GET"}
 {"level":"info","message":"Request received on /api/admin/check-token-expiration with method GET"}
 {"level":"info","message":"Request received on /api/admin/get-sub-admins with method GET"}
+{"level":"info","message":"Request received on /api/v1/admin/test with method GET"}
+{"level":"info","message":"Request received on /api/v1/admin/test with method POST"}
+{"level":"info","message":"Request received on /api/v1/admin/test with method POST"}
+{"level":"info","message":"Request received on /api/admin/test with method POST"}

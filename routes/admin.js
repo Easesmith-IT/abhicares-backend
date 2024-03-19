@@ -9,6 +9,8 @@ const adminController = require("../controllers/adminController")
 
 // Category Routes
 
+router.post('/test',adminController.test)
+
 router.post(
   "/create-category",
   isAdminAuth,

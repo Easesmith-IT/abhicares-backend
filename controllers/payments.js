@@ -322,13 +322,18 @@ exports.websiteCodOrder = async (req, res, next) => {
   try {
     const user = req.user;
 
-    const { itemTotal, discount, tax, total, userAddressId, bookings } =
+    const { itemTotal, discount, tax, total, userAddressId, bookings,referalDiscount } =
       req.body;
+
+      
 
     let couponId = null;
     if (req.body.couponId) {
       couponId = req.body.couponId;
     }
+
+    let referalDis = null;
+    if(referalDiscount)referalDis=referalDiscount
 
     const cart = await Cart.findOne({ userId: user._id }).populate({
       path: "items",
@@ -360,6 +365,7 @@ exports.websiteCodOrder = async (req, res, next) => {
       orderValue: total,
       itemTotal,
       discount,
+      referalDiscount:referalDis,
       tax,
       items: orderItems,
       couponId: couponId,
@@ -392,6 +398,14 @@ exports.websiteCodOrder = async (req, res, next) => {
     cart.items = [];
     cart.totalPrice = 0;
     await cart.save();
+
+    if(referalDiscount>0){
+      const user = await User.findById(req.user._id);
+      user.referralCredits = 0
+      await user.save()
+    }
+
+
     return res.status(200).json(order);
   } catch (err) {
     res.status(500).json({ success: false, message: "Something went wrong:(" });
@@ -404,9 +418,13 @@ exports.websiteCodOrder = async (req, res, next) => {
 
 exports.checkout = async (req, res, next) => {
   try {
-    const { itemTotal, discount, tax, total, userAddressId, bookings } =
+    const { itemTotal, discount, tax, total, userAddressId, bookings,referalDiscount } =
       req.body;
     const user = req.user;
+
+    
+    let referalDis = null;
+    if(referalDiscount)referalDis=referalDiscount
 
     console.log('couponId',req.body.couponId)
 
@@ -450,6 +468,7 @@ exports.checkout = async (req, res, next) => {
       },
       itemTotal,
       discount,
+      referalDiscount:referalDis,
       tax,
       items: orderItems,
       couponId: couponId,
@@ -523,6 +542,7 @@ exports.paymentVerification = async (req, res, next) => {
           paymentId: razorpay_payment_id,
         },
         itemTotal: result.itemTotal,
+        referalDiscount:result.referalDiscount,
         discount: result.discount,
         tax: result.tax,
         items: result.items,
@@ -556,6 +576,12 @@ exports.paymentVerification = async (req, res, next) => {
       });
 
       await payment.save();
+
+      if(result.referalDiscount>0){
+        const user = await User.findById(result.user.userId);
+        user.referralCredits = 0
+        await user.save()
+      }
 
       res
         .status(200)

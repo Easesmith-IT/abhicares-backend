@@ -29,8 +29,30 @@ const {
   uploadFileToGCS,
   deleteFileFromGCS,
 } = require("../middleware/imageMiddleware");
+const shortid = require("shortid");
 
 // category routes
+
+exports.test = async (req, res, next) => {
+  try {
+    const users = await User.find();
+    for (const user of users){
+      const referralCode = shortid.generate();
+      user.referralCode = referralCode;
+      await user.save()
+
+    }
+      res
+        .status(200)
+        .json({ success: true, message: "Category created successful" });
+    
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Something went wrong:(" });
+
+    logger.error(err);
+    next(err);
+  }
+};
 
 exports.postCreateCategory = async (req, res, next) => {
   try {
