@@ -209,8 +209,8 @@ exports.createUser = async (req, res, next) => {
       const referralUser = await userModel.findOne({referralCode:enteredReferralCode,status:true});
 
       if(referralUser){
-        const referralAmt = await referAndEarnModel.find()
-        user.referralCredits = user.referralCredits + referralAmt.amount
+        const referralAmt = await referAndEarnModel.findOne()
+        user.referralCredits = user.referralCredits + referralAmt.amount;
       }
 
 

@@ -5,11 +5,11 @@ const { authorize } = require("../middleware/authorization");
 const router = express.Router();
 const img_upload = require("../middleware/imageMiddleware");
 
-const adminController = require("../controllers/adminController")
+const adminController = require("../controllers/adminController");
 
 // Category Routes
 
-router.post('/test',adminController.test)
+router.post("/test", adminController.test);
 
 router.post(
   "/create-category",
@@ -157,7 +157,7 @@ router.delete(
   isAdminAuth,
   authorize("services", "write"),
   adminController.deleteServiceProduct
-); 
+);
 
 ///////////////////////////////////////////////
 // Seller Routes
@@ -562,8 +562,17 @@ router.get(
   adminController.getAllPayments
 );
 
-
-router.get('/get-refer-and-earn-amount',isAdminAuth,authorize('settings','read'),adminController.getReferAndEarnAmt)
-router.post('/update-refer-and-earn-amount',isAdminAuth,authorize('settings','write'),adminController.updateReferAndEarnAmt);
+router.get(
+  "/get-refer-and-earn-amount",
+  isAdminAuth,
+  authorize("settings", "read"),
+  adminController.getReferAndEarnAmt
+);
+router.post(
+  "/update-refer-and-earn-amount",
+  isAdminAuth,
+  authorize("settings", "write"),
+  adminController.updateReferAndEarnAmt
+);
 
 module.exports = router;

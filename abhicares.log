@@ -2360,3 +2360,12 @@
 {"level":"info","message":"Request received on /api/v1/admin/test with method POST"}
 {"level":"info","message":"Request received on /api/v1/admin/test with method POST"}
 {"level":"info","message":"Request received on /api/admin/test with method POST"}
+{"level":"info","message":"Request received on /api/admin/update-refer-and-earn-amount with method POST"}
+{"level":"info","message":"Request received on /api/admin/update-refer-and-earn-amount with method POST"}
+{"level":"info","message":"Request received on /api/admin/update-refer-and-earn-amount with method POST"}
+{"level":"info","message":"Request received on /api/admin/check-token-expiration with method GET"}
+{"level":"info","message":"Request received on /api/admin/get-coupons with method GET"}
+{"level":"info","message":"Request received on /api/admin/check-token-expiration with method GET"}
+{"level":"info","message":"Request received on /api/admin/get-coupons with method GET"}
+{"level":"info","message":"Request received on /api/admin/delete-coupon/65f9332dbe828d57cef350bb with method DELETE"}
+{"level":"info","message":"Request received on /api/admin/get-coupons with method GET"}
