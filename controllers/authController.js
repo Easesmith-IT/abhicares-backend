@@ -211,9 +211,11 @@ exports.createUser = async (req, res, next) => {
       if(referralUser){
         const referralAmt = await referAndEarnModel.findOne()
         referralUser.referralCredits = referralUser.referralCredits + referralAmt.amount;
+
+        await referralUser.save()
       }
 
-
+      
       await user.save();
 
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
