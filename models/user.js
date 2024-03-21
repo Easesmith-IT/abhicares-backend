@@ -43,10 +43,6 @@ const userSchema = new Schema(
       required:true
     },
 
-    referralCredits:{
-      type:Number,
-      default:0
-    },
   },
   { timestamps: true }
 );

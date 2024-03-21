@@ -5,6 +5,7 @@ const { logger } = require("../server");
 //Importing Models
 const UserAddress = require("../models/useraddress");
 const User = require("../models/user");
+const UserReferalLink = require("../models/userReferealLink");
 const Order = require("../models/order");
 const Payment = require("../models/payments");
 const Products = require("../models/product");
@@ -400,9 +401,9 @@ exports.websiteCodOrder = async (req, res, next) => {
     await cart.save();
 
     if(referalDiscount>0){
-      const user = await User.findById(req.user._id);
-      user.referralCredits = 0
-      await user.save()
+      const userRefDoc = await UserReferalLink.findOne({userId:req.user._id});
+      userRefDoc.referralCredits = 0
+      await userRefDoc.save()
     }
 
 
@@ -578,9 +579,9 @@ exports.paymentVerification = async (req, res, next) => {
       await payment.save();
 
       if(result.referalDiscount>0){
-        const user = await User.findById(result.user.userId);
-        user.referralCredits = 0
-        await user.save()
+        const userRefDoc = await UserReferalLink.findOne({userId:result.user.userId});
+        userRefDoc.referralCredits = 0
+        await userRefDoc.save()
       }
 
       res

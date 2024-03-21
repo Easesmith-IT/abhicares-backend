@@ -10,6 +10,7 @@ const axios = require("axios");
 const { generateOTP, verifyOTP } = require("../util/otpHandler");
 const userAddressModel = require("../models/useraddress");
 const referAndEarnModel = require("../models/referAndEarn");
+const UserReferalLink = require("../models/userReferealLink");
 
 const authKey = "T1PhA56LPJysMHFZ62B5";
 const authToken = "8S2pMXV8IRpZP6P37p4SWrVErk2N6CzSEa458pt1";
@@ -34,14 +35,6 @@ exports.generateOtpUser = async (req, res, next) => {
         .status(400)
         .json({ success: false, message: "User does not exist" });
     }
-
-    // Generate a 6-digit OTP
-    // const otp = otpGenerator.generate(6, {
-    //   digits: true,
-    //   lowerCaseAlphabets: false,
-    //   upperCaseAlphabets: false,
-    //   specialChars: false,
-    // });
 
     await generateOTP(phoneNumber, user);
 
@@ -198,7 +191,10 @@ exports.createUser = async (req, res, next) => {
 
       const referralCode = shortid.generate();
 
+
       var user = await userModel({ name: decoded.name, phone: phone,referralCode:referralCode });
+
+      await UserReferalLink.create({userId:user._id})
 
       var userCart = await cartModel({ userId: user._id });
       await userCart.save();
@@ -209,10 +205,13 @@ exports.createUser = async (req, res, next) => {
       const referralUser = await userModel.findOne({referralCode:enteredReferralCode,status:true});
 
       if(referralUser){
-        const referralAmt = await referAndEarnModel.findOne()
-        referralUser.referralCredits = referralUser.referralCredits + referralAmt.amount;
+        const userRefDoc = await UserReferalLink.findOne({userId:referralUser._id})
 
-        await referralUser.save()
+        const referralAmt = await referAndEarnModel.findOne()
+        userRefDoc.referralCredits = userRefDoc.referralCredits + referralAmt.amount;
+        userRefDoc.noOfUsersAppliedCoupon++;
+
+        await userRefDoc.save()
       }
 
       

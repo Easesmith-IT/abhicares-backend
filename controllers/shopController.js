@@ -12,6 +12,7 @@ const Faq = require("../models/faq");
 const HelpCenter = require("../models/helpCenter");
 const Coupon = require("../models/offerCoupon");
 const User = require("../models/user");
+const UserReferalLink = require("../models/userReferealLink");
 
 const AppError = require("../controllers/errorController");
 
@@ -824,16 +825,16 @@ exports.getReferralCredits = async (req, res, next) => {
 
     const userId = req.user._id;
 
-    const user = await User.findById(userId);
+    const userRefDoc = await UserReferalLink.findOne({userId});
 
-    let credits = user.referralCredits || 0
+    let credits = userRefDoc.referralCredits || 0
     let creditsAvailable = false
 
     if(credits>0)creditsAvailable = true;
 
     res
       .status(200)
-      .json({ success: true, credits,creditsAvailable });
+      .json({ success: true, credits,creditsAvailable,noOfUsersAppliedCoupon:userRefDoc.noOfUsersAppliedCoupon });
   } catch (err) {
     console.log(err);
     res.status(500).json({ success: false, message: "Something went wrong:(" });

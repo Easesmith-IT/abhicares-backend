@@ -30,22 +30,19 @@ const {
   deleteFileFromGCS,
 } = require("../middleware/imageMiddleware");
 const shortid = require("shortid");
+const UserReferalLink = require("../models/userReferealLink");
 
 // category routes
 
 exports.test = async (req, res, next) => {
   try {
     const users = await User.find();
-    for (const user of users){
-      const referralCode = shortid.generate();
-      user.referralCode = referralCode;
-      await user.save()
-
+    for (const user of users) {
+       await UserReferalLink.create({ userId: user._id });
     }
-      res
-        .status(200)
-        .json({ success: true, message: "Category created successful" });
-    
+    res
+      .status(200)
+      .json({ success: true, message: "Category created successful" });
   } catch (err) {
     res.status(500).json({ success: false, message: "Something went wrong:(" });
 
@@ -303,7 +300,7 @@ exports.uploadServiceIcon = async (req, res, next) => {
     }
 
     if (!imageUrl) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       const service = await Service.findById(serviceId);
       service.icon = imageUrl;
@@ -367,7 +364,7 @@ exports.updateService = async (req, res, next) => {
       !appHomepage ||
       !webHomepage
     ) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       var result = await Service.findOne({ _id: id });
       result.name = name;
@@ -484,7 +481,7 @@ exports.createProduct = async (req, res, next) => {
       !imageUrl ||
       !serviceId
     ) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       await Product.create({
         name: name,
@@ -589,7 +586,7 @@ exports.updateProduct = async (req, res, next) => {
       }
     }
     if (!name || !price || !offerPrice || !description) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       const result = await Product.findOne({ _id: id });
       result.name = name;
@@ -663,7 +660,7 @@ exports.createSeller = async (req, res, next) => {
       !contactPerson ||
       !categoryId
     ) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       bcrypt.genSalt(10, function (err, salt) {
         bcrypt.hash(password, salt, async function (err, hash) {
@@ -758,7 +755,7 @@ exports.updateSeller = async (req, res, next) => {
       !categoryId ||
       !services
     ) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       var result = await Seller.findOne({ _id: id });
       result.name = name;
@@ -921,7 +918,7 @@ exports.getSellerByLocation = async (req, res, next) => {
     const { latitude, longitude, distance } = req.body;
 
     if (!latitude || !longitude || !distance) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     }
 
     const result = await Seller.find({
@@ -1160,7 +1157,7 @@ exports.updateUserByAdmin = async (req, res, next) => {
     const id = req.params.id; // this is object id
     const { name, phone } = req.body;
     if (!name || !phone) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       var result = await User.findOne({ _id: id });
       result.name = name;
@@ -1330,7 +1327,7 @@ exports.createPackage = async (req, res, next) => {
       }
     }
     if (!name || !price || !offerPrice || !products || !serviceId) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       await Package.create({
         name: name,
@@ -1367,7 +1364,7 @@ exports.updatePackage = async (req, res, next) => {
       }
     }
     if (!name || !price || !offerPrice || !products) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       let result = await Package.findOne({ _id: id });
 
@@ -1689,7 +1686,7 @@ exports.getAllOrders = async (req, res, next) => {
           },
         },
       })
-      .populate({path:"couponId",model:'Coupon'})
+      .populate({ path: "couponId", model: "Coupon" })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
@@ -1729,7 +1726,7 @@ exports.getRecentOrders = async (req, res, next) => {
           },
         },
       })
-      .populate({path:"couponId",model:'Coupon'})
+      .populate({ path: "couponId", model: "Coupon" })
       .exec();
 
     const totalPage = Math.ceil((await Order.countDocuments()) / limit);
@@ -1776,7 +1773,7 @@ exports.getMolthlyOrder = async (req, res, next) => {
   try {
     const { month, year } = req.body;
     if (!month || !year) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       const startDate = new Date(year, month - 1, 1); // Month is zero-based
       const endDate = new Date(year, month, 0, 23, 59, 59);
@@ -1824,13 +1821,11 @@ exports.getAllPayments = async (req, res, next) => {
 
     const paymentsLength = await Payment.find().count();
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        payments: payments,
-        docsLength: Math.ceil(paymentsLength / limit),
-      });
+    res.status(200).json({
+      success: true,
+      payments: payments,
+      docsLength: Math.ceil(paymentsLength / limit),
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: "Something went wrong:(" });
 
@@ -1900,7 +1895,7 @@ exports.updateHelpCenter = async (req, res, next) => {
     const id = req.params.id;
     const { resolution } = req.body;
     if (!resolution) {
-      return next(new AppError(400, "Please provide resolution"))
+      return next(new AppError(400, "Please provide resolution"));
     } else {
       var result = await HelpCenter.findOne({ _id: id });
       result.resolution = resolution;
@@ -1924,12 +1919,11 @@ exports.createAvailableCities = async (req, res, next) => {
     const { city, state, pinCode } = req.body;
 
     if (!city || !state || !pinCode) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       const result = await AvailableCity.find({ city: city });
       if (result.length > 0) {
-        return next(new AppError(400, "City already exist"))
-
+        return next(new AppError(400, "City already exist"));
       } else {
         await AvailableCity.create({
           city: city,
@@ -1968,7 +1962,7 @@ exports.updateAvailableCities = async (req, res, next) => {
     const id = req.params.id; // this is object id of available city
 
     if (!city || !state || !pinCode) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       const result = await AvailableCity.findOne({ _id: id });
       result.city = city;
@@ -2030,7 +2024,7 @@ exports.allotSeller = async (req, res, next) => {
     const id = req.params.id; // this is seller id
     const { bookingId } = req.body;
     if (!bookingId) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     }
     var bookingData = await Booking.findOne({ _id: bookingId });
     bookingData.sellerId = id;
@@ -2112,7 +2106,7 @@ exports.getSellerOrderByStatus = async (req, res, next) => {
     const id = req.params.id; // seller id
     const { status } = req.body;
     if (!status) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     }
     const result = await Booking.find({ sellerId: id, status: status })
       .populate({
@@ -2188,8 +2182,8 @@ exports.getAllBooking = async (req, res, next) => {
           },
         },
       })
-      .populate({path:"sellerId",model:'Seller'})
-      .sort({createdAt:-1})
+      .populate({ path: "sellerId", model: "Seller" })
+      .sort({ createdAt: -1 });
     res.status(200).json({
       success: true,
       message: "All booking list",
@@ -2223,21 +2217,20 @@ exports.deleteBooking = async (req, res, next) => {
 
 exports.createCoupon = async (req, res, next) => {
   try {
-    const { name, offPercentage, description,noOfTimesPerUser } = req.body;
+    const { name, offPercentage, description, noOfTimesPerUser } = req.body;
 
     if (!name || !offPercentage || !description) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       const result = await Coupon.find({ name: name });
       if (result.length > 0) {
-        
-        return next( new AppError(400, "Coupon already exist"))
+        return next(new AppError(400, "Coupon already exist"));
       } else {
         await Coupon.create({
           name,
           offPercentage,
           description,
-          noOfTimesPerUser
+          noOfTimesPerUser,
         });
         res
           .status(201)
@@ -2267,17 +2260,18 @@ exports.deleteCoupon = async (req, res, next) => {
 
 exports.updateCoupon = async (req, res, next) => {
   try {
-    const { name, offPercentage, description, status,noOfTimesPerUser } = req.body;
+    const { name, offPercentage, description, status, noOfTimesPerUser } =
+      req.body;
     const id = req.params.id; // this is object id of available city
 
     if (!name || !offPercentage || !description || !status) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       const result = await Coupon.findOne({ _id: id });
       result.name = name;
       result.offPercentage = offPercentage;
       result.description = description;
-      result.noOfTimesPerUser = noOfTimesPerUser
+      result.noOfTimesPerUser = noOfTimesPerUser;
       result.status = status;
       await result.save();
       res
@@ -2314,11 +2308,11 @@ exports.createFaq = async (req, res, next) => {
   try {
     const { ques, ans } = req.body;
     if (!ques || !ans) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       const result = await Faq.find({ ques: ques });
       if (result.length > 0) {
-        return next( new AppError(400, "Question already exist"))
+        return next(new AppError(400, "Question already exist"));
       } else {
         await Faq.create({
           ques: ques,
@@ -2367,7 +2361,7 @@ exports.updateFaq = async (req, res, next) => {
     const id = req.params.id;
     const { ques, ans } = req.body;
     if (!ques || !ans) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       var result = await Faq.findOne({ _id: id });
       result.ques = ques;
@@ -2385,16 +2379,12 @@ exports.updateFaq = async (req, res, next) => {
   }
 };
 
-
 // refer and earn routes
 
 exports.getReferAndEarnAmt = async (req, res, next) => {
   try {
-    const doc = await ReferAndEarn.find() 
-      res
-        .status(201)
-        .json({ success: true, doc });
-
+    const doc = await ReferAndEarn.find();
+    res.status(201).json({ success: true, doc });
   } catch (err) {
     res.status(500).json({ success: false, message: "Something went wrong:(" });
 
@@ -2403,25 +2393,20 @@ exports.getReferAndEarnAmt = async (req, res, next) => {
   }
 };
 
-
 exports.updateReferAndEarnAmt = async (req, res, next) => {
   try {
-    const {amount} = req.body;
+    const { amount } = req.body;
 
     const doc = await ReferAndEarn.findOne();
 
-    if(!doc){
-      await ReferAndEarn.create({amount})
-    }
-    else{
-      doc.amount =amount;
-      await doc.save()
+    if (!doc) {
+      await ReferAndEarn.create({ amount });
+    } else {
+      doc.amount = amount;
+      await doc.save();
     }
 
-      res
-        .status(201)
-        .json({ success: true, message:'Updated successfully' });
-
+    res.status(201).json({ success: true, message: "Updated successfully" });
   } catch (err) {
     res.status(500).json({ success: false, message: "Something went wrong:(" });
     logger.error(err);
