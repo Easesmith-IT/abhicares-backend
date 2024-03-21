@@ -6,7 +6,7 @@ const isCity = require("../middleware/availableCity");
 // controllers
 const shoppingController = require('../controllers/shopController')
 const authController = require('../controllers/authController')
-const paymentController = require("../controllers/payments");
+const paymentController = require("../controllers/paymentsController");
 
 
 // Category routes

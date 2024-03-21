@@ -1,4 +1,3 @@
-const { logger } = require("../server");
 
 const Category = require("../models/category");
 const Product = require("../models/product");
@@ -11,29 +10,23 @@ const Order = require("../models/order");
 const Faq = require("../models/faq");
 const HelpCenter = require("../models/helpCenter");
 const Coupon = require("../models/offerCoupon");
-const User = require("../models/user");
+// const User = require("../models/user");
 const UserReferalLink = require("../models/userReferealLink");
 
-const AppError = require("../controllers/errorController");
+const AppError = require("../util/appError");
+const catchAsync = require("../util/catchAsync");
 
-exports.getAllCategory = async (req, res, next) => {
-  try {
+exports.getAllCategory = catchAsync(async (req, res, next) => {
+
     const result = await Category.find();
     res.status(200).json({
       success: true,
       message: "These are all the categories",
       data: result,
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
-
-exports.getServiceProduct = async (req, res, next) => {
-  try {
+exports.getServiceProduct = catchAsync(async (req, res, next) => {
     const id = req.params.id; // service id
     var page = 1;
     if (req.query.page) {
@@ -59,30 +52,16 @@ exports.getServiceProduct = async (req, res, next) => {
       data: result,
       totalPage: totalPage,
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
-
-exports.getServicesByCategoryId = async (req, res, next) => {
-  try {
+exports.getServicesByCategoryId = catchAsync(async (req, res, next) => {
     const id = req.params.id;
     const services = await Service.find({ categoryId: id });
 
     res.status(200).json({ success: true, data: services });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
-
-exports.searchService = async (req, res, next) => {
-  try {
+exports.searchService = catchAsync(async (req, res, next) => {
     var search = "";
     var page = 1;
     if (req.query.search) {
@@ -112,16 +91,9 @@ exports.searchService = async (req, res, next) => {
       data: result,
       totalPage: totalPage,
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
-
-exports.getCategoryService = async (req, res, next) => {
-  try {
+exports.getCategoryService = catchAsync(async (req, res, next) => {
     const id = req.params.id;
     const services = await Service.find({ categoryId: id });
 
@@ -144,16 +116,9 @@ exports.getCategoryService = async (req, res, next) => {
     const products = productsArrays.flat();
 
     res.status(200).json({ success: true, data: products });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
-
-exports.createEnquiry = async (req, res, next) => {
-  try {
+exports.createEnquiry = catchAsync(async (req, res, next) => {
     const { name, phone, serviceType, city, state } = req.body;
     if (!name || !phone || !serviceType || !city || !state) {
       return next(new AppError(400, "All the fields are required"));
@@ -169,31 +134,17 @@ exports.createEnquiry = async (req, res, next) => {
     res
       .status(201)
       .json({ success: true, message: "enquiry created successful" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
-
-exports.getServicePackage = async (req, res, next) => {
-  try {
+exports.getServicePackage = catchAsync(async (req, res, next) => {
     const id = req.params.id;
     const result = await Package.find({ serviceId: id });
     res
       .status(200)
       .json({ success: true, message: "package list", data: result });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
-
-exports.getPackageProduct = async (req, res, next) => {
-  try {
+exports.getPackageProduct = catchAsync(async (req, res, next) => {
     const id = req.params.id;
 
     const package = await Package.findById(id);
@@ -210,19 +161,11 @@ exports.getPackageProduct = async (req, res, next) => {
     res
       .status(200)
       .json({ success: true, message: "products list", data: products });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
-
-    logger.error(err);
-    console.log(err);
-    next(err);
-  }
-};
+});
 
 // cart controllers
 
-exports.getCart = async (req, res, next) => {
-  try {
+exports.getCart = catchAsync(async (req, res, next) => {
     const user = req.user;
     var cart;
     if (user) {
@@ -293,17 +236,9 @@ exports.getCart = async (req, res, next) => {
         data: cart.items,
         totalOfferPrice: cart.totalPrice,
       });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    console.log(err);
-    next(err);
-  }
-};
-
-exports.removeItemFromCart = async (req, res, next) => {
-  try {
+exports.removeItemFromCart =catchAsync (async (req, res, next) => {
     const itemId = req.params.id;
     const { type } = req.body;
     const user = req.user;
@@ -337,9 +272,7 @@ exports.removeItemFromCart = async (req, res, next) => {
         }
       });
       if (existingItemIndex < 0) {
-        return res
-          .status(404)
-          .json({ message: "Product does not exist in the cart" });
+        return next(new AppError("Product does not exist in the cart",404))
       } else if (cart.items[existingItemIndex].quantity > 1) {
         cart.items[existingItemIndex].quantity--;
       } else {
@@ -378,17 +311,10 @@ exports.removeItemFromCart = async (req, res, next) => {
         message: "item removed from cart",
       });
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    console.log(err);
-    next(err);
-  }
-};
+exports.addItemToCart = catchAsync(async (req, res, next) => {
 
-exports.addItemToCart = async (req, res, next) => {
-  try {
     const user = req.user;
     const { itemId, type } = req.body; // item id
     console.log("itemId", itemId);
@@ -460,18 +386,10 @@ exports.addItemToCart = async (req, res, next) => {
         message: "item added from cart",
       });
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    console.log(err);
-    next(err);
-  }
-};
-
-exports.updateItemQuantity = async (req, res, next) => {
+exports.updateItemQuantity =catchAsync (async (req, res, next) => {
   // const cartId = req.params.id //cart id
-  try {
     const { quantity, userId } = req.body;
 
     const itemId = req.params.id; // item id
@@ -533,17 +451,9 @@ exports.updateItemQuantity = async (req, res, next) => {
         res.status(200).json({ success: true, message: "cart is empthy" });
       }
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    console.log(err);
-    next(err);
-  }
-};
-
-exports.addProductReview = async (req, res, next) => {
-  try {
+exports.addProductReview = catchAsync(async (req, res, next) => {
     const id = req.params.id; // this is product/package id
     const { title, content, rating } = req.body;
     if (!rating) {
@@ -558,9 +468,7 @@ exports.addProductReview = async (req, res, next) => {
       userId: req.user._id,
     });
     if (reviewProd || reviewPack) {
-      return res
-        .status(400)
-        .json({ success: true, message: "Review Already Exists" });
+      return next(new AppError("Review Already Exists",400))
     }
 
     const orders = await Order.find({
@@ -608,37 +516,20 @@ exports.addProductReview = async (req, res, next) => {
         message: "Review added successfully",
       });
     } else {
-      return res.status(400).json({
-        message: "You can't add this review",
-      });
+      return next(new AppError("You can't add this review",400))
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    console.log("add review error", err);
-    next(err);
-  }
-};
-
-exports.deleteProductReview = async (req, res, next) => {
-  try {
+exports.deleteProductReview = catchAsync(async (req, res, next) => {
     const id = req.params.id; // review id
 
     await Review.findByIdAndDelete({ _id: id });
     res
       .status(200)
       .json({ success: true, message: "Review deleted successful" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
-
-exports.updateProductReview = async (req, res, next) => {
-  try {
+exports.updateProductReview =catchAsync (async (req, res, next) => {
     const id = req.params.id; // review id
     const { title, content, rating } = req.body;
     if (!rating) {
@@ -653,16 +544,9 @@ exports.updateProductReview = async (req, res, next) => {
         .status(200)
         .json({ success: true, message: "review updated successful" });
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
-
-exports.getProductReview = async (req, res, next) => {
-  try {
+exports.getProductReview = catchAsync(async (req, res, next) => {
     const id = req.params.id; // product id
     const userId = req?.user?._id ? req?.user._id : null;
     const { type } = req.query; // product or package
@@ -707,33 +591,20 @@ exports.getProductReview = async (req, res, next) => {
         data: allReviews,
       });
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
-
-    logger.error(err);
-    next(err);
-  }
-};
+});
 
 // faq
-exports.getAllFaq = async (req, res, next) => {
-  try {
+exports.getAllFaq = catchAsync(async (req, res, next) => {
     const result = await Faq.find();
     res
       .status(201)
       .json({ success: true, message: "list of all faq", data: result });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
-
-    logger.error(err);
-    next(err);
-  }
-};
+});
 
 // help center
 
-exports.createHelpCenter = async (req, res, next) => {
-  try {
+exports.createHelpCenter = catchAsync(async (req, res, next) => {
+
     const id = req.user._id;
     const { description, issue, others } = req.body;
     if (!description) {
@@ -749,16 +620,11 @@ exports.createHelpCenter = async (req, res, next) => {
         .status(201)
         .json({ success: true, message: "help center created successful" });
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
 
-    logger.error(err);
-    next(err);
-  }
-};
+});
 
-exports.getUserHelpCenter = async (req, res, next) => {
-  try {
+exports.getUserHelpCenter = catchAsync(async (req, res, next) => {
+
     const id = req.user._id;
     const result = await HelpCenter.find({ userId: id });
     if (result.length == 0) {
@@ -770,22 +636,15 @@ exports.getUserHelpCenter = async (req, res, next) => {
         data: result,
       });
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
 
-    logger.error(err);
-    next(err);
-  }
-};
+});
 
-exports.getCouponByName = async (req, res, next) => {
-  try {
+exports.getCouponByName = catchAsync(async (req, res, next) => {
+
     const { name } = req.body;
     const userId = req.user._id;
     if (!name) {
-      return res
-        .status(400)
-        .json({ success: false, message: "All Fields are required" });
+      return next(new AppError("All Fields are required",400))
     }
 
     const result = await Coupon.find({ name: name });
@@ -805,23 +664,16 @@ exports.getCouponByName = async (req, res, next) => {
 
     console.log('couponUseCount',couponUseCount)
     if(couponUseCount>=noOfTimesPerUser){
-      return res.status(400).json({success:false,message:'You have already used this coupon!'})
+      return next(new AppError('You have already used this coupon!',400))
     }
 
     res
       .status(200)
       .json({ success: true, message: "Your coupon", data: result });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
+exports.getReferralCredits = catchAsync(async (req, res, next) => {
 
-exports.getReferralCredits = async (req, res, next) => {
-  try {
 
     const userId = req.user._id;
 
@@ -835,11 +687,5 @@ exports.getReferralCredits = async (req, res, next) => {
     res
       .status(200)
       .json({ success: true, credits,creditsAvailable,noOfUsersAppliedCoupon:userRefDoc.noOfUsersAppliedCoupon });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
 
-    logger.error(err);
-    next(err);
-  }
-};
+});

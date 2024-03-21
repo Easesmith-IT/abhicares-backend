@@ -18,7 +18,7 @@ const SellerModel = require("../../models/seller");
 const SellerCashOut = require("../../models/sellerCashout");
 
 //controller
-const AppError = require("../errorController");
+const AppError = require("../../util/appError");
 
 //middleware
 const { auth } = require("../../middleware/auth");

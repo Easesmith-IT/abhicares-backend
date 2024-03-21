@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const appController = require("../controllers/app-controller");
-const paymentController = require("../controllers/payments");
+const paymentController = require("../controllers/paymentsController");
 const authController = require("../controllers/authController")
 
 

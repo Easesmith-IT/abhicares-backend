@@ -1,15 +1,15 @@
-const userModel = require("../models/user");
-const jwt = require("jsonwebtoken");
-const cartModel = require("../models/cart");
-const AppError = require("../controllers/errorController");
-const shortid = require('shortid');
-const { logger } = require("../server");
 
-// Encode the concatenated string into base64
+const jwt = require("jsonwebtoken");
+const AppError = require("../util/appError");
+const shortid = require('shortid');
+const catchAsync = require('../util/catchAsync');
 const axios = require("axios");
 const { generateOTP, verifyOTP } = require("../util/otpHandler");
-const userAddressModel = require("../models/useraddress");
-const referAndEarnModel = require("../models/referAndEarn");
+
+const Cart = require("../models/cart");
+const User = require("../models/user");
+const UserAddress = require("../models/useraddress");
+const ReferAndEarn = require("../models/referAndEarn");
 const UserReferalLink = require("../models/userReferealLink");
 
 const authKey = "T1PhA56LPJysMHFZ62B5";
@@ -23,41 +23,28 @@ const config = {
     Authorization: `Basic ${encodedCredentials}`,
   },
 };
-exports.generateOtpUser = async (req, res, next) => {
-  try {
+exports.generateOtpUser = catchAsync(async (req, res, next) => {
     const { phoneNumber } = req.body;
-    const user = await userModel
+    const user = await User
       .findOne({ phone: phoneNumber })
       .select("-password");
     console.log(user);
     if (!user) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User does not exist" });
+      return next(new AppError("User does not exist",404))
     }
 
     await generateOTP(phoneNumber, user);
 
     res.status(200).json({ message: "otp sent successful" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    console.log(err);
-    next(err);
-  }
-};
-
-exports.verifyUserOtp = async (req, res, next) => {
-  try {
+exports.verifyUserOtp = catchAsync(async (req, res, next) => {
     const { enteredOTP, phoneNumber } = req.body;
-    const user = await userModel
+    const user = await User
       .findOne({ phone: phoneNumber })
       .select("-password");
     if (!user) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User does not exist" });
+      return next(new AppError("User does not exist",404))
     }
 
     await verifyOTP(phoneNumber, enteredOTP, user, res);
@@ -65,7 +52,7 @@ exports.verifyUserOtp = async (req, res, next) => {
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "2d",
     });
-    const userCart = await cartModel.findById(user.cartId);
+    const userCart = await Cart.findById(user.cartId);
     if (req.cookies["guestCart"]) {
       const guestCart = JSON.parse(req.cookies["guestCart"]);
       const carItems = guestCart.items;
@@ -109,30 +96,18 @@ exports.verifyUserOtp = async (req, res, next) => {
       userName: user.name,
       userPhone: user.phone,
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    console.log("err--->", err);
-    next(err);
-  }
-};
+exports.signupOtp = catchAsync(async (req, res, next) => {
 
-exports.signupOtp = async (req, res, next) => {
-  try {
     const { name, phone, referralCode } = req.body;
     if (!name || !phone) {
-      return res
-        .status(400)
-        .json({ success: false, message: "All the fields are required" });
+      return next(new AppError("All the fields are required",400))
     }
 
-    const resultData = await userModel.findOne({ phone: phone });
+    const resultData = await User.findOne({ phone: phone });
     if (resultData) {
-      return res.status(400).json({
-        success: true,
-        message: "User already exists, Please Login!",
-      });
+      return next(new AppError("User already exists, Please Login!",400))
     }
 
     const otp = Math.floor(Math.random() * 900000) + 100000;
@@ -161,29 +136,16 @@ exports.signupOtp = async (req, res, next) => {
       .status(200)
       .cookie("tempVerf", token, { httpOnly: true })
       .json({ message: "otp sent successfully" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    console.log(err);
-    next(err);
-  }
-};
-
-exports.createUser = async (req, res, next) => {
-  try {
+exports.createUser = catchAsync(async (req, res, next) => {
     const { enteredOTP, phone } = req.body;
     if (!req.cookies["tempVerf"]) {
-      return res.status(400).json({
-        success: false,
-        message: "No signup request available",
-      });
+            return next(new AppError("No signup request available",404))
     }
 
     if (!enteredOTP || !phone) {
-      return res
-        .status(400)
-        .json({ success: false, message: "All the fields are required" });
+      return next(new AppError("All the fields are required",400))
     }
 
     const decoded = jwt.verify(req.cookies["tempVerf"], process.env.JWT_SECRET);
@@ -192,22 +154,22 @@ exports.createUser = async (req, res, next) => {
       const referralCode = shortid.generate();
 
 
-      var user = await userModel({ name: decoded.name, phone: phone,referralCode:referralCode });
+      var user = await User({ name: decoded.name, phone: phone,referralCode:referralCode });
 
       await UserReferalLink.create({userId:user._id})
 
-      var userCart = await cartModel({ userId: user._id });
+      var userCart = await Cart({ userId: user._id });
       await userCart.save();
 
       user.cartId = userCart._id;
 
       const enteredReferralCode = decoded.referralCode;
-      const referralUser = await userModel.findOne({referralCode:enteredReferralCode,status:true});
+      const referralUser = await User.findOne({referralCode:enteredReferralCode,status:true});
 
       if(referralUser){
         const userRefDoc = await UserReferalLink.findOne({userId:referralUser._id})
 
-        const referralAmt = await referAndEarnModel.findOne()
+        const referralAmt = await ReferAndEarn.findOne()
         userRefDoc.referralCredits = userRefDoc.referralCredits + referralAmt.amount;
         userRefDoc.noOfUsersAppliedCoupon++;
 
@@ -257,32 +219,20 @@ exports.createUser = async (req, res, next) => {
         userPhone: user.phone,
       });
     } else {
-      return res.status(400).json({ message: "OTP in Invalid" });
+      return next(new AppError("OTP in Invalid",400))
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    console.log(err);
-    next(err);
-  }
-};
-
-exports.logoutUser = async (req, res, next) => {
-  try {
+exports.logoutUser = catchAsync(async (req, res, next) => {
     res.clearCookie("token");
     return res.json({ success: true, message: "Logout successful" });
-  } catch (err) {
-    next(err);
-  }
-};
+});
 
-exports.updateEmail = async (req, res, next) => {
-  try {
+exports.updateEmail = catchAsync(async (req, res, next) => {
     const userId = req.user._id;
     const email = req.body.email;
 
-    const user = await userModel.findById(userId);
+    const user = await User.findById(userId);
     user.email = email;
     await user.save();
 
@@ -290,38 +240,24 @@ exports.updateEmail = async (req, res, next) => {
       success: true,
       message: "Email updated successfully!",
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
-
-exports.userInfo = async (req, res, next) => {
-  try {
+exports.userInfo = catchAsync(async (req, res, next) => {
     const userId = req.user._id;
 
-    const user = await userModel.findById(userId);
-    const userAddresses = await userAddressModel.find({ userId });
+    const user = await User.findById(userId);
+    const userAddresses = await UserAddress.find({ userId });
 
     res.status(200).json({
       success: true,
       userInfo: { user, userAddresses },
       message: "User Profile sent!",
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
-
-    logger.error(err);
-    next(err);
-  }
-};
+});
 
 // address routes
 
-exports.addUserAddress = async (req, res, next) => {
-  try {
+exports.addUserAddress = catchAsync(async (req, res, next) => {
     // console.log(req.body);
     const { addressLine, pincode, landmark, city, location, defaultAddress } =
       req.body;
@@ -329,7 +265,7 @@ exports.addUserAddress = async (req, res, next) => {
     if (!addressLine || !pincode || !landmark || !city || !userId) {
       return next(new AppError(400, "All the fields are required"));
     } else {
-      await userAddressModel.create({
+      await UserAddress.create({
         addressLine: addressLine,
         pincode: pincode,
         landmark: landmark,
@@ -342,23 +278,15 @@ exports.addUserAddress = async (req, res, next) => {
         .status(201)
         .json({ success: true, message: "user address created successful" });
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    console.log(err);
-    next(err);
-  }
-};
-
-exports.updateUserAddress = async (req, res, next) => {
-  try {
+exports.updateUserAddress = catchAsync(async (req, res, next) => {
     const id = req.params.id; // address id
     const { addressLine, pincode, landmark, city, defaultAddress } = req.body;
     if (!addressLine || !pincode || !landmark || !city) {
       return next(new AppError(400, "All the fields are required"));
     } else {
-      const result = await userAddressModel.findOne({ _id: id });
+      const result = await UserAddress.findOne({ _id: id });
       result.addressLine = addressLine;
       result.pincode = pincode;
       result.landmark = landmark;
@@ -370,19 +298,11 @@ exports.updateUserAddress = async (req, res, next) => {
         .status(200)
         .json({ success: true, message: "user address updated successful" });
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    console.log(err);
-    next(err);
-  }
-};
-
-exports.getAllAddresses = async (req, res, next) => {
-  try {
+exports.getAllAddresses = catchAsync(async (req, res, next) => {
     const id = req.user._id; //this is user id
-    const addresses = await userAddressModel.find({ userId: id });
+    const addresses = await UserAddress.find({ userId: id });
     if (addresses.length === 0) {
       return res.status(200).json({
         success: true,
@@ -394,26 +314,12 @@ exports.getAllAddresses = async (req, res, next) => {
         data: addresses,
       });
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
-
-exports.deleteAddress = async (req, res, next) => {
-  try {
+exports.deleteAddress = catchAsync(async (req, res, next) => {
     const id = req.params.id; //object id
-    await userAddressModel.findByIdAndDelete({ _id: id });
+    await UserAddress.findByIdAndDelete({ _id: id });
     res
       .status(200)
       .json({ success: true, message: "address deleted successful" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
-
-    logger.error(err);
-    console.log(err);
-    next(err);
-  }
-};
+});

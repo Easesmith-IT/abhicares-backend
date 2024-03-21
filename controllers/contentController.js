@@ -1,10 +1,10 @@
 const { uploadFileToGCS } = require("../middleware/imageMiddleware");
 const Content = require("../models/content");
 const Service = require("../models/service");
-const AppError = require("./errorController");
+const AppError = require("../util/appError");
+const catchAsync = require("../util/catchAsync");
 
-exports.uploadBanners = async (req, res, next) => {
-  try {
+exports.uploadBanners = catchAsync(async (req, res, next) => {
     const { type, section, page, serviceId } = req.body;
 
     let image = ''
@@ -50,15 +50,9 @@ exports.uploadBanners = async (req, res, next) => {
         data: newDoc,
       });
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
-    console.log(err);
-    next(err);
-  }
-};
+});
 
-exports.getBanners = async (req, res, next) => {
-  try {
+exports.getBanners = catchAsync(async (req, res, next) => {
     const { type, section, page, heroBanners } = req.query;
     let doc;
     if (heroBanners) {
@@ -94,22 +88,14 @@ exports.getBanners = async (req, res, next) => {
     if (!doc) {
       return next(new AppError(400, "Document does not exists"))
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
-    console.log(err);
-    next(err);
-  }
-};
+});
 
-exports.updateContent = async (req, res) => {
-  try {
+exports.updateContent = catchAsync(async (req, res,next) => {
     const id = req.params.id;
     const content = await Content.findOne({ _id: id });
 
     if (!content) {
-      return res.status(404).json({
-        message: `Content not found with this ${id}`,
-      });
+      return next(new AppError(`Content not found with this ${id}`,404))
     }
 
     const { title, type, value, description, section } = req.body;
@@ -127,62 +113,44 @@ exports.updateContent = async (req, res) => {
     });
 
     if (!update) {
-      return res.status(400).json({
-        message: "Could not update Content",
-      });
+      return next(new AppError("Could not update Content",404))
     }
 
     res.status(200).json({
       message: "updated successfully",
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
-  }
-};
+});
 
-exports.getContent = async (req, res) => {
-  try {
+exports.getContent = catchAsync(async (req, res,next) => {
     const title = req.query.title;
     const content = await Content.findOne({ title: title });
     if (!content) {
-      return res.status(404).json({
-        message: `No content found for the title ${title}`,
-      });
+      return next(new AppError(`No content found for the title ${title}`,404))
     }
     res.status(200).json({
       content: content,
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
-  }
-};
 
-exports.getSeoByPage = async (req, res) => {
-  try {
+});
+
+exports.getSeoByPage = catchAsync(async (req, res,next) => {
     const page = req.query.page;
     const content = await Content.findOne({ page: page, type: "seo" });
     if (!content) {
-      return res.status(404).json({
-        message: `No content found for the page ${page}`,
-      });
+      return next(new AppError(`No content found for the page ${page}`,404))
     }
     res.status(200).json({
       seo: content,
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
-  }
-};
+});
 
-exports.updateSeo = async (req, res) => {
-  try {
+exports.updateSeo = catchAsync(async (req, res,next) => {
+
     const { page, seoTitle, seoDescription, categoryId } = req.body;
     const content = await Content.findOne({ page: page, type: "seo" });
 
     if (!content) {
-      return res.status(404).json({
-        message: `Seo not found`,
-      });
+      return next(new AppError(`Seo not found`,404))
     }
 
     const updateContent = {
@@ -200,27 +168,19 @@ exports.updateSeo = async (req, res) => {
     );
 
     if (!update) {
-      return res.status(400).json({
-        message: "Could not update Content",
-      });
+      return next(new AppError("Could not update Content",404))
     }
 
     res.status(200).json({
       message: "updated successfully",
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
-  }
-};
+});
 
-exports.getSeoByCategoryId = async (req, res, next) => {
-  try {
+exports.getSeoByCategoryId = catchAsync(async (req, res, next) => {
     const id = req.params.id;
     const service = await Service.findById(id);
     if (!service) {
-      return res.status(404).json({
-        message: `service not found`,
-      });
+      return next(new AppError(`service not found`,404))
     }
     const content = await Content.findOne({
       categoryId: service.categoryId,
@@ -228,17 +188,10 @@ exports.getSeoByCategoryId = async (req, res, next) => {
     });
 
     if (!content) {
-      return res.status(404).json({
-        message: `Seo not found`,
-      });
+      return next(new AppError(`Seo not found`,404))
     }
     res.status(200).json({
       success: true,
       seo: content,
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
-    console.log(err);
-    next(err);
-  }
-};
+});

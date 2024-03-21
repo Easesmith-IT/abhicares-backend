@@ -1,15 +1,15 @@
-const { io } = require('../server')
-const AppError = require('../controllers/errorController')
-const bookingModel=require("../models/booking")
+const  io  = require('../server')
+const AppError = require('../util/appError')
+const Booking=require("../models/booking")
+const catchAsync = require('../util/catchAsync')
 
-exports.addLocationToDatabase = async (req, res, next) => {
-  try {
+exports.addLocationToDatabase = catchAsync(async (req, res, next) => {
     const {location,status} = req.body
     const id = req.params.id // booking id
    if(!location || !status){
     return next(new AppError(400, "All the fields are required"))
    }
-    const result = await bookingModel.findOne({_id:id})
+    const result = await Booking.findOne({_id:id})
     if (result) {
       result.currentLocation.status = status
       result.currentLocation.location = location
@@ -25,14 +25,10 @@ exports.addLocationToDatabase = async (req, res, next) => {
     } else {
       return next(new AppError(400, 'order not found'))
     }
-  } catch (err) {
-    next(err)
-  }
-}
+})
 
 // not required
-exports.getOrderLocation = async (req, res, next) => {
-    try {
+exports.getOrderLocation = catchAsync(async (req, res, next) => {
       const id = req.params.id // booking id
       console.log("hello bro")
 
@@ -41,7 +37,7 @@ exports.getOrderLocation = async (req, res, next) => {
        
         let result
         var myInterval= setInterval(async function(){
-           result = await bookingModel.findOne({_id:id})
+           result = await Booking.findOne({_id:id})
            console.log("result")
             socket.emit("customEvent",{message:"location access successful",location:result.currentLocation.location,status:currentLocation.status})
            
@@ -54,8 +50,4 @@ exports.getOrderLocation = async (req, res, next) => {
           console.log('A user disconnected')
         })
       })
- 
-    } catch (err) {
-      next(err)
-    }
-  }
+  })
