@@ -1,26 +1,28 @@
 const Razorpay = require("razorpay");
 var crypto = require("crypto");
-const { logger } = require("../server");
+const catchAsync = require('../util/catchAsync');
+
 
 //Importing Models
 const UserAddress = require("../models/useraddress");
 const User = require("../models/user");
+const UserReferalLink = require("../models/userReferealLink");
 const Order = require("../models/order");
 const Payment = require("../models/payments");
 const Products = require("../models/product");
 const Cart = require("../models/cart");
 const Booking = require("../models/booking");
-const packageModel = require("../models/packages");
-const tempOrder = require("../models/tempOrder");
+const Package = require("../models/packages");
+const TempOrder = require("../models/tempOrder");
 const { autoAssignBooking } = require("../util/autoAssignBooking");
+const AppError = require("../util/appError");
 
 const instance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY,
   key_secret: process.env.RAZORPAY_API_SECRET,
 });
 
-exports.appOrder = async (req, res, next) => {
-  try {
+exports.appOrder = catchAsync(async (req, res, next) => {
     const userId = req.body.userId;
     const userAddressId = req.body.userAddressId;
     const user = await User.findById(userId);
@@ -32,7 +34,7 @@ exports.appOrder = async (req, res, next) => {
     const couponId = cart.couponId;
     const payId = req.body.payId;
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return next(new AppError("User not found.",404))
     }
 
     // Extract cart data from the user's cart
@@ -149,14 +151,9 @@ exports.appOrder = async (req, res, next) => {
       await booking.save();
     }
     return res.status(200).json(order);
-  } catch (err) {
-    console.log(err);
-    return { message: "error", error: err };
-  }
-};
+});
 
-exports.getAllUserOrders = async (req, res, next) => {
-  try {
+exports.getAllUserOrders = catchAsync(async (req, res, next) => {
     const id = req.user._id;
     const result = await Order.find({ "user.userId": id })
       .populate({
@@ -176,16 +173,9 @@ exports.getAllUserOrders = async (req, res, next) => {
     res
       .status(200)
       .json({ success: true, message: "Your all orders", data: result });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
-
-exports.createOrderInvoice = async (req, res, next) => {
-  try {
+exports.createOrderInvoice = catchAsync(async (req, res, next) => {
     const id = req.params.id;
     const result = await Order.findOne({ _id: id }).populate({
       path: "items",
@@ -203,13 +193,9 @@ exports.createOrderInvoice = async (req, res, next) => {
     res
       .status(200)
       .json({ success: true, message: "This is order details", data: result });
-  } catch (err) {
-    next(err);
-  }
-};
+});
 
-exports.updateOrderStatus = async (req, res, next) => {
-  try {
+exports.updateOrderStatus = catchAsync(async (req, res, next) => {
     const id = req.params.id; // order id
     const status = req.body.status;
     var result = await Order.findOne({ _id: id });
@@ -218,15 +204,9 @@ exports.updateOrderStatus = async (req, res, next) => {
     res
       .status(200)
       .json({ success: true, message: "Order status changed successfull" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
-
-const generateOrderItems = async (cartItems, bookings) => {
+const generateOrderItems = catchAsync(async (cartItems, bookings) => {
   const orderItems = [];
 
   for (const item of cartItems) {
@@ -234,7 +214,7 @@ const generateOrderItems = async (cartItems, bookings) => {
     if (item.type == "product") {
       prod = await Products.findById(item.productId);
     } else if (item.type == "package") {
-      pack = await packageModel.findById(item.packageId._id.toString());
+      pack = await Package.findById(item.packageId._id.toString());
     }
 
     if (prod) {
@@ -262,9 +242,9 @@ const generateOrderItems = async (cartItems, bookings) => {
   }
 
   return orderItems;
-};
+});
 
-const generateBookings = async (
+const generateBookings = catchAsync(async (
   orderItems,
   user,
   order,
@@ -326,19 +306,23 @@ const generateBookings = async (
       );
     }
   }
-};
+});
 
-exports.websiteCodOrder = async (req, res, next) => {
-  try {
+exports.websiteCodOrder = catchAsync(async (req, res, next) => {
     const user = req.user;
 
-    const { itemTotal, discount, tax, total, userAddressId, bookings } =
+    const { itemTotal, discount, tax, total, userAddressId, bookings,referalDiscount } =
       req.body;
+
+      
 
     let couponId = null;
     if (req.body.couponId) {
       couponId = req.body.couponId;
     }
+
+    let referalDis = null;
+    if(referalDiscount)referalDis=referalDiscount
 
     const cart = await Cart.findOne({ userId: user._id }).populate({
       path: "items",
@@ -356,7 +340,7 @@ exports.websiteCodOrder = async (req, res, next) => {
     });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return next(new AppError("User not found.",404))
     }
     const items = cart.items;
     const orderItems = await generateOrderItems(items, bookings);
@@ -370,6 +354,7 @@ exports.websiteCodOrder = async (req, res, next) => {
       orderValue: total,
       itemTotal,
       discount,
+      referalDiscount:referalDis,
       tax,
       items: orderItems,
       couponId: couponId,
@@ -402,21 +387,28 @@ exports.websiteCodOrder = async (req, res, next) => {
     cart.items = [];
     cart.totalPrice = 0;
     await cart.save();
+
+    if(referalDiscount>0){
+      const userRefDoc = await UserReferalLink.findOne({userId:req.user._id});
+      userRefDoc.referralCredits = 0
+      await userRefDoc.save()
+    }
+
+
     return res.status(200).json(order);
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    console.log(err);
-    return { message: "error", error: err };
-  }
-};
+exports.checkout = catchAsync(async (req, res, next) => {
 
-exports.checkout = async (req, res, next) => {
-  try {
-    const { itemTotal, discount, tax, total, userAddressId, bookings } =
+    const { itemTotal, discount, tax, total, userAddressId, bookings,referalDiscount } =
       req.body;
     const user = req.user;
+
+    
+    let referalDis = null;
+    if(referalDiscount)referalDis=referalDiscount
+
+    console.log('couponId',req.body.couponId)
 
     let couponId = null;
     if (req.body.couponId) {
@@ -439,7 +431,7 @@ exports.checkout = async (req, res, next) => {
     });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return next(new AppError("User not found.",404))
     }
     const items = cart.items;
 
@@ -447,7 +439,7 @@ exports.checkout = async (req, res, next) => {
 
     const userAddress = await UserAddress.findById(userAddressId);
 
-    const order = new tempOrder({
+    const order = new TempOrder({
       orderPlatform: "website",
       paymentType: "Online",
       orderValue: total,
@@ -458,6 +450,7 @@ exports.checkout = async (req, res, next) => {
       },
       itemTotal,
       discount,
+      referalDiscount:referalDis,
       tax,
       items: orderItems,
       couponId: couponId,
@@ -492,16 +485,9 @@ exports.checkout = async (req, res, next) => {
       razorpayOrder: createdOrder,
       order: order,
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    next(err);
-  }
-};
-
-exports.paymentVerification = async (req, res, next) => {
-  try {
+exports.paymentVerification = catchAsync(async (req, res, next) => {
     const {
       razorpay_order_id,
       razorpay_payment_id,
@@ -519,7 +505,7 @@ exports.paymentVerification = async (req, res, next) => {
     const isAuthentic = expectedSignature === razorpay_signature;
 
     if (isAuthentic) {
-      const result = await tempOrder.findOne({ _id: productId });
+      const result = await TempOrder.findOne({ _id: productId });
 
       const order = new Order({
         orderPlatform: result.orderPlatform,
@@ -531,6 +517,7 @@ exports.paymentVerification = async (req, res, next) => {
           paymentId: razorpay_payment_id,
         },
         itemTotal: result.itemTotal,
+        referalDiscount:result.referalDiscount,
         discount: result.discount,
         tax: result.tax,
         items: result.items,
@@ -551,7 +538,7 @@ exports.paymentVerification = async (req, res, next) => {
         "completed"
       );
 
-      await tempOrder.findByIdAndDelete({ _id: productId });
+      await TempOrder.findByIdAndDelete({ _id: productId });
 
       //payment creation
       const payment = new Payment({
@@ -565,6 +552,12 @@ exports.paymentVerification = async (req, res, next) => {
 
       await payment.save();
 
+      if(result.referalDiscount>0){
+        const userRefDoc = await UserReferalLink.findOne({userId:result.user.userId});
+        userRefDoc.referralCredits = 0
+        await userRefDoc.save()
+      }
+
       res
         .status(200)
         .json({ success: true, message: "varification successful" });
@@ -574,23 +567,12 @@ exports.paymentVerification = async (req, res, next) => {
         message: "verification failed",
       });
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Something went wrong:(" });
+});
 
-    logger.error(err);
-    console.log("err", err);
-    next(err);
-  }
-};
-
-exports.getApiKey = async (req, res, next) => {
-  try {
+exports.getApiKey = catchAsync(async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "api key",
       apiKey: process.env.RAZORPAY_API_KEY,
     });
-  } catch (err) {
-    next(err);
-  }
-};
+});

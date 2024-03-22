@@ -6,7 +6,7 @@ const isCity = require("../middleware/availableCity");
 // controllers
 const shoppingController = require('../controllers/shopController')
 const authController = require('../controllers/authController')
-const paymentController = require("../controllers/payments");
+const paymentController = require("../controllers/paymentsController");
 
 
 // Category routes
@@ -128,6 +128,7 @@ router.get("/get-user-help", userAuth, shoppingController.getUserHelpCenter);
 
 // Coupon routes
 router.post("/get-coupon-details", userAuth, shoppingController.getCouponByName);
+router.post("/get-referralCredits", userAuth, shoppingController.getReferralCredits);
 
 // user profile routes
 router.post('/update-email',userAuth,authController.updateEmail)

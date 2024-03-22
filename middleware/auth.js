@@ -1,16 +1,15 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const jwtkey = require("../util/jwtkey");
+const AppError = require("../util/appError");
 
 exports.userAuth = async (req, res, next) => {
   try {
     const token = req.cookies["token"];
     //token is missing
     if (!token) {
-      return res.status(401).json({
-        message: "Token is missing",
-        success: false,
-      });
+      return next(new AppError("Token is missing",401))
+
     }
     try {
       const validatedToken = await jwt.verify(token, process.env.JWT_SECRET);
@@ -19,10 +18,7 @@ exports.userAuth = async (req, res, next) => {
       const user = await User.findById(userId);
       req.user = user;
     } catch (err) {
-      return res.status(400).json({
-        message: "Invalid Token",
-        success: false,
-      });
+      return next(new AppError("Invalid Token",401))
     }
     //if token is valid move on to next middleware
     next();
@@ -49,17 +45,12 @@ exports.userAuthForCart = async (req, res, next) => {
         req.user = null;
       }
     } catch (err) {
-      if ((err.name = "TokenExpiredError")) {
+      if ((err.name === "TokenExpiredError")) {
         res.clearCookie("token");
-        return res.status(400).json({
-          message: "Token expired",
-          tokenExpired: true,
-        });
+        return next(new AppError("Token expired",400))
+
       }
-      return res.status(400).json({
-        message: "Invalid Token",
-        success: false,
-      });
+      return next(new AppError("Invalid Token",401))
     }
     //if token is valid move on to next middleware
     next();
@@ -71,23 +62,17 @@ exports.userAuthForCart = async (req, res, next) => {
 
 exports.isAdminAuth = async (req, res, next) => {
   try {
-    // console.log('token inside', req.header('Authorization'))
+    console.log('inside isadmin auth')
     const token = req.cookies["admtoken"];
 
     jwt.verify(token, jwtkey.secretJwtKey, function (err, authData) {
       if (err) {
         if (err.name === "TokenExpiredError") {
           res.clearCookie("admtoken");
-          return res.status(400).json({
-            message: "Token expired",
-            tokenExpired: true,
-          });
+          return next(new AppError("Token expired",400))
         }
-        return res.status(401).json({
-          message: "Token authentication failed",
-          error: err,
-          success: false,
-        });
+
+        return next(new AppError("Token authentication failed",400))
       } else {
         // console.log('authData',authData)
         req.perm = authData.permissions;
