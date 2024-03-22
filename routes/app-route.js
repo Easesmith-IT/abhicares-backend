@@ -43,4 +43,10 @@ router.get("/search-service", appController.searchService);
 router.get("/get-tickets/:userId", appController.getUserTickets);
 router.post("/raise-ticket", appController.raiseTicket);
 
+
+// coupon, referral and app-homepage api's
+router.post("/get-coupon-details", appController.getCouponByName);
+router.post("/get-referralCredits", appController.getReferralCredits);
+router.get("/get-services-app-homepage", appController.getAppHomePageServices);
+
 module.exports = router;

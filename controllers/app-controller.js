@@ -6,14 +6,20 @@ const Service = require("../models/service");
 const User = require("../models/user");
 const UserAddress = require("../models/useraddress");
 const Order = require("../models/order");
+const ReferAndEarn = require("../models/referAndEarn");
 const Content = require("../models/content");
 const HelpCentre = require("../models/helpCenter");
+const Coupon = require("../models/offerCoupon");
+const UserReferalLink = require("../models/userReferealLink");
 const mongoose = require("mongoose");
 const { auth } = require("../middleware/auth");
 const jwt = require("jsonwebtoken");
 const BookingModel = require("../models/booking");
 const { contentSecurityPolicy } = require("helmet");
 const ReviewModel = require("../models/review");
+const catchAsync = require("../util/catchAsync");
+const AppError = require("../util/appError");
+const shortid = require("shortid");
 
 /////////////////////////////////////////////////////////////////////////////
 //app routes
@@ -321,17 +327,36 @@ exports.createUser = async (req, res, next) => {
   try {
     const phoneNumber = req.body.phone;
     const name = req.body.name;
+    const enteredReferralCode = req.body.referralCode;
+
+
     const psw = "password";
     var user = await User.findOne({ phone: phoneNumber });
     if (user) {
       return res.status(403).json({ message: "User already exist" });
     } else {
+      const referralCode = shortid.generate();
       user = await User({
         phone: phoneNumber,
         name: name,
         password: psw,
         gender: "notDefined",
+        referralCode
       });
+
+      await UserReferalLink.create({userId:user._id})
+
+      const referralUser = await User.findOne({referralCode:enteredReferralCode,status:true});
+
+      if(referralUser){
+        const userRefDoc = await UserReferalLink.findOne({userId:referralUser._id})
+
+        const referralAmt = await ReferAndEarn.findOne()
+        userRefDoc.referralCredits = userRefDoc.referralCredits + referralAmt.amount;
+        userRefDoc.noOfUsersAppliedCoupon++;
+
+        await userRefDoc.save()
+      }
       user.save();
       console.log(user);
       return res.status(200).json({ user });
@@ -427,3 +452,60 @@ exports.raiseTicket = async (req, res, next) => {
     return next(err);
   }
 };
+
+exports.getCouponByName = catchAsync(async (req, res, next) => {
+
+  const { name,userId } = req.body;
+  if (!name) {
+    return next(new AppError("All Fields are required",400))
+  }
+
+  const result = await Coupon.find({ name: name });
+  if (result.length === 0) {
+    return next(new AppError(400, "Coupon not found"));
+  }
+
+  const orders = await Order.find({ "user.userId": userId });
+  const {noOfTimesPerUser} = result[0];
+  console.log('noOfTimesPerUser',noOfTimesPerUser)
+
+  let couponUseCount = 0;
+
+  orders.forEach((order)=>{
+    if(order.couponId && order.couponId.toString()===result[0]._id.toString())couponUseCount++;
+  })
+
+  console.log('couponUseCount',couponUseCount)
+  if(couponUseCount>=noOfTimesPerUser){
+    return next(new AppError('You have already used this coupon!',400))
+  }
+
+  res
+    .status(200)
+    .json({ success: true, message: "Your coupon", data: result });
+});
+
+exports.getReferralCredits = catchAsync(async (req, res, next) => {
+
+  const userId = req.body.userId;
+
+  const userRefDoc = await UserReferalLink.findOne({userId});
+
+  let credits = userRefDoc.referralCredits || 0
+  let creditsAvailable = false
+
+  if(credits>0)creditsAvailable = true;
+
+  res
+    .status(200)
+    .json({ success: true, credits,creditsAvailable,noOfUsersAppliedCoupon:userRefDoc.noOfUsersAppliedCoupon });
+
+});
+
+exports.getAppHomePageServices = catchAsync(async (req, res, next) => {
+  const services = await Service.find({appHomepage:true});
+  res
+    .status(200)
+    .json({ success: true, services });
+
+});
