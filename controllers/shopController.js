@@ -674,7 +674,6 @@ exports.getCouponByName = catchAsync(async (req, res, next) => {
 
 exports.getReferralCredits = catchAsync(async (req, res, next) => {
 
-
     const userId = req.user._id;
 
     const userRefDoc = await UserReferalLink.findOne({userId});
