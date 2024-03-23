@@ -1,5 +1,7 @@
 const socketIO = require('socket.io');
 
+const server = require('../server')
+
 function initializeSocket(server) {
     const io = socketIO(server);
 
@@ -17,4 +19,8 @@ function initializeSocket(server) {
     return io;
 }
 
-module.exports = initializeSocket
+
+// initialize socket.io
+const io = initializeSocket(server);
+
+module.exports = io
