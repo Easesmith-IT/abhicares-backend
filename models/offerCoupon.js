@@ -22,6 +22,10 @@ const offerCouponSchema = new mongoose.Schema(
       type: String,
       default: "active",
     },
+    noOfTimesPerUser: {
+      type: Number,
+      default: 1,
+    },
   },
   { timestamps: true }
 );

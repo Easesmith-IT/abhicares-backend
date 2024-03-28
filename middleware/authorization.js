@@ -1,5 +1,7 @@
 // req.perm;
 
+const AppError = require("../util/appError");
+
 exports.authorize = (section,accessType) => {
    return (req, res, next) => {
      const adminPermissions = req.perm || {};
@@ -16,8 +18,7 @@ exports.authorize = (section,accessType) => {
        next();
        return;
      }
-
-       return res.status(403).json({message:"Forbidden- Insufficient Permissions"})
+     return next(new AppError("Forbidden- Insufficient Permissions",403))
     }; 
 }
 

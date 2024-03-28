@@ -31,6 +31,9 @@ const orderSchema = new Schema(
       type: Number,
       required: true,
     },
+    referalDiscount: {
+      type: Number,
+    },
     tax: {
       type: Number,
       required: true,
