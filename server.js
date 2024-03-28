@@ -3,18 +3,14 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const express = require("express");
 
-process.on("uncaughtException", (err) => {
-  console.log("UNCAUGHT EXCEPTION! Shutting down...");
-  console.log(err.name, err.message);
-  process.exit(1);
-});
+process.on('uncaughtException',err=>{
+  console.log('UNCAUGHT EXCEPTION! Shutting down...');
+  console.log(err.name,err.message);
+  process.exit(1)
+})
 
-require("dotenv").config();
-const { app } = require("./app.js");
+const app = express();
 const server = http.createServer(app);
-
-// initialize socket.io
-const io = initializeSocket(server);
 
 const mongoose_url = process.env.TEST_MONGO_CONNECTION;
 
@@ -33,13 +29,14 @@ server.listen(port, function () {
   console.log(`Server is running on port http://localhost:${port}`);
 });
 
-process.on("unhandledRejection", (err) => {
-  console.log("UNHANDLED REJECTION! Shutting down...");
-  console.log(err.name, err.message);
 
-  process.exit(1);
+process.on('unhandledRejection',err=>{
+  console.log('UNHANDLED REJECTION! Shutting down...');
+  console.log(err)
+  console.log(err.name,err.message);
+
+  process.exit(1)
 });
 
-module.exports = io;
 
-module.exports = { app, server };
+module.exports =  {app,server};

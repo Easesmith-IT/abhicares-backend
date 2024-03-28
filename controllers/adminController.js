@@ -736,7 +736,7 @@ exports.getSellerWallet = catchAsync(async (req, res, next) => {
   const wallet = await SellerWallet.findOne({ sellerId: id });
 
   if (!wallet) {
-    return next(new AppError("No wallet found", 404));
+    return next(new AppError("No wallet found",404))
   }
 
   res.status(200).json({
@@ -782,7 +782,7 @@ exports.approveSellerCashout = catchAsync(async (req, res, next) => {
   const cashout = await SellerCashout.findById(id);
 
   if (!cashout) {
-    return next(new AppError("No cashout found", 404));
+    return next(new AppError("No cashout found",404))
   }
   const wallet = await SellerWallet.findById(cashout.sellerWalletId.toString());
 
@@ -1185,7 +1185,7 @@ exports.updateAdminUser = catchAsync(async (req, res, next) => {
   console.log(permissions);
 
   if (!adminId || !name || !permissions) {
-    return next(new AppError("All the fields are required", 400));
+    return next(new AppError("All the fields are required",400))
   } else {
     const result = await Admin.findById(id);
 
@@ -1207,11 +1207,11 @@ exports.getSubAdmins = catchAsync(async (req, res, next) => {
 });
 
 exports.loginAdminUser = catchAsync(async (req, res, next) => {
-  console.log("inside admin login");
+  console.log('inside admin login')
   const { adminId, password } = req.body;
   const admin = await Admin.findOne({ adminId: adminId });
   if (!admin) {
-    return next(new AppError("No admin exists with this id", 404));
+    return next(new AppError("No admin exists with this id",404))
   }
 
   const isMatch = await bcrypt.compare(password, admin.password);
@@ -1229,7 +1229,7 @@ exports.loginAdminUser = catchAsync(async (req, res, next) => {
       perm: admin.permissions,
     });
   } else {
-    return next(new AppError("Incorrect Password!", 400));
+    return next(new AppError("Incorrect Password!",400))
   }
 });
 

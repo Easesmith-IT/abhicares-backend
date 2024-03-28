@@ -132,6 +132,105 @@ exports.signupOtp = catchAsync(async (req, res, next) => {
     .json({ message: "otp sent successfully" });
 });
 
+exports.appSignupOtp = catchAsync(async (req, res, next) => {
+  const { name, phone, referralCode } = req.body;
+  if (!name || !phone) {
+    res
+      .status(400)
+      .json({ success: false, message: "All the fields are required" });
+  } else {
+    const resultData = await User.findOne({ phone: phone });
+    if (resultData) {
+      res.status(403).json({
+        success: true,
+        message: "User already exists, Please Login!",
+      });
+    } else {
+      const otp = Math.floor(Math.random() * 900000) + 100000;
+      const text = `${otp} is your OTP of AbhiCares, OTP is only valid for 10 mins, do not share it with anyone. - Azadkart private limited`;
+      await axios.post(
+        `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
+        {
+          Text: text,
+          Number: phone,
+          SenderId: "AZKART",
+          DRNotifyUrl: "https://www.domainname.com/notifyurl",
+          DRNotifyHttpMethod: "POST",
+          Tool: "API",
+        },
+        config
+      );
+      var payload = {
+        phone: phone,
+        otp: otp,
+        name: name,
+        referralCode: referralCode,
+      };
+      var token = jwt.sign(payload, process.env.JWT_SECRET);
+      res
+        .status(200)
+        .json({ message: "otp sent successfully", tempVerf: token });
+    }
+  }
+});
+exports.appCreateUser = catchAsync(async (req, res, next) => {
+  const { enteredOTP, phone, tempVerf } = req.body;
+  if (!tempVerf) {
+    res.status(400).json({
+      success: false,
+      message: "No signup request available",
+    });
+  } else if (!enteredOTP || !phone) {
+    res
+      .status(400)
+      .json({ success: false, message: "All the fields are required" });
+  } else {
+    const decoded = jwt.verify(tempVerf, process.env.JWT_SECRET);
+    console.log(decoded.otp == enteredOTP, decoded.phone == phone);
+    if (decoded.otp == enteredOTP && decoded.phone == phone) {
+      const referralCode = shortid.generate();
+      const psw = "password";
+      var user = await User({
+        name: decoded.name,
+        phone: phone,
+        password: psw,
+        gender: "notDefined",
+        referralCode,
+      });
+
+      await user.save();
+      var userCart = await Cart({ userId: user._id });
+      await userCart.save();
+      user.cartId = userCart._id;
+      const referralUser = await User.findOne({
+        referralCode: decoded.referralCode,
+        status: true,
+      });
+
+      if (referralUser) {
+        const userRefDoc = await UserReferalLink.findOne({
+          userId: referralUser._id,
+        });
+
+        const referralAmt = await ReferAndEarn.findOne();
+        userRefDoc.referralCredits =
+          userRefDoc.referralCredits + referralAmt.amount;
+        userRefDoc.noOfUsersAppliedCoupon++;
+
+        await userRefDoc.save();
+      }
+      await user.save();
+      return res.status(200).json({
+        message: "Logged In",
+        success: true,
+        user: user,
+      });
+    } else {
+      return res.status(400).json({ message: "OTP in Invalid" });
+    }
+  }
+});
+
 exports.createUser = catchAsync(async (req, res, next) => {
   const { enteredOTP, phone } = req.body;
   if (!req.cookies["tempVerf"]) {
