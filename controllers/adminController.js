@@ -2,7 +2,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const jwtkey = require("../util/jwtkey");
-// const { logger } = require("../connection/expressMain_connection");
 
 const Category = require("../models/category");
 const Package = require("../models/packages");
