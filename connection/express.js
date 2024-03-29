@@ -29,20 +29,34 @@ const limiter = rateLimit({
   max: 1000, // limit each IP to 100 requests per windowMs
   message: "Too many requests from this IP, please try again later.",
 });
-// app.use(limiter);
+app.use(limiter);
 
 // app.use(helmet());
-// app.use(hpp());
-// app.use(mongoSanitize());
+app.use(hpp());
+app.use(mongoSanitize());
+
+// Use session middleware
+app.use(
+  session({
+    secret: "your-secret-key",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      secure: false,
+    },
+  })
+);
 
 app.use(bodyParser.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "build")));
+app.use(express.static(path.join(__dirname, "admin")));
 app.use(cookieParser());
 app.use(morgan("dev"));
 
-app.use(express.static(path.join(__dirname, "build")));
-app.use(express.static(path.join(__dirname, "admin")));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/newUpload", express.static(path.join(__dirname, "newUpload")));
+
+// app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// app.use("/newUpload", express.static(path.join(__dirname, "newUpload")));
 
 app.use(
   cors({
@@ -51,19 +65,6 @@ app.use(
   })
 );
 
-app.use(express.urlencoded({ extended: true }));
-
-// Use session middleware
-// app.use(
-//   session({
-//     secret: "your-secret-key",
-//     resave: false,
-//     saveUninitialized: true,
-//     cookie: {
-//       secure: false,
-//     },
-//   })
-// );
 
 app.use("/api/admin", adminRoute);
 app.use("/api/app", appRoute);
@@ -71,14 +72,20 @@ app.use("/api/service-app", serviceAppRoute);
 app.use("/api/shopping", shoppingRoute);
 app.use("/api/content", contentRoute);
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.get("/admin", (req, res) => {
   return res.sendFile(path.resolve(__dirname, "../", "admin", "index.html"));
 });
 
 app.get("*", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "../", "build", "index.html"));
+  console.log('inside wildcard route middleware');
+  try {
+    res.sendFile(path.resolve(__dirname, "../", "build", "index.html"));
+  } catch (error) {
+    console.error("Error serving index.html:", error);
+    res.status(500).send("Internal Server Error");
+  }
 });
 
 app.use(errorHandler);
