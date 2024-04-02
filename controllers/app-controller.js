@@ -523,6 +523,11 @@ exports.getCouponByName = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, message: "Your coupon", data: result });
 });
 
+exports.getAllCoupons = catchAsync(async (req, res, next) => {
+  const result = await Coupon.find();
+  return res.status(200).json({ success: true, data: result });
+});
+
 exports.getReferralCredits = catchAsync(async (req, res, next) => {
   const userId = req.params.userId;
 

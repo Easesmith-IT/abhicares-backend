@@ -52,6 +52,7 @@ router.get("/get-prod-banners", contentController.getProdBanner);
 // coupon, referral and app-homepage api's
 router.post("/get-coupon-details", appController.getCouponByName);
 router.get("/get-referralCredits/:userId", appController.getReferralCredits);
+router.get("/get-coupons", appController.getAllCoupons);
 router.get("/get-services-app-homepage", appController.getAppHomePageServices);
 
 module.exports = router;
