@@ -42,10 +42,7 @@ exports.verifyUserOtp = catchAsync(async (req, res, next) => {
     return next(new AppError("User does not exist", 404));
   }
 
-  var verify = await verifyOTP(phoneNumber, enteredOTP, user, res);
-  if (!verify) {
-    return;
-  }
+  await verifyOTP(phoneNumber, enteredOTP, user, res);
   const payload = { id: user._id };
   const token = jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: "2d",
@@ -252,9 +249,11 @@ exports.userInfo = catchAsync(async (req, res, next) => {
   const user = await User.findById(userId);
   const userAddresses = await UserAddress.find({ userId });
 
+  const userRefDoc = await UserReferalLink.findOne({ userId });
+
   res.status(200).json({
     success: true,
-    userInfo: { user, userAddresses },
+    userInfo: { user, userAddresses, userRefDoc },
     message: "User Profile sent!",
   });
 });

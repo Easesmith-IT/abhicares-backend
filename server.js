@@ -1,8 +1,7 @@
-// require("./app.js")
 const http = require("http");
+require("dotenv").config();
 const mongoose = require("mongoose");
-
-const initializeSocket = require("./connection/socket.js");
+const express = require("express");
 
 process.on("uncaughtException", (err) => {
   console.log("UNCAUGHT EXCEPTION! Shutting down...");
@@ -42,3 +41,5 @@ process.on("unhandledRejection", (err) => {
 });
 
 module.exports = io;
+
+module.exports = { app, server };

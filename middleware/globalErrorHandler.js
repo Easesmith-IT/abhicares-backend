@@ -1,5 +1,9 @@
-const { logger } = require('../app');
+const winston = require("winston");
 const AppError = require('../util/appError')
+
+const logger = winston.createLogger({
+    transports: [new winston.transports.File({ filename: "abhicares.log" })],
+  });
 
 const sendErrorDev = (err,res) =>{
     res.status(err.statusCode).json({
@@ -56,7 +60,7 @@ const handleJWTExpiredError = () =>{
 const errorHandler = (err, req, res, next) => {
 console.log(err.stack);
 console.log('err catched',err);
-
+s
 err.statusCode = err.statusCode || 500;
 err.status = err.status || 'error';
 
