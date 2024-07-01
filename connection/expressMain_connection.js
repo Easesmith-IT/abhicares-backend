@@ -25,9 +25,9 @@ app.use("/api/content", contentRoute);
 
 // app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-app.get("/admin", (req, res) => {
-  return res.sendFile(path.resolve(__dirname, "../", "admin", "index.html"));
-});
+// app.get("/admin", (req, res) => {
+//   return res.sendFile(path.resolve(__dirname, "../", "admin", "index.html"));
+// });
 
 app.get("*", (req, res) => {
   console.log('inside wildcard route middleware');
