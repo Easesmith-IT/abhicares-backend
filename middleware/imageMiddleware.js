@@ -20,10 +20,10 @@ const { Storage } = require("@google-cloud/storage");
 
 
 const storageClient = new Storage({
-  projectId: "abhicares-backend",
+  projectId: process.env.PROJECT_ID,
   keyFilename: "./config/abhicares-backend-a59bded84a4f.json",
 });
-const bucketName = "abhicares-backend-bucket"
+const bucketName = process.env.PROJECT_NAME
 
 async function makeBucketPublic() {
   await storageClient.bucket(bucketName).makePublic();
