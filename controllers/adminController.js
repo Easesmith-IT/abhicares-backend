@@ -2134,7 +2134,7 @@ exports.filterNotification = catchAsync(async (req, res, next) => {
 
   // Check if notifications are found
   if (!notifications || notifications.length === 0) {
-      return res.status(400).json({
+      return res.status(200).json({
           success: false,
           message: "No notifications found for the given date.",
           data:[]
