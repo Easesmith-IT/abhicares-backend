@@ -83,61 +83,27 @@ function initializeFirebase(deviceType) {
     return admin.app(appName);
 }
 
-async function sendPushNotification(deviceType, token, message, scheduleTime = null) {
+async function sendPushNotification(deviceType, token, message) {
     try {
         const firebaseApp = initializeFirebase(deviceType);
+
+        // Set the token for the message
         message.token = token;
 
-        // If no schedule time, send immediately
-        if (!scheduleTime) {
-            const response = await firebaseApp.messaging().send(message);
-            console.log("Immediate notification sent:", response);
-            return response;
-        }
+        // Send the notification immediately
+        const response = await firebaseApp.messaging().send(message);
+        console.log("Notification sent:", response);
 
-        // Extract date and time from the scheduleTime object
-        const { date, time } = scheduleTime;
-
-        if (!date || !time) {
-            throw new AppError("Both date and time must be provided in scheduleTime", 400);
-        }
-
-        // Combine date and time to create a valid Date object
-        const scheduledTime = new Date(`${date}T${time}`);
-        const currentTime = new Date();
-
-        if (isNaN(scheduledTime.getTime()) || scheduledTime <= currentTime) {
-            throw new AppError("Schedule time must be a valid future date and time", 400);
-        }
-
-        // Schedule the notification
-        const job = schedule.scheduleJob(scheduledTime, async () => {
-            try {
-                const response = await firebaseApp.messaging().send(message);
-                console.log("Scheduled notification sent:", response);
-                return response;
-            } catch (error) {
-                console.error("Error sending scheduled notification:", error);
-                throw new AppError(
-                    error.message || "Failed to send scheduled notification",
-                    error.code === 'messaging/invalid-argument' ? 400 : 500
-                );
-            }
-        });
-
-        return {
-            scheduled: true,
-            scheduledTime: scheduledTime,
-            message: message,
-        };
+        return response;
     } catch (error) {
-        console.error("Notification Error:", error);
+        console.error("Firebase Error:", error);
         throw new AppError(
             error.message || "Notification failed",
             error.code === 'messaging/invalid-argument' ? 400 : 500
         );
     }
 }
+
 
 
 module.exports = { sendPushNotification };

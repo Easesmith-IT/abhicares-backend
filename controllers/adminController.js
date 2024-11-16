@@ -31,7 +31,9 @@ const {
 const UserReferalLink = require("../models/userReferealLink");
 const catchAsync = require("../util/catchAsync");
 const { tokenSchema } = require("../models/fcmToken");
-const { sendPushNotification } = require("./pushNotificationController");
+const { sendPushNotification } = require("./pushNotificationController"); 
+const schedule = require("node-schedule");
+const notificationSchema = require("../models/notificationSchema");
 
 // category routes
 
@@ -1938,50 +1940,140 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 //   }
 // });
 
+// exports.sendNotification = async (req, res, next) => {
+//     const { fcmToken, deviceType, description, scheduleTime,title } = req.body;
+
+//     // Validate input
+//     if (!fcmToken || !deviceType || !text) {
+//         return next(new AppError("Please provide fcmToken, deviceType, and text", 400));
+//     }
+
+//   let imageUrl = null;
+//   if (req.files && req.files[0]) {
+//       const file = req.files[0];
+//       const ext = file.originalname.split(".").pop(); // Get file extension
+//       try {
+//           const ret = await uploadFileToGCS(file.buffer, ext); // Upload file to GCS
+//           imageUrl = ret; // GCS returns the full URL of the uploaded file
+//       } catch (error) {
+//           console.error("GCS Upload Error:", error);
+//           return next(new AppError("Error while uploading the file to GCS", 500));
+//       }
+//   }
+
+//   // Prepare the notification message
+//   const message = {
+//       notification: {
+//           title: title,
+//           body: description,
+//           ...(imageUrl && { image: imageUrl }), // Add image if available
+//       },
+//       token: fcmToken, // FCM token of the recipient device
+//   };
+
+
+//     try {
+//         // Call the sendPushNotification function
+//         const response = await sendPushNotification(deviceType, fcmToken, message, scheduleTime);
+
+//         res.status(200).json({
+//             success: true,
+//             message: scheduleTime ? "Notification scheduled successfully" : "Notification sent successfully",
+//             response,
+//         });
+//     } catch (error) {
+//         next(error);
+//     }
+// };
+
 exports.sendNotification = async (req, res, next) => {
-    const { fcmToken, deviceType, description, scheduleTime,title } = req.body;
+    const { fcmToken, deviceType, description, scheduleTiming, title } = req.body;
 
     // Validate input
-    if (!fcmToken || !deviceType || !text) {
-        return next(new AppError("Please provide fcmToken, deviceType, and text", 400));
+    if (!fcmToken || !deviceType || !description || !title) {
+        return next(new AppError("Please provide fcmToken, deviceType, title, and description", 400));
     }
 
-  let imageUrl = null;
-  if (req.files && req.files[0]) {
-      const file = req.files[0];
-      const ext = file.originalname.split(".").pop(); // Get file extension
-      try {
-          const ret = await uploadFileToGCS(file.buffer, ext); // Upload file to GCS
-          imageUrl = ret; // GCS returns the full URL of the uploaded file
-      } catch (error) {
-          console.error("GCS Upload Error:", error);
-          return next(new AppError("Error while uploading the file to GCS", 500));
-      }
-  }
+    let imageUrl = null;
+    if (req.files && req.files[0]) {
+        const file = req.files[0];
+        const ext = file.originalname.split(".").pop(); // Get file extension
+        try {
+            const ret = await uploadFileToGCS(file.buffer, ext); // Upload file to GCS
+            imageUrl = ret; // GCS returns the full URL of the uploaded file
+        } catch (error) {
+            console.error("GCS Upload Error:", error);
+            return next(new AppError("Error while uploading the file to GCS", 500));
+        }
+    }
 
-  // Prepare the notification message
-  const message = {
-      notification: {
-          title: title,
-          body: description,
-          ...(imageUrl && { image: imageUrl }), // Add image if available
-      },
-      token: fcmToken, // FCM token of the recipient device
-  };
-
+    // Prepare the notification message
+    const message = {
+        notification: {
+            title: title,
+            body: description,
+            ...(imageUrl && { image: imageUrl }), // Add image if available
+        },
+        token: fcmToken, // FCM token of the recipient device
+    };
 
     try {
-        // Call the sendPushNotification function
-        const response = await sendPushNotification(deviceType, fcmToken, message, scheduleTime);
+        // Save scheduled notification in the database if scheduleTiming is provided
+        if (scheduleTiming?.date && scheduleTiming?.time) {
+            // Combine date and time into a valid Date object
+            const scheduledDate = new Date(`${scheduleTiming.date}T${scheduleTiming.time}`);
+            if (isNaN(scheduledDate)) {
+                return next(new AppError("Invalid schedule date or time", 400));
+            }
 
-        res.status(200).json({
+            if (scheduledDate <= new Date()) {
+                return next(new AppError("Scheduled time must be in the future", 400));
+            }
+
+            const notificationData = {
+                fcmToken,
+                deviceType,
+                text: description,
+                scheduleTiming,
+                status: "scheduled",
+            };
+
+            const savedNotification = await notificationSchema.create(notificationData); // Save the notification to the database
+
+            // Schedule the notification using node-schedule
+            schedule.scheduleJob(scheduledDate, async () => {
+                try {
+                    await sendPushNotification(deviceType, fcmToken, message);
+                    console.log("Scheduled notification sent successfully");
+
+                    // Update the notification status to "sent"
+                    await notificationSchema.findOneAndUpdate(
+                        { _id: savedNotification._id },
+                        { status: "sent" }
+                    );
+                } catch (error) {
+                    console.error("Error sending scheduled notification:", error);
+                }
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: "Notification scheduled successfully",
+                notification: savedNotification,
+            });
+        }
+
+        // Send immediate notification if no scheduleTiming
+        const response = await sendPushNotification(deviceType, fcmToken, message);
+        return res.status(200).json({
             success: true,
-            message: scheduleTime ? "Notification scheduled successfully" : "Notification sent successfully",
+            message: "Notification sent successfully",
             response,
         });
     } catch (error) {
         next(error);
     }
 };
+
 
 
