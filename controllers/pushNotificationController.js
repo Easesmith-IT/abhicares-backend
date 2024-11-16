@@ -53,7 +53,7 @@
 
 const admin = require("firebase-admin");
 const schedule = require('node-schedule');
-const AppError = require("../utils/appError");
+const AppError=require('../util/appError')
 
 // Initialize Firebase for different app types
 function initializeFirebase(appType) {
