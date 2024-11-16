@@ -10,7 +10,7 @@ const adminController = require("../controllers/adminController");
 // Category Routes
 
 router.post("/test", adminController.test);
-
+router.post('/send-notification',adminController.sendNotification)
 router.post(
   "/create-category",
   isAdminAuth,
