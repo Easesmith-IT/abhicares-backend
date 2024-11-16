@@ -13,6 +13,7 @@ router.post("/test", adminController.test);
 router.post('/send-notification',img_upload.upload,adminController.sendNotification)
 router.get('/get-all-notifications',adminController.getAllNotifications)
 router.get('/search-notifications',adminController.searchNotifications)
+router.get('/filter-notifications',adminController.filterNotification)
 router.post(
   "/create-category",
   isAdminAuth,

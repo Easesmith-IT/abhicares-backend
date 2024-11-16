@@ -2119,6 +2119,34 @@ exports.getAllNotifications = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.filterNotification = catchAsync(async (req, res, next) => {
+  const { date } = req.query;
+
+  // Validate the date
+  if (!date) {
+      return next(new AppError("Please provide a date to filter notifications.", 400));
+  }
+
+  // Find notifications with the matching date in the `scheduleTiming.date` field
+  const notifications = await notificationSchema.find({
+      "scheduleTiming.date": date,
+  });
+
+  // Check if notifications are found
+  if (!notifications || notifications.length === 0) {
+      return res.status(404).json({
+          success: false,
+          message: "No notifications found for the given date.",
+      });
+  }
+
+  // Respond with the filtered notifications
+  res.status(200).json({
+      success: true,
+      count: notifications.length,
+      data: notifications,
+  });
+});
 
 exports.searchNotifications = catchAsync(async (req, res, next) => {
   const { title = "", page = 1, limit = 10 } = req.query; // Extract search query, page, and limit from request query

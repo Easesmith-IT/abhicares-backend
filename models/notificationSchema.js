@@ -30,6 +30,7 @@ title:{
   status: { 
     type: String,
     default: "scheduled" },
-});
+},
+{ timestamps: true });
 
 module.exports = mongoose.model("Notification", notificationSchema);
