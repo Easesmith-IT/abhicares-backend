@@ -60,13 +60,13 @@ function initializeFirebase(appType) {
     let serviceAccount;
 
     switch (appType) {
-        case 'delivery-partner':
-            serviceAccount = require("../config/delivery-partner.json");
+        case 'web':
+            serviceAccount = require("../config/abhicares-backend-a59bded84a4f.json");
             break;
-        case 'restaurant':
+        case 'android':
             serviceAccount = require("../config/restaurant.json");
             break;
-        case 'user':
+        case 'ios':
             serviceAccount = require("../config/user.json");
             break;
         default:
