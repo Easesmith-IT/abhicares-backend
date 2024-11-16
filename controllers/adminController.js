@@ -1987,32 +1987,36 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 // };
 
 exports.sendNotification = async (req, res, next) => {
-    const { fcmToken, deviceType, description, scheduleTiming, title } = req.body;
+    const { fcmToken, deviceType, description, date,time, title } = req.body;
+    const scheduleTiming={
+      date,time
+    }
+    console.log(fcmToken,'fcmToken')
 
     // Validate input
     if (!fcmToken || !deviceType || !description || !title) {
         return next(new AppError("Please provide fcmToken, deviceType, title, and description", 400));
     }
 
-    let imageUrl = null;
-    if (req.files && req.files[0]) {
-        const file = req.files[0];
-        const ext = file.originalname.split(".").pop(); // Get file extension
-        try {
-            const ret = await uploadFileToGCS(file.buffer, ext); // Upload file to GCS
-            imageUrl = ret; // GCS returns the full URL of the uploaded file
-        } catch (error) {
-            console.error("GCS Upload Error:", error);
-            return next(new AppError("Error while uploading the file to GCS", 500));
-        }
-    }
+    // let imageUrl = null;
+    // if (req.files && req.files[0]) {
+    //     const file = req.files[0];
+    //     const ext = file.originalname.split(".").pop(); // Get file extension
+    //     try {
+    //         const ret = await uploadFileToGCS(file.buffer, ext); // Upload file to GCS
+    //         imageUrl = ret; // GCS returns the full URL of the uploaded file
+    //     } catch (error) {
+    //         console.error("GCS Upload Error:", error);
+    //         return next(new AppError("Error while uploading the file to GCS", 500));
+    //     }
+    // }
 
     // Prepare the notification message
     const message = {
         notification: {
             title: title,
             body: description,
-            ...(imageUrl && { image: imageUrl }), // Add image if available
+            // ...(imageUrl && { image: imageUrl }), // Add image if available
         },
         token: fcmToken, // FCM token of the recipient device
     };
@@ -2033,7 +2037,9 @@ exports.sendNotification = async (req, res, next) => {
             const notificationData = {
                 fcmToken,
                 deviceType,
-                text: description,
+                description,
+                title,
+                // image,
                 scheduleTiming,
                 status: "scheduled",
             };
@@ -2074,6 +2080,103 @@ exports.sendNotification = async (req, res, next) => {
         next(error);
     }
 };
+
+exports.getAllNotifications = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = 10 } = req.query; // Default to page 1 and 10 items per page
+
+  // Convert page and limit to integers
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  // Validate page and limit values
+  if (pageNumber <= 0 || limitNumber <= 0) {
+      return next(new AppError("Page and limit must be positive integers", 400));
+  }
+
+  // Calculate the number of documents to skip
+  const skip = (pageNumber - 1) * limitNumber;
+
+  // Fetch notifications with pagination
+  const notifications = await notificationSchema
+      .find()
+      .skip(skip) // Skip the appropriate number of documents
+      .limit(limitNumber) // Limit the number of documents returned
+      .sort({ createdAt: -1 }); // Optionally sort by creation time or another field
+
+  // Get total document count for pagination metadata
+  const totalNotifications = await notificationSchema.countDocuments();
+
+  // Prepare the response with pagination metadata
+  res.status(200).json({
+      success: true,
+      data: notifications,
+      pagination: {
+          total: totalNotifications,
+          page: pageNumber,
+          limit: limitNumber,
+          totalPages: Math.ceil(totalNotifications / limitNumber),
+      },
+  });
+});
+
+
+exports.searchNotifications = catchAsync(async (req, res, next) => {
+  const { title = "", page = 1, limit = 10 } = req.query; // Extract search query, page, and limit from request query
+
+  // Convert page and limit to integers
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  if (pageNumber <= 0 || limitNumber <= 0) {
+      return next(new AppError("Page and limit must be positive integers", 400));
+  }
+
+  // Calculate the number of documents to skip
+  const skip = (pageNumber - 1) * limitNumber;
+
+  // Build the search query
+  const searchQuery = {
+      title: { $regex: title, $options: "i" }, // Case-insensitive search using regex
+  };
+
+  // Get the total count of matching notifications
+  const totalNotifications = await notificationSchema.countDocuments(searchQuery);
+
+  // Validate if the page exists
+  const totalPages = Math.ceil(totalNotifications / limitNumber);
+  if (pageNumber > totalPages && totalNotifications > 0) {
+      return res.status(200).json({
+          success: true,
+          data: [],
+          pagination: {
+              total: totalNotifications,
+              page: pageNumber,
+              limit: limitNumber,
+              totalPages: totalPages,
+          },
+          message: "No notifications available for this page",
+      });
+  }
+
+  // Fetch notifications with pagination
+  const notifications = await notificationSchema
+      .find(searchQuery)
+      .skip(skip)
+      .limit(limitNumber)
+      .sort({ createdAt: -1 }); // Optionally sort by creation time or another field
+
+  // Prepare the response with pagination metadata
+  res.status(200).json({
+      success: true,
+      data: notifications,
+      pagination: {
+          total: totalNotifications,
+          page: pageNumber,
+          limit: limitNumber,
+          totalPages: totalPages,
+      },
+  });
+});
 
 
 

@@ -64,7 +64,7 @@ function initializeFirebase(deviceType) {
             serviceAccount = require("../config/abhicares-backend-a59bded84a4f.json");
             break;
         case 'android':
-            serviceAccount = require("../config/restaurant.json");
+            serviceAccount = require("../config/abhicares-backend-a59bded84a4f.json");
             break;
         case 'ios':
             serviceAccount = require("../config/user.json");

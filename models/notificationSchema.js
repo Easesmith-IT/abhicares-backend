@@ -5,11 +5,14 @@ const notificationSchema = new mongoose.Schema({
     type: String, 
     required: true 
 },
+title:{
+    type:String,
+},
   deviceType: { 
     type: String, 
     required: true 
 },
-  text: { 
+  description: { 
     type: String, 
     required: true 
 },
@@ -21,6 +24,9 @@ const notificationSchema = new mongoose.Schema({
         type:String
     }
 },
+   image:{
+    type:String,
+   },
   status: { 
     type: String,
     default: "scheduled" },
