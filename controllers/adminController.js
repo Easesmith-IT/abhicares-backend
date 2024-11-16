@@ -1939,7 +1939,7 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 // });
 
 exports.sendNotification = async (req, res, next) => {
-    const { fcmToken, deviceType, description, scheduleTime } = req.body;
+    const { fcmToken, deviceType, description, scheduleTime,title } = req.body;
 
     // Validate input
     if (!fcmToken || !deviceType || !text) {
@@ -1962,7 +1962,7 @@ exports.sendNotification = async (req, res, next) => {
   // Prepare the notification message
   const message = {
       notification: {
-          title: "Test Notification",
+          title: title,
           body: description,
           ...(imageUrl && { image: imageUrl }), // Add image if available
       },
