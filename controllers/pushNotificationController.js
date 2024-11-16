@@ -56,10 +56,10 @@ const schedule = require('node-schedule');
 const AppError=require('../util/appError')
 
 // Initialize Firebase for different app types
-function initializeFirebase(appType) {
+function initializeFirebase(deviceType) {
     let serviceAccount;
 
-    switch (appType) {
+    switch (deviceType) {
         case 'web':
             serviceAccount = require("../config/abhicares-backend-a59bded84a4f.json");
             break;
@@ -73,7 +73,7 @@ function initializeFirebase(appType) {
             throw new Error("Invalid app type");
     }
 
-    const appName = `firebase-${appType}`;
+    const appName = `firebase-${deviceType}`;
     if (!admin.apps.find(app => app.name === appName)) {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)
@@ -83,9 +83,9 @@ function initializeFirebase(appType) {
     return admin.app(appName);
 }
 
-async function sendPushNotification(appType, token, message, scheduleTime = null) {
+async function sendPushNotification(deviceType, token, message, scheduleTime = null) {
     try {
-        const firebaseApp = initializeFirebase(appType);
+        const firebaseApp = initializeFirebase(deviceType);
         message.token = token;
 
         // If no schedule time, send immediately
