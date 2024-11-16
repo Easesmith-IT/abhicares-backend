@@ -95,12 +95,19 @@ async function sendPushNotification(deviceType, token, message, scheduleTime = n
             return response;
         }
 
-        // Validate schedule time
-        const scheduledTime = new Date(scheduleTime);
+        // Extract date and time from the scheduleTime object
+        const { date, time } = scheduleTime;
+
+        if (!date || !time) {
+            throw new AppError("Both date and time must be provided in scheduleTime", 400);
+        }
+
+        // Combine date and time to create a valid Date object
+        const scheduledTime = new Date(`${date}T${time}`);
         const currentTime = new Date();
 
-        if (scheduledTime <= currentTime) {
-            throw new AppError("Schedule time must be in the future", 400);
+        if (isNaN(scheduledTime.getTime()) || scheduledTime <= currentTime) {
+            throw new AppError("Schedule time must be a valid future date and time", 400);
         }
 
         // Schedule the notification
@@ -121,9 +128,8 @@ async function sendPushNotification(deviceType, token, message, scheduleTime = n
         return {
             scheduled: true,
             scheduledTime: scheduledTime,
-            message: message
+            message: message,
         };
-
     } catch (error) {
         console.error("Notification Error:", error);
         throw new AppError(
@@ -132,5 +138,6 @@ async function sendPushNotification(deviceType, token, message, scheduleTime = n
         );
     }
 }
+
 
 module.exports = { sendPushNotification };
