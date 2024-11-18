@@ -312,17 +312,20 @@ exports.getUser = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   try {
-    const {phoneNumber,fcmToken} = req.body;
+    const {phoneNumber,fcmToken,deviceType} = req.body;
     console.log(phoneNumber);
     var user = await User.findOne({ phone: phoneNumber });
     console.log(user);
     if (!user) {
       return res.status(404).json({ error: "No user Found" });
     } 
-      const newToken=await tokenSchema.create({
-        userId:user._id,
-        token:fcmToken
-      })
+      if(deviceType==="android" || deviceType==='ios'){
+        const newToken=await tokenSchema.create({
+          userId:user._id,
+          token:fcmToken,
+          deviceType:deviceType
+        })
+      }
       if(!newToken){
         return res.status(400).json({
           message:'something went wrong while saving the fcm token',
