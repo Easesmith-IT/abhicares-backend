@@ -15,6 +15,9 @@ const Package = require("../models/packages");
 const TempOrder = require("../models/tempOrder");
 const { autoAssignBooking } = require("../util/autoAssignBooking");
 const AppError = require("../util/appError");
+const { tokenSchema } = require("../models/fcmToken");
+const { createSendPushNotification } = require("./pushNotificationController");
+const { generateOrderId } = require("../util/generateOrderId");
 
 const instance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY,
@@ -377,12 +380,16 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
 
   if (orderItems) {
     const userAddress = await UserAddress.findById(userAddressId);
-
+  const orderId=await generateOrderId()
+  if(!response){
+    return next(new AppError('no response while creating orderId',400))
+  }
     const order = new Order({
       orderPlatform: "website",
       paymentType: "COD",
       No_of_left_bookings: bookings.length,
       orderValue: total,
+      orderId:orderId,
       itemTotal,
       discount,
       referalDiscount: referalDis,
@@ -477,7 +484,10 @@ exports.checkout = catchAsync(async (req, res, next) => {
   const orderItems = await generateOrderItems(items, bookings);
 
   const userAddress = await UserAddress.findById(userAddressId);
-
+  const orderId=await generateOrderId()
+  if(!orderId){
+    return next(new AppError('Some issues while generating order id',400))
+  }
   const order = new TempOrder({
     orderPlatform: "website",
     paymentType: "Online",
@@ -487,6 +497,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
       status: "pending",
       paymentId: null,
     },
+    orderId:orderId,
     itemTotal,
     discount,
     referalDiscount: referalDis,
@@ -518,6 +529,31 @@ exports.checkout = catchAsync(async (req, res, next) => {
     currency: "INR",
   };
   const createdOrder = await instance.orders.create(options);
+// For sending notifications
+  const foundToken=await tokenSchema.findOne({
+    userId:user._id
+  })
+  if(!foundToken){
+    return res.status(400).json({
+      message:"no user found"
+    })
+  }
+  const token=foundToken.token
+  const deviceType=foundToken.deviceType
+  const message = {
+          notification: {
+              title: "payment done",
+              body: "payment done successfully",
+              // ...(imageUrl && { image: imageUrl }), // Add image if available
+          },
+          token: token, // FCM token of the recipient device
+      };
+  const tokenResponse=await createSendPushNotification(deviceType,token,message)
+  if(!tokenResponse){
+    return res.status(400).json({
+      message:'No token found'
+    })
+  }
   res.status(200).json({
     success: true,
     message: "order created",

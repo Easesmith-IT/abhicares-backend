@@ -282,6 +282,30 @@ exports.postOrderBooking = async (req, res, next) => {
       booking.paymentType = paymentType;
     }
     await booking.save();
+    const foundToken=await tokenSchema.findOne({
+      userId:userId
+    })
+    if(!foundToken){
+      return res.status(400).json({
+        message:"no user found"
+      })
+    }
+    const token=foundToken.token
+    const deviceType=foundToken.deviceType
+    const message = {
+            notification: {
+                title: "Service completed",
+                body: "Service Completed successfully",
+                // ...(imageUrl && { image: imageUrl }), // Add image if available
+            },
+            token: token, // FCM token of the recipient device
+        };
+    const tokenResponse=await createSendPushNotification(deviceType,token,message)
+    if(!tokenResponse){
+      return res.status(400).json({
+        message:'No token found'
+      })
+    }
     return res.status(200).json({ review });
   } catch (err) {
     console.log(err);

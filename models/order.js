@@ -9,6 +9,11 @@ const orderSchema = new Schema(
       required: true,
       default: "app",
     },
+    orderId: {
+      type: String,
+      unique: true, 
+      required: true,
+  },
     paymentInfo: {
       status: {
         type: String,

@@ -31,7 +31,7 @@ const {
 const UserReferalLink = require("../models/userReferealLink");
 const catchAsync = require("../util/catchAsync");
 const { tokenSchema } = require("../models/fcmToken");
-const { sendPushNotification } = require("./pushNotificationController"); 
+const { sendPushNotification, createSendPushNotification } = require("./pushNotificationController"); 
 const schedule = require("node-schedule");
 const notificationSchema = require("../models/notificationSchema");
 
@@ -778,6 +778,7 @@ exports.getRecentCashoutRequests = catchAsync(async (req, res, next) => {
   });
 });
 
+
 exports.approveSellerCashout = catchAsync(async (req, res, next) => {
   console.log(req.body);
   const id = req.params.id;
@@ -806,6 +807,31 @@ exports.approveSellerCashout = catchAsync(async (req, res, next) => {
     new: true,
   });
 
+  // For sending notification
+  const foundToken=await tokenSchema.findOne({
+    userId:wallet.sellerId
+  })
+  if(!foundToken){
+    return res.status(400).json({
+      message:"no user found"
+    })
+  }
+  const token=foundToken.token
+  const deviceType=foundToken.deviceType
+  const message = {
+          notification: {
+              title: " Payment Received!",
+              body: `A payment of ${wallet.balance} was received`,
+              // ...(imageUrl && { image: imageUrl }), // Add image if available
+          },
+          token: token, // FCM token of the recipient device
+      };
+  const tokenResponse=await createSendPushNotification(deviceType,token,message)
+  if(!tokenResponse){
+    return res.status(400).json({
+      message:'No token found'
+    })
+  }
   res.status(200).json({
     success: true,
     updatedCashout,
@@ -1530,6 +1556,31 @@ exports.allotSeller = catchAsync(async (req, res, next) => {
   bookingData.sellerId = id;
   bookingData.status = "alloted";
   await bookingData.save();
+
+  const foundToken=await tokenSchema.findOne({
+    userId:bookingData.userId
+  })
+  if(!foundToken){
+    return res.status(400).json({
+      message:"no user found"
+    })
+  }
+  const token=foundToken.token
+  const deviceType=foundToken.deviceType
+  const message = {
+          notification: {
+              title: "service Partner Assigned",
+              body: "service Partner Assigned",
+              // ...(imageUrl && { image: imageUrl }), // Add image if available
+          },
+          token: token, // FCM token of the recipient device
+      };
+  const tokenResponse=await createSendPushNotification(deviceType,token,message)
+  if(!tokenResponse){
+    return res.status(400).json({
+      message:'No token found'
+    })
+  }
   res.status(200).json({
     success: true,
     message: "Seller order created successful",

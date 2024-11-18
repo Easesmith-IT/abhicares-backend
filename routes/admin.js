@@ -444,6 +444,8 @@ router.patch(
   authorize("bookings", "write"),
   adminController.allotSeller
 ); // passing seller id
+
+// router.get('/create-order',adminController.createOrderId)
 router.patch(
   "/update-seller-order-status/:id",
   isAdminAuth,

@@ -153,7 +153,23 @@ async function sendNotificationToAllUsers(deviceType, message) {
         );
     }
 }
+async function createSendPushNotification(appType, token, message) {
+    try {
+        const firebaseApp = initializeFirebase(appType);
+        
+        // Set the token for the message
+        message.token = token;
+        
+        // Send the notification
+        const response = await firebaseApp.messaging().send(message);
+        console.log("FCM Response:", response);
+        
+        return response;
+    } catch (error) {
+        console.error("Firebase Error:", error);
+        throw new AppError(error.message || "Notification failed", error.code === 'messaging/invalid-argument' ? 400 : 500);
+    }
+}
 
 
-
-module.exports = { sendPushNotification };
+module.exports = { sendPushNotification,createSendPushNotification };
