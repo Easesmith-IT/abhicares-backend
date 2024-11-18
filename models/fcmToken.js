@@ -8,12 +8,12 @@ const fcmTokenModel=mongoose.Schema({
     },
     token:{
         type:String,
-        required:true,
+        // required:true,
     },
     deviceType:{
         type:String,
         enum:['web','android','ios'],
-        required:true
+        // required:true
     },
     createdAt: { type: Date, default: Date.now },
 })
