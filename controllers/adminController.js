@@ -35,6 +35,7 @@ const { sendPushNotification } = require("./pushNotificationController");
 const schedule = require("node-schedule");
 const notificationSchema = require("../models/notificationSchema");
 
+
 // category routes
 
 exports.test = async (req, res, next) => {
@@ -2081,10 +2082,6 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 //     }
 // };
 
-const schedule = require("node-schedule");
-const notificationSchema = require("./models/notificationSchema");
-const tokenSchema = require("./models/tokenSchema");
-const { sendPushNotification } = require("./utils/notifications");
 
 exports.sendNotificationToAll = async (req, res, next) => {
     const { description, date, time, title } = req.body;
