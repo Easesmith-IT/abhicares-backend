@@ -2084,101 +2084,115 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 
 
 exports.sendNotificationToAll = async (req, res, next) => {
-    const { description, date, time, title } = req.body;
+  const { description, date, time, title } = req.body;
 
-    // Validate input
-    if (!description || !title) {
-        return next(new AppError("Please provide title and description", 400));
-    }
+  // Validate input
+  if (!description || !title) {
+      return next(new AppError("Please provide title and description", 400));
+  }
 
-    // let imageUrl = null;
-    // if (req.files && req.files[0]) {
-    //     const file = req.files[0];
-    //     const ext = file.originalname.split(".").pop(); // Get file extension
-    //     try {
-    //         const ret = await uploadFileToGCS(file.buffer, ext); // Upload file to GCS
-    //         imageUrl = ret; // GCS returns the full URL of the uploaded file
-    //     } catch (error) {
-    //         console.error("GCS Upload Error:", error);
-    //         return next(new AppError("Error while uploading the file to GCS", 500));
-    //     }
-    // }
+  // Image handling (currently commented)
+  // let imageUrl = null;
+  // if (req.files && req.files[0]) {
+  //     const file = req.files[0];
+  //     const ext = file.originalname.split(".").pop(); // Get file extension
+  //     try {
+  //         const ret = await uploadFileToGCS(file.buffer, ext); // Upload file to GCS
+  //         imageUrl = ret; // GCS returns the full URL of the uploaded file
+  //     } catch (error) {
+  //         console.error("GCS Upload Error:", error);
+  //         return next(new AppError("Error while uploading the file to GCS", 500));
+  //     }
+  // }
 
-    try {
-        // Retrieve all FCM tokens from tokenSchema
-        const tokens = await tokenSchema.distinct("fcmToken");
-        if (!tokens || tokens.length === 0) {
-            return next(new AppError("No FCM tokens found to send notifications", 404));
-        }
+  try {
+      // Retrieve FCM tokens and their corresponding appTypes from tokenSchema
+      const tokensByAppType = await tokenSchema.aggregate([
+          {
+              $group: {
+                  _id: "$deviceType", // Group by appType
+                  tokens: { $push: "$token" }, // Collect all tokens for each appType
+              },
+          },
+      ]);
 
-        // Prepare the notification message
-        const message = {
-            notification: {
-                title: title,
-                body: description,
-                // ...(imageUrl && { image: imageUrl }), // Add image if available
-            },
-        };
+      if (!tokensByAppType || tokensByAppType.length === 0) {
+          return next(new AppError("No FCM tokens found to send notifications", 404));
+      }
 
-        // Check if notification should be scheduled
-        if (date && time) {
-            const scheduledDate = new Date(`${date}T${time}`);
-            if (isNaN(scheduledDate)) {
-                return next(new AppError("Invalid schedule date or time", 400));
-            }
+      // Prepare the notification message
+      const message = {
+          notification: {
+              title: title,
+              body: description,
+              // ...(imageUrl && { image: imageUrl }), // Add image if available
+          },
+      };
 
-            if (scheduledDate <= new Date()) {
-                return next(new AppError("Scheduled time must be in the future", 400));
-            }
+      // Check if notification should be scheduled
+      if (date && time) {
+          const scheduledDate = new Date(`${date}T${time}`);
+          if (isNaN(scheduledDate)) {
+              return next(new AppError("Invalid schedule date or time", 400));
+          }
 
-            // Save the scheduled notification in the database
-            const notificationData = {
-                description,
-                title,
-                scheduleTiming: { date, time },
-                // image: imageUrl, // Save image URL if provided
-                status: "scheduled",
-            };
+          if (scheduledDate <= new Date()) {
+              return next(new AppError("Scheduled time must be in the future", 400));
+          }
 
-            const savedNotification = await notificationSchema.create(notificationData);
+          // Save the scheduled notification in the database
+          const notificationData = {
+              description,
+              title,
+              scheduleTiming: { date, time },
+              // image: imageUrl, // Save image URL if provided
+              status: "scheduled",
+          };
 
-            // Schedule the notification for all tokens
-            schedule.scheduleJob(scheduledDate, async () => {
-                try {
-                    for (const token of tokens) {
-                        await sendPushNotification("all", token, { ...message, token });
-                    }
-                    console.log("Scheduled notification sent to all users successfully");
+          const savedNotification = await notificationSchema.create(notificationData);
 
-                    // Update the notification status
-                    await notificationSchema.findOneAndUpdate(
-                        { _id: savedNotification._id },
-                        { status: "sent" }
-                    );
-                } catch (error) {
-                    console.error("Error sending scheduled notification to all:", error);
-                }
-            });
+          // Schedule the notification for all tokens by appType
+          schedule.scheduleJob(scheduledDate, async () => {
+              try {
+                  for (const { _id: appType, tokens } of tokensByAppType) {
+                      for (const token of tokens) {
+                          await sendPushNotification(appType, token, { ...message, token });
+                      }
+                  }
+                  console.log("Scheduled notification sent to all users successfully");
 
-            return res.status(200).json({
-                success: true,
-                message: "Notification scheduled for all users successfully",
-            });
-        }
+                  // Update the notification status
+                  await notificationSchema.findOneAndUpdate(
+                      { _id: savedNotification._id },
+                      { status: "sent" }
+                  );
+              } catch (error) {
+                  console.error("Error sending scheduled notification to all:", error);
+              }
+          });
 
-        // Send notification to all users immediately
-        for (const token of tokens) {
-            await sendPushNotification("all", token, { ...message, token });
-        }
+          return res.status(200).json({
+              success: true,
+              message: "Notification scheduled for all users successfully",
+          });
+      }
 
-        return res.status(200).json({
-            success: true,
-            message: "Notification sent to all users successfully",
-        });
-    } catch (error) {
-        next(error);
-    }
+      // Send notifications to all tokens by appType immediately
+      for (const { _id: appType, tokens } of tokensByAppType) {
+          for (const token of tokens) {
+              await sendPushNotification(appType, token, { ...message, token });
+          }
+      }
+
+      return res.status(200).json({
+          success: true,
+          message: "Notification sent to all users successfully",
+      });
+  } catch (error) {
+      next(error);
+  }
 };
+
 
 
 exports.getAllNotifications = catchAsync(async (req, res, next) => {

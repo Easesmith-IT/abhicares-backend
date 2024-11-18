@@ -58,7 +58,7 @@ const AppError=require('../util/appError')
 // Initialize Firebase for different app types
 function initializeFirebase(deviceType) {
     let serviceAccount;
-
+    console.log(deviceType)
     switch (deviceType) {
         case 'web':
             serviceAccount = require("../config/abhicares-backend-a59bded84a4f.json");
@@ -84,6 +84,7 @@ function initializeFirebase(deviceType) {
 }
 
 async function sendPushNotification(deviceType, token, message) {
+    console.log(deviceType,'line number 87')
     try {
         const firebaseApp = initializeFirebase(deviceType);
 
@@ -105,6 +106,7 @@ async function sendPushNotification(deviceType, token, message) {
 }
 
 async function sendNotificationToAllUsers(deviceType, message) {
+    console.log(deviceType,'line number 109')
     try {
         // Step 1: Fetch all tokens for the specified device type
         const userTokens = await userSchema.find({ deviceType }, "fcmToken");

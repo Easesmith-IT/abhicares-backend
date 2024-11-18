@@ -1,17 +1,17 @@
 const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema({
-  fcmToken: { 
-    type: String, 
-    required: true 
-},
+//   fcmToken: { 
+//     type: String, 
+//     required: true 
+// },
 title:{
     type:String,
 },
-  deviceType: { 
-    type: String, 
-    required: true 
-},
+//   deviceType: { 
+//     type: String, 
+//     required: true 
+// },
   description: { 
     type: String, 
     required: true 
