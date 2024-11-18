@@ -47,11 +47,21 @@ exports.verifyUserOtp = catchAsync(async (req, res, next) => {
   let newToken;
   await verifyOTP(phoneNumber, enteredOTP, user, res);
   if(deviceType==="android" || deviceType==='ios'){
-     newToken=await tokenSchema.create({
-      userId:user._id,
-      token:fcmToken,
-      deviceType:deviceType
-    })
+
+    const foundUserToken=await tokenSchema.findById({userId:user._id})
+      if(foundUserToken){
+        foundUserToken.updateOne({
+          token:fcmToken
+        })
+      }
+    
+     if(!foundUserToken){
+      newToken=await tokenSchema.create({
+        userId:user._id,
+        token:fcmToken,
+        deviceType:deviceType
+      })
+     }
   }
   if(!newToken){
     return res.status(400).json({
