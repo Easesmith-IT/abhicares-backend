@@ -1212,7 +1212,7 @@ exports.getSubAdmins = catchAsync(async (req, res, next) => {
 
 exports.loginAdminUser = catchAsync(async (req, res, next) => {
   console.log('inside admin login')
-  const { adminId, password,fcmToken,deviceType } = req.body;
+  const { adminId, password } = req.body;
   const admin = await Admin.findOne({ adminId: adminId });
   if (!admin) {
     return next(new AppError("No admin exists with this id",404))
@@ -1222,35 +1222,12 @@ exports.loginAdminUser = catchAsync(async (req, res, next) => {
 
   if (isMatch) {
     var token = jwt.sign(
-      { adminId: adminId, permissions: admin.permissions,fcmToken:fcmToken },
+      { adminId: adminId, permissions: admin.permissions, },
       jwtkey.secretJwtKey,
       { expiresIn: "2d" }
     );
-    const newToken=await tokenSchema.create({
-      token:fcmToken,
-      userId:adminId,
-      deviceType:deviceType
-    })
-    if(!newToken){
-      return next(new AppError('something went wrong while generating the fcm token',400))
-    }
     res.cookie("admtoken", token, { secure: true, httpOnly: true });
-    let message = {
-                  notification: {
-                      title: "Test Notification",
-                      body: "Notification Message",
-                  },
-                  data: {
-                      orderId: "123456",
-                      orderDate: "2024-08-20"
-                  },
-                  token: token
-              };
-      
-   const tokenResponse= await createSendPushNotification(deviceTyp,token,message)
-    if(!tokenResponse){
-      return next(new AppError('something went wrong while sending notification',400))
-    }
+   
     return res.status(200).json({
       success: true,
       message: "Login successful",
