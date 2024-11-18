@@ -20,6 +20,7 @@ const ReviewModel = require("../models/review");
 const catchAsync = require("../util/catchAsync");
 const AppError = require("../util/appError");
 const shortid = require("shortid");
+const { tokenSchema } = require("../models/fcmToken");
 
 /////////////////////////////////////////////////////////////////////////////
 //app routes
@@ -311,15 +312,25 @@ exports.getUser = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   try {
-    const phoneNumber = req.body.phone;
+    const {phoneNumber,fcmToken} = req.body;
     console.log(phoneNumber);
     var user = await User.findOne({ phone: phoneNumber });
     console.log(user);
     if (!user) {
       return res.status(404).json({ error: "No user Found" });
-    } else {
+    } 
+      const newToken=await tokenSchema.create({
+        userId:user._id,
+        token:fcmToken
+      })
+      if(!newToken){
+        return res.status(400).json({
+          message:'something went wrong while saving the fcm token',
+
+        })
+      }
       return res.status(200).json({ user });
-    }
+    
   } catch (err) {
     const error = new Error(err);
     error.httpStatusCode = 500;
