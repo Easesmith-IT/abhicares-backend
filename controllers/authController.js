@@ -65,6 +65,7 @@ exports.verifyUserOtp = catchAsync(async (req, res, next) => {
           message:'something went wrong while saving the fcm token',
     
         })
+      
       }
      }
   }
