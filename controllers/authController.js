@@ -43,6 +43,19 @@ exports.verifyUserOtp = catchAsync(async (req, res, next) => {
   }
 
   await verifyOTP(phoneNumber, enteredOTP, user, res);
+  if(deviceType==="android" || deviceType==='ios'){
+    const newToken=await tokenSchema.create({
+      userId:user._id,
+      token:fcmToken,
+      deviceType:deviceType
+    })
+  }
+  if(!newToken){
+    return res.status(400).json({
+      message:'something went wrong while saving the fcm token',
+
+    })
+  }
   const payload = { id: user._id };
   const token = jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: "2d",
