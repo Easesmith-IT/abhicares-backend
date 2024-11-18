@@ -48,11 +48,10 @@ exports.verifyUserOtp = catchAsync(async (req, res, next) => {
   await verifyOTP(phoneNumber, enteredOTP, user, res);
   if(deviceType==="android" || deviceType==='ios'){
 
-    const foundUserToken=await tokenSchema.findById({userId:user._id})
+    const foundUserToken=await tokenSchema.findOne({userId:user._id})
       if(foundUserToken){
-        foundUserToken.updateOne({
-          token:fcmToken
-        })
+        foundUserToken.token=fcmToken;
+        await foundUserToken.save();
       }
     
      if(!foundUserToken){
@@ -61,14 +60,15 @@ exports.verifyUserOtp = catchAsync(async (req, res, next) => {
         token:fcmToken,
         deviceType:deviceType
       })
+      if(!newToken){
+        return res.status(400).json({
+          message:'something went wrong while saving the fcm token',
+    
+        })
+      }
      }
   }
-  if(!newToken){
-    return res.status(400).json({
-      message:'something went wrong while saving the fcm token',
-
-    })
-  }
+  
   const payload = { id: user._id };
   const token = jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: "2d",
