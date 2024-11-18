@@ -10,6 +10,7 @@ const User = require("../models/user");
 const UserAddress = require("../models/useraddress");
 const ReferAndEarn = require("../models/referAndEarn");
 const UserReferalLink = require("../models/userReferealLink");
+const { tokenSchema } = require("../models/fcmToken");
 
 const authKey = "T1PhA56LPJysMHFZ62B5";
 const authToken = "8S2pMXV8IRpZP6P37p4SWrVErk2N6CzSEa458pt1";
@@ -22,6 +23,8 @@ const config = {
     Authorization: `Basic ${encodedCredentials}`,
   },
 };
+
+
 exports.generateOtpUser = catchAsync(async (req, res, next) => {
   const { phoneNumber } = req.body;
   const user = await User.findOne({ phone: phoneNumber }).select("-password");
