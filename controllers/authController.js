@@ -36,7 +36,7 @@ exports.generateOtpUser = catchAsync(async (req, res, next) => {
 });
 
 exports.verifyUserOtp = catchAsync(async (req, res, next) => {
-  const { enteredOTP, phoneNumber } = req.body;
+  const {deviceType,fcmToken, enteredOTP, phoneNumber } = req.body;
   const user = await User.findOne({ phone: phoneNumber }).select("-password");
   if (!user) {
     return next(new AppError("User does not exist", 404));
