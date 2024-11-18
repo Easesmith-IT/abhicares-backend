@@ -10,7 +10,7 @@ const adminController = require("../controllers/adminController");
 // Category Routes
 
 router.post("/test", adminController.test);
-router.post('/send-notification',img_upload.upload,adminController.sendNotification)
+router.post('/send-notification',img_upload.upload,adminController.sendNotificationToAll)
 router.get('/get-all-notifications',adminController.getAllNotifications)
 router.get('/search-notifications',adminController.searchNotifications)
 router.get('/filter-notifications',adminController.filterNotification)
