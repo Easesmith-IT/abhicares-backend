@@ -41,10 +41,10 @@ exports.verifyUserOtp = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError("User does not exist", 404));
   }
-
+  let newToken;
   await verifyOTP(phoneNumber, enteredOTP, user, res);
   if(deviceType==="android" || deviceType==='ios'){
-    const newToken=await tokenSchema.create({
+     newToken=await tokenSchema.create({
       userId:user._id,
       token:fcmToken,
       deviceType:deviceType
