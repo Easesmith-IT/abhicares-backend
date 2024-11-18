@@ -4,7 +4,7 @@ const fcmTokenModel=mongoose.Schema({
 
     userId:{
         type:mongoose.Schema.ObjectId,
-        ref:""
+        // ref:""
     },
     token:{
         type:String,
