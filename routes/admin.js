@@ -418,6 +418,7 @@ router.post(
   authorize("helpCenter", "read"),
   adminController.getAllHelpCenter
 );
+router.post('/gen-order-id',adminController.genOrderId)
 router.delete(
   "/delete-help-list/:id",
   isAdminAuth,

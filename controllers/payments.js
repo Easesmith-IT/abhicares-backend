@@ -13,6 +13,7 @@ const Booking = require("../models/booking");
 const packageModel = require("../models/packages");
 const tempOrder = require("../models/tempOrder");
 const { autoAssignBooking } = require("../util/autoAssignBooking");
+const { generateOrderId } = require("../util/generateOrderId");
 
 const instance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY,
@@ -354,7 +355,7 @@ exports.websiteCodOrder = async (req, res, next) => {
         },
       ],
     });
-
+    const orderId=await generateOrderId()
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -371,6 +372,7 @@ exports.websiteCodOrder = async (req, res, next) => {
       itemTotal,
       discount,
       tax,
+      orderId:orderId,
       items: orderItems,
       couponId: couponId,
       user: {

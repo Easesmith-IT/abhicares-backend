@@ -123,7 +123,10 @@ exports.postUpdateLiveLocation = async (req, res, next) => {
     const lat = req.body.lat;
     const long = req.body.long;
     console.log(req.body);
-    const booking = await BookingModel.findById(id);
+    const booking = await BookingModel.findById(id).populate({
+      path:"sellerId",
+      model:"Seller"
+    });
     // console.log(booking);
     booking.currentLocation.location = [lat, long];
     await booking.save();
@@ -141,8 +144,8 @@ exports.postUpdateLiveLocation = async (req, res, next) => {
     const deviceType=foundToken.deviceType
     const message = {
             notification: {
-                title: "payment done",
-                body: "payment done successfully",
+                title: "Your service partner is on the way",
+                body:`${booking.sellerId.name} is on their way to your location.`,
                 // ...(imageUrl && { image: imageUrl }), // Add image if available
             },
             token: token, // FCM token of the recipient device
@@ -211,9 +214,37 @@ exports.postLocationReached = async (req, res, next) => {
 exports.postBookingCompletionReq = async (req, res, next) => {
   try {
     const id = req.body.id; // seller id
-    const booking = await BookingModel.findById(id);
+    const booking = await BookingModel.findById(id).populate({
+      path:'userId',
+      model:"User"
+    });
     booking.currentLocation.status = "completeReq";
     booking.save();
+
+    const foundToken=await tokenSchema.findOne({
+      userId:booking.userId
+    })
+    if(!foundToken){
+      return res.status(400).json({
+        message:"no user found"
+      })
+    }
+    const token=foundToken.token
+    const deviceType=foundToken.deviceType
+    const message = {
+            notification: {
+                title: "Customer Approved the service",
+                body: `${booking.userId.name} has approved your service`,
+                // ...(imageUrl && { image: imageUrl }), // Add image if available
+            },
+            token: token, // FCM token of the recipient device
+        };
+    const tokenResponse=await createSendPushNotification(deviceType,token,message)
+    if(!tokenResponse){
+      return res.status(400).json({
+        message:'No token found'
+      })
+    }
     res.status(200).json({
       success: true,
       booking: booking,

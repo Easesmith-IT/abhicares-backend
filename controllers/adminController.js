@@ -34,10 +34,14 @@ const { tokenSchema } = require("../models/fcmToken");
 const { sendPushNotification, createSendPushNotification } = require("./pushNotificationController"); 
 const schedule = require("node-schedule");
 const notificationSchema = require("../models/notificationSchema");
+const { generateOrderId } = require("../util/generateOrderId");
 
 
 // category routes
-
+exports.genOrderId=catchAsync(async(req,res,next)=>{
+ const orderId= await generateOrderId();
+ console.log("order id",orderId)
+})
 exports.test = async (req, res, next) => {
   try {
     const users = await User.find();
@@ -1552,7 +1556,10 @@ exports.allotSeller = catchAsync(async (req, res, next) => {
   if (!bookingId) {
     return next(new AppError(400, "All the fields are required"));
   }
-  var bookingData = await Booking.findOne({ _id: bookingId });
+  var bookingData = await Booking.findOne({ _id: bookingId }).populate({
+    path:"sellerId",
+    model:"Seller"
+  });
   bookingData.sellerId = id;
   bookingData.status = "alloted";
   await bookingData.save();
@@ -1570,7 +1577,7 @@ exports.allotSeller = catchAsync(async (req, res, next) => {
   const message = {
           notification: {
               title: "service Partner Assigned",
-              body: "service Partner Assigned",
+              body: `${bookingData.sellerId.name} has been assigned to your service request. They will call you shortly.`,
               // ...(imageUrl && { image: imageUrl }), // Add image if available
           },
           token: token, // FCM token of the recipient device

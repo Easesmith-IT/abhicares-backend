@@ -265,7 +265,10 @@ exports.postOrderBooking = async (req, res, next) => {
       userId: userId,
     });
     await review.save();
-    const booking = await BookingModel.findById(bookingId);
+    const booking = await BookingModel.findById(bookingId).populate({
+      path:'sellerId',
+      model:'Seller'
+    });
 
     const order = await Order.findById(orderId);
 
@@ -295,7 +298,7 @@ exports.postOrderBooking = async (req, res, next) => {
     const message = {
             notification: {
                 title: "Service completed",
-                body: "Service Completed successfully",
+                body: `Your service has been completed by ${booking.sellerId.name}. Please confirm the service completion.`,
                 // ...(imageUrl && { image: imageUrl }), // Add image if available
             },
             token: token, // FCM token of the recipient device
@@ -325,7 +328,7 @@ exports.getUser = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ error: "No user Found" });
     } else {
-      return res.status(200).json({ users });
+      return res.status(200).json({ user });
     }
   } catch (err) {
     const error = new Error(err);
