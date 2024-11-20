@@ -6,6 +6,10 @@ const fcmTokenModel=mongoose.Schema({
         type:mongoose.Schema.ObjectId,
         // ref:""
     },
+    sellerId:{
+        type:mongoose.Schema.ObjectId,
+        ref:'Seller'
+    },
     token:{
         type:String,
         // required:true,

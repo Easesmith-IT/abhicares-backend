@@ -6,6 +6,7 @@ const sellerModel = require("../../models/seller");
 
 const axios = require("axios");
 const { generateOTP, verifyOTP } = require("../../util/otpHandler");
+const { tokenSchema } = require("../../models/fcmToken");
 const authKey = "T1PhA56LPJysMHFZ62B5";
 const authToken = "8S2pMXV8IRpZP6P37p4SWrVErk2N6CzSEa458pt1";
 const credentials = `${authKey}:${authToken}`;
@@ -43,7 +44,7 @@ exports.generateOtpseller = async (req, res, next) => {
 
 exports.verifySellerOtp = async (req, res, next) => {
   try {
-    const { enteredOTP, phoneNumber } = req.body;
+    const { fcmToken,deviceType,enteredOTP, phoneNumber } = req.body;
     let seller;
     if (phoneNumber != "9994448880") {
       seller = await sellerModel.findById("65ab9df28e5dafb1fe1fd8bd");
@@ -63,6 +64,29 @@ exports.verifySellerOtp = async (req, res, next) => {
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "2d",
     });
+    if(deviceType==="android" || deviceType==='ios'){
+
+      const foundUserToken=await tokenSchema.findOne({userId:user._id})
+        if(foundUserToken){
+          foundUserToken.token=fcmToken;
+          await foundUserToken.save();
+        }
+      
+       if(!foundUserToken){
+        newToken=await tokenSchema.create({
+          sellerId:seller._id,
+          token:fcmToken,
+          deviceType:deviceType
+        })
+        if(!newToken){
+          return res.status(400).json({
+            message:'something went wrong while saving the fcm token',
+      
+          })
+        
+        }
+       }
+    }
     res.status(200).json({
       message: "Logged In",
       success: true,
