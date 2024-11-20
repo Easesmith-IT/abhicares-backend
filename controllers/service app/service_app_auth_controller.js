@@ -44,9 +44,9 @@ exports.generateOtpseller = async (req, res, next) => {
 
 exports.verifySellerOtp = async (req, res, next) => {
   try {
-    const { fcmToken,deviceType,enteredOTP, phoneNumber } = req.body;
+    const { appType,fcmToken,deviceType,enteredOTP, phoneNumber } = req.body;
     let seller;
-    if (phoneNumber != "9994448880") {
+    if (phoneNumber == "9994448880") {
       seller = await sellerModel.findById("65ab9df28e5dafb1fe1fd8bd");
     } else {
       seller = await sellerModel
@@ -66,7 +66,7 @@ exports.verifySellerOtp = async (req, res, next) => {
     });
     if(deviceType==="android" || deviceType==='ios'){
 
-      const foundUserToken=await tokenSchema.findOne({userId:user._id})
+      const foundUserToken=await tokenSchema.findOne({sellerId:seller._id})
         if(foundUserToken){
           foundUserToken.token=fcmToken;
           await foundUserToken.save();
@@ -76,7 +76,8 @@ exports.verifySellerOtp = async (req, res, next) => {
         newToken=await tokenSchema.create({
           sellerId:seller._id,
           token:fcmToken,
-          deviceType:deviceType
+          deviceType:deviceType,
+          appType:appType
         })
         if(!newToken){
           return res.status(400).json({

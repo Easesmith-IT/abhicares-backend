@@ -1,4 +1,5 @@
 const Booking = require("../models/booking");
+const { tokenSchema } = require("../models/fcmToken");
 const Partner = require("../models/seller");
 
 {
@@ -75,7 +76,30 @@ exports.autoAssignBooking = async (serviceId, bookingId) => {
   booking.sellerId = assignedPartner;
   booking.status = "alloted";
   booking.autoAssigned = true
-
+  const foundSellerFcmToken=await tokenSchema.findOne({
+    sellerId:assignedPartner
+  })
+  if(!foundSellerFcmToken){
+    return res.status(400).json({
+      message:'no seller found'
+    })
+  }
+  const fcmToken=foundSellerFcmToken.token
+  const deviceType=foundSellerFcmToken.deviceType
+  const appType=foundToken.appType
+  let message = {
+    notification: {
+        title: "New Service Booking",
+        body: "You have been assigned a new service booking"
+    },
+    data: {
+        orderId: order.orderId || "",
+        orderDate: "2024-08-20"
+    },
+    token: foundUserToken.token
+};
+  await createSendPushNotification(deviceType,fcmToken,message,appType)
+  
   // Save the updated booking
   await booking.save();
 };

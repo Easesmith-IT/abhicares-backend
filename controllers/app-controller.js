@@ -286,7 +286,7 @@ exports.postOrderBooking = async (req, res, next) => {
     }
     await booking.save();
     const foundToken=await tokenSchema.findOne({
-      userId:userId
+      sellerId:booking.sellerId
     })
     if(!foundToken){
       return res.status(400).json({
@@ -295,6 +295,7 @@ exports.postOrderBooking = async (req, res, next) => {
     }
     const token=foundToken.token
     const deviceType=foundToken.deviceType
+    const appType=foundToken.appType
     const message = {
             notification: {
                 title: "Service completed",
@@ -303,7 +304,7 @@ exports.postOrderBooking = async (req, res, next) => {
             },
             token: token, // FCM token of the recipient device
         };
-    const tokenResponse=await createSendPushNotification(deviceType,token,message)
+    const tokenResponse=await createSendPushNotification(deviceType,token,message,appType)
     if(!tokenResponse){
       return res.status(400).json({
         message:'No token found'

@@ -55,25 +55,49 @@ const admin = require("firebase-admin");
 const schedule = require('node-schedule');
 const AppError=require('../util/appError')
 
-// Initialize Firebase for different app types
-function initializeFirebase(deviceType) {
+function initializeFirebase(appType, deviceType) {
     let serviceAccount;
-    console.log(deviceType)
-    switch (deviceType) {
-        case 'web':
-            serviceAccount = require("../config/abhicares-backend-a59bded84a4f.json");
+
+    console.log(`Device Type: ${deviceType}, App Type: ${appType}`);
+
+    switch (appType) {
+        case 'mainApp':
+            switch (deviceType) {
+                case 'web':
+                    serviceAccount = require("../config/serviceApp/web.json");
+                    break;
+                case 'android':
+                    serviceAccount = require("../config/androidApp.json");
+                    break;
+                case 'ios':
+                    serviceAccount = require("../config/serviceApp/ios.json");
+                    break;
+                default:
+                    throw new Error("Invalid device type for serviceApp");
+            }
             break;
-        case 'android':
-            serviceAccount = require("../config/androidApp.json");
+
+        case 'mainApp':
+            switch (deviceType) {
+                case 'web':
+                    serviceAccount = require("../config/userApp/web.json");
+                    break;
+                case 'android':
+                    serviceAccount = require("../config/service_partner.json");
+                    break;
+                case 'ios':
+                    serviceAccount = require("../config/userApp/ios.json");
+                    break;
+                default:
+                    throw new Error("Invalid device type for userApp");
+            }
             break;
-        case 'ios':
-            serviceAccount = require("../config/user.json");
-            break;
+
         default:
             throw new Error("Invalid app type");
     }
 
-    const appName = `firebase-${deviceType}`;
+    const appName = `firebase-${appType}-${deviceType}`;
     if (!admin.apps.find(app => app.name === appName)) {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)
@@ -82,7 +106,6 @@ function initializeFirebase(deviceType) {
 
     return admin.app(appName);
 }
-
 async function sendPushNotification(deviceType, token, message) {
     console.log(deviceType,'line number 87')
     try {

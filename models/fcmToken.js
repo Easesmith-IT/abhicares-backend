@@ -19,6 +19,10 @@ const fcmTokenModel=mongoose.Schema({
         enum:['web','android','ios'],
         // required:true
     },
+    appType:{
+        type:String,
+        enum:['partnerApp','mainApp']
+    },
     createdAt: { type: Date, default: Date.now },
 })
 

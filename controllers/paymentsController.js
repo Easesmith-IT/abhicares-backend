@@ -542,6 +542,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
   }
   const token=foundToken.token
   const deviceType=foundToken.deviceType
+  const appType=foundToken.appType
   const message = {
           notification: {
               title: "payment done",
@@ -550,7 +551,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
           },
           token: token, // FCM token of the recipient device
       };
-  const tokenResponse=await createSendPushNotification(deviceType,token,message)
+  const tokenResponse=await createSendPushNotification(deviceType,token,message,appType)
   if(!tokenResponse){
     return res.status(400).json({
       message:'No token found'
