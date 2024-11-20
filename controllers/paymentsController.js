@@ -38,7 +38,7 @@ exports.appOrder = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-
+    
     // Extract cart data from the user's cart
     const products = cart["items"];
     // // Create an array to store order items
@@ -67,6 +67,8 @@ exports.appOrder = async (req, res, next) => {
         });
       }
     }
+    const orderId=await generateOrderId()
+
     const userAddress = await UserAddress.findById(userAddressId);
     console.log(totalOrderval);
     const order = new Order({
@@ -77,7 +79,7 @@ exports.appOrder = async (req, res, next) => {
       discount: 0,
       tax: (cart["totalvalue"] * 18) / 100,
       items: orderItems,
-
+      orderId,
       orderPlatform: "app",
       user: {
         userId: user._id,
