@@ -21,6 +21,7 @@ const catchAsync = require("../util/catchAsync");
 const AppError = require("../util/appError");
 const shortid = require("shortid");
 const { tokenSchema } = require("../models/fcmToken");
+const helpCenter = require("../models/helpCenter");
 
 /////////////////////////////////////////////////////////////////////////////
 //app routes
@@ -254,6 +255,7 @@ exports.postOrderBooking = async (req, res, next) => {
     const bookingId = req.body.bookingId;
     const rating = req.body.rating;
     const orderId = req.body.orderId;
+    const sellerId=req.body.sellerId
     const content = req.body.content;
     console.log(paymentType);
     console.log(req.body);
@@ -263,6 +265,8 @@ exports.postOrderBooking = async (req, res, next) => {
       productId: productId,
       orderId: orderId,
       userId: userId,
+      sellerId:sellerId,
+      bookingId:bookingId?bookingId:""
     });
     await review.save();
     const booking = await BookingModel.findById(bookingId).populate({
@@ -456,34 +460,117 @@ exports.getUserAddress = async (req, res, next) => {
   }
 };
 
-exports.getUserTickets = async (req, res, next) => {
-  try {
-    console.log("reached");
-    const userId = req.params.userId;
-    console.log(userId);
-    var tickets = await HelpCentre.find({ userId: userId });
-    console.log(tickets);
-    return res.status(200).json({ tickets });
-  } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
-  }
-};
+// exports.getUserTickets = async (req, res, next) => {
+//   try {
+//     console.log("reached");
+//     const userId = req.params.userId;
+//     console.log(userId);
+//     var tickets = await HelpCentre.find({ userId: userId });
+//     console.log(tickets);
+//     return res.status(200).json({ tickets });
+//   } catch (err) {
+//     const error = new Error(err);
+//     error.httpStatusCode = 500;
+//     return next(err);
+//   }
+// };
 
+exports.getUserTickets = catchAsync(async (req, res, next) => {
+  const { page, userId } = req.query;
+  const limit=10;
+  // Validate userId
+  if (!userId) {
+    return res.status(400).json({
+      status: "fail",
+      message: "User ID is required.",
+    });
+  }
+
+  // Calculate skip value for pagination
+  const skip = (page - 1) * limit;
+
+  // Fetch paginated tickets for the user
+  const tickets = await HelpCentre.find({ userId })
+    .sort({ createdAt: -1 }) // Sort tickets by most recent
+    .skip(skip) // Skip records for previous pages
+    .limit(parseInt(limit)); // Limit the number of records per page
+
+  // Count total tickets for the user
+  const totalTickets = await HelpCentre.countDocuments({ userId });
+
+  // Return the paginated tickets and meta information
+  return res.status(200).json({
+    status: "success",
+    currentPage: parseInt(page),
+    totalPages: Math.ceil(totalTickets / limit),
+    results: tickets.length,
+    totalResults: totalTickets,
+    tickets,
+  });
+});
+
+exports.getSingleTicket = catchAsync(async (req, res, next) => {
+  const { ticketId } = req.params; // Extract ticketId from the route parameters
+
+  // Find the ticket by its ID
+  const ticket = await HelpCenter.findById(ticketId);
+
+  // If the ticket is not found
+  if (!ticket) {
+    return res.status(404).json({
+      status: "fail",
+      message: "Ticket not found.",
+    });
+  }
+
+  // Return the ticket details
+  res.status(200).json({
+    status: "success",
+    ticket,
+  });
+});
 exports.raiseTicket = async (req, res, next) => {
   try {
-    const issue = req.body.issue;
-    const description = req.body.description;
-    const userId = req.body.userId;
+    const {issue,description,userId,sellerId,raisedBy,bookingId}=req.body
     var ticket = await HelpCentre({
       issue: issue,
       description: description,
       userId: userId,
+      sellerId:sellerId?sellerId:"",
+      raisedBy:raisedBy,
+      ticketType,
+      bookingId:bookingId?bookingId:""
     });
 
     ticket.save();
+
+    // const foundToken=await tokenSchema.findOne({
+    //   sellerId:sellerId
+    // })
+    // if(!foundToken){
+    //   return res.status(400).json({
+    //     message:"no user found"
+    //   })
+    // }
+    // const token=foundToken.token
+    // const deviceType=foundToken.deviceType
+    // const appType=foundToken.appType
+    // const message = {
+    //         notification: {
+    //             title: "Service completed",
+    //             body: `Your service has been completed by ${booking.sellerId.name}. Please confirm the service completion.`,
+    //             // ...(imageUrl && { image: imageUrl }), // Add image if available
+    //         },
+    //         token: token, // FCM token of the recipient device
+    //     };
+    // const tokenResponse=await createSendPushNotification(deviceType,token,message,appType)
+    // if(!tokenResponse){
+    //   return res.status(400).json({
+    //     message:'No token found'
+    //   })
+    // }
     console.log(ticket);
+
     return res.status(200).json({ ticket });
   } catch (err) {
     const error = new Error(err);

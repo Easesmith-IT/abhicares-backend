@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 var bcrypt = require("bcryptjs");
 // const Nursery = require("../models/nursery");
-
+const catchAsync = require("../../util/catchAsync");
 //models
 const Category = require("../../models/category");
 const Package = require("../../models/packages");
@@ -22,6 +22,7 @@ const AppError = require("../../util/appError");
 
 //middleware
 const { auth } = require("../../middleware/auth");
+const review = require("../../models/review");
 /////////////////////////////////////////////////////////////////////////////
 //app routes
 
@@ -103,6 +104,47 @@ exports.getHomePageContents = async (req, res, next) => {
     res.status(200).json({ banners: contents, length: contents.length });
   } catch (error) {}
 };
+
+exports.getPartnerReviews = catchAsync(async (req, res, next) => {
+  const { sellerId, page } = req.query;
+  const limit = 10
+
+  // Convert page and limit to integers
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  // Validate sellerId
+  if (!sellerId) {
+    return next(new AppError('Seller ID is required', 400));
+  }
+
+  // Calculate the number of documents to skip
+  const skip = (pageNumber - 1) * limitNumber;
+
+  // Fetch reviews with pagination
+  const foundReviews = await review
+    .find({ sellerId }) // Assuming reviews are stored with a `sellerId` field
+    .skip(skip)
+    .limit(limitNumber);
+
+  if (!foundReviews || foundReviews.length === 0) {
+    return next(new AppError('No reviews found', 400));
+  }
+
+  // Get total count for the given seller
+  const totalReviews = await review.countDocuments({ sellerId });
+
+  res.status(200).json({
+    message: "Reviews found",
+    data: {
+      reviews: foundReviews,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalReviews / limitNumber),
+      totalReviews,
+    },
+    status: true,
+  });
+});
 
 // Order Controller
 
@@ -273,18 +315,98 @@ exports.getUserTickets = async (req, res, next) => {
   }
 };
 
+exports.getservicePartnerTickets = catchAsync(async (req, res, next) => {
+  const { page, sellerId } = req.query;
+  const limit=10;
+  // Validate userId
+  if (!sellerId) {
+    return res.status(400).json({
+      status: "fail",
+      message: "User ID is required.",
+    });
+  }
+
+  // Calculate skip value for pagination
+  const skip = (page - 1) * limit;
+
+  // Fetch paginated tickets for the user
+  const tickets = await HelpCentre.find({ sellerId })
+    .sort({ createdAt: -1 }) // Sort tickets by most recent
+    .skip(skip) // Skip records for previous pages
+    .limit(parseInt(limit)); // Limit the number of records per page
+
+  // Count total tickets for the user
+  const totalTickets = await HelpCentre.countDocuments({ sellerId });
+
+  // Return the paginated tickets and meta information
+  return res.status(200).json({
+    status: "success",
+    currentPage: parseInt(page),
+    totalPages: Math.ceil(totalTickets / limit),
+    results: tickets.length,
+    totalResults: totalTickets,
+    tickets,
+  });
+});
+
+exports.getSingleTicket = catchAsync(async (req, res, next) => {
+  const { ticketId } = req.params; // Extract ticketId from the route parameters
+
+  // Find the ticket by its ID
+  const ticket = await HelpCentre.findById(ticketId);
+
+  // If the ticket is not found
+  if (!ticket) {
+    return res.status(404).json({
+      status: "fail",
+      message: "Ticket not found.",
+    });
+  }
+
+  // Return the ticket details
+  res.status(200).json({
+    status: "success",
+    ticket,
+  });
+});
+
 exports.raiseTicket = async (req, res, next) => {
   try {
-    const issue = req.body.issue;
-    const description = req.body.description;
-    const userId = req.body.userId;
+    
+    const{issue,description,userId,sellerId}=req.body
     var ticket = await HelpCentre({
       issue: issue,
       description: description,
       userId: userId,
+      sellerId:sellerId?sellerId:""
     });
 
     ticket.save();
+    // const foundToken=await tokenSchema.findOne({
+    //   sellerId:sellerId
+    // })
+    // if(!foundToken){
+    //   return res.status(400).json({
+    //     message:"no user found"
+    //   })
+    // }
+    // const token=foundToken.token
+    // const deviceType=foundToken.deviceType
+    // const appType=foundToken.appType
+    // const message = {
+    //         notification: {
+    //             title: "Service completed",
+    //             body: `Your service has been completed by ${booking.sellerId.name}. Please confirm the service completion.`,
+    //             // ...(imageUrl && { image: imageUrl }), // Add image if available
+    //         },
+    //         token: token, // FCM token of the recipient device
+    //     };
+    // const tokenResponse=await createSendPushNotification(deviceType,token,message,appType)
+    // if(!tokenResponse){
+    //   return res.status(400).json({
+    //     message:'No token found'
+    //   })
+    // }
     console.log(ticket);
     return res.status(200).json({ ticket });
   } catch (err) {

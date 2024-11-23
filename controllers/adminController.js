@@ -35,6 +35,7 @@ const { sendPushNotification, createSendPushNotification } = require("./pushNoti
 const schedule = require("node-schedule");
 const notificationSchema = require("../models/notificationSchema");
 const { generateOrderId } = require("../util/generateOrderId");
+const review = require("../models/review");
 
 
 // category routes
@@ -1461,6 +1462,7 @@ exports.getAllHelpCenter = catchAsync(async (req, res, next) => {
   });
 });
 
+
 exports.deleteHelpCenter = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
@@ -1536,6 +1538,59 @@ exports.getAvailableCities = catchAsync(async (req, res, next) => {
   });
 });
 
+
+// Getting reviews
+exports.getAllReviews = catchAsync(async (req, res, next) => {
+  const { page} = req.query; 
+  const limit = 10 
+
+  // Calculate skip value for pagination
+  const skip = (page - 1) * limit;
+
+  // Fetch paginated reviews
+  const reviews = await review.find()
+    .sort({ createdAt: -1 }) // Sort by most recent
+    .skip(skip) // Skip records for previous pages
+    .limit(parseInt(limit)); // Limit the number of records per page
+
+  // Count total reviews
+  const totalReviews = await review.countDocuments();
+
+  // If no reviews are found
+  if (reviews.length === 0) {
+    return res.status(404).json({
+      status: "fail",
+      message: "No reviews found",
+    });
+  }
+
+  // Return paginated reviews with metadata
+  res.status(200).json({
+    status: "success",
+    currentPage: parseInt(page),
+    totalPages: Math.ceil(totalReviews / limit),
+    results: reviews.length,
+    totalResults: totalReviews,
+    data: reviews,
+  });
+});
+
+exports.deleteReview = catchAsync(async (req, res, next) => {
+  const { reviewId } = req.params; 
+
+  // Find the review by ID and delete it
+  const deletedReview = await review.findByIdAndDelete(reviewId);
+
+  // If review is not found
+  if (!deletedReview) {
+    return next(new AppError("Review not found", 404)); // 404 if review does not exist
+  }
+  
+  res.status(200).json({
+    status: "success",
+    message: "Review deleted successfully",
+  });
+});
 // seller order controllers
 exports.getSellerList = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is service id
@@ -1593,6 +1648,172 @@ exports.allotSeller = catchAsync(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Seller order created successful",
+  });
+});
+
+// Ticket Controllers
+
+exports.getSingleTicket = catchAsync(async (req, res, next) => {
+  const { ticketId } = req.query; 
+
+  // Find the ticket by its ID
+  const ticket = await HelpCenter.findById(ticketId);
+
+  // If the ticket is not found
+  if (!ticket) {
+    return res.status(404).json({
+      status: "fail",
+      message: "Ticket not found.",
+    });
+  }
+
+  // Return the ticket details
+  res.status(200).json({
+    status: "success",
+    ticket,
+  });
+});
+exports.filterUserTickets = catchAsync(async (req, res, next) => {
+  const { date, serviceType, raisedBy, page,  } = req.query;
+  const limit=10;
+  // Create a filter object
+  let filter = {};
+
+  // Date filter (for a specific day)
+  if (date) {
+    const startOfDay = new Date(date);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    filter.createdAt = {
+      $gte: startOfDay,
+      $lte: endOfDay,
+    };
+  }
+
+  // Service type filter
+  if (serviceType) {
+    filter.ticketType = serviceType;
+  }
+
+  // RaisedBy filter
+  if (raisedBy) {
+    filter.raisedBy = raisedBy;
+  }
+
+  // Pagination setup
+  const skip = (page - 1) * limit;
+
+  // Query the HelpCenter collection with the filters
+  const tickets = await HelpCentre.find(filter)
+    .populate("userId", "firstName lastName email") // Populate user details
+    .populate("bookingId", "serviceDate") // Populate booking details
+    .populate("serviceId", "serviceName") // Populate service details
+    .sort({ createdAt: -1 }) // Sort by most recent tickets
+    .skip(skip) // Skip the previous pages
+    .limit(parseInt(limit)); // Limit the number of tickets per page
+
+  // Count total tickets for the given filter
+  const totalTickets = await HelpCentre.countDocuments(filter);
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
+    currentPage: parseInt(page),
+    totalPages: Math.ceil(totalTickets / limit),
+    results: tickets.length,
+    totalResults: totalTickets,
+    data: tickets,
+  });
+});
+
+exports.getAllTickets = catchAsync(async (req, res, next) => {
+  const { page } = req.query; 
+  const limit = 10;
+  // Calculate skip value for pagination
+  const skip = (page - 1) * limit;
+
+  // Fetch paginated tickets
+  const tickets = await HelpCenter.find()
+    .sort({ createdAt: -1 }) 
+    .skip(skip) 
+    .limit(parseInt(limit)); 
+
+  // Count total tickets
+  const totalTickets = await HelpCenter.countDocuments();
+
+  // If no tickets are found
+  if (tickets.length === 0) {
+    return next(new AppError("No tickets found", 404));
+  }
+
+  // Return paginated tickets with metadata
+  return res.status(200).json({
+    status: "success",
+    currentPage: parseInt(page),
+    totalPages: Math.ceil(totalTickets / limit),
+    results: tickets.length,
+    totalResults: totalTickets,
+    data: tickets,
+  });
+});
+
+exports.updateTicketStatus = catchAsync(async (req, res, next) => {
+  const { status, resolution,ticketId } = req.body; 
+
+  // Validate the inputs
+  if (!status && !resolution) {
+    return res.status(400).json({
+      status: "fail",
+      message: "Either 'status' or 'resolution' must be provided.",
+    });
+  }
+
+  // Find and update the ticket
+  const updatedTicket = await HelpCentre.findByIdAndUpdate(
+    ticketId,
+    {
+      ...(status && { status }), 
+      ...(resolution && { resolution }), 
+    },
+    { new: true, runValidators: true } 
+  );
+
+  // If no ticket is found
+  if (!updatedTicket) {
+    return res.status(404).json({
+      status: "fail",
+      message: "Ticket not found.",
+    });
+  }
+
+  // Send the updated ticket in the response
+  res.status(200).json({
+    status: "success",
+    message: "Ticket updated successfully.",
+    data: updatedTicket,
+  });
+});
+
+exports.deleteTicket = catchAsync(async (req, res, next) => {
+  const { ticketId } = req.params; // Ticket ID from the URL
+
+  // Attempt to delete the ticket
+  const deletedTicket = await HelpCentre.findByIdAndDelete(ticketId);
+
+  // If no ticket is found
+  if (!deletedTicket) {
+    return res.status(404).json({
+      status: "fail",
+      message: "Ticket not found.",
+    });
+  }
+
+  // Send a success response
+  res.status(200).json({
+    status: "success",
+    message: "Ticket deleted successfully.",
+    data: null,
   });
 });
 

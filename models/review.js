@@ -31,6 +31,14 @@ const reviewSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    serviceType:{
+      type:String,
+      
+    },
+    bookingId:{
+      type:mongoose.Types.ObjectId,
+      ref:"Booking"
+    }
   },
   { timestamps: true }
 );

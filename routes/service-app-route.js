@@ -63,6 +63,9 @@ router.get("/get-cashout/:id", serviceAppController.getSellerCashout);
 router.get("/get-tickets/:userId", serviceAppController.getUserTickets);
 router.post("/raise-ticket", serviceAppController.raiseTicket);
 
+// get reviews
+router.get('/get-reviews',serviceAppController.getPartnerReviews)
+
 // Trace order routes
 router.post(
   "/add-booking-location/:id",

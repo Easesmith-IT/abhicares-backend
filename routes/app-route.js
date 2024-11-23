@@ -42,7 +42,8 @@ router.get("/get-order-booking/:id", appController.getOrderBooking);
 router.post("/complete-order-booking", appController.postOrderBooking);
 
 router.get("/search-service", appController.searchService);
-router.get("/get-tickets/:userId", appController.getUserTickets);
+router.get("/get-tickets", appController.getUserTickets);
+router.get('/get-single-ticket',appController.getSingleTicket)
 router.post("/raise-ticket", appController.raiseTicket);
 
 // banner route
@@ -54,5 +55,7 @@ router.post("/get-coupon-details", appController.getCouponByName);
 router.get("/get-referralCredits/:userId", appController.getReferralCredits);
 router.get("/get-coupons", appController.getAllCoupons);
 router.get("/get-services-app-homepage", appController.getAppHomePageServices);
+
+
 
 module.exports = router;

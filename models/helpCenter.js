@@ -6,6 +6,10 @@ const helpCenterSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    raisedBy:{
+      type:String,
+      enum:['customer','partner']
+    },
     description: {
       type: String,
       required: true,
@@ -17,6 +21,7 @@ const helpCenterSchema = new mongoose.Schema(
     status: {
       type: String,
       default: "in-review",
+      enum:['in-progress','raised','completed']
     },
     issue: {
       type: String,
@@ -27,6 +32,21 @@ const helpCenterSchema = new mongoose.Schema(
       type: String,
       default: "",
       // required:true
+    },
+    sellerId:{
+      type: String,
+      default: "",
+    },
+    bookingId:{
+      type:mongoose.Types.ObjectId,
+      ref:"Booking"
+    },
+    serviceId:{
+      type:mongoose.Types.ObjectId,
+      refL:"Service"    
+    },
+    ticketType:{
+      type:String
     },
   },
   { timestamps: true }
