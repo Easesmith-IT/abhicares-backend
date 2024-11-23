@@ -1757,9 +1757,6 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
 
   // Query the HelpCenter collection with the filters
   const tickets = await HelpCenter.find(filter)
-    .populate("userId", "firstName lastName email") // Populate user details
-    .populate("bookingId", "serviceDate") // Populate booking details
-    .populate("serviceId", "serviceName") // Populate service details
     .sort({ createdAt: -1 }) // Sort by most recent tickets
     .skip(skip) // Skip the previous pages
     .limit(limit); // Limit the number of tickets per page
