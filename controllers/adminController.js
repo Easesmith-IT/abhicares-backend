@@ -1592,6 +1592,62 @@ exports.deleteReview = catchAsync(async (req, res, next) => {
     message: "Review deleted successfully",
   });
 });
+
+exports.filterReview = catchAsync(async (req, res, next) => {
+  const { date, serviceType, page = 1 } = req.body;
+
+  const limit = 10; // Number of reviews per page
+  const skip = (page - 1) * limit; // Calculate how many documents to skip
+
+  // Build the filter object
+  let filter = {};
+  if (date) {
+    filter.date = date; // Match exact date
+  }
+  if (serviceType) {
+    filter.serviceType = serviceType; // Match exact service type
+  }
+
+  // Query the reviews with filters, sorting, and pagination
+  const filteredReviews = await review
+    .find(filter)
+    .sort({ createdAt: -1 }) // Sort by most recent reviews
+    .skip(skip) // Skip documents for pagination
+    .limit(limit); // Limit results per page
+
+  // Count total reviews matching the filter
+  const totalReviews = await review.countDocuments(filter);
+
+  // Check if no reviews are found
+  if (!filteredReviews || filteredReviews.length === 0) {
+    return next(new AppError("No reviews found", 404));
+  }
+
+  // Respond with paginated reviews
+  res.status(200).json({
+    status: true,
+    message: "Reviews found",
+    currentPage: parseInt(page),
+    totalPages: Math.ceil(totalReviews / limit),
+    results: filteredReviews.length,
+    totalResults: totalReviews,
+    data: filteredReviews,
+  });
+});
+
+exports.getSingleReview=catchAsync(async(req,res,next)=>{
+  const{reviewId}=req.body
+
+  const foundReview=await review.findOne(reviewId)
+  if(!foundReview){
+    return next(new AppError('no review found',200))
+  }
+  res.status(200).json({
+    message:"review details",
+    data:foundReview,
+    status:true
+  })
+})
 // seller order controllers
 exports.getSellerList = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is service id

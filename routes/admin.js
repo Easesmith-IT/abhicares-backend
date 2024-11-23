@@ -418,6 +418,12 @@ router.patch('/update-ticket',adminController.updateTicketStatus)
 router.get('/filter-ticket',adminController.filterUserTickets)
 router.delete('/delete-ticket',adminController.deleteTicket)
 
+
+// Reviews Routes
+router.get('/get-all-reviews',adminController.getAllReviews)
+router.delete('/delete-review',adminController.deleteReview)
+router.post('/filter-review',adminController.filterReview)
+router.get('/review-detail',adminController.getSingleReview)
 //Help Center Routes
 router.post(
   "/get-all-help-list",
