@@ -1674,7 +1674,7 @@ exports.getSingleTicket = catchAsync(async (req, res, next) => {
   });
 });
 exports.filterUserTickets = catchAsync(async (req, res, next) => {
-  const { date, serviceType, raisedBy, page,  } = req.query;
+  const { date, serviceType, raisedBy, page} = req.query;
   const limit=10;
   // Create a filter object
   let filter = {};
@@ -1693,7 +1693,7 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
 
   // Service type filter
   if (serviceType) {
-    filter.ticketType = serviceType;
+    filter.serviceType = serviceType;
   }
 
   // RaisedBy filter
@@ -1705,7 +1705,7 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
   const skip = (page - 1) * limit;
 
   // Query the HelpCenter collection with the filters
-  const tickets = await HelpCentre.find(filter)
+  const tickets = await HelpCenter.find(filter)
     .populate("userId", "firstName lastName email") // Populate user details
     .populate("bookingId", "serviceDate") // Populate booking details
     .populate("serviceId", "serviceName") // Populate service details
@@ -1714,7 +1714,7 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
     .limit(parseInt(limit)); // Limit the number of tickets per page
 
   // Count total tickets for the given filter
-  const totalTickets = await HelpCentre.countDocuments(filter);
+  const totalTickets = await HelpCenter.countDocuments(filter);
 
   // Send the response
   res.status(200).json({
