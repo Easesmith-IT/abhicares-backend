@@ -1674,21 +1674,15 @@ exports.getSingleTicket = catchAsync(async (req, res, next) => {
   });
 });
 exports.filterUserTickets = catchAsync(async (req, res, next) => {
-  const { date, serviceType, raisedBy, page} = req.query;
-  const limit=10;
+  const { date, serviceType, raisedBy, page = 1 } = req.query;
+  const limit = 10;
+
   // Create a filter object
   let filter = {};
 
-  // Date filter (for a specific day)
+  // Date filter (for a specific day stored as a string)
   if (date) {
-    const startOfDay = new Date(date);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    filter.createdAt = {
-      $gte: startOfDay,
-      $lte: endOfDay,
-    };
+    filter.date = date; // Match exact string date
   }
 
   // Service type filter
@@ -1702,7 +1696,7 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
   }
 
   // Pagination setup
-  const skip = (page - 1) * limit;
+  const skip = (parseInt(page) - 1) * limit;
 
   // Query the HelpCenter collection with the filters
   const tickets = await HelpCenter.find(filter)
@@ -1711,7 +1705,7 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
     .populate("serviceId", "serviceName") // Populate service details
     .sort({ createdAt: -1 }) // Sort by most recent tickets
     .skip(skip) // Skip the previous pages
-    .limit(parseInt(limit)); // Limit the number of tickets per page
+    .limit(limit); // Limit the number of tickets per page
 
   // Count total tickets for the given filter
   const totalTickets = await HelpCenter.countDocuments(filter);
@@ -1726,6 +1720,7 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
     data: tickets,
   });
 });
+
 
 exports.getAllTickets = catchAsync(async (req, res, next) => {
   const { page } = req.query; 

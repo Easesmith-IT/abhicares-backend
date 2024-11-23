@@ -21,7 +21,7 @@ const helpCenterSchema = new mongoose.Schema(
     status: {
       type: String,
       default: "in-review",
-      enum:['in-progress','raised','completed']
+      enum:['in-review','raised','completed']
     },
     issue: {
       type: String,
@@ -51,6 +51,9 @@ const helpCenterSchema = new mongoose.Schema(
     serviceType:{
       type:mongoose.Types.ObjectId,
       ref:"Category"
+    },
+    date:{
+      type:String,
     }
   },
   { timestamps: true }
