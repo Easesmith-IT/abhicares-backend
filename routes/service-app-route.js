@@ -62,7 +62,7 @@ router.get("/get-cashout/:id", serviceAppController.getSellerCashout);
 //tickets
 router.get("/get-tickets/:userId", serviceAppController.getUserTickets);
 router.post("/raise-ticket", serviceAppController.raiseTicket);
-
+router.get('/get-all-tickets',serviceAppController.getservicePartnerTickets)
 // get reviews
 router.get('/get-reviews',serviceAppController.getPartnerReviews)
 

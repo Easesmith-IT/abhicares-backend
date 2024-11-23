@@ -48,6 +48,10 @@ const helpCenterSchema = new mongoose.Schema(
     ticketType:{
       type:String
     },
+    serviceType:{
+      type:mongoose.Types.ObjectId,
+      ref:"Category"
+    }
   },
   { timestamps: true }
 );
