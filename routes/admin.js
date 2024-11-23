@@ -414,8 +414,9 @@ router.delete(
 // for tickets
 router.get('/get-all-tickets',adminController.getAllTickets)
 router.get('/get-single-ticket',adminController.getSingleTicket)
-router.post('/update-ticket',adminController.updateTicketStatus)
+router.patch('/update-ticket',adminController.updateTicketStatus)
 router.get('/filter-ticket',adminController.filterUserTickets)
+router.delete('/delete-ticket',adminController.deleteTicket)
 
 //Help Center Routes
 router.post(

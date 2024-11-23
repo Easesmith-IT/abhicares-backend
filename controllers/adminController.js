@@ -36,6 +36,7 @@ const schedule = require("node-schedule");
 const notificationSchema = require("../models/notificationSchema");
 const { generateOrderId } = require("../util/generateOrderId");
 const review = require("../models/review");
+const helpCenter = require("../models/helpCenter");
 
 
 // category routes
@@ -1765,7 +1766,7 @@ exports.updateTicketStatus = catchAsync(async (req, res, next) => {
   }
 
   // Find and update the ticket
-  const updatedTicket = await HelpCentre.findByIdAndUpdate(
+  const updatedTicket = await HelpCenter.findByIdAndUpdate(
     ticketId,
     {
       ...(status && { status }), 
@@ -1791,11 +1792,11 @@ exports.updateTicketStatus = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteTicket = catchAsync(async (req, res, next) => {
-  const { ticketId } = req.params; // Ticket ID from the URL
-
+  const { ticketId } = req.query; // Ticket ID from the URL
+  console.log(ticketId)
   // Attempt to delete the ticket
-  const deletedTicket = await HelpCentre.findByIdAndDelete(ticketId);
-
+  const deletedTicket = await helpCenter.findByIdAndDelete(ticketId);
+  console.log(deletedTicket)
   // If no ticket is found
   if (!deletedTicket) {
     return res.status(404).json({
