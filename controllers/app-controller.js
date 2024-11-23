@@ -539,8 +539,8 @@ exports.raiseTicket = async (req, res, next) => {
       sellerId:sellerId?sellerId:"",
       raisedBy:raisedBy,
       ticketType,
-      serviceType:serviceType,
-      serviceId,
+      serviceType:serviceType?serviceType:"",
+      serviceId:serviceId?serviceId:'',
       bookingId:bookingId?bookingId:"",
       date
     });

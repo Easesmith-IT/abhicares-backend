@@ -373,12 +373,18 @@ exports.getSingleTicket = catchAsync(async (req, res, next) => {
 exports.raiseTicket = async (req, res, next) => {
   try {
     
-    const{issue,description,userId,sellerId}=req.body
+    const {serviceId,date,issue,description,userId,sellerId,raisedBy,bookingId,serviceType,ticketType}=req.body
     var ticket = await HelpCentre({
       issue: issue,
       description: description,
-      userId: userId,
-      sellerId:sellerId?sellerId:""
+      userId: userId?userId:"",
+      sellerId:sellerId?sellerId:"",
+      raisedBy:raisedBy,
+      ticketType,
+      serviceType:serviceType?serviceType:"",
+      serviceId:serviceId?serviceId:'',
+      bookingId:bookingId?bookingId:"",
+      date
     });
 
     ticket.save();
