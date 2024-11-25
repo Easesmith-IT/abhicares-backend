@@ -1594,7 +1594,7 @@ exports.deleteReview = catchAsync(async (req, res, next) => {
 });
 
 exports.filterReview = catchAsync(async (req, res, next) => {
-  const { date, serviceType, page = 1 } = req.body;
+  const { date, serviceType, page = 1 } = req.query;
 
   const limit = 10; // Number of reviews per page
   const skip = (page - 1) * limit; // Calculate how many documents to skip

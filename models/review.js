@@ -33,11 +33,15 @@ const reviewSchema = new mongoose.Schema(
     },
     serviceType:{
       type:String,
+      ref:"Category"
       
     },
     bookingId:{
       type:mongoose.Types.ObjectId,
       ref:"Booking"
+    },
+    date:{
+      type:String,
     }
   },
   { timestamps: true }
