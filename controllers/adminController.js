@@ -1614,7 +1614,13 @@ exports.filterReview = catchAsync(async (req, res, next) => {
     .sort({ createdAt: -1 }) // Sort by most recent reviews
     .skip(skip) // Skip documents for pagination
     .limit(limit); // Limit results per page
-
+  
+    if(!filteredReviews || filteredReviews.length===0){
+      return res.status(200).json({
+        message:'nothing found',
+        data:[]
+      })
+    }
   // Count total reviews matching the filter
   const totalReviews = await review.countDocuments(filter);
 
@@ -1636,9 +1642,16 @@ exports.filterReview = catchAsync(async (req, res, next) => {
 });
 
 exports.getSingleReview=catchAsync(async(req,res,next)=>{
-  const{reviewId}=req.body
+  const{reviewId}=req.query
 
-  const foundReview=await review.findOne(reviewId)
+  const foundReview=await review.findOne({_id:reviewId}).populate({
+    path:"productId",
+    model:"Product"
+  })
+  .populate({
+    path:"userId",
+    model:"User"
+  })
   if(!foundReview){
     return next(new AppError('no review found',200))
   }
@@ -1714,7 +1727,26 @@ exports.getSingleTicket = catchAsync(async (req, res, next) => {
   const { ticketId } = req.query; 
 
   // Find the ticket by its ID
-  const ticket = await HelpCenter.findById(ticketId);
+  const ticket = await HelpCenter.findById(ticketId).populate({
+    path:"userId",
+    model:"User"
+  })
+  .populate({
+    path:"sellerId",
+    model:"Seller"
+  })
+  .populate({
+    path:'bookingId',
+    model:"Booking"
+  })
+  .populate({
+    path:'serviceId',
+    model:"Service"
+  })
+  .populate({
+    path:'serviceType',
+    model:"Category"
+  });
 
   // If the ticket is not found
   if (!ticket) {
@@ -1761,6 +1793,12 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
     .skip(skip) // Skip the previous pages
     .limit(limit); // Limit the number of tickets per page
 
+    if(!tickets || tickets.length===0){
+      return res.status(200).json({
+        message:"nothing found",
+        data:[],
+      })
+    }
   // Count total tickets for the given filter
   const totalTickets = await HelpCenter.countDocuments(filter);
 
