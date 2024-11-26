@@ -1624,8 +1624,12 @@ exports.filterReview = catchAsync(async (req, res, next) => {
       model:"Product"
     })
     .populate({
-      path:"bookingId",
-      model:"Booking"
+      path: "bookingId",
+      model: "Booking",
+      populate: {
+        path: "sellerId",
+        model: "Seller"
+      }
     })
     .populate({
       path:"packageId",
