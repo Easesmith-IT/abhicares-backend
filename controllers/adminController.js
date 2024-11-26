@@ -37,6 +37,7 @@ const notificationSchema = require("../models/notificationSchema");
 const { generateOrderId } = require("../util/generateOrderId");
 const review = require("../models/review");
 const helpCenter = require("../models/helpCenter");
+const seller = require("../models/seller");
 
 
 // category routes
@@ -1980,6 +1981,29 @@ exports.updateSellerOrderStatus = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getSellerDetails=catchAsync(async(req,res,next)=>{
+  const{sellerId}=req.query
+  if(!sellerId){
+    return next(new AppError('no seller found',400))
+  }
+  const foundSeller=await seller.findById(sellerId).populate({
+    path:"categoryId",
+    model:"Category"
+  })
+  .populate({
+    path: "services.serviceId",
+    model: "Service",
+  })
+  if(!foundSeller){
+    return next(new AppError("no seller found",400))
+
+  }
+  res.status(200).json({
+    message:"seller details",
+    data:foundSeller
+  })
+
+})
 exports.getSellerOrder = catchAsync(async (req, res, next) => {
   const id = req.params.id; // seller id
   const result = await Booking.find({ sellerId: id }).populate({

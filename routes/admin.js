@@ -165,6 +165,7 @@ router.delete(
 ///////////////////////////////////////////////
 // Seller Routes
 
+router.get('/get-seller',adminController.getSellerDetails)
 router.post(
   "/create-seller",
   isAdminAuth,
