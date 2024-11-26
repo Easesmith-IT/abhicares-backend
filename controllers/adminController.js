@@ -1898,7 +1898,7 @@ exports.getAllTickets = catchAsync(async (req, res, next) => {
 });
 
 exports.updateTicketStatus = catchAsync(async (req, res, next) => {
-  const { status, resolution,ticketId } = req.body; 
+  const { status, resolution, ticketId, date } = req.body;
 
   // Validate the inputs
   if (!status && !resolution) {
@@ -1908,14 +1908,34 @@ exports.updateTicketStatus = catchAsync(async (req, res, next) => {
     });
   }
 
+  if (!date) {
+    return res.status(400).json({
+      status: "fail",
+      message: "'date' is required.",
+    });
+  }
+
+  // Build the update object
+  const updateFields = {
+    ...(status && { status }),
+    ...(resolution && { resolution }),
+  };
+
+  // Prepare ticket history update
+  const ticketHistoryEntry = {
+    date, // Use the date provided from the frontend
+    ...(status && { status }),
+    ...(resolution && { resolution }),
+  };
+
   // Find and update the ticket
   const updatedTicket = await HelpCenter.findByIdAndUpdate(
     ticketId,
     {
-      ...(status && { status }), 
-      ...(resolution && { resolution }), 
+      $set: updateFields, // Update status and resolution
+      $push: { ticketHistory: ticketHistoryEntry }, // Add to ticketHistory
     },
-    { new: true, runValidators: true } 
+    { new: true, runValidators: true } // Return updated document and apply validators
   );
 
   // If no ticket is found
@@ -1933,6 +1953,7 @@ exports.updateTicketStatus = catchAsync(async (req, res, next) => {
     data: updatedTicket,
   });
 });
+
 
 exports.deleteTicket = catchAsync(async (req, res, next) => {
   const { ticketId } = req.query; // Ticket ID from the URL

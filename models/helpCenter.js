@@ -18,6 +18,17 @@ const helpCenterSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    ticketHistory:[{
+      date:{
+        type:String,
+      },
+      status:{
+        type:String,
+      },
+      resolution:{
+        type:String
+      }
+    }],
     status: {
       type: String,
       default: "in-review",
