@@ -423,6 +423,7 @@ router.delete('/delete-ticket',adminController.deleteTicket)
 router.get('/get-all-reviews',adminController.getAllReviews)
 router.delete('/delete-review',adminController.deleteReview)
 router.get('/filter-review',adminController.filterReview)
+router.post('/create-review',adminController.createReview)
 router.get('/review-detail',adminController.getSingleReview)
 //Help Center Routes
 router.post(

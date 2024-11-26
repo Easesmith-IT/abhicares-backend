@@ -15,6 +15,8 @@ router.get(
   "/get-homepage-speciality-services",
   appController.getHomepageSpeciality
 );
+
+
 router.get("/get-categories", appController.getCategories);
 router.get("/get-services/:categoryId", appController.getServices);
 router.get("/get-service-screen/:serviceId", appController.getServiceScreen);
