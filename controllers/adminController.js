@@ -1817,6 +1817,7 @@ exports.getSingleTicket = catchAsync(async (req, res, next) => {
 exports.filterUserTickets = catchAsync(async (req, res, next) => {
   const { date, serviceType, raisedBy, page } = req.query;
   const limit = 10;
+  console.log(req.query, 'req query')
 
   // Create a filter object
   let filter = {};

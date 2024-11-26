@@ -31,7 +31,7 @@ const helpCenterSchema = new mongoose.Schema(
     }],
     status: {
       type: String,
-      default: "in-review",
+      default: "raised",
       enum:['in-review','raised','completed']
     },
     issue: {

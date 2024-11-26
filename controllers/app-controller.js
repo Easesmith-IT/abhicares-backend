@@ -546,7 +546,14 @@ exports.raiseTicket = async (req, res, next) => {
       serviceType:serviceType?serviceType:"",
       serviceId:serviceId?serviceId:'',
       bookingId:bookingId?bookingId:"",
-      date
+      date,
+      ticketHistory: [
+        {
+          date: date,
+          status: "raised",
+          resolution: "",
+        },
+      ]
     });
 
     ticket.save();
