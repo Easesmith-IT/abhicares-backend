@@ -257,6 +257,7 @@ exports.postOrderBooking = async (req, res, next) => {
     const orderId = req.body.orderId;
     const sellerId=req.body.sellerId
     const content = req.body.content;
+    const packageId = req.body.packageId;
     const date=req.body.date;
     console.log(paymentType);
     console.log(req.body);
@@ -268,7 +269,8 @@ exports.postOrderBooking = async (req, res, next) => {
       userId: userId,
       sellerId:sellerId,
       bookingId:bookingId?bookingId:"",
-      date:date
+      date:date,
+      packageId:packageId?packageId:""
     });
     await review.save();
     const booking = await BookingModel.findById(bookingId).populate({

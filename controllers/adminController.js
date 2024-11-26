@@ -1623,6 +1623,18 @@ exports.filterReview = catchAsync(async (req, res, next) => {
       path:"productId",
       model:"Product"
     })
+    .populate({
+      path:"bookingId",
+      model:"Booking"
+    })
+    .populate({
+      path:"packageId",
+      model:"Package"
+    })
+    .populate({
+      path:"orderId",
+      model:"Order"
+    })
     .sort({ createdAt: -1 }) // Sort by most recent reviews
     .skip(skip) // Skip documents for pagination
     .limit(limit); // Limit results per page
@@ -1654,10 +1666,10 @@ exports.filterReview = catchAsync(async (req, res, next) => {
 });
 
 exports.createReview=catchAsync(async(req,res,next)=>{
-  const{title,content,rating,productId,userId,date,serviceType}=req.body
+  const{title,content,rating,productId,userId,date,serviceType,packageId,bookingId}=req.body
 
   const newReview=await review.create({
-    title,content,rating,productId,userId,date,serviceType
+    title,content,rating,productId,userId,date,serviceType,packageId,bookingId
   }) 
   
   res.status(200).json({
