@@ -1623,22 +1623,6 @@ exports.filterReview = catchAsync(async (req, res, next) => {
       path:"productId",
       model:"Product"
     })
-    .populate({
-      path: "bookingId",
-      model: "Booking",
-      populate: {
-        path: "sellerId",
-        model: "Seller"
-      }
-    })
-    .populate({
-      path:"packageId",
-      model:"Package"
-    })
-    .populate({
-      path:"orderId",
-      model:"Order"
-    })
     .sort({ createdAt: -1 }) // Sort by most recent reviews
     .skip(skip) // Skip documents for pagination
     .limit(limit); // Limit results per page
@@ -1693,6 +1677,22 @@ exports.getSingleReview=catchAsync(async(req,res,next)=>{
   .populate({
     path:"userId",
     model:"User"
+  })
+  .populate({
+    path: "bookingId",
+    model: "Booking",
+    populate: {
+      path: "sellerId",
+      model: "Seller"
+    }
+  })
+  .populate({
+    path:"packageId",
+    model:"Package"
+  })
+  .populate({
+    path:"orderId",
+    model:"Order"
   })
   if(!foundReview){
     return next(new AppError('no review found',200))
