@@ -1672,7 +1672,11 @@ exports.getSingleReview=catchAsync(async(req,res,next)=>{
 
   const foundReview=await review.findOne({_id:reviewId}).populate({
     path:"productId",
-    model:"Product"
+    model:"Product",
+    populate: {
+      path: "serviceId",
+      model: "Service"
+    }
   })
   .populate({
     path:"userId",
@@ -1688,11 +1692,16 @@ exports.getSingleReview=catchAsync(async(req,res,next)=>{
   })
   .populate({
     path:"packageId",
-    model:"Package"
+    model:"Package",
+    populate: {
+      path: "serviceId",
+      model: "Service"
+    }
   })
   .populate({
     path:"orderId",
-    model:"Order"
+    model:"Order",
+    
   })
   if(!foundReview){
     return next(new AppError('no review found',200))
