@@ -1815,7 +1815,7 @@ exports.getSingleTicket = catchAsync(async (req, res, next) => {
   });
 });
 exports.filterUserTickets = catchAsync(async (req, res, next) => {
-  const { date, serviceType, raisedBy, page = 1 } = req.query;
+  const { date, serviceType, raisedBy, page } = req.query;
   const limit = 10;
 
   // Create a filter object
@@ -1835,9 +1835,9 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
   if (raisedBy) {
     filter.raisedBy = raisedBy;
   }
-
+  const pageNumber= parseInt(page)
   // Pagination setup
-  const skip = (parseInt(page) - 1) * limit;
+  const skip = (pageNumber - 1) * limit;
 
   // Query the HelpCenter collection with the filters
   const tickets = await HelpCenter.find(filter)
@@ -1857,7 +1857,7 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
   // Send the response
   res.status(200).json({
     status: "success",
-    currentPage: parseInt(page),
+    currentPage: pageNumber,
     totalPages: Math.ceil(totalTickets / limit),
     results: tickets.length,
     totalResults: totalTickets,
@@ -1923,7 +1923,7 @@ exports.updateTicketStatus = catchAsync(async (req, res, next) => {
 
   // Prepare ticket history update
   const ticketHistoryEntry = {
-    date, // Use the date provided from the frontend
+    date, 
     ...(status && { status }),
     ...(resolution && { resolution }),
   };
