@@ -1577,7 +1577,7 @@ exports.getAllReviews = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteReview = catchAsync(async (req, res, next) => {
-  const { reviewId } = req.params; 
+  const { reviewId } = req.query; 
 
   // Find the review by ID and delete it
   const deletedReview = await review.findByIdAndDelete(reviewId);
