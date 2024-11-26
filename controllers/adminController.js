@@ -1595,9 +1595,9 @@ exports.deleteReview = catchAsync(async (req, res, next) => {
 
 exports.filterReview = catchAsync(async (req, res, next) => {
   const { date, serviceType, page = 1 } = req.query;
-
+  const pageNumber=parseInt(page)
   const limit = 10; // Number of reviews per page
-  const skip = (page - 1) * limit; // Calculate how many documents to skip
+  const skip = (pageNumber - 1) * limit; // Calculate how many documents to skip
 
   // Build the filter object
   let filter = {};
@@ -1645,7 +1645,7 @@ exports.filterReview = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: true,
     message: "Reviews found",
-    currentPage: parseInt(page),
+    currentPage: parseInt(pageNumber),
     totalPages: Math.ceil(totalReviews / limit),
     results: filteredReviews.length,
     totalResults: totalReviews,
