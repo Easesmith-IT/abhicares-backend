@@ -264,7 +264,7 @@ exports.postOrderBooking = async (req, res, next) => {
     const review = await ReviewModel({
       rating: rating,
       content: content,
-      productId: productId,
+      productId: productId?productId:"",
       orderId: orderId,
       userId: userId,
       sellerId:sellerId,

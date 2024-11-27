@@ -1708,6 +1708,7 @@ exports.filterReview = catchAsync(async (req, res, next) => {
 exports.createReview = catchAsync(async (req, res, next) => {
   const {
     title,
+    orderId,
     content,
     rating,
     productId,
@@ -1727,6 +1728,7 @@ exports.createReview = catchAsync(async (req, res, next) => {
     userId,
     date,
     serviceType,
+    orderId:orderId?orderId:null,
     packageId:packageId?packageId:null,
     bookingId:bookingId?bookingId:null,
     reviewType,
