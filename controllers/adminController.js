@@ -37,12 +37,13 @@ const {
 } = require("./pushNotificationController");
 const schedule = require("node-schedule");
 const notificationSchema = require("../models/notificationSchema");
-const { generateOrderId, generateBookingId } = require("../util/generateOrderId");
+const { generateOrderId, generateBookingId, generatePartnerId } = require("../util/generateOrderId");
 const review = require("../models/review");
 const helpCenter = require("../models/helpCenter");
 const seller = require("../models/seller");
 const booking = require("../models/booking");
 const order = require("../models/order");
+const { counterSchema } = require("../models/counter");
 
 // category routes
 exports.genOrderId = catchAsync(async (req, res, next) => {
@@ -539,6 +540,46 @@ exports.createSeller = catchAsync(async (req, res, next) => {
       });
     });
   }
+});
+
+exports.updateSellerId = catchAsync(async (req, res, next) => {
+  const foundSellers = await Seller.find(); // Fetch all sellers
+
+  // Loop through sellers and update their partnerId
+  for (let i = 0; i < foundSellers.length; i++) {
+    const partnerId = await generatePartnerId(); // Generate a unique ID
+    foundSellers[i].partnerId = partnerId; // Update the local object
+    await foundSellers[i].save(); // Save the updated seller to the database
+  }
+
+  res.status(200).json({
+    message: 'IDs updated successfully',
+  });
+});
+exports.deletePartnerIds = catchAsync(async (req, res, next) => {
+  const sellersWithPartnerId = await Seller.find({ partnerId: { $exists: true } });
+
+  
+  await Seller.updateMany({}, { $unset: { partnerId: "" } });
+
+  res.status(200).json({
+    success: true,
+    message: "Partner IDs deleted successfully",
+    deleted: sellersWithPartnerId.map((seller) => seller._id), 
+  });
+});
+exports.resetCounter = catchAsync(async (req, res, next) => {
+  
+  await counterSchema.findOneAndUpdate(
+    { name: 'partnerId' }, 
+    { value: 0 },         
+    { new: true, upsert: true }
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Counter has been reset to 0",
+  });
 });
 
 exports.getAllSeller = catchAsync(async (req, res, next) => {

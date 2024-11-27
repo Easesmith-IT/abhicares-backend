@@ -23,6 +23,7 @@ const AppError = require("../../util/appError");
 //middleware
 const { auth } = require("../../middleware/auth");
 const review = require("../../models/review");
+const { generatePartnerId } = require("../../util/generateOrderId");
 /////////////////////////////////////////////////////////////////////////////
 //app routes
 
@@ -438,8 +439,7 @@ exports.getServiceByCategory = async (req, res, next) => {
   }
 };
 
-exports.createSeller = async (req, res, next) => {
-  try {
+exports.createSeller = catchAsync(async (req, res, next) => {
     var {
       name,
       legalName,
@@ -467,6 +467,7 @@ exports.createSeller = async (req, res, next) => {
     ) {
       return next(new AppError(400, "All the fields are required"))
     } else {
+      const partnerId=await generatePartnerId()
       bcrypt.genSalt(10, function (err, salt) {
         bcrypt.hash(password, salt, async function (err, hash) {
           if (err) {
@@ -475,6 +476,7 @@ exports.createSeller = async (req, res, next) => {
               .json({ success: false, message: "password enctyption error" });
           } else {
             req.body.password = hash;
+            req.body.partnerId = partnerId;
             var seller = await SellerModel.create(req.body);
             await SellerWallet.create({ sellerId: seller._id });
             res.status(201).json({
@@ -486,11 +488,9 @@ exports.createSeller = async (req, res, next) => {
         });
       });
     }
-  } catch (err) {
-    console.log("error--->", err);
-    next(err);
-  }
-};
+  
+});
+
 
 exports.getAllSeller = async (req, res, next) => {
   try {

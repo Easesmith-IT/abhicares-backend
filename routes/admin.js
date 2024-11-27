@@ -379,6 +379,9 @@ router.get(
   adminController.getOrderById
 );
 
+router.patch('/update-seller-id',adminController.updateSellerId)
+router.delete('/delete-seller-id',adminController.deletePartnerIds)
+router.patch('/reset-counter-id',adminController.resetCounter)
 router.get(
   '/get-order-count-by-status',adminController.getOrderCountByStatus
 )

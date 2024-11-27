@@ -8,6 +8,9 @@ const sellerSchema = new Schema(
       type: String,
       required: true,
     },
+    partnerId:{
+      type:String,
+    },
     legalName: {
       type: String,
       // required: true,
