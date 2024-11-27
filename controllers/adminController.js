@@ -1810,22 +1810,42 @@ exports.getSingleReview = catchAsync(async (req, res, next) => {
 });
 
 
-exports.getOrderCountByStatus=catchAsync(async(req,res,next)=>{
-  const{status}=req.query
+exports.getOrderCountByStatus = catchAsync(async (req, res, next) => {
 
-  const foundOrderCount=await order.find({status:status}).countDocuments()
-  if(!foundOrderCount){
+  const orderCounts = await order.aggregate([
+    {
+      $group: {
+        _id: "$status", 
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        status: "$_id", 
+        count: 1, 
+        _id: 0,
+      },
+    },
+  ]);
+
+  // Check if no orders exist
+  if (!orderCounts || orderCounts.length === 0) {
     return res.status(200).json({
-      message:"no orders there",
-      data:[]
-    })
+      success: true,
+      message: "No orders found",
+      data: [],
+    });
   }
+
+  // Return grouped order counts
   return res.status(200).json({
-    status:true,
-    data:foundOrderCount,
-    message:"Here's the order Count"
-  })
-})
+    success: true,
+    message: "Here's the order count grouped by status",
+    data: orderCounts,
+  });
+});
+
+
 // seller order controllers
 exports.getSellerList = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is service id
