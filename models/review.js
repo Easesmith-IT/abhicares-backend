@@ -32,7 +32,7 @@ const reviewSchema = new mongoose.Schema(
       required: true,
     },
     serviceType:{
-      type:String,
+      type:mongoose.Types.ObjectId,
       ref:"Category"
       
     },
@@ -42,6 +42,10 @@ const reviewSchema = new mongoose.Schema(
     },
     date:{
       type:String,
+    },
+    reviewType:{
+      type:String,
+      enum:['service','product']
     }
   },
   { timestamps: true }

@@ -31,20 +31,24 @@ const {
 const UserReferalLink = require("../models/userReferealLink");
 const catchAsync = require("../util/catchAsync");
 const { tokenSchema } = require("../models/fcmToken");
-const { sendPushNotification, createSendPushNotification } = require("./pushNotificationController"); 
+const {
+  sendPushNotification,
+  createSendPushNotification,
+} = require("./pushNotificationController");
 const schedule = require("node-schedule");
 const notificationSchema = require("../models/notificationSchema");
-const { generateOrderId } = require("../util/generateOrderId");
+const { generateOrderId, generateBookingId } = require("../util/generateOrderId");
 const review = require("../models/review");
 const helpCenter = require("../models/helpCenter");
 const seller = require("../models/seller");
-
+const booking = require("../models/booking");
+const order = require("../models/order");
 
 // category routes
-exports.genOrderId=catchAsync(async(req,res,next)=>{
- const orderId= await generateOrderId();
- console.log("order id",orderId)
-})
+exports.genOrderId = catchAsync(async (req, res, next) => {
+  const orderId = await generateOrderId();
+  console.log("order id", orderId);
+});
 exports.test = async (req, res, next) => {
   try {
     const users = await User.find();
@@ -747,7 +751,7 @@ exports.getSellerWallet = catchAsync(async (req, res, next) => {
   const wallet = await SellerWallet.findOne({ sellerId: id });
 
   if (!wallet) {
-    return next(new AppError("No wallet found",404))
+    return next(new AppError("No wallet found", 404));
   }
 
   res.status(200).json({
@@ -785,7 +789,6 @@ exports.getRecentCashoutRequests = catchAsync(async (req, res, next) => {
   });
 });
 
-
 exports.approveSellerCashout = catchAsync(async (req, res, next) => {
   console.log(req.body);
   const id = req.params.id;
@@ -794,7 +797,7 @@ exports.approveSellerCashout = catchAsync(async (req, res, next) => {
   const cashout = await SellerCashout.findById(id);
 
   if (!cashout) {
-    return next(new AppError("No cashout found",404))
+    return next(new AppError("No cashout found", 404));
   }
   const wallet = await SellerWallet.findById(cashout.sellerWalletId.toString());
 
@@ -815,30 +818,35 @@ exports.approveSellerCashout = catchAsync(async (req, res, next) => {
   });
 
   // For sending notification
-  const foundToken=await tokenSchema.findOne({
-    sellerId:wallet.sellerId
-  })
-  if(!foundToken){
+  const foundToken = await tokenSchema.findOne({
+    sellerId: wallet.sellerId,
+  });
+  if (!foundToken) {
     return res.status(400).json({
-      message:"no user found"
-    })
+      message: "no user found",
+    });
   }
-  const token=foundToken.token
-  const deviceType=foundToken.deviceType
-  const appType=foundToken.appType
+  const token = foundToken.token;
+  const deviceType = foundToken.deviceType;
+  const appType = foundToken.appType;
   const message = {
-          notification: {
-              title: " Payment Received!",
-              body: `A payment of ${wallet.balance} was received`,
-              // ...(imageUrl && { image: imageUrl }), // Add image if available
-          },
-          token: token, // FCM token of the recipient device
-      };
-  const tokenResponse=await createSendPushNotification(appType,deviceType,token,message)
-  if(!tokenResponse){
+    notification: {
+      title: " Payment Received!",
+      body: `A payment of ${wallet.balance} was received`,
+      // ...(imageUrl && { image: imageUrl }), // Add image if available
+    },
+    token: token, // FCM token of the recipient device
+  };
+  const tokenResponse = await createSendPushNotification(
+    appType,
+    deviceType,
+    token,
+    message
+  );
+  if (!tokenResponse) {
     return res.status(400).json({
-      message:'No token found'
-    })
+      message: "No token found",
+    });
   }
   res.status(200).json({
     success: true,
@@ -1223,7 +1231,7 @@ exports.updateAdminUser = catchAsync(async (req, res, next) => {
   console.log(permissions);
 
   if (!adminId || !name || !permissions) {
-    return next(new AppError("All the fields are required",400))
+    return next(new AppError("All the fields are required", 400));
   } else {
     const result = await Admin.findById(id);
 
@@ -1245,30 +1253,30 @@ exports.getSubAdmins = catchAsync(async (req, res, next) => {
 });
 
 exports.loginAdminUser = catchAsync(async (req, res, next) => {
-  console.log('inside admin login')
+  console.log("inside admin login");
   const { adminId, password } = req.body;
   const admin = await Admin.findOne({ adminId: adminId });
   if (!admin) {
-    return next(new AppError("No admin exists with this id",404))
+    return next(new AppError("No admin exists with this id", 404));
   }
 
   const isMatch = await bcrypt.compare(password, admin.password);
 
   if (isMatch) {
     var token = jwt.sign(
-      { adminId: adminId, permissions: admin.permissions, },
+      { adminId: adminId, permissions: admin.permissions },
       jwtkey.secretJwtKey,
       { expiresIn: "2d" }
     );
     res.cookie("admtoken", token, { secure: true, httpOnly: true });
-   
+
     return res.status(200).json({
       success: true,
       message: "Login successful",
       perm: admin.permissions,
     });
   } else {
-    return next(new AppError("Incorrect Password!",400))
+    return next(new AppError("Incorrect Password!", 400));
   }
 });
 
@@ -1464,7 +1472,6 @@ exports.getAllHelpCenter = catchAsync(async (req, res, next) => {
   });
 });
 
-
 exports.deleteHelpCenter = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
@@ -1540,17 +1547,17 @@ exports.getAvailableCities = catchAsync(async (req, res, next) => {
   });
 });
 
-
 // Getting reviews
 exports.getAllReviews = catchAsync(async (req, res, next) => {
-  const { page} = req.query; 
-  const limit = 10 
+  const { page } = req.query;
+  const limit = 10;
 
   // Calculate skip value for pagination
   const skip = (page - 1) * limit;
 
   // Fetch paginated reviews
-  const reviews = await review.find()
+  const reviews = await review
+    .find()
     .sort({ createdAt: -1 }) // Sort by most recent
     .skip(skip) // Skip records for previous pages
     .limit(parseInt(limit)); // Limit the number of records per page
@@ -1578,7 +1585,7 @@ exports.getAllReviews = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteReview = catchAsync(async (req, res, next) => {
-  const { reviewId } = req.query; 
+  const { reviewId } = req.query;
 
   // Find the review by ID and delete it
   const deletedReview = await review.findByIdAndDelete(reviewId);
@@ -1587,7 +1594,7 @@ exports.deleteReview = catchAsync(async (req, res, next) => {
   if (!deletedReview) {
     return next(new AppError("Review not found", 404)); // 404 if review does not exist
   }
-  
+
   res.status(200).json({
     status: "success",
     message: "Review deleted successfully",
@@ -1596,7 +1603,7 @@ exports.deleteReview = catchAsync(async (req, res, next) => {
 
 exports.filterReview = catchAsync(async (req, res, next) => {
   const { date, serviceType, page = 1 } = req.query;
-  const pageNumber=parseInt(page)
+  const pageNumber = parseInt(page);
   const limit = 10; // Number of reviews per page
   const skip = (pageNumber - 1) * limit; // Calculate how many documents to skip
 
@@ -1613,27 +1620,27 @@ exports.filterReview = catchAsync(async (req, res, next) => {
   const filteredReviews = await review
     .find(filter)
     .populate({
-      path:"userId",
-      model:"User"
+      path: "userId",
+      model: "User",
     })
     .populate({
-      path:"serviceType",
-      model:"Category"
+      path: "serviceType",
+      model: "Category",
     })
     .populate({
-      path:"productId",
-      model:"Product"
+      path: "productId",
+      model: "Product",
     })
     .sort({ createdAt: -1 }) // Sort by most recent reviews
     .skip(skip) // Skip documents for pagination
     .limit(limit); // Limit results per page
-  
-    if(!filteredReviews || filteredReviews.length===0){
-      return res.status(200).json({
-        message:'nothing found',
-        data:[]
-      })
-    }
+
+  if (!filteredReviews || filteredReviews.length === 0) {
+    return res.status(200).json({
+      message: "nothing found",
+      data: [],
+    });
+  }
   // Count total reviews matching the filter
   const totalReviews = await review.countDocuments(filter);
 
@@ -1654,63 +1661,125 @@ exports.filterReview = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createReview=catchAsync(async(req,res,next)=>{
-  const{title,content,rating,productId,userId,date,serviceType,packageId,bookingId}=req.body
+exports.createReview = catchAsync(async (req, res, next) => {
+  const {
+    title,
+    content,
+    rating,
+    productId,
+    userId,
+    date,
+    serviceType,
+    packageId,
+    bookingId,
+    reviewType,
+  } = req.body;
 
-  const newReview=await review.create({
-    title,content,rating,productId,userId,date,serviceType,packageId,bookingId
-  }) 
-  
+  const newReview = await review.create({
+    title,
+    content,
+    rating,
+    productId: productId ? productId : null,
+    userId,
+    date,
+    serviceType,
+    packageId:packageId?packageId:null,
+    bookingId:bookingId?bookingId:null,
+    reviewType,
+  });
+
   res.status(200).json({
-    message:"review created",
+    message: "review created",
+    status: true,
+    data: newReview,
+  });
+});
+exports.getBookingId=catchAsync(async(req,res,next)=>{
+  const bookingId= await generateBookingId()
+  return res.status(200).json({
+    message:"found",
     status:true,
-    data:newReview,
+    data:bookingId
   })
 })
-
-exports.getSingleReview=catchAsync(async(req,res,next)=>{
-  const{reviewId}=req.query
-
-  const foundReview=await review.findOne({_id:reviewId}).populate({
-    path:"productId",
-    model:"Product",
-    populate: {
-      path: "serviceId",
-      model: "Service"
-    }
-  })
-  .populate({
-    path:"userId",
-    model:"User"
-  })
-  .populate({
-    path: "bookingId",
-    model: "Booking",
-    populate: {
-      path: "sellerId",
-      model: "Seller"
-    }
-  })
-  .populate({
-    path:"packageId",
-    model:"Package",
-    populate: {
-      path: "serviceId",
-      model: "Service"
-    }
-  })
-  .populate({
-    path:"orderId",
-    model:"Order",
-    
-  })
-  if(!foundReview){
-    return next(new AppError('no review found',200))
+exports.updateBookingId=catchAsync(async(req,res,next)=>{
+  const foundBookings=await booking.find()
+  const length=foundBookings.length
+  for(let i=0;i<length-1;i++){
+    const bookingId=await generateBookingId()
+    const updatedBookings=await booking.findByIdAndUpdate(
+      foundBookings[i]._id,
+      {bookingId:bookingId},
+      { new: true }
+    )
   }
   res.status(200).json({
-    message:"review details",
-    data:foundReview,
-    status:true
+    status: "success",
+    message: "All bookings have been updated with new booking IDs.",
+  });
+})
+exports.getSingleReview = catchAsync(async (req, res, next) => {
+  const { reviewId } = req.query;
+
+  const foundReview = await review
+    .findOne({ _id: reviewId })
+    .populate({
+      path: "productId",
+      model: "Product",
+      populate: {
+        path: "serviceId",
+        model: "Service",
+      },
+    })
+    .populate({
+      path: "userId",
+      model: "User",
+    })
+    .populate({
+      path: "bookingId",
+      model: "Booking",
+      populate: {
+        path: "sellerId",
+        model: "Seller",
+      },
+    })
+    .populate({
+      path: "packageId",
+      model: "Package",
+      populate: {
+        path: "serviceId",
+        model: "Service",
+      },
+    })
+    .populate({
+      path: "orderId",
+      model: "Order",
+    });
+  if (!foundReview) {
+    return next(new AppError("no review found", 200));
+  }
+  res.status(200).json({
+    message: "review details",
+    data: foundReview,
+    status: true,
+  });
+});
+
+
+exports.getOrderCountByStatus=catchAsync(async(req,res,next)=>{
+  const{status}=req.query
+
+  const foundOrderCount=await order.find({status:status}).countDocuments()
+  if(!foundOrderCount){
+    return res.status(200).json({
+      message:"no orders there",
+      data:[]
+    })
+  }
+  return res.status(200).json({
+    status:true,
+    data:foundOrderCount,
+    message:"Here's the order Count"
   })
 })
 // seller order controllers
@@ -1735,37 +1804,42 @@ exports.allotSeller = catchAsync(async (req, res, next) => {
     return next(new AppError(400, "All the fields are required"));
   }
   var bookingData = await Booking.findOne({ _id: bookingId }).populate({
-    path:"sellerId",
-    model:"Seller"
+    path: "sellerId",
+    model: "Seller",
   });
   bookingData.sellerId = id;
   bookingData.status = "alloted";
   await bookingData.save();
 
-  const foundToken=await tokenSchema.findOne({
-    userId:bookingData.userId
-  })
-  if(!foundToken){
+  const foundToken = await tokenSchema.findOne({
+    userId: bookingData.userId,
+  });
+  if (!foundToken) {
     return res.status(400).json({
-      message:"no user found"
-    })
+      message: "no user found",
+    });
   }
-  const token=foundToken.token
-  const deviceType=foundToken.deviceType
-  const appType=foundToken.appType
+  const token = foundToken.token;
+  const deviceType = foundToken.deviceType;
+  const appType = foundToken.appType;
   const message = {
-          notification: {
-              title: "service Partner Assigned",
-              body: `${bookingData.sellerId.name} has been assigned to your service request. They will call you shortly.`,
-              // ...(imageUrl && { image: imageUrl }), // Add image if available
-          },
-          token: token, // FCM token of the recipient device
-      };
-  const tokenResponse=await createSendPushNotification(deviceType,token,message,appType)
-  if(!tokenResponse){
+    notification: {
+      title: "service Partner Assigned",
+      body: `${bookingData.sellerId.name} has been assigned to your service request. They will call you shortly.`,
+      // ...(imageUrl && { image: imageUrl }), // Add image if available
+    },
+    token: token, // FCM token of the recipient device
+  };
+  const tokenResponse = await createSendPushNotification(
+    deviceType,
+    token,
+    message,
+    appType
+  );
+  if (!tokenResponse) {
     return res.status(400).json({
-      message:'No token found'
-    })
+      message: "No token found",
+    });
   }
   res.status(200).json({
     success: true,
@@ -1776,29 +1850,30 @@ exports.allotSeller = catchAsync(async (req, res, next) => {
 // Ticket Controllers
 
 exports.getSingleTicket = catchAsync(async (req, res, next) => {
-  const { ticketId } = req.query; 
+  const { ticketId } = req.query;
 
   // Find the ticket by its ID
-  const ticket = await HelpCenter.findById(ticketId).populate({
-    path:"userId",
-    model:"User"
-  })
-  .populate({
-    path:"sellerId",
-    model:"Seller"
-  })
-  .populate({
-    path:'bookingId',
-    model:"Booking"
-  })
-  .populate({
-    path:'serviceId',
-    model:"Service"
-  })
-  .populate({
-    path:'serviceType',
-    model:"Category"
-  });
+  const ticket = await HelpCenter.findById(ticketId)
+    .populate({
+      path: "userId",
+      model: "User",
+    })
+    .populate({
+      path: "sellerId",
+      model: "Seller",
+    })
+    .populate({
+      path: "bookingId",
+      model: "Booking",
+    })
+    .populate({
+      path: "serviceId",
+      model: "Service",
+    })
+    .populate({
+      path: "serviceType",
+      model: "Category",
+    });
 
   // If the ticket is not found
   if (!ticket) {
@@ -1815,9 +1890,9 @@ exports.getSingleTicket = catchAsync(async (req, res, next) => {
   });
 });
 exports.filterUserTickets = catchAsync(async (req, res, next) => {
-  const { date, serviceType, raisedBy, page } = req.query;
+  const { date, serviceType, raisedBy, page } = req.body;
   const limit = 10;
-  console.log(req.query, 'req query')
+  console.log(req.query, "req query");
 
   // Create a filter object
   let filter = {};
@@ -1836,7 +1911,7 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
   if (raisedBy) {
     filter.raisedBy = raisedBy;
   }
-  const pageNumber= parseInt(page)
+  const pageNumber = parseInt(page);
   // Pagination setup
   const skip = (pageNumber - 1) * limit;
 
@@ -1845,13 +1920,13 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
     .sort({ createdAt: -1 }) // Sort by most recent tickets
     .skip(skip) // Skip the previous pages
     .limit(limit); // Limit the number of tickets per page
-
-    if(!tickets || tickets.length===0){
-      return res.status(200).json({
-        message:"nothing found",
-        data:[],
-      })
-    }
+  console.log("tickets", tickets);
+  if (!tickets || tickets.length === 0) {
+    return res.status(200).json({
+      message: "nothing found",
+      data: [],
+    });
+  }
   // Count total tickets for the given filter
   const totalTickets = await HelpCenter.countDocuments(filter);
 
@@ -1866,18 +1941,17 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
   });
 });
 
-
 exports.getAllTickets = catchAsync(async (req, res, next) => {
-  const { page } = req.query; 
+  const { page } = req.query;
   const limit = 10;
   // Calculate skip value for pagination
   const skip = (page - 1) * limit;
 
   // Fetch paginated tickets
   const tickets = await HelpCenter.find()
-    .sort({ createdAt: -1 }) 
-    .skip(skip) 
-    .limit(parseInt(limit)); 
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(parseInt(limit));
 
   // Count total tickets
   const totalTickets = await HelpCenter.countDocuments();
@@ -1924,7 +1998,7 @@ exports.updateTicketStatus = catchAsync(async (req, res, next) => {
 
   // Prepare ticket history update
   const ticketHistoryEntry = {
-    date, 
+    date,
     ...(status && { status }),
     ...(resolution && { resolution }),
   };
@@ -1955,13 +2029,12 @@ exports.updateTicketStatus = catchAsync(async (req, res, next) => {
   });
 });
 
-
 exports.deleteTicket = catchAsync(async (req, res, next) => {
   const { ticketId } = req.query; // Ticket ID from the URL
-  console.log(ticketId)
+  console.log(ticketId);
   // Attempt to delete the ticket
   const deletedTicket = await helpCenter.findByIdAndDelete(ticketId);
-  console.log(deletedTicket)
+  console.log(deletedTicket);
   // If no ticket is found
   if (!deletedTicket) {
     return res.status(404).json({
@@ -2003,29 +2076,29 @@ exports.updateSellerOrderStatus = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getSellerDetails=catchAsync(async(req,res,next)=>{
-  const{sellerId}=req.query
-  if(!sellerId){
-    return next(new AppError('no seller found',400))
+exports.getSellerDetails = catchAsync(async (req, res, next) => {
+  const { sellerId } = req.query;
+  if (!sellerId) {
+    return next(new AppError("no seller found", 400));
   }
-  const foundSeller=await seller.findById(sellerId).populate({
-    path:"categoryId",
-    model:"Category"
-  })
-  .populate({
-    path: "services.serviceId",
-    model: "Service",
-  })
-  if(!foundSeller){
-    return next(new AppError("no seller found",400))
-
+  const foundSeller = await seller
+    .findById(sellerId)
+    .populate({
+      path: "categoryId",
+      model: "Category",
+    })
+    .populate({
+      path: "services.serviceId",
+      model: "Service",
+    });
+  if (!foundSeller) {
+    return next(new AppError("no seller found", 400));
   }
   res.status(200).json({
-    message:"seller details",
-    data:foundSeller
-  })
-
-})
+    message: "seller details",
+    data: foundSeller,
+  });
+});
 exports.getSellerOrder = catchAsync(async (req, res, next) => {
   const id = req.params.id; // seller id
   const result = await Booking.find({ sellerId: id }).populate({
@@ -2255,7 +2328,6 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
   res.status(201).json({ success: true, message: "Updated successfully" });
 });
 
-
 // exports.sendNotification = catchAsync(async (req, res, next) => {
 //   const { fcmToken, deviceType, text } = req.body;
 
@@ -2414,7 +2486,6 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 //       token: fcmToken, // FCM token of the recipient device
 //   };
 
-
 //     try {
 //         // Call the sendPushNotification function
 //         const response = await sendPushNotification(deviceType, fcmToken, message, scheduleTime);
@@ -2524,13 +2595,12 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 //     }
 // };
 
-
 exports.sendNotificationToAll = async (req, res, next) => {
   const { description, date, time, title } = req.body;
 
   // Validate input
   if (!description || !title) {
-      return next(new AppError("Please provide title and description", 400));
+    return next(new AppError("Please provide title and description", 400));
   }
 
   // Image handling (currently commented)
@@ -2548,94 +2618,96 @@ exports.sendNotificationToAll = async (req, res, next) => {
   // }
 
   try {
-      // Retrieve FCM tokens and their corresponding appTypes from tokenSchema
-      const tokensByAppType = await tokenSchema.aggregate([
-          {
-              $group: {
-                  _id: "$deviceType", // Group by appType
-                  tokens: { $push: "$token" }, // Collect all tokens for each appType
-              },
-          },
-      ]);
+    // Retrieve FCM tokens and their corresponding appTypes from tokenSchema
+    const tokensByAppType = await tokenSchema.aggregate([
+      {
+        $group: {
+          _id: "$deviceType", // Group by appType
+          tokens: { $push: "$token" }, // Collect all tokens for each appType
+        },
+      },
+    ]);
 
-      if (!tokensByAppType || tokensByAppType.length === 0) {
-          return next(new AppError("No FCM tokens found to send notifications", 404));
+    if (!tokensByAppType || tokensByAppType.length === 0) {
+      return next(
+        new AppError("No FCM tokens found to send notifications", 404)
+      );
+    }
+
+    // Prepare the notification message
+    const message = {
+      notification: {
+        title: title,
+        body: description,
+        // ...(imageUrl && { image: imageUrl }), // Add image if available
+      },
+    };
+
+    // Check if notification should be scheduled
+    if (date && time) {
+      const scheduledDate = new Date(`${date}T${time}`);
+      if (isNaN(scheduledDate)) {
+        return next(new AppError("Invalid schedule date or time", 400));
       }
 
-      // Prepare the notification message
-      const message = {
-          notification: {
-              title: title,
-              body: description,
-              // ...(imageUrl && { image: imageUrl }), // Add image if available
-          },
+      if (scheduledDate <= new Date()) {
+        return next(new AppError("Scheduled time must be in the future", 400));
+      }
+
+      // Save the scheduled notification in the database
+      const notificationData = {
+        description,
+        title,
+        scheduleTiming: { date, time },
+        // image: imageUrl, // Save image URL if provided
+        status: "scheduled",
       };
 
-      // Check if notification should be scheduled
-      if (date && time) {
-          const scheduledDate = new Date(`${date}T${time}`);
-          if (isNaN(scheduledDate)) {
-              return next(new AppError("Invalid schedule date or time", 400));
-          }
+      const savedNotification = await notificationSchema.create(
+        notificationData
+      );
 
-          if (scheduledDate <= new Date()) {
-              return next(new AppError("Scheduled time must be in the future", 400));
-          }
-
-          // Save the scheduled notification in the database
-          const notificationData = {
-              description,
-              title,
-              scheduleTiming: { date, time },
-              // image: imageUrl, // Save image URL if provided
-              status: "scheduled",
-          };
-
-          const savedNotification = await notificationSchema.create(notificationData);
-
-          // Schedule the notification for all tokens by appType
-          schedule.scheduleJob(scheduledDate, async () => {
-              try {
-                  for (const { _id: appType, tokens } of tokensByAppType) {
-                      for (const token of tokens) {
-                          await sendPushNotification(appType, token, { ...message, token });
-                      }
-                  }
-                  console.log("Scheduled notification sent to all users successfully");
-
-                  // Update the notification status
-                  await notificationSchema.findOneAndUpdate(
-                      { _id: savedNotification._id },
-                      { status: "sent" }
-                  );
-              } catch (error) {
-                  console.error("Error sending scheduled notification to all:", error);
-              }
-          });
-
-          return res.status(200).json({
-              success: true,
-              message: "Notification scheduled for all users successfully",
-          });
-      }
-
-      // Send notifications to all tokens by appType immediately
-      for (const { _id: appType, tokens } of tokensByAppType) {
-          for (const token of tokens) {
+      // Schedule the notification for all tokens by appType
+      schedule.scheduleJob(scheduledDate, async () => {
+        try {
+          for (const { _id: appType, tokens } of tokensByAppType) {
+            for (const token of tokens) {
               await sendPushNotification(appType, token, { ...message, token });
+            }
           }
-      }
+          console.log("Scheduled notification sent to all users successfully");
+
+          // Update the notification status
+          await notificationSchema.findOneAndUpdate(
+            { _id: savedNotification._id },
+            { status: "sent" }
+          );
+        } catch (error) {
+          console.error("Error sending scheduled notification to all:", error);
+        }
+      });
 
       return res.status(200).json({
-          success: true,
-          message: "Notification sent to all users successfully",
+        success: true,
+        message: "Notification scheduled for all users successfully",
       });
+    }
+
+    // Send notifications to all tokens by appType immediately
+    for (const { _id: appType, tokens } of tokensByAppType) {
+      for (const token of tokens) {
+        await sendPushNotification(appType, token, { ...message, token });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification sent to all users successfully",
+    });
   } catch (error) {
-      next(error);
+    next(error);
   }
 };
-
-
 
 exports.getAllNotifications = catchAsync(async (req, res, next) => {
   const { page = 1, limit = 10 } = req.query; // Default to page 1 and 10 items per page
@@ -2646,7 +2718,7 @@ exports.getAllNotifications = catchAsync(async (req, res, next) => {
 
   // Validate page and limit values
   if (pageNumber <= 0 || limitNumber <= 0) {
-      return next(new AppError("Page and limit must be positive integers", 400));
+    return next(new AppError("Page and limit must be positive integers", 400));
   }
 
   // Calculate the number of documents to skip
@@ -2654,24 +2726,24 @@ exports.getAllNotifications = catchAsync(async (req, res, next) => {
 
   // Fetch notifications with pagination
   const notifications = await notificationSchema
-      .find()
-      .skip(skip) // Skip the appropriate number of documents
-      .limit(limitNumber) // Limit the number of documents returned
-      .sort({ createdAt: -1 }); // Optionally sort by creation time or another field
+    .find()
+    .skip(skip) // Skip the appropriate number of documents
+    .limit(limitNumber) // Limit the number of documents returned
+    .sort({ createdAt: -1 }); // Optionally sort by creation time or another field
 
   // Get total document count for pagination metadata
   const totalNotifications = await notificationSchema.countDocuments();
 
   // Prepare the response with pagination metadata
   res.status(200).json({
-      success: true,
-      data: notifications,
-      pagination: {
-          total: totalNotifications,
-          page: pageNumber,
-          limit: limitNumber,
-          totalPages: Math.ceil(totalNotifications / limitNumber),
-      },
+    success: true,
+    data: notifications,
+    pagination: {
+      total: totalNotifications,
+      page: pageNumber,
+      limit: limitNumber,
+      totalPages: Math.ceil(totalNotifications / limitNumber),
+    },
   });
 });
 
@@ -2680,28 +2752,30 @@ exports.filterNotification = catchAsync(async (req, res, next) => {
 
   // Validate the date
   if (!date) {
-      return next(new AppError("Please provide a date to filter notifications.", 400));
+    return next(
+      new AppError("Please provide a date to filter notifications.", 400)
+    );
   }
 
   // Find notifications with the matching date in the `scheduleTiming.date` field
   const notifications = await notificationSchema.find({
-      "scheduleTiming.date": date,
+    "scheduleTiming.date": date,
   });
 
   // Check if notifications are found
   if (!notifications || notifications.length === 0) {
-      return res.status(200).json({
-          success: false,
-          message: "No notifications found for the given date.",
-          data:[]
-      });
+    return res.status(200).json({
+      success: false,
+      message: "No notifications found for the given date.",
+      data: [],
+    });
   }
 
   // Respond with the filtered notifications
   res.status(200).json({
-      success: true,
-      count: notifications.length,
-      data: notifications,
+    success: true,
+    count: notifications.length,
+    data: notifications,
   });
 });
 
@@ -2713,7 +2787,7 @@ exports.searchNotifications = catchAsync(async (req, res, next) => {
   const limitNumber = parseInt(limit, 10);
 
   if (pageNumber <= 0 || limitNumber <= 0) {
-      return next(new AppError("Page and limit must be positive integers", 400));
+    return next(new AppError("Page and limit must be positive integers", 400));
   }
 
   // Calculate the number of documents to skip
@@ -2721,47 +2795,46 @@ exports.searchNotifications = catchAsync(async (req, res, next) => {
 
   // Build the search query
   const searchQuery = {
-      title: { $regex: title, $options: "i" }, // Case-insensitive search using regex
+    title: { $regex: title, $options: "i" }, // Case-insensitive search using regex
   };
 
   // Get the total count of matching notifications
-  const totalNotifications = await notificationSchema.countDocuments(searchQuery);
+  const totalNotifications = await notificationSchema.countDocuments(
+    searchQuery
+  );
 
   // Validate if the page exists
   const totalPages = Math.ceil(totalNotifications / limitNumber);
   if (pageNumber > totalPages && totalNotifications > 0) {
-      return res.status(200).json({
-          success: true,
-          data: [],
-          pagination: {
-              total: totalNotifications,
-              page: pageNumber,
-              limit: limitNumber,
-              totalPages: totalPages,
-          },
-          message: "No notifications available for this page",
-      });
+    return res.status(200).json({
+      success: true,
+      data: [],
+      pagination: {
+        total: totalNotifications,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: totalPages,
+      },
+      message: "No notifications available for this page",
+    });
   }
 
   // Fetch notifications with pagination
   const notifications = await notificationSchema
-      .find(searchQuery)
-      .skip(skip)
-      .limit(limitNumber)
-      .sort({ createdAt: -1 }); // Optionally sort by creation time or another field
+    .find(searchQuery)
+    .skip(skip)
+    .limit(limitNumber)
+    .sort({ createdAt: -1 }); // Optionally sort by creation time or another field
 
   // Prepare the response with pagination metadata
   res.status(200).json({
-      success: true,
-      data: notifications,
-      pagination: {
-          total: totalNotifications,
-          page: pageNumber,
-          limit: limitNumber,
-          totalPages: totalPages,
-      },
+    success: true,
+    data: notifications,
+    pagination: {
+      total: totalNotifications,
+      page: pageNumber,
+      limit: limitNumber,
+      totalPages: totalPages,
+    },
   });
 });
-
-
-

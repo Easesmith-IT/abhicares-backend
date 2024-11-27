@@ -378,6 +378,10 @@ router.get(
   authorize("orders", "read"),
   adminController.getOrderById
 );
+
+router.get(
+  '/get-order-count-by-status',adminController.getOrderCountByStatus
+)
 router.post(
   "/get-monthly-orders",
   isAdminAuth,
@@ -462,6 +466,9 @@ router.patch(
 ); // passing seller id
 
 // router.get('/create-order',adminController.createOrderId)
+
+router.get('/get-bookingId',adminController.getBookingId)
+router.patch('/update-bookingId',adminController.updateBookingId)
 router.patch(
   "/update-seller-order-status/:id",
   isAdminAuth,

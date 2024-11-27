@@ -17,7 +17,7 @@ const { autoAssignBooking } = require("../util/autoAssignBooking");
 const AppError = require("../util/appError");
 const { tokenSchema } = require("../models/fcmToken");
 const { createSendPushNotification } = require("./pushNotificationController");
-const { generateOrderId } = require("../util/generateOrderId");
+const { generateOrderId, generateBookingId } = require("../util/generateOrderId");
 
 const instance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY,
@@ -111,10 +111,12 @@ exports.appOrder = async (req, res, next) => {
     ///booking creation
     for (const orderItem of orderItems) {
       var booking;
+      const bookingId=await generateBookingId()
       if (orderItem.product) {
         booking = new Booking({
           orderId: order._id,
           userId: user._id,
+          bookingId:bookingId,
           paymentStatus: paymentStatus,
           userAddress: {
             addressLine: userAddress.addressLine,
