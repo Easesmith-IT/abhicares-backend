@@ -22,9 +22,117 @@ const AppError = require("../util/appError");
 const shortid = require("shortid");
 const { tokenSchema } = require("../models/fcmToken");
 const helpCenter = require("../models/helpCenter");
+const locationValidator = require("../util/locationValidator");
 
 /////////////////////////////////////////////////////////////////////////////
 //app routes
+
+exports.updateUserProfile = async (req, res, next) => {
+  try {
+    const userId = req.params.userId;
+    const { name, phone, email, dateOfBirth, Gender } = req.body;
+    const errors = [];
+
+    // Find user first
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (!user.status) {
+      return res.status(403).json({ error: "User account is inactive" });
+    }
+
+    // Validate and prepare updates
+    const updates = {};
+
+    // Name validation
+    if (name !== undefined) {
+      if (typeof name !== "string" || name.trim().length < 2) {
+        errors.push("Name must be at least 2 characters long");
+      } else {
+        updates.name = name.trim();
+      }
+    }
+
+    // Phone validation
+    if (phone !== undefined) {
+      const phoneRegex = /^\+?[\d\s-]{10,}$/;
+      if (!phoneRegex.test(phone)) {
+        errors.push("Invalid phone number format");
+      } else {
+        // Check phone uniqueness
+        const existingUser = await User.findOne({
+          phone,
+          _id: { $ne: userId },
+        });
+        if (existingUser) {
+          errors.push("Phone number already in use");
+        } else {
+          updates.phone = phone;
+        }
+      }
+    }
+
+    // Email validation
+    if (email !== undefined) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        errors.push("Invalid email format");
+      } else {
+        updates.email = email;
+      }
+    }
+
+    // Date of birth validation
+    if (dateOfBirth !== undefined) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(dateOfBirth)) {
+        errors.push("Invalid date format. Use YYYY-MM-DD");
+      } else {
+        updates.dateOfBirth = dateOfBirth;
+      }
+    }
+
+    // Gender validation
+    if (Gender !== undefined) {
+      if (!["MALE", "FEMALE"].includes(Gender)) {
+        errors.push("Gender must be either MALE or FEMALE");
+      } else {
+        updates.Gender = Gender;
+      }
+    }
+
+    // Check if there are any validation errors
+    if (errors.length > 0) {
+      return res.status(400).json({ errors });
+    }
+
+    // Check if there are any fields to update
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: "No valid fields to update" });
+    }
+
+    // Apply updates
+    Object.assign(user, updates);
+    await user.save();
+
+    // Return updated user without sensitive information
+    const { password, otp, otpExpiresAt, ...userWithoutSensitive } =
+      user.toObject();
+
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      user: userWithoutSensitive,
+    });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    return res.status(500).json({
+      error: "An error occurred while updating the profile",
+      details: error.message,
+    });
+  }
+};
 
 exports.searchService = async (req, res, next) => {
   try {
@@ -255,27 +363,28 @@ exports.postOrderBooking = async (req, res, next) => {
     const bookingId = req.body.bookingId;
     const rating = req.body.rating;
     const orderId = req.body.orderId;
-    const sellerId=req.body.sellerId
+    const sellerId = req.body.sellerId;
     const content = req.body.content;
     const packageId = req.body.packageId;
-    const date=req.body.date;
+    const date = req.body.date;
     console.log(paymentType);
     console.log(req.body);
     const review = await ReviewModel({
       rating: rating,
       content: content,
-      productId: productId?productId:"",
+      reviewType: "ON-BOOKING",
+      productId: productId ? productId : "",
       orderId: orderId,
       userId: userId,
-      sellerId:sellerId,
-      bookingId:bookingId?bookingId:"",
-      date:date,
-      packageId:packageId?packageId:""
+      sellerId: sellerId,
+      bookingId: bookingId ? bookingId : "",
+      date: date,
+      packageId: packageId ? packageId : "",
     });
     await review.save();
     const booking = await BookingModel.findById(bookingId).populate({
-      path:'sellerId',
-      model:'Seller'
+      path: "sellerId",
+      model: "Seller",
     });
 
     const order = await Order.findById(orderId);
@@ -293,30 +402,35 @@ exports.postOrderBooking = async (req, res, next) => {
       booking.paymentType = paymentType;
     }
     await booking.save();
-    const foundToken=await tokenSchema.findOne({
-      sellerId:booking.sellerId
-    })
-    if(!foundToken){
+    const foundToken = await tokenSchema.findOne({
+      sellerId: booking.sellerId,
+    });
+    if (!foundToken) {
       return res.status(400).json({
-        message:"no user found"
-      })
+        message: "no user found",
+      });
     }
-    const token=foundToken.token
-    const deviceType=foundToken.deviceType
-    const appType=foundToken.appType
+    const token = foundToken.token;
+    const deviceType = foundToken.deviceType;
+    const appType = foundToken.appType;
     const message = {
-            notification: {
-                title: "Service completed",
-                body: `Your service has been completed by ${booking.sellerId.name}. Please confirm the service completion.`,
-                // ...(imageUrl && { image: imageUrl }), // Add image if available
-            },
-            token: token, // FCM token of the recipient device
-        };
-    const tokenResponse=await createSendPushNotification(deviceType,token,message,appType)
-    if(!tokenResponse){
+      notification: {
+        title: "Service completed",
+        body: `Your service has been completed by ${booking.sellerId.name}. Please confirm the service completion.`,
+        // ...(imageUrl && { image: imageUrl }), // Add image if available
+      },
+      token: token, // FCM token of the recipient device
+    };
+    const tokenResponse = await createSendPushNotification(
+      deviceType,
+      token,
+      message,
+      appType
+    );
+    if (!tokenResponse) {
       return res.status(400).json({
-        message:'No token found'
-      })
+        message: "No token found",
+      });
     }
     return res.status(200).json({ review });
   } catch (err) {
@@ -348,16 +462,15 @@ exports.getUser = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   try {
-    const {phoneNumber} = req.body;
+    const { phoneNumber } = req.body;
     console.log(phoneNumber);
     var user = await User.findOne({ phone: phoneNumber });
     console.log(user);
     if (!user) {
       return res.status(404).json({ error: "No user Found" });
-    } 
-     
-      return res.status(200).json({ user });
-    
+    }
+
+    return res.status(200).json({ user });
   } catch (err) {
     const error = new Error(err);
     error.httpStatusCode = 500;
@@ -481,7 +594,7 @@ exports.getUserAddress = async (req, res, next) => {
 
 exports.getUserTickets = catchAsync(async (req, res, next) => {
   const { page, userId } = req.query;
-  const limit=10;
+  const limit = 10;
   // Validate userId
   if (!userId) {
     return res.status(400).json({
@@ -535,17 +648,28 @@ exports.getSingleTicket = catchAsync(async (req, res, next) => {
 });
 exports.raiseTicket = async (req, res, next) => {
   try {
-    const {serviceId,date,issue,description,userId,sellerId,raisedBy,bookingId,serviceType,ticketType}=req.body
+    const {
+      serviceId,
+      date,
+      issue,
+      description,
+      userId,
+      sellerId,
+      raisedBy,
+      bookingId,
+      serviceType,
+      ticketType,
+    } = req.body;
     var ticket = await HelpCentre({
       issue: issue,
       description: description,
       userId: userId,
-      sellerId:sellerId?sellerId:"",
-      raisedBy:raisedBy,
+      sellerId: sellerId ? sellerId : "",
+      raisedBy: raisedBy,
       ticketType,
-      serviceType:serviceType?serviceType:"",
-      serviceId:serviceId?serviceId:'',
-      bookingId:bookingId?bookingId:"",
+      serviceType: serviceType ? serviceType : "",
+      serviceId: serviceId ? serviceId : "",
+      bookingId: bookingId ? bookingId : "",
       date,
       ticketHistory: [
         {
@@ -553,7 +677,7 @@ exports.raiseTicket = async (req, res, next) => {
           status: "raised",
           resolution: "",
         },
-      ]
+      ],
     });
 
     ticket.save();
@@ -681,3 +805,27 @@ exports.getAppHomePageServices = catchAsync(async (req, res, next) => {
   const services = await Service.find({ appHomepage: true });
   res.status(200).json({ success: true, services });
 });
+
+exports.checkServiceability = async (req, res, next) => {
+  try {
+    const { city, state, pinCode } = req.query;
+    const validation = await locationValidator.validateLocation(
+      city,
+      state,
+      pinCode
+    );
+
+    return res.status(200).json({
+      success: true,
+      isServiceable: validation.isValid,
+      message: validation.isValid
+        ? "Location is serviceable"
+        : validation.error,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: "Error checking serviceability",
+    });
+  }
+};

@@ -14,7 +14,7 @@ const packageModel = require("../models/packages");
 const tempOrder = require("../models/tempOrder");
 const { autoAssignBooking } = require("../util/autoAssignBooking");
 const { generateOrderId } = require("../util/generateOrderId");
-
+const locationValidator = require("../util/locationValidator");
 const instance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY,
   key_secret: process.env.RAZORPAY_API_SECRET,
@@ -35,7 +35,19 @@ exports.appOrder = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
+    const userAddress = await UserAddress.findById(userAddressId);
 
+    const validation = await locationValidator.validateLocation(
+      userAddress.userAddresscity,
+      userAddress.state,
+      userAddress.pinCode
+    );
+    if (!validation) {
+      res.status(403).json({
+        message: "Service is not available in your location.",
+        serviceable: false,
+      });
+    }
     // Extract cart data from the user's cart
     const products = cart["items"];
     // // Create an array to store order items
@@ -64,7 +76,6 @@ exports.appOrder = async (req, res, next) => {
         });
       }
     }
-    const userAddress = await UserAddress.findById(userAddressId);
     console.log(totalOrderval);
     const order = new Order({
       paymentType: cart["paymentType"],
@@ -355,7 +366,7 @@ exports.websiteCodOrder = async (req, res, next) => {
         },
       ],
     });
-    const orderId=await generateOrderId()
+    const orderId = await generateOrderId();
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -363,7 +374,17 @@ exports.websiteCodOrder = async (req, res, next) => {
     const orderItems = await generateOrderItems(items, bookings);
 
     const userAddress = await UserAddress.findById(userAddressId);
-
+    const validation = await locationValidator.validateLocation(
+      userAddress.userAddresscity,
+      userAddress.state,
+      userAddress.pinCode
+    );
+    if (!validation) {
+      res.status(403).json({
+        message: "Service is not available in your location.",
+        serviceable: false,
+      });
+    }
     const order = new Order({
       orderPlatform: "website",
       paymentType: "COD",
@@ -372,7 +393,7 @@ exports.websiteCodOrder = async (req, res, next) => {
       itemTotal,
       discount,
       tax,
-      orderId:orderId,
+      orderId: orderId,
       items: orderItems,
       couponId: couponId,
       user: {
@@ -448,7 +469,17 @@ exports.checkout = async (req, res, next) => {
     const orderItems = await generateOrderItems(items, bookings);
 
     const userAddress = await UserAddress.findById(userAddressId);
-
+    const validation = await locationValidator.validateLocation(
+      userAddress.userAddresscity,
+      userAddress.state,
+      userAddress.pinCode
+    );
+    if (!validation) {
+      res.status(403).json({
+        message: "Service is not available in your location.",
+        serviceable: false,
+      });
+    }
     const order = new tempOrder({
       orderPlatform: "website",
       paymentType: "Online",

@@ -37,7 +37,11 @@ const {
 } = require("./pushNotificationController");
 const schedule = require("node-schedule");
 const notificationSchema = require("../models/notificationSchema");
-const { generateOrderId, generateBookingId, generatePartnerId } = require("../util/generateOrderId");
+const {
+  generateOrderId,
+  generateBookingId,
+  generatePartnerId,
+} = require("../util/generateOrderId");
 const review = require("../models/review");
 const helpCenter = require("../models/helpCenter");
 const seller = require("../models/seller");
@@ -553,26 +557,26 @@ exports.updateSellerId = catchAsync(async (req, res, next) => {
   }
 
   res.status(200).json({
-    message: 'IDs updated successfully',
+    message: "IDs updated successfully",
   });
 });
 exports.deletePartnerIds = catchAsync(async (req, res, next) => {
-  const sellersWithPartnerId = await Seller.find({ partnerId: { $exists: true } });
+  const sellersWithPartnerId = await Seller.find({
+    partnerId: { $exists: true },
+  });
 
-  
   await Seller.updateMany({}, { $unset: { partnerId: "" } });
 
   res.status(200).json({
     success: true,
     message: "Partner IDs deleted successfully",
-    deleted: sellersWithPartnerId.map((seller) => seller._id), 
+    deleted: sellersWithPartnerId.map((seller) => seller._id),
   });
 });
 exports.resetCounter = catchAsync(async (req, res, next) => {
-  
   await counterSchema.findOneAndUpdate(
-    { name: 'partnerId' }, 
-    { value: 0 },         
+    { name: "partnerId" },
+    { value: 0 },
     { new: true, upsert: true }
   );
 
@@ -1414,7 +1418,7 @@ exports.getRecentOrders = catchAsync(async (req, res, next) => {
 
 exports.getOrderById = catchAsync(async (req, res, next) => {
   const orderId = req.query.orderId;
-  const order = await Order.findOne({orderId:orderId});
+  const order = await Order.findOne({ orderId: orderId });
 
   if (!order) {
     res.status(404).json({
@@ -1536,9 +1540,9 @@ exports.updateHelpCenter = catchAsync(async (req, res, next) => {
 
 // available city routes
 exports.createAvailableCities = catchAsync(async (req, res, next) => {
-  const { city, state, pinCode } = req.body;
+  const { city, state, pinCodes } = req.body;
 
-  if (!city || !state || !pinCode) {
+  if (!city || !state || !pinCodes) {
     return next(new AppError(400, "All the fields are required"));
   } else {
     const result = await AvailableCity.find({ city: city });
@@ -1548,7 +1552,7 @@ exports.createAvailableCities = catchAsync(async (req, res, next) => {
       await AvailableCity.create({
         city: city,
         state: state,
-        pinCode: pinCode,
+        pinCodes: pinCodes,
       });
       res
         .status(201)
@@ -1564,16 +1568,16 @@ exports.deleteAvailableCities = catchAsync(async (req, res, next) => {
 });
 
 exports.updateAvailableCities = catchAsync(async (req, res, next) => {
-  const { city, state, pinCode } = req.body;
+  const { city, state, pinCodes } = req.body;
   const id = req.params.id; // this is object id of available city
 
-  if (!city || !state || !pinCode) {
+  if (!city || !state || !pinCodes) {
     return next(new AppError(400, "All the fields are required"));
   } else {
     const result = await AvailableCity.findOne({ _id: id });
     result.city = city;
     result.state = state;
-    result.pinCode = pinCode;
+    result.pinCodes = pinCodes;
     await result.save();
     res.status(200).json({ success: true, message: "Data updated successful" });
   }
@@ -1643,24 +1647,22 @@ exports.deleteReview = catchAsync(async (req, res, next) => {
 });
 
 exports.filterReview = catchAsync(async (req, res, next) => {
-  const { date, serviceType,reviewType, page = 1 } = req.query;
+  const { date, serviceType, reviewType, page = 1 } = req.query;
   const pageNumber = parseInt(page);
-  const limit = 10; 
-  const skip = (pageNumber - 1) * limit; 
+  const limit = 10;
+  const skip = (pageNumber - 1) * limit;
 
-  
   let filter = {};
   if (date) {
-    filter.date = date; 
+    filter.date = date;
   }
-  if(reviewType){
-    filter.reviewType=reviewType
+  if (reviewType) {
+    filter.reviewType = reviewType;
   }
   if (serviceType) {
     filter.serviceType = serviceType;
   }
 
-  
   const filteredReviews = await review
     .find(filter)
     .populate({
@@ -1676,8 +1678,8 @@ exports.filterReview = catchAsync(async (req, res, next) => {
       model: "Product",
     })
     .sort({ createdAt: -1 })
-    .skip(skip) 
-    .limit(limit); 
+    .skip(skip)
+    .limit(limit);
 
   if (!filteredReviews || filteredReviews.length === 0) {
     return res.status(200).json({
@@ -1728,9 +1730,9 @@ exports.createReview = catchAsync(async (req, res, next) => {
     userId,
     date,
     serviceType,
-    orderId:orderId?orderId:null,
-    packageId:packageId?packageId:null,
-    bookingId:bookingId?bookingId:null,
+    orderId: orderId ? orderId : null,
+    packageId: packageId ? packageId : null,
+    bookingId: bookingId ? bookingId : null,
     reviewType,
   });
 
@@ -1740,30 +1742,30 @@ exports.createReview = catchAsync(async (req, res, next) => {
     data: newReview,
   });
 });
-exports.getBookingId=catchAsync(async(req,res,next)=>{
-  const bookingId= await generateBookingId()
+exports.getBookingId = catchAsync(async (req, res, next) => {
+  const bookingId = await generateBookingId();
   return res.status(200).json({
-    message:"found",
-    status:true,
-    data:bookingId
-  })
-})
-exports.updateBookingId=catchAsync(async(req,res,next)=>{
-  const foundBookings=await booking.find()
-  const length=foundBookings.length
-  for(let i=0;i<length-1;i++){
-    const bookingId=await generateBookingId()
-    const updatedBookings=await booking.findByIdAndUpdate(
+    message: "found",
+    status: true,
+    data: bookingId,
+  });
+});
+exports.updateBookingId = catchAsync(async (req, res, next) => {
+  const foundBookings = await booking.find();
+  const length = foundBookings.length;
+  for (let i = 0; i < length - 1; i++) {
+    const bookingId = await generateBookingId();
+    const updatedBookings = await booking.findByIdAndUpdate(
       foundBookings[i]._id,
-      {bookingId:bookingId},
+      { bookingId: bookingId },
       { new: true }
-    )
+    );
   }
   res.status(200).json({
     status: "success",
     message: "All bookings have been updated with new booking IDs.",
   });
-})
+});
 exports.getSingleReview = catchAsync(async (req, res, next) => {
   const { reviewId } = req.query;
 
@@ -1811,20 +1813,18 @@ exports.getSingleReview = catchAsync(async (req, res, next) => {
   });
 });
 
-
 exports.getOrderCountByStatus = catchAsync(async (req, res, next) => {
-
   const orderCounts = await order.aggregate([
     {
       $group: {
-        _id: "$status", 
+        _id: "$status",
         count: { $sum: 1 },
       },
     },
     {
       $project: {
-        status: "$_id", 
-        count: 1, 
+        status: "$_id",
+        count: 1,
         _id: 0,
       },
     },
@@ -1846,7 +1846,6 @@ exports.getOrderCountByStatus = catchAsync(async (req, res, next) => {
     data: orderCounts,
   });
 });
-
 
 // seller order controllers
 exports.getSellerList = catchAsync(async (req, res, next) => {
@@ -1982,10 +1981,11 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
   const skip = (pageNumber - 1) * limit;
 
   // Query the HelpCenter collection with the filters
-  const tickets = await HelpCenter.find(filter).populate({
-    path:"bookingId",
-    model:"Booking"
-  })
+  const tickets = await HelpCenter.find(filter)
+    .populate({
+      path: "bookingId",
+      model: "Booking",
+    })
     .sort({ createdAt: -1 }) // Sort by most recent tickets
     .skip(skip) // Skip the previous pages
     .limit(limit); // Limit the number of tickets per page
@@ -2017,10 +2017,11 @@ exports.getAllTickets = catchAsync(async (req, res, next) => {
   const skip = (page - 1) * limit;
 
   // Fetch paginated tickets
-  const tickets = await HelpCenter.find().populate({
-    path:"bookingId",
-    model:"Booking"
-  })
+  const tickets = await HelpCenter.find()
+    .populate({
+      path: "bookingId",
+      model: "Booking",
+    })
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(parseInt(limit));
@@ -2910,3 +2911,82 @@ exports.searchNotifications = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+exports.updateSellerStatus = async (req, res) => {
+  try {
+    const { sellerId, status } = req.body;
+    const errors = [];
+
+    // Find seller first
+    const seller = await Seller.findById(sellerId);
+    if (!seller) {
+      return res.status(404).json({ error: "Seller not found" });
+    }
+
+    // Validate status
+    const validStatuses = ["IN-REVIEW", "APPROVED", "REJECTED", "HOLD"];
+    if (!status) {
+      errors.push("Status is required");
+    } else if (!validStatuses.includes(status)) {
+      errors.push(`Status must be one of: ${validStatuses.join(", ")}`);
+    }
+
+    // Return if there are validation errors
+    if (errors.length > 0) {
+      return res.status(400).json({ errors });
+    }
+
+    // If status is the same, no need to update
+    if (seller.status === status) {
+      return res.status(200).json({
+        message: "No status change required",
+        seller,
+      });
+    }
+
+    // Update seller status
+    seller.status = status;
+    await seller.save();
+
+    // Additional actions based on status change
+    let message = "Seller status updated successfully";
+    switch (status) {
+      case "APPROVED":
+        // You could add additional logic here like:
+        // - Sending welcome email
+        // - Triggering partner ID generation
+        // - Activating seller's services
+        message = "Seller has been approved successfully";
+        break;
+      case "REJECTED":
+        // You could add additional logic here like:
+        // - Sending rejection notification
+        // - Deactivating services
+        message = "Seller has been rejected";
+        break;
+      case "HOLD":
+        // You could add additional logic here like:
+        // - Sending hold notification
+        // - Temporarily suspending services
+        message = "Seller has been put on hold";
+        break;
+      case "IN-REVIEW":
+        message = "Seller status set to review";
+        break;
+    }
+
+    // Remove sensitive information before sending response
+    const { password, ...sellerWithoutSensitive } = seller.toObject();
+
+    return res.status(200).json({
+      message,
+      seller: sellerWithoutSensitive,
+    });
+  } catch (error) {
+    console.error("Seller status update error:", error);
+    return res.status(500).json({
+      error: "An error occurred while updating seller status",
+      details: error.message,
+    });
+  }
+};

@@ -108,7 +108,7 @@ exports.getHomePageContents = async (req, res, next) => {
 
 exports.getPartnerReviews = catchAsync(async (req, res, next) => {
   const { sellerId, page } = req.query;
-  const limit = 10
+  const limit = 10;
 
   // Convert page and limit to integers
   const pageNumber = parseInt(page, 10);
@@ -116,7 +116,7 @@ exports.getPartnerReviews = catchAsync(async (req, res, next) => {
 
   // Validate sellerId
   if (!sellerId) {
-    return next(new AppError('Seller ID is required', 400));
+    return next(new AppError("Seller ID is required", 400));
   }
 
   // Calculate the number of documents to skip
@@ -129,7 +129,7 @@ exports.getPartnerReviews = catchAsync(async (req, res, next) => {
     .limit(limitNumber);
 
   if (!foundReviews || foundReviews.length === 0) {
-    return next(new AppError('No reviews found', 400));
+    return next(new AppError("No reviews found", 400));
   }
 
   // Get total count for the given seller
@@ -318,7 +318,7 @@ exports.getUserTickets = async (req, res, next) => {
 
 exports.getservicePartnerTickets = catchAsync(async (req, res, next) => {
   const { page, sellerId } = req.query;
-  const limit=10;
+  const limit = 10;
   // Validate userId
   if (!sellerId) {
     return res.status(400).json({
@@ -373,19 +373,29 @@ exports.getSingleTicket = catchAsync(async (req, res, next) => {
 
 exports.raiseTicket = async (req, res, next) => {
   try {
-    
-    const {serviceId,date,issue,description,userId,sellerId,raisedBy,bookingId,serviceType,ticketType}=req.body
+    const {
+      serviceId,
+      date,
+      issue,
+      description,
+      userId,
+      sellerId,
+      raisedBy,
+      bookingId,
+      serviceType,
+      ticketType,
+    } = req.body;
     var ticket = await HelpCentre({
       issue: issue,
       description: description,
-      userId: userId?userId:"",
-      sellerId:sellerId?sellerId:"",
-      raisedBy:raisedBy,
+      userId: userId ? userId : "",
+      sellerId: sellerId ? sellerId : "",
+      raisedBy: raisedBy,
       ticketType,
-      serviceType:serviceType?serviceType:"",
-      serviceId:serviceId?serviceId:'',
-      bookingId:bookingId?bookingId:"",
-      date
+      serviceType: serviceType ? serviceType : "",
+      serviceId: serviceId ? serviceId : "",
+      bookingId: bookingId ? bookingId : "",
+      date,
     });
 
     ticket.save();
@@ -440,57 +450,55 @@ exports.getServiceByCategory = async (req, res, next) => {
 };
 
 exports.createSeller = catchAsync(async (req, res, next) => {
-    var {
-      name,
-      legalName,
-      gstNumber,
-      phone,
-      status,
-      address,
-      password,
-      contactPerson,
-      categoryId,
-      services,
-    } = req.body;
-    // const {state,city,addressLine,pincode,location}=address
-    // const {name,phone,email}=contactPerson
+  var {
+    name,
+    legalName,
+    gstNumber,
+    phone,
+    status,
+    address,
+    password,
+    contactPerson,
+    categoryId,
+    services,
+  } = req.body;
+  // const {state,city,addressLine,pincode,location}=address
+  // const {name,phone,email}=contactPerson
 
-    if (
-      !name ||
-      // !legalName ||
-      // !gstNumber ||
-      !phone ||
-      !address ||
-      !password ||
-      // !contactPerson ||
-      !categoryId
-    ) {
-      return next(new AppError(400, "All the fields are required"))
-    } else {
-      const partnerId=await generatePartnerId()
-      bcrypt.genSalt(10, function (err, salt) {
-        bcrypt.hash(password, salt, async function (err, hash) {
-          if (err) {
-            res
-              .status(400)
-              .json({ success: false, message: "password enctyption error" });
-          } else {
-            req.body.password = hash;
-            req.body.partnerId = partnerId;
-            var seller = await SellerModel.create(req.body);
-            await SellerWallet.create({ sellerId: seller._id });
-            res.status(201).json({
-              success: true,
-              message: "Seller created successful",
-              seller: seller,
-            });
-          }
-        });
+  if (
+    !name ||
+    // !legalName ||
+    // !gstNumber ||
+    !phone ||
+    !address ||
+    !password ||
+    // !contactPerson ||
+    !categoryId
+  ) {
+    return next(new AppError(400, "All the fields are required"));
+  } else {
+    const partnerId = await generatePartnerId();
+    bcrypt.genSalt(10, function (err, salt) {
+      bcrypt.hash(password, salt, async function (err, hash) {
+        if (err) {
+          res
+            .status(400)
+            .json({ success: false, message: "password enctyption error" });
+        } else {
+          req.body.password = hash;
+          req.body.partnerId = partnerId;
+          var seller = await SellerModel.create(req.body);
+          await SellerWallet.create({ sellerId: seller._id });
+          res.status(201).json({
+            success: true,
+            message: "Seller created successful",
+            seller: seller,
+          });
+        }
       });
-    }
-  
+    });
+  }
 });
-
 
 exports.getAllSeller = async (req, res, next) => {
   try {
@@ -558,7 +566,7 @@ exports.updateSeller = async (req, res, next) => {
       !address ||
       !contactPerson
     ) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       var result = await SellerModel.findOne({ _id: id });
       result.name = name;
@@ -659,4 +667,56 @@ exports.getSellerCashout = async (req, res, next) => {
   }
   let.findOne({ sellerId: id });
   return res.json(wallet);
+};
+
+exports.checkSellerStatus = async (req, res, next) => {
+  try {
+    // Get sellerId from params or query
+    const sellerId = req.params.sellerId || req.query.sellerId;
+
+    if (!sellerId) {
+      return res.status(400).json({
+        error: "Seller ID is required",
+      });
+    }
+
+    // Find seller with minimal fields projection
+    const seller = await SellerModel.findById(sellerId)
+      .select("name status partnerId legalName")
+      .lean();
+
+    if (!seller) {
+      return res.status(404).json({
+        error: "Seller not found",
+      });
+    }
+
+    // Prepare response with status details
+    const statusDetails = {
+      current: seller.status,
+      isApproved: seller.status === "APPROVED",
+      isRejected: seller.status === "REJECTED",
+      isOnHold: seller.status === "HOLD",
+      isInReview: seller.status === "IN-REVIEW",
+      canOperate: seller.status === "APPROVED", // Business logic - only approved sellers can operate
+      lastUpdated: seller._id.getTimestamp(), // Get timestamp from MongoDB ObjectId
+    };
+
+    return res.status(200).json({
+      success: true,
+      seller: {
+        id: seller._id,
+        name: seller.name,
+        legalName: seller.legalName,
+        partnerId: seller.partnerId,
+      },
+      status: statusDetails,
+    });
+  } catch (error) {
+    console.error("Check seller status error:", error);
+    return res.status(500).json({
+      error: "An error occurred while checking seller status",
+      details: error.message,
+    });
+  }
 };

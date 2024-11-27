@@ -14,6 +14,11 @@ const reviewSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    reviewType: {
+      type: String,
+      required: true,
+      enum: ["ON-PRODUCT", "ON-BOOKING"],
+    },
     productId: {
       type: mongoose.Types.ObjectId,
       ref: "Product",
@@ -31,24 +36,28 @@ const reviewSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    serviceType:{
-      type:mongoose.Types.ObjectId,
-      ref:"Category"
-      
+    serviceType: {
+      type: mongoose.Types.ObjectId,
+      ref: "Category",
     },
-    bookingId:{
-      type:mongoose.Types.ObjectId,
-      ref:"Booking"
+    bookingId: {
+      type: mongoose.Types.ObjectId,
+      ref: "Booking",
     },
-    date:{
-      type:String,
+    date: {
+      type: String,
     },
-    reviewType:{
-      type:String,
-      enum:['service','product']
-    }
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    indexes: [
+      { reviewType: 1 },
+      { userId: 1 },
+      { productId: 1, reviewType: 1 },
+      { bookingId: 1, reviewType: 1 },
+      { serviceType: 1, reviewType: 1 },
+    ],
+  }
 );
 
 module.exports = mongoose.model("Review", reviewSchema);

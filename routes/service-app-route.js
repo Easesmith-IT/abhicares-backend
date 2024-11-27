@@ -62,9 +62,9 @@ router.get("/get-cashout/:id", serviceAppController.getSellerCashout);
 //tickets
 router.get("/get-tickets/:userId", serviceAppController.getUserTickets);
 router.post("/raise-ticket", serviceAppController.raiseTicket);
-router.get('/get-all-tickets',serviceAppController.getservicePartnerTickets)
+router.get("/get-all-tickets", serviceAppController.getservicePartnerTickets);
 // get reviews
-router.get('/get-reviews',serviceAppController.getPartnerReviews)
+router.get("/get-reviews", serviceAppController.getPartnerReviews);
 
 // Trace order routes
 router.post(
@@ -72,4 +72,8 @@ router.post(
   traceOrder_controller.addLocationToDatabase
 ); // passing booking id
 router.get("/get-booking-location/:id", traceOrder_controller.getOrderLocation); // passing booking id
+router.get(
+  "/get-partner-status/:sellerId",
+  serviceAppController.checkSellerStatus
+);
 module.exports = router;
