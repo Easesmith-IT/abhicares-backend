@@ -1643,21 +1643,24 @@ exports.deleteReview = catchAsync(async (req, res, next) => {
 });
 
 exports.filterReview = catchAsync(async (req, res, next) => {
-  const { date, serviceType, page = 1 } = req.query;
+  const { date, serviceType,reviewType, page = 1 } = req.query;
   const pageNumber = parseInt(page);
-  const limit = 10; // Number of reviews per page
-  const skip = (pageNumber - 1) * limit; // Calculate how many documents to skip
+  const limit = 10; 
+  const skip = (pageNumber - 1) * limit; 
 
-  // Build the filter object
+  
   let filter = {};
   if (date) {
-    filter.date = date; // Match exact date
+    filter.date = date; 
+  }
+  if(reviewType){
+    filter.reviewType=reviewType
   }
   if (serviceType) {
-    filter.serviceType = serviceType; // Match exact service type
+    filter.serviceType = serviceType;
   }
 
-  // Query the reviews with filters, sorting, and pagination
+  
   const filteredReviews = await review
     .find(filter)
     .populate({
@@ -1672,9 +1675,9 @@ exports.filterReview = catchAsync(async (req, res, next) => {
       path: "productId",
       model: "Product",
     })
-    .sort({ createdAt: -1 }) // Sort by most recent reviews
-    .skip(skip) // Skip documents for pagination
-    .limit(limit); // Limit results per page
+    .sort({ createdAt: -1 })
+    .skip(skip) 
+    .limit(limit); 
 
   if (!filteredReviews || filteredReviews.length === 0) {
     return res.status(200).json({
