@@ -1982,7 +1982,10 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
   const skip = (pageNumber - 1) * limit;
 
   // Query the HelpCenter collection with the filters
-  const tickets = await HelpCenter.find(filter)
+  const tickets = await HelpCenter.find(filter).populate({
+    path:"bookingId",
+    model:"Booking"
+  })
     .sort({ createdAt: -1 }) // Sort by most recent tickets
     .skip(skip) // Skip the previous pages
     .limit(limit); // Limit the number of tickets per page
@@ -2014,7 +2017,10 @@ exports.getAllTickets = catchAsync(async (req, res, next) => {
   const skip = (page - 1) * limit;
 
   // Fetch paginated tickets
-  const tickets = await HelpCenter.find()
+  const tickets = await HelpCenter.find().populate({
+    path:"bookingId",
+    model:"Booking"
+  })
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(parseInt(limit));
