@@ -1414,7 +1414,7 @@ exports.getRecentOrders = catchAsync(async (req, res, next) => {
 
 exports.getOrderById = catchAsync(async (req, res, next) => {
   const orderId = req.query.orderId;
-  const order = await Order.findOne(orderId);
+  const order = await Order.findOne({orderId:orderId});
 
   if (!order) {
     res.status(404).json({
