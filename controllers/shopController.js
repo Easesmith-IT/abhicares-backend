@@ -15,6 +15,67 @@ const UserReferalLink = require("../models/userReferealLink");
 const AppError = require("../util/appError");
 const catchAsync = require("../util/catchAsync");
 const mongoose = require("mongoose");
+
+/////////////////////////
+
+const updateServiceRating = async (serviceId, serviceType) => {
+  try {
+    const Model = serviceType === "product" ? Product : Package;
+
+    const stats = await Review.aggregate([
+      {
+        $match: {
+          [serviceType === "product" ? "productId" : "packageId"]:
+            new mongoose.Types.ObjectId(serviceId),
+          reviewType: "ON-BOOKING",
+          status: "APPROVED",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+          ratingCounts: { $push: "$rating" },
+        },
+      },
+    ]);
+
+    const ratingData =
+      stats.length > 0
+        ? {
+            rating: parseFloat(stats[0].averageRating.toFixed(1)),
+            totalReviews: stats[0].totalReviews,
+            ratingDistribution: {
+              5: stats[0].ratingCounts.filter((r) => r === 5).length,
+              4: stats[0].ratingCounts.filter((r) => r === 4).length,
+              3: stats[0].ratingCounts.filter((r) => r === 3).length,
+              2: stats[0].ratingCounts.filter((r) => r === 2).length,
+              1: stats[0].ratingCounts.filter((r) => r === 1).length,
+            },
+          }
+        : {
+            rating: 0,
+            totalReviews: 0,
+            ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+          };
+
+    await Model.findByIdAndUpdate(serviceId, {
+      $set: {
+        rating: ratingData.rating,
+        totalReviews: ratingData.totalReviews,
+        ratingDistribution: ratingData.ratingDistribution,
+      },
+    });
+
+    return ratingData;
+  } catch (error) {
+    console.error("Error updating service rating:", error);
+    throw error;
+  }
+};
+
+/////////////////////////
 exports.getAllCategory = catchAsync(async (req, res, next) => {
   const result = await Category.find();
   res.status(200).json({
@@ -743,5 +804,74 @@ exports.getReferralCredits = catchAsync(async (req, res, next) => {
     credits,
     creditsAvailable,
     noOfUsersAppliedCoupon: userRefDoc.noOfUsersAppliedCoupon,
+  });
+});
+
+exports.addBookingReview = catchAsync(async (req, res, next) => {
+  const { bookingId, rating, title, content, serviceType, serviceId } =
+    req.body;
+
+  // Validate rating
+  if (!rating || rating < 1 || rating > 5) {
+    return next(
+      new AppError("Please provide a valid rating between 1 and 5", 400)
+    );
+  }
+
+  // Find booking and verify ownership
+  const booking = await Booking.findOne({
+    _id: bookingId,
+    userId: req.user._id,
+  });
+
+  if (!booking) {
+    return next(new AppError("Booking not found or unauthorized", 404));
+  }
+
+  // Check if booking is completed
+  if (booking.status !== "COMPLETED") {
+    return next(new AppError("Can only review completed bookings", 400));
+  }
+
+  // Check for existing review
+  const existingReview = await Review.findOne({
+    bookingId,
+    userId: req.user._id,
+  });
+
+  if (existingReview) {
+    return next(new AppError("You have already reviewed this booking", 400));
+  }
+
+  // Determine if it's a product or package
+  const serviceField = serviceType === "product" ? "productId" : "packageId";
+
+  // Create the review
+  const review = await Review.create({
+    title,
+    content,
+    rating,
+    userId: req.user._id,
+    bookingId,
+    [serviceField]: serviceId,
+    reviewType: "ON-BOOKING",
+    status: "APPROVED", // or 'PENDING' based on your requirements
+    serviceType: booking.categoryId, // Assuming categoryId exists in booking
+  });
+
+  // Update service rating
+  await updateServiceRating(serviceId, serviceType);
+
+  return res.status(201).json({
+    status: "success",
+    message: "Review added successfully",
+    data: {
+      review,
+      serviceDetails: {
+        type: serviceType,
+        name: booking.serviceId.name,
+        id: booking.serviceId._id,
+      },
+    },
   });
 });
