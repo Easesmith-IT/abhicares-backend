@@ -445,6 +445,7 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
 
 exports.checkout = catchAsync(async (req, res, next) => {
   const {
+    platformType,
     itemTotal,
     discount,
     tax,
@@ -454,7 +455,9 @@ exports.checkout = catchAsync(async (req, res, next) => {
     referalDiscount,
   } = req.body;
   const user = req.user;
-
+  if (!user) {
+    return next(new AppError("User not found.", 404));
+  }
   let referalDis = null;
   if (referalDiscount) referalDis = referalDiscount;
 
@@ -464,7 +467,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
   if (req.body.couponId) {
     couponId = req.body.couponId;
   }
-
+  
   const cart = await Cart.findOne({ userId: user._id }).populate({
     path: "items",
     model: "Cart",
@@ -480,9 +483,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
     ],
   });
 
-  if (!user) {
-    return next(new AppError("User not found.", 404));
-  }
+  
   const items = cart.items;
 
   const orderItems = await generateOrderItems(items, bookings);
@@ -534,7 +535,8 @@ exports.checkout = catchAsync(async (req, res, next) => {
   };
   const createdOrder = await instance.orders.create(options);
 // For sending notifications
-  const foundToken=await tokenSchema.findOne({
+  if(platformType==="android"){
+    const foundToken=await tokenSchema.findOne({
     userId:user._id
   })
   if(!foundToken){
@@ -558,7 +560,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
     return res.status(400).json({
       message:'No token found'
     })
-  }
+  }}
   res.status(200).json({
     success: true,
     message: "order created",
