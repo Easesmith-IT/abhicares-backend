@@ -7,6 +7,8 @@ const paymentController = require("../controllers/paymentsController");
 const authController = require("../controllers/authController");
 const contentController = require("../controllers/contentController.js");
 
+router.get("/get-auto", appController.autoReview);
+
 //homepage route
 router.get("/get-homepage-hero-banners", appController.getHomePageHeroBanners);
 router.get("/get-homepage-banners", appController.getHomePageBanners);

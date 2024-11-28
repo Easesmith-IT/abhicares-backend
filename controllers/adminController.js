@@ -2295,27 +2295,44 @@ exports.deleteBooking = catchAsync(async (req, res, next) => {
 // coupon controllers
 
 exports.createCoupon = catchAsync(async (req, res, next) => {
-  const { name, offPercentage, description, noOfTimesPerUser } = req.body;
+  const {
+    name,
+    offPercentage,
+    categoryType, // Array of category IDs
+    maxDiscount,
+    discountType,
+    description,
+    noOfTimesPerUser,
+  } = req.body;
 
-  if (!name || !offPercentage || !description) {
-    return next(new AppError(400, "All the fields are required"));
-  } else {
-    const result = await Coupon.find({ name: name });
-    if (result.length > 0) {
-      return next(new AppError(400, "Coupon already exist"));
-    } else {
-      await Coupon.create({
-        name,
-        offPercentage,
-        description,
-        noOfTimesPerUser,
-      });
-      res
-        .status(201)
-        .json({ success: true, message: "Data inserted successful" });
-    }
+  // Validate required fields
+  if (!name || !offPercentage || !description || !categoryType || categoryType.length === 0) {
+    return next(new AppError(400, "All fields, including at least one category, are required"));
   }
+
+  // Check if coupon already exists
+  const existingCoupon = await Coupon.findOne({ name });
+  if (existingCoupon) {
+    return next(new AppError(400, "Coupon already exists"));
+  }
+
+  // Create the coupon
+  await Coupon.create({
+    name,
+    offPercentage,
+    categoryType,
+    maxDiscount,
+    discountType,
+    description,
+    noOfTimesPerUser,
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "Coupon created successfully",
+  });
 });
+
 
 exports.deleteCoupon = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is object id
@@ -2324,7 +2341,7 @@ exports.deleteCoupon = catchAsync(async (req, res, next) => {
 });
 
 exports.updateCoupon = catchAsync(async (req, res, next) => {
-  const { name, offPercentage, description, status, noOfTimesPerUser } =
+  const { name, offPercentage, description, status, noOfTimesPerUser,categoryType,maxDiscount,discountType } =
     req.body;
   const id = req.params.id; // this is object id of available city
 
@@ -2337,6 +2354,9 @@ exports.updateCoupon = catchAsync(async (req, res, next) => {
     result.description = description;
     result.noOfTimesPerUser = noOfTimesPerUser;
     result.status = status;
+    result.categoryType=categoryType,
+    result.maxDiscount=maxDiscount,
+    result.discountType=discountType
     await result.save();
     res.status(200).json({ success: true, message: "Data updated successful" });
   }

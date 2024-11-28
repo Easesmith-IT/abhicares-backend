@@ -4,10 +4,9 @@ const { userAuth, userAuthForCart } = require("../middleware/auth");
 const isCity = require("../middleware/availableCity");
 
 // controllers
-const shoppingController = require('../controllers/shopController')
-const authController = require('../controllers/authController')
+const shoppingController = require("../controllers/shopController");
+const authController = require("../controllers/authController");
 const paymentController = require("../controllers/paymentsController");
-
 
 // Category routes
 router.get("/get-all-category", shoppingController.getAllCategory);
@@ -22,8 +21,7 @@ router.get("/get-all-product/:id", shoppingController.getServiceProduct); //pass
 router.post("/create-enquiry", shoppingController.createEnquiry);
 // Package Routes
 router.get("/get-service-package/:id", shoppingController.getServicePackage);
-router.get("/get-package-product/:id", shoppingController.getPackageProduct); 
-
+router.get("/get-package-product/:id", shoppingController.getPackageProduct);
 
 //Cart Routes
 router.get("/cart-details", userAuthForCart, shoppingController.getCart);
@@ -32,7 +30,11 @@ router.post(
   userAuthForCart,
   shoppingController.removeItemFromCart
 ); //product id
-router.post("/add-item-cart", userAuthForCart, shoppingController.addItemToCart);
+router.post(
+  "/add-item-cart",
+  userAuthForCart,
+  shoppingController.addItemToCart
+);
 router.post(
   "/update-item-quantity/:id",
   userAuthForCart,
@@ -47,16 +49,8 @@ router.get("/logout-user", authController.logoutUser);
 // special routes
 // router.post("/get-user-by-token", auth_controller.getUserByToken);
 // User Address Routes
-router.post(
-  "/create-user-address",
-  userAuth,
-  authController.addUserAddress
-);
-router.get(
-  "/get-user-address",
-  userAuth,
-  authController.getAllAddresses
-); //passing user id
+router.post("/create-user-address", userAuth, authController.addUserAddress);
+router.get("/get-user-address", userAuth, authController.getAllAddresses); //passing user id
 router.delete(
   "/delete-user-address/:id",
   userAuth,
@@ -69,9 +63,14 @@ router.patch(
 ); // passing address id
 // CMS Routes
 
-router.get("/get-products-by-categoryId/:id", shoppingController.getCategoryService);
+router.get(
+  "/get-products-by-categoryId/:id",
+  shoppingController.getCategoryService
+);
 
 // Review Routes
+router.post("/add-booking-review", shoppingController.addBookingReview);
+
 router.post(
   "/add-product-review/:id",
   userAuth,
@@ -89,8 +88,7 @@ router.patch(
   shoppingController.updateProductReview
 );
 // review id
-router.get("/get-product-review/:id", shoppingController.getProductReview); 
-
+router.get("/get-product-review/:id", shoppingController.getProductReview);
 
 //order Routes
 router.post(
@@ -118,7 +116,6 @@ router.post(
 );
 router.post("/get-api-key", userAuth, paymentController.getApiKey);
 
-
 // FAQ Routes
 router.get("/get-all-faq", userAuth, shoppingController.getAllFaq);
 
@@ -131,9 +128,7 @@ router.post("/get-coupon-details", userAuth, shoppingController.getCouponByName)
 router.post("/get-referralCredits", userAuth, shoppingController.getReferralCredits);
 
 // user profile routes
-router.post('/update-email',userAuth,authController.updateEmail)
-router.get('/user-info',userAuth,authController.userInfo)
-
-
+router.post("/update-email", userAuth, authController.updateEmail);
+router.get("/user-info", userAuth, authController.userInfo);
 
 module.exports = router;
