@@ -384,8 +384,8 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
 
   if (orderItems) {
     const userAddress = await UserAddress.findById(userAddressId);
-  const orderId=await generateOrderId()
-  if(!response){
+    const orderId=await generateOrderId()
+  if(!orderId){
     return next(new AppError('no response while creating orderId',400))
   }
     const order = new Order({

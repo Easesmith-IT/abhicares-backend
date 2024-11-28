@@ -1540,26 +1540,45 @@ exports.updateHelpCenter = catchAsync(async (req, res, next) => {
 
 // available city routes
 exports.createAvailableCities = catchAsync(async (req, res, next) => {
-  const { city, state, pinCodes } = req.body;
+  const { city, state, pinCode } = req.body;
 
-  if (!city || !state || !pinCodes) {
-    return next(new AppError(400, "All the fields are required"));
-  } else {
-    const result = await AvailableCity.find({ city: city });
-    if (result.length > 0) {
-      return next(new AppError(400, "City already exist"));
-    } else {
-      await AvailableCity.create({
-        city: city,
-        state: state,
-        pinCodes: pinCodes,
-      });
-      res
-        .status(201)
-        .json({ success: true, message: "Data inserted successful" });
-    }
+  if (!city || !state || !pinCode) {
+    return next(new AppError(400, "City, state, and pinCode are required"));
   }
+
+  // Check if the city-state combination already exists
+  const existingCity = await AvailableCity.findOne({ city, state });
+
+  if (existingCity) {
+    // Check if the pinCode already exists in this city-state combination
+    const isPinCodeExists = existingCity.pinCodes.some(
+      (p) => p.code === parseInt(pinCode) // Convert pinCode to number for comparison
+    );
+
+    if (isPinCodeExists) {
+      return next(new AppError(400, "PinCode already exists for this city"));
+    }
+
+    // Add the new pinCode to the existing city
+    existingCity.pinCodes.push({ code: parseInt(pinCode) }); // Add new pinCode object
+    await existingCity.save();
+    return res
+      .status(200)
+      .json({ success: true, message: "PinCode added to existing city" });
+  }
+
+  // Create a new city entry with the provided pinCode
+  const newCity = await AvailableCity.create({
+    city,
+    state,
+    pinCodes: [{ code: parseInt(pinCode) }], // Save pinCode as an object in the array
+  });
+
+  res
+    .status(201)
+    .json({ success: true, message: "City and PinCode added successfully", data: newCity });
 });
+
 
 exports.deleteAvailableCities = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is object id
