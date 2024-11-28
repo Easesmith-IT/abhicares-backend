@@ -575,6 +575,7 @@ exports.paymentVerification = catchAsync(async (req, res, next) => {
     razorpay_payment_id,
     razorpay_signature,
     productId,
+    orderId
   } = req.body;
 
   const body = razorpay_order_id + "|" + razorpay_payment_id;
@@ -605,6 +606,7 @@ exports.paymentVerification = catchAsync(async (req, res, next) => {
       items: result.items,
       couponId: result.couponId,
       user: result.user,
+      orderId
     });
 
     await order.save();
