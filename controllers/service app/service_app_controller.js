@@ -669,11 +669,11 @@ exports.getSellerCashout = async (req, res, next) => {
   return res.json(wallet);
 };
 
-exports.checkSellerStatus = async (req, res, next) => {
-  try {
+exports.checkSellerStatus = catchAsync(async (req, res, next) => {
+  
     // Get sellerId from params or query
-    const sellerId = req.params.sellerId || req.query.sellerId;
-
+    const {sellerId} = req.query
+    console.log('seller id',sellerId)
     if (!sellerId) {
       return res.status(400).json({
         error: "Seller ID is required",
@@ -712,11 +712,5 @@ exports.checkSellerStatus = async (req, res, next) => {
       },
       status: statusDetails,
     });
-  } catch (error) {
-    console.error("Check seller status error:", error);
-    return res.status(500).json({
-      error: "An error occurred while checking seller status",
-      details: error.message,
-    });
-  }
-};
+
+})
