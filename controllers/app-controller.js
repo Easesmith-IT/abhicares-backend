@@ -534,6 +534,7 @@ exports.AddUserAddress = async (req, res, next) => {
     const addressLine = req.body.addressLine;
     const pincode = req.body.pincode;
     const city = req.body.city;
+    const state = req.body.satate;
     const userId = req.body.userId;
     const landmark = req.body.landmark;
     const lat = req.body.lat;
@@ -543,6 +544,7 @@ exports.AddUserAddress = async (req, res, next) => {
       pincode: pincode,
       landmark: landmark,
       city: city,
+      state: state,
       userId: userId,
       location: {
         coordinates: [lat, long],
