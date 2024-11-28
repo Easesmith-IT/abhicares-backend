@@ -695,38 +695,56 @@ exports.getUserHelpCenter = catchAsync(async (req, res, next) => {
 });
 
 exports.getCouponByName = catchAsync(async (req, res, next) => {
-  const { name } = req.body;
-  const userId = req.user._id;
-  if (!name) {
-    return next(new AppError("All Fields are required", 400));
+  const { name, serviceCategoryType,userId } = req.body; // serviceCategoryType is an array
+  // const userId = req.user._id;
+
+  if (!name || !serviceCategoryType || !Array.isArray(serviceCategoryType)) {
+    return next(new AppError("All fields are required and serviceCategoryType must be an array", 400));
   }
 
   const result = await Coupon.find({ name: name });
   if (result.length === 0) {
-    return next(new AppError(400, "Coupon not found"));
+    return next(new AppError("Coupon not found", 400));
   }
 
+  // Get the coupon
+  const coupon = result[0];
+
+  // Check if all category IDs in serviceCategoryType match the coupon's categoryType
+  const couponCategoryIds = coupon.categoryType.map((id) => id.toString());
+  const isValidCategoryType = serviceCategoryType.every((id) =>
+    couponCategoryIds.includes(id.toString())
+  );
+
+  if (!isValidCategoryType) {
+    return next(
+      new AppError("This coupon is not valid for the selected product/service type", 400)
+    );
+  }
+
+  // Check if the user has already used this coupon
   const orders = await Order.find({ "user.userId": userId });
-  const { noOfTimesPerUser } = result[0];
+  const { noOfTimesPerUser } = coupon;
+
   console.log("noOfTimesPerUser", noOfTimesPerUser);
 
   let couponUseCount = 0;
 
   orders.forEach((order) => {
-    if (
-      order.couponId &&
-      order.couponId.toString() === result[0]._id.toString()
-    )
+    if (order.couponId && order.couponId.toString() === coupon._id.toString()) {
       couponUseCount++;
+    }
   });
 
   console.log("couponUseCount", couponUseCount);
+
   if (couponUseCount >= noOfTimesPerUser) {
     return next(new AppError("You have already used this coupon!", 400));
   }
 
-  res.status(200).json({ success: true, message: "Your coupon", data: result });
+  res.status(200).json({ success: true, message: "Your coupon", data: coupon });
 });
+
 
 exports.getReferralCredits = catchAsync(async (req, res, next) => {
   const userId = req.user._id;
