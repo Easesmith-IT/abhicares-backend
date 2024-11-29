@@ -968,16 +968,34 @@ exports.getAllAddressesByUserId = catchAsync(async (req, res, next) => {
 
 exports.updateUserByAdmin = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is object id
-  const { name, phone } = req.body;
-  if (!name || !phone) {
-    return next(new AppError(400, "All the fields are required"));
-  } else {
-    var result = await User.findOne({ _id: id });
-    result.name = name;
-    result.phone = phone;
-    await result.save();
+  const { name, phone,email, dateOfBirth, Gender  } = req.body;
+  
+    const user={}
+    if(name){
+      user.name=name
+    }
+    if(phone){
+      user.phone=phone
+    }
+    if(email){
+      user.email=email
+    }
+    if(dateOfBirth){
+      user.name=name
+    }
+    if(Gender){
+      user.Gender=Gender
+    }
+    var result = await User.findOneAndUpdate({ _id: id },
+      user,
+      {new:true}
+    );
+
+   if(!result){
+    return next(new AppError('somethng went wrong while updating user Details'))
+   }
     res.status(200).json({ success: true, message: "user updated successful" });
-  }
+ 
 });
 
 exports.deleteUser = catchAsync(async (req, res, next) => {
