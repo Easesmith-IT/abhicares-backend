@@ -990,9 +990,10 @@ exports.updateUserByAdmin = catchAsync(async (req, res, next) => {
       user,
       {new:true}
     );
-    result.name = name;
-    result.phone = phone;
-    await result.save();
+
+   if(!result){
+    return next(new AppError('somethng went wrong while updating user Details'))
+   }
     res.status(200).json({ success: true, message: "user updated successful" });
  
 });
