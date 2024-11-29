@@ -342,7 +342,7 @@ router.delete(
   adminController.deleteCoupon
 ); // passing object id
 router.patch(
-  "/update-coupon/:id",
+  "/update-coupon",
   isAdminAuth,
   authorize("offers", "write"),
   adminController.updateCoupon

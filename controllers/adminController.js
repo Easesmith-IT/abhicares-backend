@@ -2343,26 +2343,51 @@ exports.deleteCoupon = catchAsync(async (req, res, next) => {
 });
 
 exports.updateCoupon = catchAsync(async (req, res, next) => {
-  const { name, offPercentage, description, status, noOfTimesPerUser,categoryType,maxDiscount,discountType } =
-    req.body;
-  const id = req.params.id; // this is object id of available city
+  const {
+    name,
+    offPercentage,
+    description,
+    status,
+    noOfTimesPerUser,
+    categoryType,
+    maxDiscount,
+    discountType,
+    couponFixedValue,
+    id
+  } = req.body;
 
-  if (!name || !offPercentage || !description || !status) {
-    return next(new AppError(400, "All the fields are required"));
-  } else {
-    const result = await Coupon.findOne({ _id: id });
-    result.name = name;
-    result.offPercentage = offPercentage;
-    result.description = description;
-    result.noOfTimesPerUser = noOfTimesPerUser;
-    result.status = status;
-    result.categoryType=categoryType,
-    result.maxDiscount=maxDiscount,
-    result.discountType=discountType
-    await result.save();
-    res.status(200).json({ success: true, message: "Data updated successful" });
+  // Validate mandatory fields
+  if (!name || !description || !status) {
+    return next(new AppError(400, "All the required fields are missing"));
   }
+
+  // Find the coupon by ID
+  const coupon = await Coupon.findById(id);
+  if (!coupon) {
+    return next(new AppError(404, "Coupon not found"));
+  }
+
+  // Update the fields
+  coupon.name = name;
+  coupon.offPercentage = offPercentage;
+  coupon.description = description;
+  coupon.status = status;
+  coupon.noOfTimesPerUser = noOfTimesPerUser || coupon.noOfTimesPerUser; 
+  coupon.categoryType = categoryType;
+  coupon.maxDiscount = maxDiscount || coupon.maxDiscount; 
+  coupon.discountType = discountType || coupon.discountType; 
+  coupon.couponFixedValue = couponFixedValue || coupon.couponFixedValue;
+
+  
+  await coupon.save();
+
+ 
+  res.status(200).json({
+    success: true,
+    message: "Data updated successfully",
+    data: coupon, 
 });
+})
 
 exports.getAllCoupons = catchAsync(async (req, res, next) => {
   const result = await Coupon.find();
