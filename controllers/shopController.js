@@ -15,6 +15,7 @@ const UserReferalLink = require("../models/userReferealLink");
 const AppError = require("../util/appError");
 const catchAsync = require("../util/catchAsync");
 const mongoose = require("mongoose");
+const Booking = require("../models/booking");
 
 /////////////////////////
 
@@ -858,9 +859,9 @@ exports.getReferralCredits = catchAsync(async (req, res, next) => {
 });
 
 exports.addBookingReview = catchAsync(async (req, res, next) => {
-  const { bookingId, rating, title, content, serviceType, serviceId } =
+  const { userId,bookingId, rating, title, content, serviceType, serviceId } =
     req.body;
-
+   console.log(req.body,'req.body')
   // Validate rating
   if (!rating || rating < 1 || rating > 5) {
     return next(
@@ -869,24 +870,24 @@ exports.addBookingReview = catchAsync(async (req, res, next) => {
   }
 
   // Find booking and verify ownership
-  const booking = await Booking.findOne({
+  const foundBooking = await Booking.findOne({
     _id: bookingId,
-    userId: req.user._id,
+    userId: userId,
   });
-
-  if (!booking) {
+  //  console.log(booking, 'booking')
+  if (!foundBooking) {
     return next(new AppError("Booking not found or unauthorized", 404));
   }
 
   // Check if booking is completed
-  if (booking.status !== "COMPLETED") {
+  if (foundBooking.status !== "completed") {
     return next(new AppError("Can only review completed bookings", 400));
   }
 
   // Check for existing review
   const existingReview = await Review.findOne({
     bookingId,
-    userId: req.user._id,
+    userId: userId,
   });
 
   if (existingReview) {
@@ -901,12 +902,12 @@ exports.addBookingReview = catchAsync(async (req, res, next) => {
     title,
     content,
     rating,
-    userId: req.user._id,
+    userId: userId,
     bookingId,
     [serviceField]: serviceId,
     reviewType: "ON-BOOKING",
     status: "APPROVED", // or 'PENDING' based on your requirements
-    serviceType: booking.categoryId, // Assuming categoryId exists in booking
+    serviceType: foundBooking.categoryId, // Assuming categoryId exists in booking
   });
 
   // Update service rating
@@ -915,13 +916,5 @@ exports.addBookingReview = catchAsync(async (req, res, next) => {
   return res.status(201).json({
     status: "success",
     message: "Review added successfully",
-    data: {
-      review,
-      serviceDetails: {
-        type: serviceType,
-        name: booking.serviceId.name,
-        id: booking.serviceId._id,
-      },
-    },
   });
 });
