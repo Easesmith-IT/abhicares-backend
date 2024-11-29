@@ -2311,6 +2311,47 @@ exports.deleteBooking = catchAsync(async (req, res, next) => {
 });
 
 // coupon controllers
+exports.filterPartner = catchAsync(async (req, res, next) => {
+  const { status, page = 1, limit = 10 } = req.query;
+  
+  
+  if (!status) {
+    return next(new AppError('No status found', 400));
+  }
+
+  
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const foundPartners = await Seller.find({ status: status.toUpperCase() })
+    .skip(skip) 
+    .limit(limitNumber); 
+
+  
+  if (!foundPartners || foundPartners.length === 0) {
+    return res.status(200).json({
+      message: "No partners found",
+      data: [],
+    });
+  }
+
+  
+  const totalPartners = await Seller.countDocuments({ status: status.toUpperCase() });
+
+  
+  res.status(200).json({
+    message: "Partners fetched successfully",
+    data: foundPartners,
+    pagination: {
+      total: totalPartners, 
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalPartners / limitNumber), 
+    },
+  });
+});
+
 
 exports.createCoupon = catchAsync(async (req, res, next) => {
   const {
