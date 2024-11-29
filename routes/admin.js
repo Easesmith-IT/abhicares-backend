@@ -331,8 +331,8 @@ router.get(
 // coupons Routes
 router.post(
   "/create-coupon",
-  // isAdminAuth,
-  // authorize("offers", "write"),
+  isAdminAuth,
+  authorize("offers", "write"),
   adminController.createCoupon
 );
 router.delete(

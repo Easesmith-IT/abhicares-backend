@@ -2303,7 +2303,7 @@ exports.createCoupon = catchAsync(async (req, res, next) => {
     discountType,
     description,
     noOfTimesPerUser,
-    fixedCouponValue
+    couponFixedValue
   } = req.body;
 
   // Validate required fields
@@ -2326,7 +2326,7 @@ exports.createCoupon = catchAsync(async (req, res, next) => {
     discountType,
     description,
     noOfTimesPerUser,
-    fixedCouponValue:fixedCouponValue?fixedCouponValue:""
+    couponFixedValue:couponFixedValue?couponFixedValue:""
   });
 
   res.status(201).json({
