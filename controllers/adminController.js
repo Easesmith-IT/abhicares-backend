@@ -1913,36 +1913,36 @@ exports.allotSeller = catchAsync(async (req, res, next) => {
   bookingData.status = "alloted";
   await bookingData.save();
 
-  const foundToken = await tokenSchema.findOne({
-    userId: bookingData.userId,
-  });
-  if (!foundToken) {
-    return res.status(400).json({
-      message: "no user found",
-    });
-  }
-  const token = foundToken.token;
-  const deviceType = foundToken.deviceType;
-  const appType = foundToken.appType;
-  const message = {
-    notification: {
-      title: "service Partner Assigned",
-      body: `${bookingData.sellerId.name} has been assigned to your service request. They will call you shortly.`,
-      // ...(imageUrl && { image: imageUrl }), // Add image if available
-    },
-    token: token, // FCM token of the recipient device
-  };
-  const tokenResponse = await createSendPushNotification(
-    deviceType,
-    token,
-    message,
-    appType
-  );
-  if (!tokenResponse) {
-    return res.status(400).json({
-      message: "No token found",
-    });
-  }
+  // const foundToken = await tokenSchema.findOne({
+  //   userId: bookingData.userId,
+  // });
+  // if (!foundToken) {
+  //   return res.status(400).json({
+  //     message: "no user found",
+  //   });
+  // }
+  // const token = foundToken.token;
+  // const deviceType = foundToken.deviceType;
+  // const appType = foundToken.appType;
+  // const message = {
+  //   notification: {
+  //     title: "service Partner Assigned",
+  //     body: `${bookingData.sellerId.name} has been assigned to your service request. They will call you shortly.`,
+  //     // ...(imageUrl && { image: imageUrl }), // Add image if available
+  //   },
+  //   token: token, // FCM token of the recipient device
+  // };
+  // const tokenResponse = await createSendPushNotification(
+  //   deviceType,
+  //   token,
+  //   message,
+  //   appType
+  // );
+  // if (!tokenResponse) {
+  //   return res.status(400).json({
+  //     message: "No token found",
+  //   });
+  // }
   res.status(200).json({
     success: true,
     message: "Seller order created successful",
