@@ -13,13 +13,17 @@ const offerCouponSchema=new mongoose.Schema({
       type:String,
       enum:['fixed','percentage']
      },
+     couponFixedValue:{
+      type:String,
+
+     },
      maxDiscount:{
       type:String,
 
      },
      offPercentage:{
         type:Number,
-        required:[true,"please provide OFF percentage"]
+      //   required:[true,"please provide OFF percentage"]
      },
      date:{
         type:Date,

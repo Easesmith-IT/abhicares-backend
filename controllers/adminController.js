@@ -2303,10 +2303,11 @@ exports.createCoupon = catchAsync(async (req, res, next) => {
     discountType,
     description,
     noOfTimesPerUser,
+    fixedCouponValue
   } = req.body;
 
   // Validate required fields
-  if (!name || !offPercentage || !description || !categoryType || categoryType.length === 0) {
+  if (!name || !description || !categoryType || categoryType.length === 0) {
     return next(new AppError(400, "All fields, including at least one category, are required"));
   }
 
@@ -2319,12 +2320,13 @@ exports.createCoupon = catchAsync(async (req, res, next) => {
   // Create the coupon
   await Coupon.create({
     name,
-    offPercentage,
+    offPercentage:offPercentage?offPercentage:"",
     categoryType,
     maxDiscount,
     discountType,
     description,
     noOfTimesPerUser,
+    fixedCouponValue:fixedCouponValue?fixedCouponValue:""
   });
 
   res.status(201).json({
