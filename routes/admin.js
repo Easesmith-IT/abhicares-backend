@@ -331,8 +331,8 @@ router.get(
 // coupons Routes
 router.post(
   "/create-coupon",
-  // isAdminAuth,
-  // authorize("offers", "write"),
+  isAdminAuth,
+  authorize("offers", "write"),
   adminController.createCoupon
 );
 router.delete(
@@ -342,7 +342,7 @@ router.delete(
   adminController.deleteCoupon
 ); // passing object id
 router.patch(
-  "/update-coupon/:id",
+  "/update-coupon",
   isAdminAuth,
   authorize("offers", "write"),
   adminController.updateCoupon
