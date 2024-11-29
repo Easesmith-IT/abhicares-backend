@@ -176,6 +176,10 @@ router.post(
   authorize("partners", "write"),
   adminController.createSeller
 );
+router.get('/filter-seller',
+  // isAdminAuth,
+  // authorize("partners", "write"),
+  adminController.filterPartner)
 router.get(
   "/get-all-seller",
   isAdminAuth,
