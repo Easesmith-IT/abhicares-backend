@@ -243,6 +243,14 @@ exports.getCart = catchAsync(async (req, res, next) => {
             populate: {
               path: "productId",
               model: "Product",
+              populate:{
+                path:"serviceId",
+                model:"Service",
+                populate:{
+                  path:"categoryId",
+                  model:"Category"
+                }
+              }
             },
           },
         },
@@ -268,6 +276,14 @@ exports.getCart = catchAsync(async (req, res, next) => {
           populate: {
             path: "productId",
             model: "Product",
+            populate:{
+              path:"serviceId",
+              model:"Service",
+              populate:{
+                path:"categoryId",
+                model:"Category"
+              }
+            }
           },
         });
         var item = {
