@@ -1,6 +1,8 @@
+const { counterSchema } = require("../models/counter");
+
 exports.initializeCounter = async () => {
     try {
-      await Counter.updateOne(
+      await counterSchema.updateOne(
         { name: 'partnerId' },
         { $setOnInsert: { value: 0 } },
         { upsert: true } 
