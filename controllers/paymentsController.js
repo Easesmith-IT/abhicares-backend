@@ -175,11 +175,19 @@ exports.getAllUserOrders = catchAsync(async (req, res, next) => {
           populate: {
             path: "productId",
             model: "Product",
-          },
+          }
+        },
+        populate: {
+          path: "serviceId",
+          model: "Service",  
         },
       },
     })
-    .populate({ path: "couponId", model: "Coupon" });
+    .populate({ path: "couponId", model: "Coupon" })
+    .populate({
+      path:"bookingId",
+      model:"Booking"
+    });
   res
     .status(200)
     .json({ success: true, message: "Your all orders", data: result });
@@ -195,7 +203,7 @@ exports.createOrderInvoice = catchAsync(async (req, res, next) => {
         path: "products",
         populate: {
           path: "productId",
-          model: "Product",
+          model: "Product",  
         },
       },
     },
