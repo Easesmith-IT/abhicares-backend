@@ -932,7 +932,7 @@ exports.raiseTicket = async (req, res, next) => {
       serviceType,
       ticketType,
     } = req.body;
-    var ticket = await HelpCentre({
+    var ticket = await HelpCenter({
       issue: issue,
       description: description,
       userId: userId,
