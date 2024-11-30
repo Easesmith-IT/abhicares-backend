@@ -918,3 +918,47 @@ exports.addBookingReview = catchAsync(async (req, res, next) => {
     message: "Review added successfully",
   });
 });
+exports.raiseTicket = async (req, res, next) => {
+  try {
+    const {
+      serviceId,
+      date,
+      issue,
+      description,
+      userId,
+      sellerId,
+      raisedBy,
+      bookingId,
+      serviceType,
+      ticketType,
+    } = req.body;
+    var ticket = await HelpCentre({
+      issue: issue,
+      description: description,
+      userId: userId,
+      sellerId: sellerId ? sellerId : "",
+      raisedBy: raisedBy,
+      ticketType,
+      serviceType: serviceType ? serviceType : "",
+      serviceId: serviceId ? serviceId : "",
+      bookingId: bookingId ? bookingId : "",
+      date,
+      ticketHistory: [
+        {
+          date: date,
+          status: "raised",
+          resolution: "",
+        },
+      ],
+    });
+
+    ticket.save();
+    console.log(ticket);
+
+    return res.status(200).json({ ticket });
+  } catch (err) {
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(err);
+  }
+};
