@@ -164,7 +164,7 @@ exports.appOrder = async (req, res, next) => {
 };
 
 exports.getAllUserOrders = catchAsync(async (req, res, next) => {
-  const id = req.body.userId
+  const id = req.query.userId
   const result = await Order.find({ "user.userId": id })
     .populate({
       path: "items",
