@@ -97,7 +97,7 @@ router.post(
   isCity.isCityAvailable,
   paymentController.websiteCodOrder
 );
-router.get("/get-user-orders", userAuth, paymentController.getAllUserOrders);
+router.get("/get-user-orders", paymentController.getAllUserOrders);
 router.get(
   "/get-product-invoice/:id",
   userAuth,

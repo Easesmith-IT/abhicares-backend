@@ -135,6 +135,10 @@ const orderSchema = new Schema(
       required: true,
 
     },
+    bookingId:{
+      type:mongoose.Types.ObjectId,
+      ref:"Booking"
+    }
   },
   { timestamps: true }
 );
