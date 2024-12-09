@@ -12,7 +12,7 @@ const adminController = require("../controllers/adminController");
 router.post("/test", adminController.test);
 router.post(
   "/send-notification",
-  img_upload.upload,
+  // img_upload.upload,
   adminController.sendNotificationToAll
 );
 router.get("/get-all-notifications", adminController.getAllNotifications);
