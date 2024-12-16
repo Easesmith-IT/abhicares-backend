@@ -393,8 +393,8 @@ router.patch("/reset-counter-id", adminController.resetCounter);
 router.get("/get-order-count-by-status", adminController.getOrderCountByStatus);
 router.post(
   "/get-monthly-orders",
-  isAdminAuth,
-  authorize("orders", "read"),
+  // isAdminAuth,
+  // authorize("orders", "read"),
   adminController.getMolthlyOrder
 );
 
