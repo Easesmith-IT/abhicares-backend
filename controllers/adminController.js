@@ -1992,7 +1992,7 @@ exports.getSingleTicket = catchAsync(async (req, res, next) => {
   });
 });
 exports.filterUserTickets = catchAsync(async (req, res, next) => {
-  const { date, serviceType, raisedBy, page } = req.body;
+  const { date, serviceType, raisedBy, page=1 } = req.query;
   const limit = 10;
   console.log(req.query, "req query");
 
@@ -2013,10 +2013,10 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
   if (raisedBy) {
     filter.raisedBy = raisedBy;
   }
-  const pageNumber = parseInt(page);
+  const pageNumber = parseInt(page, 10);
   // Pagination setup
   const skip = (pageNumber - 1) * limit;
-
+  console.log(pageNumber,skip,'page number and skip')
   // Query the HelpCenter collection with the filters
   const tickets = await HelpCenter.find(filter)
     .populate({
@@ -2793,9 +2793,9 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 //     }
 // };
 
-exports.sendNotificationToAll = async (req, res, next) => {
+exports.sendNotificationToAll = async (req, res) => {
   const { description, date, time, title } = req.body;
-
+  console.log('req.body',req.body)
   // Validate input
   if (!description || !title) {
     return next(new AppError("Please provide title and description", 400));
@@ -2817,21 +2817,30 @@ exports.sendNotificationToAll = async (req, res, next) => {
 
   try {
     // Retrieve FCM tokens and their corresponding appTypes from tokenSchema
-    const tokensByAppType = await tokenSchema.aggregate([
+    console.log('description',description)
+    const tokensByDeviceType = await tokenSchema.aggregate([
       {
         $group: {
-          _id: "$deviceType", // Group by appType
-          tokens: { $push: "$token" }, // Collect all tokens for each appType
-        },
+          _id: "$deviceType", // Group by deviceType
+          tokens: { 
+            $push: { 
+              token: "$token",  // Include the token
+              appType: "$appType",
+              deviceType:"$deviceType" // Include the appType
+            } 
+          }
+        }
       },
     ]);
 
-    if (!tokensByAppType || tokensByAppType.length === 0) {
+    if (!tokensByDeviceType || tokensByDeviceType.length === 0) {
       return next(
         new AppError("No FCM tokens found to send notifications", 404)
       );
     }
-
+    for(let i=0;i<tokensByDeviceType.length;i++){
+      console.log(tokensByDeviceType[i])
+    }
     // Prepare the notification message
     const message = {
       notification: {
@@ -2892,9 +2901,16 @@ exports.sendNotificationToAll = async (req, res, next) => {
     }
 
     // Send notifications to all tokens by appType immediately
-    for (const { _id: appType, tokens } of tokensByAppType) {
-      for (const token of tokens) {
-        await sendPushNotification(appType, token, { ...message, token });
+    for (const { _id: deviceType, tokens } of tokensByDeviceType) {
+      // Log to verify deviceType and tokens
+      console.log('DeviceType:', deviceType, 'Tokens:', tokens);
+      
+      for (const { token, appType, deviceType } of tokens) {
+        // Log to verify token and appType
+        console.log('Sending notification to token:', token, 'with appType:', appType);
+        
+        // Send the notification, passing appType as a separate argument
+        await sendPushNotification(deviceType, appType, token, { ...message, token });
       }
     }
 
@@ -2903,7 +2919,7 @@ exports.sendNotificationToAll = async (req, res, next) => {
       message: "Notification sent to all users successfully",
     });
   } catch (error) {
-    next(error);
+    console.log(error);
   }
 };
 
