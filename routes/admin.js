@@ -309,8 +309,8 @@ router.delete(
 // Available Cities Routes
 router.post(
   "/create-availabe-city",
-  // isAdminAuth,
-  // authorize("availableCities", "write"),
+  isAdminAuth,
+  authorize("availableCities", "write"),
   adminController.createAvailableCities
 );
 router.delete(
@@ -321,8 +321,8 @@ router.delete(
 ); // passing object id
 router.patch(
   "/update-availabe-city/:id",
-  isAdminAuth,
-  authorize("availableCities", "write"),
+  // isAdminAuth,
+  // authorize("availableCities", "write"),
   adminController.updateAvailableCities
 ); // passing object id
 router.get(
