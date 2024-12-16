@@ -15,6 +15,7 @@ router.post(
   // img_upload.upload,
   adminController.sendNotificationToAll
 );
+router.delete('/delete-sub-admin',adminController.deleteSubAdmin)
 router.get("/get-all-notifications", adminController.getAllNotifications);
 router.get("/search-notifications", adminController.searchNotifications);
 router.get("/filter-notifications", adminController.filterNotification);
@@ -550,8 +551,8 @@ router.get("/logout-Admin", adminController.logoutAdmin);
 
 router.get(
   "/get-seller-wallet/:id",
-  isAdminAuth,
-  authorize("partners", "read"),
+  // isAdminAuth,
+  // authorize("partners", "read"),
   adminController.getSellerWallet
 );
 

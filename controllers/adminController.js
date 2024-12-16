@@ -48,6 +48,7 @@ const seller = require("../models/seller");
 const booking = require("../models/booking");
 const order = require("../models/order");
 const { counterSchema } = require("../models/counter");
+const admin = require("../models/admin");
 
 // category routes
 exports.genOrderId = catchAsync(async (req, res, next) => {
@@ -812,7 +813,11 @@ exports.getSellerByLocation = catchAsync(async (req, res, next) => {
 exports.getSellerWallet = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
-  const wallet = await SellerWallet.findOne({ sellerId: id });
+  const wallet = await SellerWallet.findOne({ sellerId: id })
+  .populate({
+    path:"sellerId",
+    model:"Seller"
+  });
 
   if (!wallet) {
     return next(new AppError("No wallet found", 404));
@@ -1334,6 +1339,17 @@ exports.getSubAdmins = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.deleteSubAdmin=catchAsync(async(req,res,next)=>{
+  const {subAdminId,role}=req.body
+   if(!role && role!=='subAdmin'){
+    return next(new AppError("please select only subadmin"))
+   }
+  await admin.findByIdAndDelete(subAdminId)
+  return res.status(200).json({
+    message:"sub admin deleted successfully",
+    status:true
+  })
+})
 exports.loginAdminUser = catchAsync(async (req, res, next) => {
   console.log("inside admin login");
   const { adminId, password } = req.body;
