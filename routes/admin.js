@@ -177,8 +177,8 @@ router.post(
   adminController.createSeller
 );
 router.get('/filter-seller',
-  // isAdminAuth,
-  // authorize("partners", "write"),
+  isAdminAuth,
+  authorize("partners", "write"),
   adminController.filterPartner)
 router.get(
   "/get-all-seller",
@@ -468,8 +468,8 @@ router.get(
 ); // passing service id
 router.get(
   "/get-order-details",
-  // isAdminAuth,
-  // authorize("bookings", "write"),
+  isAdminAuth,
+  authorize("bookings", "write"),
   adminController.getsingleOrder
 ); // passing seller id
 
@@ -485,8 +485,8 @@ router.patch(
 ); // passing booking id
 router.get(
   "/get-seller-order-list/:id",
-  isAdminAuth,
-  authorize("partners", "read"),
+  // isAdminAuth,
+  // authorize("partners", "read"),
   adminController.getSellerOrder
 ); // passing seller id
 router.post(

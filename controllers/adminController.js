@@ -600,7 +600,7 @@ exports.getAllSeller = catchAsync(async (req, res, next) => {
     totalPage++;
   }
 
-  const result = await Seller.find({ status: "active" })
+  const result = await Seller.find({ status: "APPROVED" })
     .populate("categoryId")
     .populate({
       path: "services",
@@ -726,44 +726,63 @@ exports.searchSeller = catchAsync(async (req, res, next) => {
 });
 
 exports.changeSellerStatus = catchAsync(async (req, res, next) => {
-  const id = req.params.id;
-  const { status } = req.body;
+  const { id } = req.params; 
+  const { status } = req.body; 
 
-  var result = await Seller.findOne({ _id: id });
-  result.status = status;
-  result.save();
-  res.status(200).json({ success: true, message: "Data updated successful" });
+  
+  if (!id || !status) {
+    return next(new AppError(400, "Seller ID and status are required"));
+  }
+
+  
+  const result = await Seller.findByIdAndUpdate(
+    id,
+    { status }, 
+    { new: true, runValidators: true } 
+  );
+
+  
+  if (!result) {
+    return next(new AppError(404, "Seller not found"));
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Seller status updated successfully",
+    data: result,
+  });
 });
+
 
 exports.getInReviewSeller = catchAsync(async (req, res, next) => {
   const results = await Seller.find({ status: "in-review" })
-    .populate({ path: "categoryId", model: "Category" })
+    .populate({ path: "categoryId", model: "Category" }) // Populate categoryId
     .populate({
-      path: "services",
-      populate: {
-        path: "serviceId",
-        model: "Service",
-      },
+      path: "services.serviceId", // Populate the serviceId within the services array
+      model: "Service",
     });
 
+  // Map the results to format the response
   const sellers = results.map((seller) => ({
     _id: seller._id,
     name: seller.name,
     phone: seller.phone,
     status: seller.status,
     category: seller?.categoryId?.name,
-    services: seller?.services?.map((service) => ({
-      _id: service?.serviceId?._id,
+    services: seller?.services.map((service) => ({
+      _id: service?.serviceId?._id, // Get the populated serviceId details
       name: service?.serviceId?.name,
     })),
   }));
-  // console.log("in-review sellers", result);
+
   res.status(200).json({
     success: true,
     message: "In-review seller list",
     data: sellers,
   });
 });
+
+
 
 exports.getSellerByLocation = catchAsync(async (req, res, next) => {
   const { latitude, longitude, distance } = req.body;
@@ -2301,7 +2320,8 @@ exports.getSellerDetails = catchAsync(async (req, res, next) => {
 });
 exports.getSellerOrder = catchAsync(async (req, res, next) => {
   const id = req.params.id; // seller id
-  const result = await Booking.find({ sellerId: id }).populate({
+  const result = await Booking.find({ sellerId: id })
+  .populate({
     path: "package",
     populate: {
       path: "products",
@@ -2309,7 +2329,11 @@ exports.getSellerOrder = catchAsync(async (req, res, next) => {
         path: "productId",
         model: "Product",
       },
-    },
+    }
+  })
+  .populate({
+    path:"userId",
+    model:"User"
   });
 
   res.status(200).json({
