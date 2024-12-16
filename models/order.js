@@ -119,7 +119,7 @@ const orderSchema = new Schema(
       required: true,
       type: String,
       default: "Pending",
-      enum:['Pending',"Completed","Cancelled"]
+      enum:['Pending',"Completed","Cancelled",'OutOfDelivery']
     },
     couponId: {
       type: mongoose.Types.ObjectId,

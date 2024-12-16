@@ -1451,19 +1451,27 @@ exports.getOrderById = catchAsync(async (req, res, next) => {
 });
 
 exports.getMolthlyOrder = catchAsync(async (req, res, next) => {
-  const { month, year } = req.body;
+  const { month, year, populateFields } = req.body;
+
   if (!month || !year) {
-    return next(new AppError(400, "All the fields are required"));
-  } else {
-    const startDate = new Date(year, month - 1, 1); // Month is zero-based
-    const endDate = new Date(year, month, 0, 23, 59, 59);
-    const result = await Order.find({
-      createdAt: {
-        $gte: startDate,
-        $lte: endDate,
-      },
-    })
-      .populate({
+    return next(new AppError(400, "Month and year are required"));
+  }
+
+  const startDate = new Date(year, month - 1, 1); // Month is zero-based
+  const endDate = new Date(year, month, 0, 23, 59, 59);
+
+  // Find the orders first
+  const orders = await Order.find({
+    createdAt: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+  });
+
+  // Populate conditionally
+  if (populateFields) {
+    if (populateFields.includes("items")) {
+      await Order.populate(orders, {
         path: "items",
         populate: {
           path: "package",
@@ -1475,13 +1483,20 @@ exports.getMolthlyOrder = catchAsync(async (req, res, next) => {
             },
           },
         },
-      })
-      .populate("couponId");
-    res
-      .status(200)
-      .json({ success: true, message: "Orders list", data: result });
+      });
+    }
+
+    if (populateFields.includes("couponId")) {
+      await Order.populate(orders, { path: "couponId" });
+    }
   }
+
+  // Send the response
+  res
+    .status(200)
+    .json({ success: true, message: "Orders list", data: orders });
 });
+
 
 exports.getAllPayments = catchAsync(async (req, res, next) => {
   const page = req.query.page || 1;
@@ -2004,6 +2019,26 @@ exports.allotSeller = catchAsync(async (req, res, next) => {
   });
 });
 
+
+exports.getsingleOrder=catchAsync(async(req,res,next)=>{
+  const{orderId}=req.query
+
+  if(!orderId){
+    return next(new AppError('No order id provided',400))
+  }
+
+  const foundOrder= await Order.findOne({
+    _id:orderId
+  })
+  if(!orderId){
+    return next(new AppError("no orders found",400))
+  }
+  return res.status(200).json({
+    message:"here's your order details",
+    data:foundOrder,
+    status:true
+  })
+})
 // Ticket Controllers
 
 exports.getSingleTicket = catchAsync(async (req, res, next) => {

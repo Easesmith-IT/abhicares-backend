@@ -333,7 +333,7 @@ exports.getCompletedOrders = async (req, res, next) => {
     const userId = req.params.userId;
     var order = await Order.find({
       "user.userId": userId,
-      status: "completed",
+      status: "Completed",
     });
     return res.status(200).json({ order: order });
   } catch (err) {
@@ -453,9 +453,9 @@ exports.postOrderBooking = async (req, res, next) => {
       order.status = "completed";
       await order.save();
     }
-    booking.status = "completed";
+    booking.status = "Completed";
     if (paymentType) {
-      booking.paymentStatus = "completed";
+      booking.paymentStatus = "Completed";
       booking.paymentType = paymentType;
     }
     await booking.save();
