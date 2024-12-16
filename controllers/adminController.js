@@ -737,33 +737,33 @@ exports.changeSellerStatus = catchAsync(async (req, res, next) => {
 
 exports.getInReviewSeller = catchAsync(async (req, res, next) => {
   const results = await Seller.find({ status: "in-review" })
-    .populate({ path: "categoryId", model: "Category" })
+    .populate({ path: "categoryId", model: "Category" }) // Populate categoryId
     .populate({
-      path: "services",
-      populate: {
-        path: "serviceId",
-        model: "Service",
-      },
+      path: "services.serviceId", // Populate the serviceId within the services array
+      model: "Service",
     });
 
+  // Map the results to format the response
   const sellers = results.map((seller) => ({
     _id: seller._id,
     name: seller.name,
     phone: seller.phone,
     status: seller.status,
     category: seller?.categoryId?.name,
-    services: seller?.services?.map((service) => ({
-      _id: service?.serviceId?._id,
+    services: seller?.services.map((service) => ({
+      _id: service?.serviceId?._id, // Get the populated serviceId details
       name: service?.serviceId?.name,
     })),
   }));
-  // console.log("in-review sellers", result);
+
   res.status(200).json({
     success: true,
     message: "In-review seller list",
     data: sellers,
   });
 });
+
+
 
 exports.getSellerByLocation = catchAsync(async (req, res, next) => {
   const { latitude, longitude, distance } = req.body;

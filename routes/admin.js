@@ -177,8 +177,8 @@ router.post(
   adminController.createSeller
 );
 router.get('/filter-seller',
-  // isAdminAuth,
-  // authorize("partners", "write"),
+  isAdminAuth,
+  authorize("partners", "write"),
   adminController.filterPartner)
 router.get(
   "/get-all-seller",
@@ -212,8 +212,8 @@ router.patch(
 ); // passing object id
 router.get(
   "/in-review-seller",
-  isAdminAuth,
-  authorize("partners", "read"),
+  // isAdminAuth,
+  // authorize("partners", "read"),
   adminController.getInReviewSeller
 );
 router.post(
