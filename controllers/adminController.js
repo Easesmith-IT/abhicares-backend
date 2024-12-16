@@ -600,7 +600,7 @@ exports.getAllSeller = catchAsync(async (req, res, next) => {
     totalPage++;
   }
 
-  const result = await Seller.find({ status: "active" })
+  const result = await Seller.find({ status: "APPROVED" })
     .populate("categoryId")
     .populate({
       path: "services",
