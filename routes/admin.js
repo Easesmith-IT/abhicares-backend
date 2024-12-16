@@ -466,11 +466,11 @@ router.get(
   authorize("bookings", "read"),
   adminController.getSellerList
 ); // passing service id
-router.patch(
-  "/allot-seller-order/:id",
-  isAdminAuth,
-  authorize("bookings", "write"),
-  adminController.allotSeller
+router.get(
+  "/get-order-details",
+  // isAdminAuth,
+  // authorize("bookings", "write"),
+  adminController.getsingleOrder
 ); // passing seller id
 
 // router.get('/create-order',adminController.createOrderId)

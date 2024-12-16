@@ -166,7 +166,7 @@ exports.getCompletedOrders = async (req, res, next) => {
     const userId = req.params.userId;
     var order = await Order.find({
       "user.userId": userId,
-      status: "completed",
+      status: "Completed",
     });
     return res.status(200).json({ order: order });
   } catch (err) {

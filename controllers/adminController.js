@@ -2019,6 +2019,26 @@ exports.allotSeller = catchAsync(async (req, res, next) => {
   });
 });
 
+
+exports.getsingleOrder=catchAsync(async(req,res,next)=>{
+  const{orderId}=req.query
+
+  if(!orderId){
+    return next(new AppError('No order id provided',400))
+  }
+
+  const foundOrder= await Order.findOne({
+    _id:orderId
+  })
+  if(!orderId){
+    return next(new AppError("no orders found",400))
+  }
+  return res.status(200).json({
+    message:"here's your order details",
+    data:foundOrder,
+    status:true
+  })
+})
 // Ticket Controllers
 
 exports.getSingleTicket = catchAsync(async (req, res, next) => {
