@@ -84,6 +84,16 @@ const userSchema = new Schema(
         enum: ["read", "write", "none"],
         required: true,
       },
+      notifications: {
+        type: String,
+        enum: ["read", "write", "none"],
+        required: true,
+      },
+      reviews: {
+        type: String,
+        enum: ["read", "write", "none"],
+        required: true,
+      },
       settings: {
         type: String,
         enum: ["read", "write", "none"],
