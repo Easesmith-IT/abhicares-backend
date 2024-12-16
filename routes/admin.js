@@ -212,8 +212,8 @@ router.patch(
 ); // passing object id
 router.get(
   "/in-review-seller",
-  // isAdminAuth,
-  // authorize("partners", "read"),
+  isAdminAuth,
+  authorize("partners", "read"),
   adminController.getInReviewSeller
 );
 router.post(
@@ -485,8 +485,8 @@ router.patch(
 ); // passing booking id
 router.get(
   "/get-seller-order-list/:id",
-  isAdminAuth,
-  authorize("partners", "read"),
+  // isAdminAuth,
+  // authorize("partners", "read"),
   adminController.getSellerOrder
 ); // passing seller id
 router.post(
