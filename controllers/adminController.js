@@ -1340,7 +1340,7 @@ exports.getSubAdmins = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteSubAdmin=catchAsync(async(req,res,next)=>{
-  const {subAdminId,role}=req.body
+  const {subAdminId,role}=req.query
    if(!role && role!=='subAdmin'){
     return next(new AppError("please select only subadmin"))
    }
