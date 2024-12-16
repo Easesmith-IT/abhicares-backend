@@ -58,7 +58,7 @@ exports.getSellerCompletedOrder = async (req, res, next) => {
     const id = req.params.id; // seller id
     const result = await BookingModel.find({
       sellerId: id,
-      status: "completed",
+      status: "Completed",
     }).populate("userId", "-password");
 
     res.status(200).json({

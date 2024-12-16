@@ -847,7 +847,7 @@ exports.approveSellerCashout = catchAsync(async (req, res, next) => {
   const wallet = await SellerWallet.findById(cashout.sellerWalletId.toString());
 
   let data;
-  if (status === "completed") {
+  if (status === "Completed") {
     data = { status, description, accountDetails: { date, paymentId } };
     wallet.balance = wallet.balance - cashout.value;
     await wallet.save();
@@ -2222,13 +2222,13 @@ exports.updateSellerOrderStatus = catchAsync(async (req, res, next) => {
   var result = await Booking.findOne({ _id: id });
   const order = await Order.findById(result.orderId);
 
-  if (result.status !== "completed" && status === "completed") {
+  if (result.status !== "Completed" && status === "Completed") {
     order.No_of_left_bookings = order.No_of_left_bookings - 1;
     await order.save();
   }
 
   if (order.No_of_left_bookings === 0) {
-    order.status = "completed";
+    order.status = "Completed";
     await order.save();
   }
 
