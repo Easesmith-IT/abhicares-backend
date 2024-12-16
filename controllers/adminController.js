@@ -1560,42 +1560,56 @@ exports.updateHelpCenter = catchAsync(async (req, res, next) => {
 exports.createAvailableCities = catchAsync(async (req, res, next) => {
   const { city, state, pinCode } = req.body;
 
-  if (!city || !state || !pinCode) {
-    return next(new AppError(400, "City, state, and pinCode are required"));
+  if (!city || !state || !pinCode || !Array.isArray(pinCode)) {
+    return next(new AppError("City, state, and pinCode are required, and pinCode must be an array",400));
+  }
+
+  // Extract codes from the pinCode array
+  const pinCodesToAdd = pinCode.map((p) => {
+    if (!p.code) throw new AppError("PinCode objects must contain a code property",400);
+    return parseInt(p.code);
+  });
+
+  if (pinCodesToAdd.some((code) => isNaN(code))) {
+    return next(new AppError("All pinCodes must be valid numbers",400));
   }
 
   // Check if the city-state combination already exists
   const existingCity = await AvailableCity.findOne({ city, state });
 
   if (existingCity) {
-    // Check if the pinCode already exists in this city-state combination
-    const isPinCodeExists = existingCity.pinCodes.some(
-      (p) => p.code === parseInt(pinCode) // Convert pinCode to number for comparison
-    );
+    // Check for duplicate pinCodes
+    const existingPinCodes = existingCity.pinCodes.map((p) => p.code);
+    const newPinCodes = pinCodesToAdd.filter((code) => !existingPinCodes.includes(code));
 
-    if (isPinCodeExists) {
-      return next(new AppError(400, "PinCode already exists for this city"));
+    if (newPinCodes.length === 0) {
+      return next(new AppError("All provided pinCodes already exist for this city",400,));
     }
 
-    // Add the new pinCode to the existing city
-    existingCity.pinCodes.push({ code: parseInt(pinCode) }); // Add new pinCode object
+    // Add only new pinCodes to the existing city
+    existingCity.pinCodes.push(...newPinCodes.map((code) => ({ code })));
     await existingCity.save();
-    return res
-      .status(200)
-      .json({ success: true, message: "PinCode added to existing city" });
+    return res.status(200).json({
+      success: true,
+      message: "New pinCodes added to existing city",
+      data: existingCity,
+    });
   }
 
-  // Create a new city entry with the provided pinCode
+  // Create a new city entry with the provided pinCodes
   const newCity = await AvailableCity.create({
     city,
     state,
-    pinCodes: [{ code: parseInt(pinCode) }], // Save pinCode as an object in the array
+    pinCodes: pinCodesToAdd.map((code) => ({ code })),
   });
 
-  res
-    .status(201)
-    .json({ success: true, message: "City and PinCode added successfully", data: newCity });
+  res.status(201).json({
+    success: true,
+    message: "City and pinCodes added successfully",
+    data: newCity,
+  });
 });
+
 
 
 exports.deleteAvailableCities = catchAsync(async (req, res, next) => {
@@ -1606,19 +1620,60 @@ exports.deleteAvailableCities = catchAsync(async (req, res, next) => {
 
 exports.updateAvailableCities = catchAsync(async (req, res, next) => {
   const { city, state, pinCodes } = req.body;
-  const id = req.params.id; // this is object id of available city
+  const id = req.params.id; // ObjectId of the available city
 
-  if (!city || !state || !pinCodes) {
-    return next(new AppError(400, "All the fields are required"));
-  } else {
-    const result = await AvailableCity.findOne({ _id: id });
-    result.city = city;
-    result.state = state;
-    result.pinCodes = pinCodes;
-    await result.save();
-    res.status(200).json({ success: true, message: "Data updated successful" });
+  if (!city || !state || !pinCodes || !Array.isArray(pinCodes)) {
+    return next(new AppError( "City, state, and pinCodes are required, and pinCodes must be an array",400));
   }
+
+  // Validate pinCodes and ensure each has a valid `code`
+  const validatedPinCodes = pinCodes.map((p) => {
+    if (!p.code) {
+      throw new AppError("Each pinCode object must have a 'code' property",400);
+    }
+    const parsedCode = parseInt(p.code, 10);
+    if (isNaN(parsedCode)) {
+      throw new AppError( "All pinCodes must be valid numbers",400);
+    }
+    return { code: parsedCode };
+  });
+
+  // Check if the city and state combination already exists (excluding the current record)
+  const duplicateCity = await AvailableCity.findOne({
+    _id: { $ne: id }, // Exclude the current city by ID
+    city,
+    state,
+  });
+
+  if (duplicateCity) {
+    return next(new AppError("City and state combination already exists",400));
+  }
+
+  // Find and update the city by ID
+  const existingCity = await AvailableCity.findById(id);
+
+  if (!existingCity) {
+    return next(new AppError("City not found",400));
+  }
+
+  // Update the fields
+  existingCity.city = city;
+  existingCity.state = state;
+
+  // Prevent duplicate pinCodes in the updated data
+  const existingPinCodes = existingCity.pinCodes.map((p) => p.code);
+  const newPinCodes = validatedPinCodes.filter((p) => !existingPinCodes.includes(p.code));
+  existingCity.pinCodes = [...existingCity.pinCodes, ...newPinCodes]; // Merge old and new pinCodes
+
+  await existingCity.save();
+
+  res.status(200).json({
+    success: true,
+    message: "City updated successfully",
+    data: existingCity,
+  });
 });
+
 
 exports.getAvailableCities = catchAsync(async (req, res, next) => {
   const result = await AvailableCity.find();
