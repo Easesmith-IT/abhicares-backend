@@ -200,7 +200,6 @@ exports.searchService = async (req, res, next) => {
       search = req.query.search;
       page = req.query.page;
     }
-
     var limit = 20;
     const allServices = await Service.count();
     var num = allServices / limit;
