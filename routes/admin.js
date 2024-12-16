@@ -468,8 +468,8 @@ router.get(
 ); // passing service id
 router.get(
   "/get-order-details",
-  // isAdminAuth,
-  // authorize("bookings", "write"),
+  isAdminAuth,
+  authorize("bookings", "write"),
   adminController.getsingleOrder
 ); // passing seller id
 
