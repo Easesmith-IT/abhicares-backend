@@ -1,0 +1,62 @@
+pipeline {
+    agent {
+        label "dento"
+    }
+    stages{
+        stage('scm') {
+            steps {
+                git branch: "main", credentialsId: 'github', url: 'https://github.com/easesmith/abhicares-backend.git'
+            }
+        }
+        // stage('login docker') {
+        //     steps {
+                
+        //     }
+        // }
+        
+        stage('build images') {
+            steps {
+                sh 'docker build -t shubham808/abhicares-backend .'
+            } 
+        }
+        stage('push img') {
+            steps {
+                sh 'docker push shubham808/abhicares-backend'
+            }
+        }
+        stage("delete old img") {
+            steps {
+//               sh "docker-compose down"
+                sh "docker rmi -f shubham808/abhicares-backend:latest"
+            }
+        }
+        
+//  on node
+        stage('delete old') {
+            agent {
+                label 'abhicare'
+            }
+            steps {
+                git branch: "main", credentialsId: 'github', url: 'https://github.com/easesmith/abhicares-backend.git'
+                sh 'docker-compose down'
+                sh 'docker rmi -f shubham808/abhicares-backend:latest'
+            }
+        }
+        stage('Deploy') {
+            agent {
+                label 'abhicare'
+            }
+            steps {
+                sh 'docker-compose up -d'
+            }
+        }
+    }
+    //  notification
+    post {
+        always {
+            //Add channel name
+            slackSend channel: 'deploy',
+            message: "Find Status of Pipeline:- ${currentBuild.currentResult} ${env.JOB_NAME} ${env.BUILD_NUMBER}"
+        }
+    }
+}
