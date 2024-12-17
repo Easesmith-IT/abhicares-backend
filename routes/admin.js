@@ -170,13 +170,22 @@ router.delete(
 ///////////////////////////////////////////////
 // Seller Routes
 
-router.get("/get-seller", adminController.getSellerDetails);
+router.get("/get-seller", 
+  isAdminAuth,
+  authorize("partners", "write"),
+  adminController.getSellerDetails);
 router.post(
   "/create-seller",
   isAdminAuth,
   authorize("partners", "write"),
   adminController.createSeller
 );
+
+router.post('/allot-seller-order',
+  isAdminAuth,
+  authorize("partners", "write"),
+  adminController.allotSeller)
+
 router.get('/filter-seller',
   isAdminAuth,
   authorize("partners", "write"),
@@ -322,8 +331,8 @@ router.delete(
 ); // passing object id
 router.patch(
   "/update-availabe-city/:id",
-  // isAdminAuth,
-  // authorize("availableCities", "write"),
+  isAdminAuth,
+  authorize("availableCities", "write"),
   adminController.updateAvailableCities
 ); // passing object id
 router.get(
@@ -463,8 +472,8 @@ router.patch(
 //Seller order Routes
 router.get(
   "/get-seller-list/:id",
-  isAdminAuth,
-  authorize("bookings", "read"),
+  // isAdminAuth,
+  // authorize("bookings", "read"),
   adminController.getSellerList
 ); // passing service id
 router.get(
