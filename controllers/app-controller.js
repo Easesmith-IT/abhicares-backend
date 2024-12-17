@@ -341,6 +341,7 @@ exports.getCompletedOrders = async (req, res, next) => {
     for(let i=0;i<order.length;i++){
       console.log("these are orders:",order[i])
     }
+    
     return res.status(200).json({ order: order });
   } catch (err) {
     const error = new Error(err);
