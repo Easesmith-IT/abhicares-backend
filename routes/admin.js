@@ -463,8 +463,8 @@ router.patch(
 //Seller order Routes
 router.get(
   "/get-seller-list/:id",
-  isAdminAuth,
-  authorize("bookings", "read"),
+  // isAdminAuth,
+  // authorize("bookings", "read"),
   adminController.getSellerList
 ); // passing service id
 router.get(
