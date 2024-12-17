@@ -4,7 +4,8 @@ exports.isCityAvailable=async(req,res,next)=>{
     try{
            const { city } = req.body
       console.log(city)
-           const result = await availableCitiesModel.findOne({ city: city })
+     const upperCaseCity=city.toUpperCase();
+           const result = await availableCitiesModel.findOne({ city: upperCaseCity })
       console.log(result)
            if(result!==null){
              next()

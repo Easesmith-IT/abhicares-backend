@@ -1,0 +1,8 @@
+version: "3.8"
+services:
+  abhicare-BE:
+    image: shubham808/abhicares-backend
+    container_name: abhicare-BE
+    restart: unless-stopped
+    ports:
+      - "5000:5000"

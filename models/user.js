@@ -17,16 +17,23 @@ const userSchema = new Schema(
       required: true,
       default: "password",
     },
-
-    email:{
-      type:String,
+    dateOfBirth: {
+      type: String,
+      required: false,
     },
-
+    Gender: {
+      type: String,
+      required: false,
+      enum: ["MALE", "FEMALE"],
+    },
+    email: {
+      type: String,
+    },
     otp: {
       type: Number,
     },
-    otpExpiresAt:{
-        type: Date,
+    otpExpiresAt: {
+      type: Date,
     },
     cartId: {
       type: Schema.Types.ObjectId,
@@ -37,12 +44,11 @@ const userSchema = new Schema(
       default: true,
     },
 
-    referralCode:{
-      type:String,
-      unique:true,
-      required:true
+    referralCode: {
+      type: String,
+      unique: true,
+      required: true,
     },
-
   },
   { timestamps: true }
 );

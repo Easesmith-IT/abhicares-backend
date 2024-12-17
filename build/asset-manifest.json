@@ -1,7 +1,12 @@
 {
   "files": {
+<<<<<<< HEAD
     "main.css": "/static/css/main.1b59d696.css",
     "main.js": "/static/js/main.4c637369.js",
+=======
+    "main.css": "/static/css/main.06221fe6.css",
+    "main.js": "/static/js/main.c07799d7.js",
+>>>>>>> 80d2ed7838d402f8093c3676dcbd429cc9d16334
     "static/js/703.4a01edae.chunk.js": "/static/js/703.4a01edae.chunk.js",
     "static/js/198.d636d588.chunk.js": "/static/js/198.d636d588.chunk.js",
     "static/js/787.d4aba7ab.chunk.js": "/static/js/787.d4aba7ab.chunk.js",
@@ -37,14 +42,24 @@
     "static/media/makeup.png": "/static/media/makeup.0cff7538efb53a6f0453.png",
     "static/media/revicons.woff": "/static/media/revicons.e8746a624ed098489406.woff",
     "index.html": "/index.html",
+<<<<<<< HEAD
     "main.1b59d696.css.map": "/static/css/main.1b59d696.css.map",
     "main.4c637369.js.map": "/static/js/main.4c637369.js.map",
+=======
+    "main.06221fe6.css.map": "/static/css/main.06221fe6.css.map",
+    "main.c07799d7.js.map": "/static/js/main.c07799d7.js.map",
+>>>>>>> 80d2ed7838d402f8093c3676dcbd429cc9d16334
     "703.4a01edae.chunk.js.map": "/static/js/703.4a01edae.chunk.js.map",
     "198.d636d588.chunk.js.map": "/static/js/198.d636d588.chunk.js.map",
     "787.d4aba7ab.chunk.js.map": "/static/js/787.d4aba7ab.chunk.js.map"
   },
   "entrypoints": [
+<<<<<<< HEAD
     "static/css/main.1b59d696.css",
     "static/js/main.4c637369.js"
+=======
+    "static/css/main.06221fe6.css",
+    "static/js/main.c07799d7.js"
+>>>>>>> 80d2ed7838d402f8093c3676dcbd429cc9d16334
   ]
 }

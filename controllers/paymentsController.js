@@ -17,7 +17,7 @@ const { autoAssignBooking } = require("../util/autoAssignBooking");
 const AppError = require("../util/appError");
 const { tokenSchema } = require("../models/fcmToken");
 const { createSendPushNotification } = require("./pushNotificationController");
-const { generateOrderId } = require("../util/generateOrderId");
+const { generateOrderId, generateBookingId } = require("../util/generateOrderId");
 
 const instance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY,
@@ -111,10 +111,12 @@ exports.appOrder = async (req, res, next) => {
     ///booking creation
     for (const orderItem of orderItems) {
       var booking;
+      const bookingId=await generateBookingId()
       if (orderItem.product) {
         booking = new Booking({
           orderId: order._id,
           userId: user._id,
+          bookingId:bookingId,
           paymentStatus: paymentStatus,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -162,7 +164,7 @@ exports.appOrder = async (req, res, next) => {
 };
 
 exports.getAllUserOrders = catchAsync(async (req, res, next) => {
-  const id = req.user._id;
+  const id = req.query.userId
   const result = await Order.find({ "user.userId": id })
     .populate({
       path: "items",
@@ -173,11 +175,19 @@ exports.getAllUserOrders = catchAsync(async (req, res, next) => {
           populate: {
             path: "productId",
             model: "Product",
-          },
+          }
+        },
+        populate: {
+          path: "serviceId",
+          model: "Service",  
         },
       },
     })
-    .populate({ path: "couponId", model: "Coupon" });
+    .populate({ path: "couponId", model: "Coupon" })
+    .populate({
+      path:"bookingId",
+      model:"Booking"
+    });
   res
     .status(200)
     .json({ success: true, message: "Your all orders", data: result });
@@ -193,7 +203,7 @@ exports.createOrderInvoice = catchAsync(async (req, res, next) => {
         path: "products",
         populate: {
           path: "productId",
-          model: "Product",
+          model: "Product",  
         },
       },
     },
@@ -382,8 +392,8 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
 
   if (orderItems) {
     const userAddress = await UserAddress.findById(userAddressId);
-  const orderId=await generateOrderId()
-  if(!response){
+    const orderId=await generateOrderId()
+  if(!orderId){
     return next(new AppError('no response while creating orderId',400))
   }
     const order = new Order({
@@ -443,6 +453,7 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
 
 exports.checkout = catchAsync(async (req, res, next) => {
   const {
+    platformType,
     itemTotal,
     discount,
     tax,
@@ -452,7 +463,9 @@ exports.checkout = catchAsync(async (req, res, next) => {
     referalDiscount,
   } = req.body;
   const user = req.user;
-
+  if (!user) {
+    return next(new AppError("User not found.", 404));
+  }
   let referalDis = null;
   if (referalDiscount) referalDis = referalDiscount;
 
@@ -462,7 +475,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
   if (req.body.couponId) {
     couponId = req.body.couponId;
   }
-
+  
   const cart = await Cart.findOne({ userId: user._id }).populate({
     path: "items",
     model: "Cart",
@@ -478,9 +491,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
     ],
   });
 
-  if (!user) {
-    return next(new AppError("User not found.", 404));
-  }
+  
   const items = cart.items;
 
   const orderItems = await generateOrderItems(items, bookings);
@@ -532,7 +543,8 @@ exports.checkout = catchAsync(async (req, res, next) => {
   };
   const createdOrder = await instance.orders.create(options);
 // For sending notifications
-  const foundToken=await tokenSchema.findOne({
+  if(platformType==="android"){
+    const foundToken=await tokenSchema.findOne({
     userId:user._id
   })
   if(!foundToken){
@@ -556,7 +568,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
     return res.status(400).json({
       message:'No token found'
     })
-  }
+  }}
   res.status(200).json({
     success: true,
     message: "order created",
@@ -571,6 +583,7 @@ exports.paymentVerification = catchAsync(async (req, res, next) => {
     razorpay_payment_id,
     razorpay_signature,
     productId,
+    orderId
   } = req.body;
 
   const body = razorpay_order_id + "|" + razorpay_payment_id;
@@ -601,6 +614,7 @@ exports.paymentVerification = catchAsync(async (req, res, next) => {
       items: result.items,
       couponId: result.couponId,
       user: result.user,
+      orderId
     });
 
     await order.save();

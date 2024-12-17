@@ -96,6 +96,10 @@ const bookingSchema = new mongoose.Schema(
         default: [0, 0],
       },
     },
+    bookingId:{
+      type:String,
+      
+    }
   },
   { timestamps: true }
 );

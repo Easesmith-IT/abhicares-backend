@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 var bcrypt = require("bcryptjs");
 // const Nursery = require("../models/nursery");
-
+const catchAsync = require("../../util/catchAsync");
 //models
 const Category = require("../../models/category");
 const Package = require("../../models/packages");
@@ -22,6 +22,8 @@ const AppError = require("../../util/appError");
 
 //middleware
 const { auth } = require("../../middleware/auth");
+const review = require("../../models/review");
+const { generatePartnerId } = require("../../util/generateOrderId");
 /////////////////////////////////////////////////////////////////////////////
 //app routes
 
@@ -104,6 +106,47 @@ exports.getHomePageContents = async (req, res, next) => {
   } catch (error) {}
 };
 
+exports.getPartnerReviews = catchAsync(async (req, res, next) => {
+  const { sellerId, page } = req.query;
+  const limit = 10;
+
+  // Convert page and limit to integers
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  // Validate sellerId
+  if (!sellerId) {
+    return next(new AppError("Seller ID is required", 400));
+  }
+
+  // Calculate the number of documents to skip
+  const skip = (pageNumber - 1) * limitNumber;
+
+  // Fetch reviews with pagination
+  const foundReviews = await review
+    .find({ sellerId }) // Assuming reviews are stored with a `sellerId` field
+    .skip(skip)
+    .limit(limitNumber);
+
+  if (!foundReviews || foundReviews.length === 0) {
+    return next(new AppError("No reviews found", 400));
+  }
+
+  // Get total count for the given seller
+  const totalReviews = await review.countDocuments({ sellerId });
+
+  res.status(200).json({
+    message: "Reviews found",
+    data: {
+      reviews: foundReviews,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalReviews / limitNumber),
+      totalReviews,
+    },
+    status: true,
+  });
+});
+
 // Order Controller
 
 exports.geUpcomingOrders = async (req, res, next) => {
@@ -123,7 +166,7 @@ exports.getCompletedOrders = async (req, res, next) => {
     const userId = req.params.userId;
     var order = await Order.find({
       "user.userId": userId,
-      status: "completed",
+      status: "Completed",
     });
     return res.status(200).json({ order: order });
   } catch (err) {
@@ -273,18 +316,114 @@ exports.getUserTickets = async (req, res, next) => {
   }
 };
 
+exports.getservicePartnerTickets = catchAsync(async (req, res, next) => {
+  const { page, sellerId } = req.query;
+  const limit = 10;
+  // Validate userId
+  if (!sellerId) {
+    return res.status(400).json({
+      status: "fail",
+      message: "User ID is required.",
+    });
+  }
+
+  // Calculate skip value for pagination
+  const skip = (page - 1) * limit;
+
+  // Fetch paginated tickets for the user
+  const tickets = await HelpCentre.find({ sellerId })
+    .sort({ createdAt: -1 }) // Sort tickets by most recent
+    .skip(skip) // Skip records for previous pages
+    .limit(parseInt(limit)); // Limit the number of records per page
+
+  // Count total tickets for the user
+  const totalTickets = await HelpCentre.countDocuments({ sellerId });
+
+  // Return the paginated tickets and meta information
+  return res.status(200).json({
+    status: "success",
+    currentPage: parseInt(page),
+    totalPages: Math.ceil(totalTickets / limit),
+    results: tickets.length,
+    totalResults: totalTickets,
+    tickets,
+  });
+});
+
+exports.getSingleTicket = catchAsync(async (req, res, next) => {
+  const { ticketId } = req.params; // Extract ticketId from the route parameters
+
+  // Find the ticket by its ID
+  const ticket = await HelpCentre.findById(ticketId);
+
+  // If the ticket is not found
+  if (!ticket) {
+    return res.status(404).json({
+      status: "fail",
+      message: "Ticket not found.",
+    });
+  }
+
+  // Return the ticket details
+  res.status(200).json({
+    status: "success",
+    ticket,
+  });
+});
+
 exports.raiseTicket = async (req, res, next) => {
   try {
-    const issue = req.body.issue;
-    const description = req.body.description;
-    const userId = req.body.userId;
+    const {
+      serviceId,
+      date,
+      issue,
+      description,
+      userId,
+      sellerId,
+      raisedBy,
+      bookingId,
+      serviceType,
+      ticketType,
+    } = req.body;
     var ticket = await HelpCentre({
       issue: issue,
       description: description,
-      userId: userId,
+      userId: userId ? userId : "",
+      sellerId: sellerId ? sellerId : "",
+      raisedBy: raisedBy,
+      ticketType,
+      serviceType: serviceType ? serviceType : "",
+      serviceId: serviceId ? serviceId : "",
+      bookingId: bookingId ? bookingId : "",
+      date,
     });
 
     ticket.save();
+    // const foundToken=await tokenSchema.findOne({
+    //   sellerId:sellerId
+    // })
+    // if(!foundToken){
+    //   return res.status(400).json({
+    //     message:"no user found"
+    //   })
+    // }
+    // const token=foundToken.token
+    // const deviceType=foundToken.deviceType
+    // const appType=foundToken.appType
+    // const message = {
+    //         notification: {
+    //             title: "Service completed",
+    //             body: `Your service has been completed by ${booking.sellerId.name}. Please confirm the service completion.`,
+    //             // ...(imageUrl && { image: imageUrl }), // Add image if available
+    //         },
+    //         token: token, // FCM token of the recipient device
+    //     };
+    // const tokenResponse=await createSendPushNotification(deviceType,token,message,appType)
+    // if(!tokenResponse){
+    //   return res.status(400).json({
+    //     message:'No token found'
+    //   })
+    // }
     console.log(ticket);
     return res.status(200).json({ ticket });
   } catch (err) {
@@ -310,59 +449,56 @@ exports.getServiceByCategory = async (req, res, next) => {
   }
 };
 
-exports.createSeller = async (req, res, next) => {
-  try {
-    var {
-      name,
-      legalName,
-      gstNumber,
-      phone,
-      status,
-      address,
-      password,
-      contactPerson,
-      categoryId,
-      services,
-    } = req.body;
-    // const {state,city,addressLine,pincode,location}=address
-    // const {name,phone,email}=contactPerson
+exports.createSeller = catchAsync(async (req, res, next) => {
+  var {
+    name,
+    legalName,
+    gstNumber,
+    phone,
+    status,
+    address,
+    password,
+    contactPerson,
+    categoryId,
+    services,
+  } = req.body;
+  // const {state,city,addressLine,pincode,location}=address
+  // const {name,phone,email}=contactPerson
 
-    if (
-      !name ||
-      // !legalName ||
-      // !gstNumber ||
-      !phone ||
-      !address ||
-      !password ||
-      // !contactPerson ||
-      !categoryId
-    ) {
-      return next(new AppError(400, "All the fields are required"))
-    } else {
-      bcrypt.genSalt(10, function (err, salt) {
-        bcrypt.hash(password, salt, async function (err, hash) {
-          if (err) {
-            res
-              .status(400)
-              .json({ success: false, message: "password enctyption error" });
-          } else {
-            req.body.password = hash;
-            var seller = await SellerModel.create(req.body);
-            await SellerWallet.create({ sellerId: seller._id });
-            res.status(201).json({
-              success: true,
-              message: "Seller created successful",
-              seller: seller,
-            });
-          }
-        });
+  if (
+    !name ||
+    // !legalName ||
+    // !gstNumber ||
+    !phone ||
+    !address ||
+    !password ||
+    // !contactPerson ||
+    !categoryId
+  ) {
+    return next(new AppError(400, "All the fields are required"));
+  } else {
+    const partnerId = await generatePartnerId();
+    bcrypt.genSalt(10, function (err, salt) {
+      bcrypt.hash(password, salt, async function (err, hash) {
+        if (err) {
+          res
+            .status(400)
+            .json({ success: false, message: "password enctyption error" });
+        } else {
+          req.body.password = hash;
+          req.body.partnerId = partnerId;
+          var seller = await SellerModel.create(req.body);
+          await SellerWallet.create({ sellerId: seller._id });
+          res.status(201).json({
+            success: true,
+            message: "Seller created successful",
+            seller: seller,
+          });
+        }
       });
-    }
-  } catch (err) {
-    console.log("error--->", err);
-    next(err);
+    });
   }
-};
+});
 
 exports.getAllSeller = async (req, res, next) => {
   try {
@@ -430,7 +566,7 @@ exports.updateSeller = async (req, res, next) => {
       !address ||
       !contactPerson
     ) {
-      return next(new AppError(400, "All the fields are required"))
+      return next(new AppError(400, "All the fields are required"));
     } else {
       var result = await SellerModel.findOne({ _id: id });
       result.name = name;
@@ -532,3 +668,49 @@ exports.getSellerCashout = async (req, res, next) => {
   let.findOne({ sellerId: id });
   return res.json(wallet);
 };
+
+exports.checkSellerStatus = catchAsync(async (req, res, next) => {
+  
+    // Get sellerId from params or query
+    const {sellerId} = req.query
+    console.log('seller id',sellerId)
+    if (!sellerId) {
+      return res.status(400).json({
+        error: "Seller ID is required",
+      });
+    }
+
+    // Find seller with minimal fields projection
+    const seller = await SellerModel.findById(sellerId)
+      .select("name status partnerId legalName")
+      .lean();
+
+    if (!seller) {
+      return res.status(404).json({
+        error: "Seller not found",
+      });
+    }
+
+    // Prepare response with status details
+    const statusDetails = {
+      current: seller.status,
+      isApproved: seller.status === "APPROVED",
+      isRejected: seller.status === "REJECTED",
+      isOnHold: seller.status === "HOLD",
+      isInReview: seller.status === "IN-REVIEW",
+      canOperate: seller.status === "APPROVED", // Business logic - only approved sellers can operate
+      lastUpdated: seller._id.getTimestamp(), // Get timestamp from MongoDB ObjectId
+    };
+
+    return res.status(200).json({
+      success: true,
+      seller: {
+        id: seller._id,
+        name: seller.name,
+        legalName: seller.legalName,
+        partnerId: seller.partnerId,
+      },
+      status: statusDetails,
+    });
+
+})

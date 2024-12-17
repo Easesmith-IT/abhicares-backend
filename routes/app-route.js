@@ -7,6 +7,8 @@ const paymentController = require("../controllers/paymentsController");
 const authController = require("../controllers/authController");
 const contentController = require("../controllers/contentController.js");
 
+router.get("/get-auto", appController.autoReview);
+
 //homepage route
 router.get("/get-homepage-hero-banners", appController.getHomePageHeroBanners);
 router.get("/get-homepage-banners", appController.getHomePageBanners);
@@ -15,14 +17,16 @@ router.get(
   "/get-homepage-speciality-services",
   appController.getHomepageSpeciality
 );
+
 router.get("/get-categories", appController.getCategories);
 router.get("/get-services/:categoryId", appController.getServices);
 router.get("/get-service-screen/:serviceId", appController.getServiceScreen);
 router.get("/get-products/:serviceId", appController.getProducts);
 router.get("/get-Package-details/:packageId", appController.getPackageDetails);
 // router.get("/get-product/:productId", appController.getProductDetails);
-
+///
 router.get("/get-user/:userId", appController.getUser);
+router.post("/update-profile/:userId", appController.updateUserProfile);
 router.post("/login", authController.verifyUserOtp);
 router.post("/login-otp", authController.generateOtpUser);
 router.post("/signup-otp", authController.appSignupOtp);
@@ -42,7 +46,8 @@ router.get("/get-order-booking/:id", appController.getOrderBooking);
 router.post("/complete-order-booking", appController.postOrderBooking);
 
 router.get("/search-service", appController.searchService);
-router.get("/get-tickets/:userId", appController.getUserTickets);
+router.get("/get-tickets", appController.getUserTickets);
+router.get("/get-single-ticket", appController.getSingleTicket);
 router.post("/raise-ticket", appController.raiseTicket);
 
 // banner route
@@ -54,5 +59,7 @@ router.post("/get-coupon-details", appController.getCouponByName);
 router.get("/get-referralCredits/:userId", appController.getReferralCredits);
 router.get("/get-coupons", appController.getAllCoupons);
 router.get("/get-services-app-homepage", appController.getAppHomePageServices);
+///
+router.get("/check-city-serviceability", appController.checkServiceability);
 
 module.exports = router;

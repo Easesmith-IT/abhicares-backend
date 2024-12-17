@@ -128,6 +128,10 @@ const tempOrderSchema = new Schema(
       type: Number,
       required: true,
     },
+    orderId:{
+      type:String,
+      required:true
+    }
   },
   { timestamps: true }
 );

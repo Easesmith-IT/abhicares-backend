@@ -31,17 +31,30 @@ const {
 const UserReferalLink = require("../models/userReferealLink");
 const catchAsync = require("../util/catchAsync");
 const { tokenSchema } = require("../models/fcmToken");
-const { sendPushNotification, createSendPushNotification } = require("./pushNotificationController"); 
+const {
+  sendPushNotification,
+  createSendPushNotification,
+} = require("./pushNotificationController");
 const schedule = require("node-schedule");
 const notificationSchema = require("../models/notificationSchema");
-const { generateOrderId } = require("../util/generateOrderId");
-
+const {
+  generateOrderId,
+  generateBookingId,
+  generatePartnerId,
+} = require("../util/generateOrderId");
+const review = require("../models/review");
+const helpCenter = require("../models/helpCenter");
+const seller = require("../models/seller");
+const booking = require("../models/booking");
+const order = require("../models/order");
+const { counterSchema } = require("../models/counter");
+const admin = require("../models/admin");
 
 // category routes
-exports.genOrderId=catchAsync(async(req,res,next)=>{
- const orderId= await generateOrderId();
- console.log("order id",orderId)
-})
+exports.genOrderId = catchAsync(async (req, res, next) => {
+  const orderId = await generateOrderId();
+  console.log("order id", orderId);
+});
 exports.test = async (req, res, next) => {
   try {
     const users = await User.find();
@@ -534,6 +547,46 @@ exports.createSeller = catchAsync(async (req, res, next) => {
   }
 });
 
+exports.updateSellerId = catchAsync(async (req, res, next) => {
+  const foundSellers = await Seller.find(); // Fetch all sellers
+
+  // Loop through sellers and update their partnerId
+  for (let i = 0; i < foundSellers.length; i++) {
+    const partnerId = await generatePartnerId(); // Generate a unique ID
+    foundSellers[i].partnerId = partnerId; // Update the local object
+    await foundSellers[i].save(); // Save the updated seller to the database
+  }
+
+  res.status(200).json({
+    message: "IDs updated successfully",
+  });
+});
+exports.deletePartnerIds = catchAsync(async (req, res, next) => {
+  const sellersWithPartnerId = await Seller.find({
+    partnerId: { $exists: true },
+  });
+
+  await Seller.updateMany({}, { $unset: { partnerId: "" } });
+
+  res.status(200).json({
+    success: true,
+    message: "Partner IDs deleted successfully",
+    deleted: sellersWithPartnerId.map((seller) => seller._id),
+  });
+});
+exports.resetCounter = catchAsync(async (req, res, next) => {
+  await counterSchema.findOneAndUpdate(
+    { name: "partnerId" },
+    { value: 0 },
+    { new: true, upsert: true }
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Counter has been reset to 0",
+  });
+});
+
 exports.getAllSeller = catchAsync(async (req, res, next) => {
   var page = 1;
   if (req.query.page) {
@@ -548,7 +601,7 @@ exports.getAllSeller = catchAsync(async (req, res, next) => {
     totalPage++;
   }
 
-  const result = await Seller.find({ status: "active" })
+  const result = await Seller.find({ status: "APPROVED" })
     .populate("categoryId")
     .populate({
       path: "services",
@@ -674,44 +727,63 @@ exports.searchSeller = catchAsync(async (req, res, next) => {
 });
 
 exports.changeSellerStatus = catchAsync(async (req, res, next) => {
-  const id = req.params.id;
-  const { status } = req.body;
+  const { id } = req.params; 
+  const { status } = req.body; 
 
-  var result = await Seller.findOne({ _id: id });
-  result.status = status;
-  result.save();
-  res.status(200).json({ success: true, message: "Data updated successful" });
+  
+  if (!id || !status) {
+    return next(new AppError(400, "Seller ID and status are required"));
+  }
+
+  
+  const result = await Seller.findByIdAndUpdate(
+    id,
+    { status }, 
+    { new: true, runValidators: true } 
+  );
+
+  
+  if (!result) {
+    return next(new AppError(404, "Seller not found"));
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Seller status updated successfully",
+    data: result,
+  });
 });
+
 
 exports.getInReviewSeller = catchAsync(async (req, res, next) => {
   const results = await Seller.find({ status: "in-review" })
-    .populate({ path: "categoryId", model: "Category" })
+    .populate({ path: "categoryId", model: "Category" }) // Populate categoryId
     .populate({
-      path: "services",
-      populate: {
-        path: "serviceId",
-        model: "Service",
-      },
+      path: "services.serviceId", // Populate the serviceId within the services array
+      model: "Service",
     });
 
+  // Map the results to format the response
   const sellers = results.map((seller) => ({
     _id: seller._id,
     name: seller.name,
     phone: seller.phone,
     status: seller.status,
     category: seller?.categoryId?.name,
-    services: seller?.services?.map((service) => ({
-      _id: service?.serviceId?._id,
+    services: seller?.services.map((service) => ({
+      _id: service?.serviceId?._id, // Get the populated serviceId details
       name: service?.serviceId?.name,
     })),
   }));
-  // console.log("in-review sellers", result);
+
   res.status(200).json({
     success: true,
     message: "In-review seller list",
     data: sellers,
   });
 });
+
+
 
 exports.getSellerByLocation = catchAsync(async (req, res, next) => {
   const { latitude, longitude, distance } = req.body;
@@ -741,10 +813,14 @@ exports.getSellerByLocation = catchAsync(async (req, res, next) => {
 exports.getSellerWallet = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
-  const wallet = await SellerWallet.findOne({ sellerId: id });
+  const wallet = await SellerWallet.findOne({ sellerId: id })
+  .populate({
+    path:"sellerId",
+    model:"Seller"
+  });
 
   if (!wallet) {
-    return next(new AppError("No wallet found",404))
+    return next(new AppError("No wallet found", 404));
   }
 
   res.status(200).json({
@@ -782,7 +858,6 @@ exports.getRecentCashoutRequests = catchAsync(async (req, res, next) => {
   });
 });
 
-
 exports.approveSellerCashout = catchAsync(async (req, res, next) => {
   console.log(req.body);
   const id = req.params.id;
@@ -791,12 +866,12 @@ exports.approveSellerCashout = catchAsync(async (req, res, next) => {
   const cashout = await SellerCashout.findById(id);
 
   if (!cashout) {
-    return next(new AppError("No cashout found",404))
+    return next(new AppError("No cashout found", 404));
   }
   const wallet = await SellerWallet.findById(cashout.sellerWalletId.toString());
 
   let data;
-  if (status === "completed") {
+  if (status === "Completed") {
     data = { status, description, accountDetails: { date, paymentId } };
     wallet.balance = wallet.balance - cashout.value;
     await wallet.save();
@@ -812,30 +887,35 @@ exports.approveSellerCashout = catchAsync(async (req, res, next) => {
   });
 
   // For sending notification
-  const foundToken=await tokenSchema.findOne({
-    sellerId:wallet.sellerId
-  })
-  if(!foundToken){
+  const foundToken = await tokenSchema.findOne({
+    sellerId: wallet.sellerId,
+  });
+  if (!foundToken) {
     return res.status(400).json({
-      message:"no user found"
-    })
+      message: "no user found",
+    });
   }
-  const token=foundToken.token
-  const deviceType=foundToken.deviceType
-  const appType=foundToken.appType
+  const token = foundToken.token;
+  const deviceType = foundToken.deviceType;
+  const appType = foundToken.appType;
   const message = {
-          notification: {
-              title: " Payment Received!",
-              body: `A payment of ${wallet.balance} was received`,
-              // ...(imageUrl && { image: imageUrl }), // Add image if available
-          },
-          token: token, // FCM token of the recipient device
-      };
-  const tokenResponse=await createSendPushNotification(appType,deviceType,token,message)
-  if(!tokenResponse){
+    notification: {
+      title: " Payment Received!",
+      body: `A payment of ${wallet.balance} was received`,
+      // ...(imageUrl && { image: imageUrl }), // Add image if available
+    },
+    token: token, // FCM token of the recipient device
+  };
+  const tokenResponse = await createSendPushNotification(
+    appType,
+    deviceType,
+    token,
+    message
+  );
+  if (!tokenResponse) {
     return res.status(400).json({
-      message:'No token found'
-    })
+      message: "No token found",
+    });
   }
   res.status(200).json({
     success: true,
@@ -912,16 +992,34 @@ exports.getAllAddressesByUserId = catchAsync(async (req, res, next) => {
 
 exports.updateUserByAdmin = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is object id
-  const { name, phone } = req.body;
-  if (!name || !phone) {
-    return next(new AppError(400, "All the fields are required"));
-  } else {
-    var result = await User.findOne({ _id: id });
-    result.name = name;
-    result.phone = phone;
-    await result.save();
+  const { name, phone,email, dateOfBirth, Gender  } = req.body;
+  
+    const user={}
+    if(name){
+      user.name=name
+    }
+    if(phone){
+      user.phone=phone
+    }
+    if(email){
+      user.email=email
+    }
+    if(dateOfBirth){
+      user.name=name
+    }
+    if(Gender){
+      user.Gender=Gender
+    }
+    var result = await User.findOneAndUpdate({ _id: id },
+      user,
+      {new:true}
+    );
+
+   if(!result){
+    return next(new AppError('somethng went wrong while updating user Details'))
+   }
     res.status(200).json({ success: true, message: "user updated successful" });
-  }
+ 
 });
 
 exports.deleteUser = catchAsync(async (req, res, next) => {
@@ -1220,7 +1318,7 @@ exports.updateAdminUser = catchAsync(async (req, res, next) => {
   console.log(permissions);
 
   if (!adminId || !name || !permissions) {
-    return next(new AppError("All the fields are required",400))
+    return next(new AppError("All the fields are required", 400));
   } else {
     const result = await Admin.findById(id);
 
@@ -1241,31 +1339,42 @@ exports.getSubAdmins = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.deleteSubAdmin=catchAsync(async(req,res,next)=>{
+  const {subAdminId,role}=req.query
+   if(!role && role!=='subAdmin'){
+    return next(new AppError("please select only subadmin"))
+   }
+  await admin.findByIdAndDelete(subAdminId)
+  return res.status(200).json({
+    message:"sub admin deleted successfully",
+    status:true
+  })
+})
 exports.loginAdminUser = catchAsync(async (req, res, next) => {
-  console.log('inside admin login')
+  console.log("inside admin login");
   const { adminId, password } = req.body;
   const admin = await Admin.findOne({ adminId: adminId });
   if (!admin) {
-    return next(new AppError("No admin exists with this id",404))
+    return next(new AppError("No admin exists with this id", 404));
   }
 
   const isMatch = await bcrypt.compare(password, admin.password);
 
   if (isMatch) {
     var token = jwt.sign(
-      { adminId: adminId, permissions: admin.permissions, },
+      { adminId: adminId, permissions: admin.permissions },
       jwtkey.secretJwtKey,
       { expiresIn: "2d" }
     );
     res.cookie("admtoken", token, { secure: true, httpOnly: true });
-   
+
     return res.status(200).json({
       success: true,
       message: "Login successful",
       perm: admin.permissions,
     });
   } else {
-    return next(new AppError("Incorrect Password!",400))
+    return next(new AppError("Incorrect Password!", 400));
   }
 });
 
@@ -1362,7 +1471,7 @@ exports.getRecentOrders = catchAsync(async (req, res, next) => {
 
 exports.getOrderById = catchAsync(async (req, res, next) => {
   const orderId = req.query.orderId;
-  const order = await Order.findById(orderId);
+  const order = await Order.findOne({ orderId: orderId });
 
   if (!order) {
     res.status(404).json({
@@ -1377,19 +1486,27 @@ exports.getOrderById = catchAsync(async (req, res, next) => {
 });
 
 exports.getMolthlyOrder = catchAsync(async (req, res, next) => {
-  const { month, year } = req.body;
+  const { month, year, populateFields } = req.body;
+
   if (!month || !year) {
-    return next(new AppError(400, "All the fields are required"));
-  } else {
-    const startDate = new Date(year, month - 1, 1); // Month is zero-based
-    const endDate = new Date(year, month, 0, 23, 59, 59);
-    const result = await Order.find({
-      createdAt: {
-        $gte: startDate,
-        $lte: endDate,
-      },
-    })
-      .populate({
+    return next(new AppError(400, "Month and year are required"));
+  }
+
+  const startDate = new Date(year, month - 1, 1); // Month is zero-based
+  const endDate = new Date(year, month, 0, 23, 59, 59);
+
+  // Find the orders first
+  const orders = await Order.find({
+    createdAt: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+  });
+
+  // Populate conditionally
+  if (populateFields) {
+    if (populateFields.includes("items")) {
+      await Order.populate(orders, {
         path: "items",
         populate: {
           path: "package",
@@ -1401,13 +1518,20 @@ exports.getMolthlyOrder = catchAsync(async (req, res, next) => {
             },
           },
         },
-      })
-      .populate("couponId");
-    res
-      .status(200)
-      .json({ success: true, message: "Orders list", data: result });
+      });
+    }
+
+    if (populateFields.includes("couponId")) {
+      await Order.populate(orders, { path: "couponId" });
+    }
   }
+
+  // Send the response
+  res
+    .status(200)
+    .json({ success: true, message: "Orders list", data: orders });
 });
+
 
 exports.getAllPayments = catchAsync(async (req, res, next) => {
   const page = req.query.page || 1;
@@ -1486,24 +1610,57 @@ exports.updateHelpCenter = catchAsync(async (req, res, next) => {
 exports.createAvailableCities = catchAsync(async (req, res, next) => {
   const { city, state, pinCode } = req.body;
 
-  if (!city || !state || !pinCode) {
-    return next(new AppError(400, "All the fields are required"));
-  } else {
-    const result = await AvailableCity.find({ city: city });
-    if (result.length > 0) {
-      return next(new AppError(400, "City already exist"));
-    } else {
-      await AvailableCity.create({
-        city: city,
-        state: state,
-        pinCode: pinCode,
-      });
-      res
-        .status(201)
-        .json({ success: true, message: "Data inserted successful" });
-    }
+  if (!city || !state || !pinCode || !Array.isArray(pinCode)) {
+    return next(new AppError("City, state, and pinCode are required, and pinCode must be an array",400));
   }
+
+  // Extract codes from the pinCode array
+  const pinCodesToAdd = pinCode.map((p) => {
+    if (!p.code) throw new AppError("PinCode objects must contain a code property",400);
+    return parseInt(p.code);
+  });
+
+  if (pinCodesToAdd.some((code) => isNaN(code))) {
+    return next(new AppError("All pinCodes must be valid numbers",400));
+  }
+
+  // Check if the city-state combination already exists
+  const existingCity = await AvailableCity.findOne({ city, state });
+
+  if (existingCity) {
+    // Check for duplicate pinCodes
+    const existingPinCodes = existingCity.pinCodes.map((p) => p.code);
+    const newPinCodes = pinCodesToAdd.filter((code) => !existingPinCodes.includes(code));
+
+    if (newPinCodes.length === 0) {
+      return next(new AppError("All provided pinCodes already exist for this city",400,));
+    }
+
+    // Add only new pinCodes to the existing city
+    existingCity.pinCodes.push(...newPinCodes.map((code) => ({ code })));
+    await existingCity.save();
+    return res.status(200).json({
+      success: true,
+      message: "New pinCodes added to existing city",
+      data: existingCity,
+    });
+  }
+
+  // Create a new city entry with the provided pinCodes
+  const newCity = await AvailableCity.create({
+    city,
+    state,
+    pinCodes: pinCodesToAdd.map((code) => ({ code })),
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "City and pinCodes added successfully",
+    data: newCity,
+  });
 });
+
+
 
 exports.deleteAvailableCities = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is object id
@@ -1512,20 +1669,61 @@ exports.deleteAvailableCities = catchAsync(async (req, res, next) => {
 });
 
 exports.updateAvailableCities = catchAsync(async (req, res, next) => {
-  const { city, state, pinCode } = req.body;
-  const id = req.params.id; // this is object id of available city
+  const { city, state, pinCodes } = req.body;
+  const id = req.params.id; // ObjectId of the available city
 
-  if (!city || !state || !pinCode) {
-    return next(new AppError(400, "All the fields are required"));
-  } else {
-    const result = await AvailableCity.findOne({ _id: id });
-    result.city = city;
-    result.state = state;
-    result.pinCode = pinCode;
-    await result.save();
-    res.status(200).json({ success: true, message: "Data updated successful" });
+  if (!city || !state || !pinCodes || !Array.isArray(pinCodes)) {
+    return next(new AppError( "City, state, and pinCodes are required, and pinCodes must be an array",400));
   }
+
+  // Validate pinCodes and ensure each has a valid `code`
+  const validatedPinCodes = pinCodes.map((p) => {
+    if (!p.code) {
+      throw new AppError("Each pinCode object must have a 'code' property",400);
+    }
+    const parsedCode = parseInt(p.code, 10);
+    if (isNaN(parsedCode)) {
+      throw new AppError( "All pinCodes must be valid numbers",400);
+    }
+    return { code: parsedCode };
+  });
+
+  // Check if the city and state combination already exists (excluding the current record)
+  const duplicateCity = await AvailableCity.findOne({
+    _id: { $ne: id }, // Exclude the current city by ID
+    city,
+    state,
+  });
+
+  if (duplicateCity) {
+    return next(new AppError("City and state combination already exists",400));
+  }
+
+  // Find and update the city by ID
+  const existingCity = await AvailableCity.findById(id);
+
+  if (!existingCity) {
+    return next(new AppError("City not found",400));
+  }
+
+  // Update the fields
+  existingCity.city = city;
+  existingCity.state = state;
+
+  // Prevent duplicate pinCodes in the updated data
+  const existingPinCodes = existingCity.pinCodes.map((p) => p.code);
+  const newPinCodes = validatedPinCodes.filter((p) => !existingPinCodes.includes(p.code));
+  existingCity.pinCodes = [...existingCity.pinCodes, ...newPinCodes]; // Merge old and new pinCodes
+
+  await existingCity.save();
+
+  res.status(200).json({
+    success: true,
+    message: "City updated successfully",
+    data: existingCity,
+  });
 });
+
 
 exports.getAvailableCities = catchAsync(async (req, res, next) => {
   const result = await AvailableCity.find();
@@ -1536,12 +1734,269 @@ exports.getAvailableCities = catchAsync(async (req, res, next) => {
   });
 });
 
+// Getting reviews
+exports.getAllReviews = catchAsync(async (req, res, next) => {
+  const { page } = req.query;
+  const limit = 10;
+
+  // Calculate skip value for pagination
+  const skip = (page - 1) * limit;
+
+  // Fetch paginated reviews
+  const reviews = await review
+    .find()
+    .sort({ createdAt: -1 }) // Sort by most recent
+    .skip(skip) // Skip records for previous pages
+    .limit(parseInt(limit)); // Limit the number of records per page
+
+  // Count total reviews
+  const totalReviews = await review.countDocuments();
+
+  // If no reviews are found
+  if (reviews.length === 0) {
+    return res.status(404).json({
+      status: "fail",
+      message: "No reviews found",
+    });
+  }
+
+  // Return paginated reviews with metadata
+  res.status(200).json({
+    status: "success",
+    currentPage: parseInt(page),
+    totalPages: Math.ceil(totalReviews / limit),
+    results: reviews.length,
+    totalResults: totalReviews,
+    data: reviews,
+  });
+});
+
+exports.deleteReview = catchAsync(async (req, res, next) => {
+  const { reviewId } = req.query;
+
+  // Find the review by ID and delete it
+  const deletedReview = await review.findByIdAndDelete(reviewId);
+
+  // If review is not found
+  if (!deletedReview) {
+    return next(new AppError("Review not found", 404)); // 404 if review does not exist
+  }
+
+  res.status(200).json({
+    status: "success",
+    message: "Review deleted successfully",
+  });
+});
+
+exports.filterReview = catchAsync(async (req, res, next) => {
+  const { date, serviceType, reviewType, page = 1 } = req.query;
+  const pageNumber = parseInt(page);
+  const limit = 10;
+  const skip = (pageNumber - 1) * limit;
+
+  let filter = {};
+  if (date) {
+    filter.date = date;
+  }
+  if (reviewType) {
+    filter.reviewType = reviewType;
+  }
+  if (serviceType) {
+    filter.serviceType = serviceType;
+  }
+
+  const filteredReviews = await review
+    .find(filter)
+    .populate({
+      path: "userId",
+      model: "User",
+    })
+    .populate({
+      path: "serviceType",
+      model: "Category",
+    })
+    .populate({
+      path: "productId",
+      model: "Product",
+    })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  if (!filteredReviews || filteredReviews.length === 0) {
+    return res.status(200).json({
+      message: "nothing found",
+      data: [],
+    });
+  }
+  // Count total reviews matching the filter
+  const totalReviews = await review.countDocuments(filter);
+
+  // Check if no reviews are found
+  if (!filteredReviews || filteredReviews.length === 0) {
+    return next(new AppError("No reviews found", 404));
+  }
+
+  // Respond with paginated reviews
+  res.status(200).json({
+    status: true,
+    message: "Reviews found",
+    currentPage: parseInt(pageNumber),
+    totalPages: Math.ceil(totalReviews / limit),
+    results: filteredReviews.length,
+    totalResults: totalReviews,
+    data: filteredReviews,
+  });
+});
+
+exports.createReview = catchAsync(async (req, res, next) => {
+  const {
+    title,
+    orderId,
+    content,
+    rating,
+    productId,
+    userId,
+    date,
+    serviceType,
+    packageId,
+    bookingId,
+    reviewType,
+  } = req.body;
+
+  const newReview = await review.create({
+    title,
+    content,
+    rating,
+    productId: productId ? productId : null,
+    userId,
+    date,
+    serviceType,
+    orderId: orderId ? orderId : null,
+    packageId: packageId ? packageId : null,
+    bookingId: bookingId ? bookingId : null,
+    reviewType,
+  });
+
+  res.status(200).json({
+    message: "review created",
+    status: true,
+    data: newReview,
+  });
+});
+exports.getBookingId = catchAsync(async (req, res, next) => {
+  const bookingId = await generateBookingId();
+  return res.status(200).json({
+    message: "found",
+    status: true,
+    data: bookingId,
+  });
+});
+exports.updateBookingId = catchAsync(async (req, res, next) => {
+  const foundBookings = await booking.find();
+  const length = foundBookings.length;
+  for (let i = 0; i < length - 1; i++) {
+    const bookingId = await generateBookingId();
+    const updatedBookings = await booking.findByIdAndUpdate(
+      foundBookings[i]._id,
+      { bookingId: bookingId },
+      { new: true }
+    );
+  }
+  res.status(200).json({
+    status: "success",
+    message: "All bookings have been updated with new booking IDs.",
+  });
+});
+exports.getSingleReview = catchAsync(async (req, res, next) => {
+  const { reviewId } = req.query;
+
+  const foundReview = await review
+    .findOne({ _id: reviewId })
+    .populate({
+      path: "productId",
+      model: "Product",
+      populate: {
+        path: "serviceId",
+        model: "Service",
+      },
+    })
+    .populate({
+      path: "userId",
+      model: "User",
+    })
+    .populate({
+      path: "bookingId",
+      model: "Booking",
+      populate: {
+        path: "sellerId",
+        model: "Seller",
+      },
+    })
+    .populate({
+      path: "packageId",
+      model: "Package",
+      populate: {
+        path: "serviceId",
+        model: "Service",
+      },
+    })
+    .populate({
+      path: "orderId",
+      model: "Order",
+    });
+  if (!foundReview) {
+    return next(new AppError("no review found", 200));
+  }
+  res.status(200).json({
+    message: "review details",
+    data: foundReview,
+    status: true,
+  });
+});
+
+exports.getOrderCountByStatus = catchAsync(async (req, res, next) => {
+  const orderCounts = await order.aggregate([
+    {
+      $group: {
+        _id: "$status",
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        status: "$_id",
+        count: 1,
+        _id: 0,
+      },
+    },
+  ]);
+
+  // Check if no orders exist
+  if (!orderCounts || orderCounts.length === 0) {
+    return res.status(200).json({
+      success: true,
+      message: "No orders found",
+      data: [],
+    });
+  }
+
+  // Return grouped order counts
+  return res.status(200).json({
+    success: true,
+    message: "Here's the order count grouped by status",
+    data: orderCounts,
+  });
+});
+
 // seller order controllers
 exports.getSellerList = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is service id
   const result = await Seller.find({
-    status: "active",
-    "services.serviceId": id,
+    status: "APPROVED",
+    services: { 
+      $elemMatch: { serviceId: id }
+    },
   });
 
   res.status(200).json({
@@ -1558,41 +2013,278 @@ exports.allotSeller = catchAsync(async (req, res, next) => {
     return next(new AppError(400, "All the fields are required"));
   }
   var bookingData = await Booking.findOne({ _id: bookingId }).populate({
-    path:"sellerId",
-    model:"Seller"
+    path: "sellerId",
+    model: "Seller",
   });
   bookingData.sellerId = id;
   bookingData.status = "alloted";
   await bookingData.save();
 
-  const foundToken=await tokenSchema.findOne({
-    userId:bookingData.userId
-  })
-  if(!foundToken){
-    return res.status(400).json({
-      message:"no user found"
-    })
-  }
-  const token=foundToken.token
-  const deviceType=foundToken.deviceType
-  const appType=foundToken.appType
-  const message = {
-          notification: {
-              title: "service Partner Assigned",
-              body: `${bookingData.sellerId.name} has been assigned to your service request. They will call you shortly.`,
-              // ...(imageUrl && { image: imageUrl }), // Add image if available
-          },
-          token: token, // FCM token of the recipient device
-      };
-  const tokenResponse=await createSendPushNotification(deviceType,token,message,appType)
-  if(!tokenResponse){
-    return res.status(400).json({
-      message:'No token found'
-    })
-  }
+  // const foundToken = await tokenSchema.findOne({
+  //   userId: bookingData.userId,
+  // });
+  // if (!foundToken) {
+  //   return res.status(400).json({
+  //     message: "no user found",
+  //   });
+  // }
+  // const token = foundToken.token;
+  // const deviceType = foundToken.deviceType;
+  // const appType = foundToken.appType;
+  // const message = {
+  //   notification: {
+  //     title: "service Partner Assigned",
+  //     body: `${bookingData.sellerId.name} has been assigned to your service request. They will call you shortly.`,
+  //     // ...(imageUrl && { image: imageUrl }), // Add image if available
+  //   },
+  //   token: token, // FCM token of the recipient device
+  // };
+  // const tokenResponse = await createSendPushNotification(
+  //   deviceType,
+  //   token,
+  //   message,
+  //   appType
+  // );
+  // if (!tokenResponse) {
+  //   return res.status(400).json({
+  //     message: "No token found",
+  //   });
+  // }
   res.status(200).json({
     success: true,
     message: "Seller order created successful",
+  });
+});
+
+
+exports.getsingleOrder=catchAsync(async(req,res,next)=>{
+  const{orderId}=req.query
+
+  if(!orderId){
+    return next(new AppError('No order id provided',400))
+  }
+
+  const foundOrder= await Order.findOne({
+    _id:orderId
+  })
+  if(!orderId){
+    return next(new AppError("no orders found",400))
+  }
+  return res.status(200).json({
+    message:"here's your order details",
+    data:foundOrder,
+    status:true
+  })
+})
+// Ticket Controllers
+
+exports.getSingleTicket = catchAsync(async (req, res, next) => {
+  const { ticketId } = req.query;
+
+  // Find the ticket by its ID
+  const ticket = await HelpCenter.findById(ticketId)
+    .populate({
+      path: "userId",
+      model: "User",
+    })
+    .populate({
+      path: "sellerId",
+      model: "Seller",
+    })
+    .populate({
+      path: "bookingId",
+      model: "Booking",
+    })
+    .populate({
+      path: "serviceId",
+      model: "Service",
+    })
+    .populate({
+      path: "serviceType",
+      model: "Category",
+    });
+
+  // If the ticket is not found
+  if (!ticket) {
+    return res.status(404).json({
+      status: "fail",
+      message: "Ticket not found.",
+    });
+  }
+
+  // Return the ticket details
+  res.status(200).json({
+    status: "success",
+    ticket,
+  });
+});
+exports.filterUserTickets = catchAsync(async (req, res, next) => {
+  const { date, serviceType, raisedBy, page=1 } = req.query;
+  const limit = 10;
+  console.log(req.query, "req query");
+
+  // Create a filter object
+  let filter = {};
+
+  // Date filter (for a specific day stored as a string)
+  if (date) {
+    filter.date = date; // Match exact string date
+  }
+
+  // Service type filter
+  if (serviceType) {
+    filter.serviceType = serviceType;
+  }
+
+  // RaisedBy filter
+  if (raisedBy) {
+    filter.raisedBy = raisedBy;
+  }
+  const pageNumber = parseInt(page, 10);
+  // Pagination setup
+  const skip = (pageNumber - 1) * limit;
+  console.log(pageNumber,skip,'page number and skip')
+  // Query the HelpCenter collection with the filters
+  const tickets = await HelpCenter.find(filter)
+    .populate({
+      path: "bookingId",
+      model: "Booking",
+    })
+    .sort({ createdAt: -1 }) // Sort by most recent tickets
+    .skip(skip) // Skip the previous pages
+    .limit(limit); // Limit the number of tickets per page
+  console.log("tickets", tickets);
+  if (!tickets || tickets.length === 0) {
+    return res.status(200).json({
+      message: "nothing found",
+      data: [],
+    });
+  }
+  // Count total tickets for the given filter
+  const totalTickets = await HelpCenter.countDocuments(filter);
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
+    currentPage: pageNumber,
+    totalPages: Math.ceil(totalTickets / limit),
+    results: tickets.length,
+    totalResults: totalTickets,
+    data: tickets,
+  });
+});
+
+exports.getAllTickets = catchAsync(async (req, res, next) => {
+  const { page } = req.query;
+  const limit = 10;
+  // Calculate skip value for pagination
+  const skip = (page - 1) * limit;
+
+  // Fetch paginated tickets
+  const tickets = await HelpCenter.find()
+    .populate({
+      path: "bookingId",
+      model: "Booking",
+    })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(parseInt(limit));
+
+  // Count total tickets
+  const totalTickets = await HelpCenter.countDocuments();
+
+  // If no tickets are found
+  if (tickets.length === 0) {
+    return next(new AppError("No tickets found", 404));
+  }
+
+  // Return paginated tickets with metadata
+  return res.status(200).json({
+    status: "success",
+    currentPage: parseInt(page),
+    totalPages: Math.ceil(totalTickets / limit),
+    results: tickets.length,
+    totalResults: totalTickets,
+    data: tickets,
+  });
+});
+
+exports.updateTicketStatus = catchAsync(async (req, res, next) => {
+  const { status, resolution, ticketId, date } = req.body;
+
+  // Validate the inputs
+  if (!status && !resolution) {
+    return res.status(400).json({
+      status: "fail",
+      message: "Either 'status' or 'resolution' must be provided.",
+    });
+  }
+
+  if (!date) {
+    return res.status(400).json({
+      status: "fail",
+      message: "'date' is required.",
+    });
+  }
+
+  // Build the update object
+  const updateFields = {
+    ...(status && { status }),
+    ...(resolution && { resolution }),
+  };
+
+  // Prepare ticket history update
+  const ticketHistoryEntry = {
+    date,
+    ...(status && { status }),
+    ...(resolution && { resolution }),
+  };
+
+  // Find and update the ticket
+  const updatedTicket = await HelpCenter.findByIdAndUpdate(
+    ticketId,
+    {
+      $set: updateFields, // Update status and resolution
+      $push: { ticketHistory: ticketHistoryEntry }, // Add to ticketHistory
+    },
+    { new: true, runValidators: true } // Return updated document and apply validators
+  );
+
+  // If no ticket is found
+  if (!updatedTicket) {
+    return res.status(404).json({
+      status: "fail",
+      message: "Ticket not found.",
+    });
+  }
+
+  // Send the updated ticket in the response
+  res.status(200).json({
+    status: "success",
+    message: "Ticket updated successfully.",
+    data: updatedTicket,
+  });
+});
+
+exports.deleteTicket = catchAsync(async (req, res, next) => {
+  const { ticketId } = req.query; // Ticket ID from the URL
+  console.log(ticketId);
+  // Attempt to delete the ticket
+  const deletedTicket = await helpCenter.findByIdAndDelete(ticketId);
+  console.log(deletedTicket);
+  // If no ticket is found
+  if (!deletedTicket) {
+    return res.status(404).json({
+      status: "fail",
+      message: "Ticket not found.",
+    });
+  }
+
+  // Send a success response
+  res.status(200).json({
+    status: "success",
+    message: "Ticket deleted successfully.",
+    data: null,
   });
 });
 
@@ -1602,13 +2294,13 @@ exports.updateSellerOrderStatus = catchAsync(async (req, res, next) => {
   var result = await Booking.findOne({ _id: id });
   const order = await Order.findById(result.orderId);
 
-  if (result.status !== "completed" && status === "completed") {
+  if (result.status !== "Completed" && status === "Completed") {
     order.No_of_left_bookings = order.No_of_left_bookings - 1;
     await order.save();
   }
 
   if (order.No_of_left_bookings === 0) {
-    order.status = "completed";
+    order.status = "Completed";
     await order.save();
   }
 
@@ -1621,9 +2313,33 @@ exports.updateSellerOrderStatus = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getSellerDetails = catchAsync(async (req, res, next) => {
+  const { sellerId } = req.query;
+  if (!sellerId) {
+    return next(new AppError("no seller found", 400));
+  }
+  const foundSeller = await seller
+    .findById(sellerId)
+    .populate({
+      path: "categoryId",
+      model: "Category",
+    })
+    .populate({
+      path: "services.serviceId",
+      model: "Service",
+    });
+  if (!foundSeller) {
+    return next(new AppError("no seller found", 400));
+  }
+  res.status(200).json({
+    message: "seller details",
+    data: foundSeller,
+  });
+});
 exports.getSellerOrder = catchAsync(async (req, res, next) => {
   const id = req.params.id; // seller id
-  const result = await Booking.find({ sellerId: id }).populate({
+  const result = await Booking.find({ sellerId: id })
+  .populate({
     path: "package",
     populate: {
       path: "products",
@@ -1631,7 +2347,11 @@ exports.getSellerOrder = catchAsync(async (req, res, next) => {
         path: "productId",
         model: "Product",
       },
-    },
+    }
+  })
+  .populate({
+    path:"userId",
+    model:"User"
   });
 
   res.status(200).json({
@@ -1723,29 +2443,89 @@ exports.deleteBooking = catchAsync(async (req, res, next) => {
 });
 
 // coupon controllers
+exports.filterPartner = catchAsync(async (req, res, next) => {
+  const { status, page = 1, limit = 10 } = req.query;
+  
+  
+  if (!status) {
+    return next(new AppError('No status found', 400));
+  }
+
+  
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const foundPartners = await Seller.find({ status: status.toUpperCase() })
+    .skip(skip) 
+    .limit(limitNumber); 
+
+  
+  if (!foundPartners || foundPartners.length === 0) {
+    return res.status(200).json({
+      message: "No partners found",
+      data: [],
+    });
+  }
+
+  
+  const totalPartners = await Seller.countDocuments({ status: status.toUpperCase() });
+
+  
+  res.status(200).json({
+    message: "Partners fetched successfully",
+    data: foundPartners,
+    pagination: {
+      total: totalPartners, 
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalPartners / limitNumber), 
+    },
+  });
+});
+
 
 exports.createCoupon = catchAsync(async (req, res, next) => {
-  const { name, offPercentage, description, noOfTimesPerUser } = req.body;
+  const {
+    name,
+    offPercentage,
+    categoryType, // Array of category IDs
+    maxDiscount,
+    discountType,
+    description,
+    noOfTimesPerUser,
+    couponFixedValue
+  } = req.body;
 
-  if (!name || !offPercentage || !description) {
-    return next(new AppError(400, "All the fields are required"));
-  } else {
-    const result = await Coupon.find({ name: name });
-    if (result.length > 0) {
-      return next(new AppError(400, "Coupon already exist"));
-    } else {
-      await Coupon.create({
-        name,
-        offPercentage,
-        description,
-        noOfTimesPerUser,
-      });
-      res
-        .status(201)
-        .json({ success: true, message: "Data inserted successful" });
-    }
+  // Validate required fields
+  if (!name || !description || !categoryType || categoryType.length === 0) {
+    return next(new AppError(400, "All fields, including at least one category, are required"));
   }
+
+  // Check if coupon already exists
+  const existingCoupon = await Coupon.findOne({ name });
+  if (existingCoupon) {
+    return next(new AppError(400, "Coupon already exists"));
+  }
+
+  // Create the coupon
+  await Coupon.create({
+    name,
+    offPercentage:offPercentage?offPercentage:"",
+    categoryType,
+    maxDiscount,
+    discountType,
+    description,
+    noOfTimesPerUser,
+    couponFixedValue:couponFixedValue?couponFixedValue:""
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "Coupon created successfully",
+  });
 });
+
 
 exports.deleteCoupon = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is object id
@@ -1754,23 +2534,51 @@ exports.deleteCoupon = catchAsync(async (req, res, next) => {
 });
 
 exports.updateCoupon = catchAsync(async (req, res, next) => {
-  const { name, offPercentage, description, status, noOfTimesPerUser } =
-    req.body;
-  const id = req.params.id; // this is object id of available city
+  const {
+    name,
+    offPercentage,
+    description,
+    status,
+    noOfTimesPerUser,
+    categoryType,
+    maxDiscount,
+    discountType,
+    couponFixedValue,
+    id
+  } = req.body;
 
-  if (!name || !offPercentage || !description || !status) {
-    return next(new AppError(400, "All the fields are required"));
-  } else {
-    const result = await Coupon.findOne({ _id: id });
-    result.name = name;
-    result.offPercentage = offPercentage;
-    result.description = description;
-    result.noOfTimesPerUser = noOfTimesPerUser;
-    result.status = status;
-    await result.save();
-    res.status(200).json({ success: true, message: "Data updated successful" });
+  // Validate mandatory fields
+  if (!name || !description || !status) {
+    return next(new AppError(400, "All the required fields are missing"));
   }
+
+  // Find the coupon by ID
+  const coupon = await Coupon.findById(id);
+  if (!coupon) {
+    return next(new AppError(404, "Coupon not found"));
+  }
+
+  // Update the fields
+  coupon.name = name;
+  coupon.offPercentage = offPercentage;
+  coupon.description = description;
+  coupon.status = status;
+  coupon.noOfTimesPerUser = noOfTimesPerUser || coupon.noOfTimesPerUser; 
+  coupon.categoryType = categoryType;
+  coupon.maxDiscount = maxDiscount || coupon.maxDiscount; 
+  coupon.discountType = discountType || coupon.discountType; 
+  coupon.couponFixedValue = couponFixedValue || coupon.couponFixedValue;
+
+  
+  await coupon.save();
+
+ 
+  res.status(200).json({
+    success: true,
+    message: "Data updated successfully",
+    data: coupon, 
 });
+})
 
 exports.getAllCoupons = catchAsync(async (req, res, next) => {
   const result = await Coupon.find();
@@ -1849,7 +2657,6 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 
   res.status(201).json({ success: true, message: "Updated successfully" });
 });
-
 
 // exports.sendNotification = catchAsync(async (req, res, next) => {
 //   const { fcmToken, deviceType, text } = req.body;
@@ -2009,7 +2816,6 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 //       token: fcmToken, // FCM token of the recipient device
 //   };
 
-
 //     try {
 //         // Call the sendPushNotification function
 //         const response = await sendPushNotification(deviceType, fcmToken, message, scheduleTime);
@@ -2119,13 +2925,12 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 //     }
 // };
 
-
-exports.sendNotificationToAll = async (req, res, next) => {
+exports.sendNotificationToAll = async (req, res) => {
   const { description, date, time, title } = req.body;
-
+  console.log('req.body',req.body)
   // Validate input
   if (!description || !title) {
-      return next(new AppError("Please provide title and description", 400));
+    return next(new AppError("Please provide title and description", 400));
   }
 
   // Image handling (currently commented)
@@ -2143,94 +2948,112 @@ exports.sendNotificationToAll = async (req, res, next) => {
   // }
 
   try {
-      // Retrieve FCM tokens and their corresponding appTypes from tokenSchema
-      const tokensByAppType = await tokenSchema.aggregate([
-          {
-              $group: {
-                  _id: "$deviceType", // Group by appType
-                  tokens: { $push: "$token" }, // Collect all tokens for each appType
-              },
-          },
-      ]);
+    // Retrieve FCM tokens and their corresponding appTypes from tokenSchema
+    console.log('description',description)
+    const tokensByDeviceType = await tokenSchema.aggregate([
+      {
+        $group: {
+          _id: "$deviceType", // Group by deviceType
+          tokens: { 
+            $push: { 
+              token: "$token",  // Include the token
+              appType: "$appType",
+              deviceType:"$deviceType" // Include the appType
+            } 
+          }
+        }
+      },
+    ]);
 
-      if (!tokensByAppType || tokensByAppType.length === 0) {
-          return next(new AppError("No FCM tokens found to send notifications", 404));
+    if (!tokensByDeviceType || tokensByDeviceType.length === 0) {
+      return next(
+        new AppError("No FCM tokens found to send notifications", 404)
+      );
+    }
+    for(let i=0;i<tokensByDeviceType.length;i++){
+      console.log(tokensByDeviceType[i])
+    }
+    // Prepare the notification message
+    const message = {
+      notification: {
+        title: title,
+        body: description,
+        // ...(imageUrl && { image: imageUrl }), // Add image if available
+      },
+    };
+
+    // Check if notification should be scheduled
+    if (date && time) {
+      const scheduledDate = new Date(`${date}T${time}`);
+      if (isNaN(scheduledDate)) {
+        return next(new AppError("Invalid schedule date or time", 400));
       }
 
-      // Prepare the notification message
-      const message = {
-          notification: {
-              title: title,
-              body: description,
-              // ...(imageUrl && { image: imageUrl }), // Add image if available
-          },
+      if (scheduledDate <= new Date()) {
+        return next(new AppError("Scheduled time must be in the future", 400));
+      }
+
+      // Save the scheduled notification in the database
+      const notificationData = {
+        description,
+        title,
+        scheduleTiming: { date, time },
+        // image: imageUrl, // Save image URL if provided
+        status: "scheduled",
       };
 
-      // Check if notification should be scheduled
-      if (date && time) {
-          const scheduledDate = new Date(`${date}T${time}`);
-          if (isNaN(scheduledDate)) {
-              return next(new AppError("Invalid schedule date or time", 400));
-          }
+      const savedNotification = await notificationSchema.create(
+        notificationData
+      );
 
-          if (scheduledDate <= new Date()) {
-              return next(new AppError("Scheduled time must be in the future", 400));
-          }
-
-          // Save the scheduled notification in the database
-          const notificationData = {
-              description,
-              title,
-              scheduleTiming: { date, time },
-              // image: imageUrl, // Save image URL if provided
-              status: "scheduled",
-          };
-
-          const savedNotification = await notificationSchema.create(notificationData);
-
-          // Schedule the notification for all tokens by appType
-          schedule.scheduleJob(scheduledDate, async () => {
-              try {
-                  for (const { _id: appType, tokens } of tokensByAppType) {
-                      for (const token of tokens) {
-                          await sendPushNotification(appType, token, { ...message, token });
-                      }
-                  }
-                  console.log("Scheduled notification sent to all users successfully");
-
-                  // Update the notification status
-                  await notificationSchema.findOneAndUpdate(
-                      { _id: savedNotification._id },
-                      { status: "sent" }
-                  );
-              } catch (error) {
-                  console.error("Error sending scheduled notification to all:", error);
-              }
-          });
-
-          return res.status(200).json({
-              success: true,
-              message: "Notification scheduled for all users successfully",
-          });
-      }
-
-      // Send notifications to all tokens by appType immediately
-      for (const { _id: appType, tokens } of tokensByAppType) {
-          for (const token of tokens) {
+      // Schedule the notification for all tokens by appType
+      schedule.scheduleJob(scheduledDate, async () => {
+        try {
+          for (const { _id: appType, tokens } of tokensByAppType) {
+            for (const token of tokens) {
               await sendPushNotification(appType, token, { ...message, token });
+            }
           }
-      }
+          console.log("Scheduled notification sent to all users successfully");
+
+          // Update the notification status
+          await notificationSchema.findOneAndUpdate(
+            { _id: savedNotification._id },
+            { status: "sent" }
+          );
+        } catch (error) {
+          console.error("Error sending scheduled notification to all:", error);
+        }
+      });
 
       return res.status(200).json({
-          success: true,
-          message: "Notification sent to all users successfully",
+        success: true,
+        message: "Notification scheduled for all users successfully",
       });
+    }
+
+    // Send notifications to all tokens by appType immediately
+    for (const { _id: deviceType, tokens } of tokensByDeviceType) {
+      // Log to verify deviceType and tokens
+      console.log('DeviceType:', deviceType, 'Tokens:', tokens);
+      
+      for (const { token, appType, deviceType } of tokens) {
+        // Log to verify token and appType
+        console.log('Sending notification to token:', token, 'with appType:', appType);
+        
+        // Send the notification, passing appType as a separate argument
+        await sendPushNotification(deviceType, appType, token, { ...message, token });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification sent to all users successfully",
+    });
   } catch (error) {
-      next(error);
+    console.log(error);
   }
 };
-
-
 
 exports.getAllNotifications = catchAsync(async (req, res, next) => {
   const { page = 1, limit = 10 } = req.query; // Default to page 1 and 10 items per page
@@ -2241,7 +3064,7 @@ exports.getAllNotifications = catchAsync(async (req, res, next) => {
 
   // Validate page and limit values
   if (pageNumber <= 0 || limitNumber <= 0) {
-      return next(new AppError("Page and limit must be positive integers", 400));
+    return next(new AppError("Page and limit must be positive integers", 400));
   }
 
   // Calculate the number of documents to skip
@@ -2249,24 +3072,24 @@ exports.getAllNotifications = catchAsync(async (req, res, next) => {
 
   // Fetch notifications with pagination
   const notifications = await notificationSchema
-      .find()
-      .skip(skip) // Skip the appropriate number of documents
-      .limit(limitNumber) // Limit the number of documents returned
-      .sort({ createdAt: -1 }); // Optionally sort by creation time or another field
+    .find()
+    .skip(skip) // Skip the appropriate number of documents
+    .limit(limitNumber) // Limit the number of documents returned
+    .sort({ createdAt: -1 }); // Optionally sort by creation time or another field
 
   // Get total document count for pagination metadata
   const totalNotifications = await notificationSchema.countDocuments();
 
   // Prepare the response with pagination metadata
   res.status(200).json({
-      success: true,
-      data: notifications,
-      pagination: {
-          total: totalNotifications,
-          page: pageNumber,
-          limit: limitNumber,
-          totalPages: Math.ceil(totalNotifications / limitNumber),
-      },
+    success: true,
+    data: notifications,
+    pagination: {
+      total: totalNotifications,
+      page: pageNumber,
+      limit: limitNumber,
+      totalPages: Math.ceil(totalNotifications / limitNumber),
+    },
   });
 });
 
@@ -2275,28 +3098,30 @@ exports.filterNotification = catchAsync(async (req, res, next) => {
 
   // Validate the date
   if (!date) {
-      return next(new AppError("Please provide a date to filter notifications.", 400));
+    return next(
+      new AppError("Please provide a date to filter notifications.", 400)
+    );
   }
 
   // Find notifications with the matching date in the `scheduleTiming.date` field
   const notifications = await notificationSchema.find({
-      "scheduleTiming.date": date,
+    "scheduleTiming.date": date,
   });
 
   // Check if notifications are found
   if (!notifications || notifications.length === 0) {
-      return res.status(200).json({
-          success: false,
-          message: "No notifications found for the given date.",
-          data:[]
-      });
+    return res.status(200).json({
+      success: false,
+      message: "No notifications found for the given date.",
+      data: [],
+    });
   }
 
   // Respond with the filtered notifications
   res.status(200).json({
-      success: true,
-      count: notifications.length,
-      data: notifications,
+    success: true,
+    count: notifications.length,
+    data: notifications,
   });
 });
 
@@ -2308,7 +3133,7 @@ exports.searchNotifications = catchAsync(async (req, res, next) => {
   const limitNumber = parseInt(limit, 10);
 
   if (pageNumber <= 0 || limitNumber <= 0) {
-      return next(new AppError("Page and limit must be positive integers", 400));
+    return next(new AppError("Page and limit must be positive integers", 400));
   }
 
   // Calculate the number of documents to skip
@@ -2316,47 +3141,125 @@ exports.searchNotifications = catchAsync(async (req, res, next) => {
 
   // Build the search query
   const searchQuery = {
-      title: { $regex: title, $options: "i" }, // Case-insensitive search using regex
+    title: { $regex: title, $options: "i" }, // Case-insensitive search using regex
   };
 
   // Get the total count of matching notifications
-  const totalNotifications = await notificationSchema.countDocuments(searchQuery);
+  const totalNotifications = await notificationSchema.countDocuments(
+    searchQuery
+  );
 
   // Validate if the page exists
   const totalPages = Math.ceil(totalNotifications / limitNumber);
   if (pageNumber > totalPages && totalNotifications > 0) {
-      return res.status(200).json({
-          success: true,
-          data: [],
-          pagination: {
-              total: totalNotifications,
-              page: pageNumber,
-              limit: limitNumber,
-              totalPages: totalPages,
-          },
-          message: "No notifications available for this page",
-      });
+    return res.status(200).json({
+      success: true,
+      data: [],
+      pagination: {
+        total: totalNotifications,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: totalPages,
+      },
+      message: "No notifications available for this page",
+    });
   }
 
   // Fetch notifications with pagination
   const notifications = await notificationSchema
-      .find(searchQuery)
-      .skip(skip)
-      .limit(limitNumber)
-      .sort({ createdAt: -1 }); // Optionally sort by creation time or another field
+    .find(searchQuery)
+    .skip(skip)
+    .limit(limitNumber)
+    .sort({ createdAt: -1 }); // Optionally sort by creation time or another field
 
   // Prepare the response with pagination metadata
   res.status(200).json({
-      success: true,
-      data: notifications,
-      pagination: {
-          total: totalNotifications,
-          page: pageNumber,
-          limit: limitNumber,
-          totalPages: totalPages,
-      },
+    success: true,
+    data: notifications,
+    pagination: {
+      total: totalNotifications,
+      page: pageNumber,
+      limit: limitNumber,
+      totalPages: totalPages,
+    },
   });
 });
 
+exports.updateSellerStatus = async (req, res) => {
+  try {
+    const { sellerId, status } = req.body;
+    const errors = [];
 
+    // Find seller first
+    const seller = await Seller.findById(sellerId);
+    if (!seller) {
+      return res.status(404).json({ error: "Seller not found" });
+    }
 
+    // Validate status
+    const validStatuses = ["IN-REVIEW", "APPROVED", "REJECTED", "HOLD"];
+    if (!status) {
+      errors.push("Status is required");
+    } else if (!validStatuses.includes(status)) {
+      errors.push(`Status must be one of: ${validStatuses.join(", ")}`);
+    }
+
+    // Return if there are validation errors
+    if (errors.length > 0) {
+      return res.status(400).json({ errors });
+    }
+
+    // If status is the same, no need to update
+    if (seller.status === status) {
+      return res.status(200).json({
+        message: "No status change required",
+        seller,
+      });
+    }
+
+    // Update seller status
+    seller.status = status;
+    await seller.save();
+
+    // Additional actions based on status change
+    let message = "Seller status updated successfully";
+    switch (status) {
+      case "APPROVED":
+        // You could add additional logic here like:
+        // - Sending welcome email
+        // - Triggering partner ID generation
+        // - Activating seller's services
+        message = "Seller has been approved successfully";
+        break;
+      case "REJECTED":
+        // You could add additional logic here like:
+        // - Sending rejection notification
+        // - Deactivating services
+        message = "Seller has been rejected";
+        break;
+      case "HOLD":
+        // You could add additional logic here like:
+        // - Sending hold notification
+        // - Temporarily suspending services
+        message = "Seller has been put on hold";
+        break;
+      case "IN-REVIEW":
+        message = "Seller status set to review";
+        break;
+    }
+
+    // Remove sensitive information before sending response
+    const { password, ...sellerWithoutSensitive } = seller.toObject();
+
+    return res.status(200).json({
+      message,
+      seller: sellerWithoutSensitive,
+    });
+  } catch (error) {
+    console.error("Seller status update error:", error);
+    return res.status(500).json({
+      error: "An error occurred while updating seller status",
+      details: error.message,
+    });
+  }
+};

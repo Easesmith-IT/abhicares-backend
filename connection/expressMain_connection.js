@@ -33,10 +33,12 @@ app.get("*", (req, res) => {
   console.log('inside wildcard route middleware');
   try {
     res.sendFile(path.resolve(__dirname, "../", "build", "index.html"));
+    console.log(path,'this is a path')
   } catch (error) {
     console.error("Error serving index.html:", error);
     res.status(500).send("Internal Server Error");
   }
 });
+
 
 app.use(errorHandler);

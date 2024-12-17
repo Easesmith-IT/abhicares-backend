@@ -8,6 +8,9 @@ const sellerSchema = new Schema(
       type: String,
       required: true,
     },
+    partnerId: {
+      type: String,
+    },
     legalName: {
       type: String,
       // required: true,
@@ -21,7 +24,15 @@ const sellerSchema = new Schema(
     },
     status: {
       type: String,
-      default: "in-review",
+      required: true,
+      default: "IN-REVIEW",
+      enum: ["IN-REVIEW", "APPROVED", "REJECTED", "HOLD"],
+    },
+    Gender: {
+      type: String,
+      required: true,
+      default: "MALE",
+      enum: ["MALE", "FEMALE"],
     },
     address: {
       state: {
@@ -89,4 +100,3 @@ const sellerSchema = new Schema(
 sellerSchema.index({ "address.location": "2dsphere" });
 
 module.exports = mongoose.model("Seller", sellerSchema);
-

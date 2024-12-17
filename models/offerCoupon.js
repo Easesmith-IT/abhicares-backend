@@ -5,9 +5,25 @@ const offerCouponSchema=new mongoose.Schema({
         type:String,
         required:[true,"please provide coupon name"]
      },
+     categoryType:[{
+      type:mongoose.Types.ObjectId,
+      ref:"Category"
+     }],
+     discountType:{
+      type:String,
+      enum:['fixed','percentage']
+     },
+     couponFixedValue:{
+      type:String,
+
+     },
+     maxDiscount:{
+      type:String,
+
+     },
      offPercentage:{
         type:Number,
-        required:[true,"please provide OFF percentage"]
+      //   required:[true,"please provide OFF percentage"]
      },
      date:{
         type:Date,

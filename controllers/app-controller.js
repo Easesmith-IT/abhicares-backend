@@ -19,11 +19,178 @@ const { contentSecurityPolicy } = require("helmet");
 const ReviewModel = require("../models/review");
 const catchAsync = require("../util/catchAsync");
 const AppError = require("../util/appError");
-const shortid = require("shortid");
+const { nanoid } = require("nanoid");
 const { tokenSchema } = require("../models/fcmToken");
+const helpCenter = require("../models/helpCenter");
+const pincodeValidator = require("../util/locationValidator");
+const product = require("../models/product");
+////////////////////////////////////////////////////////
+const updateServiceRating = async (serviceId, serviceType) => {
+  try {
+    const Model = serviceType === "product" ? Product : Package;
+
+    const stats = await Review.aggregate([
+      {
+        $match: {
+          [serviceType === "product" ? "productId" : "packageId"]:
+            new mongoose.Types.ObjectId(serviceId),
+          reviewType: "ON-BOOKING",
+          status: "APPROVED",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+          ratingCounts: { $push: "$rating" },
+        },
+      },
+    ]);
+
+    const ratingData =
+      stats.length > 0
+        ? {
+            rating: parseFloat(stats[0].averageRating.toFixed(1)),
+            totalReviews: stats[0].totalReviews,
+            ratingDistribution: {
+              5: stats[0].ratingCounts.filter((r) => r === 5).length,
+              4: stats[0].ratingCounts.filter((r) => r === 4).length,
+              3: stats[0].ratingCounts.filter((r) => r === 3).length,
+              2: stats[0].ratingCounts.filter((r) => r === 2).length,
+              1: stats[0].ratingCounts.filter((r) => r === 1).length,
+            },
+          }
+        : {
+            rating: 0,
+            totalReviews: 0,
+            ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+          };
+
+    await Model.findByIdAndUpdate(serviceId, {
+      $set: {
+        rating: ratingData.rating,
+        totalReviews: ratingData.totalReviews,
+        ratingDistribution: ratingData.ratingDistribution,
+      },
+    });
+
+    return ratingData;
+  } catch (error) {
+    console.error("Error updating service rating:", error);
+    throw error;
+  }
+};
 
 /////////////////////////////////////////////////////////////////////////////
 //app routes
+
+exports.updateUserProfile = async (req, res, next) => {
+  try {
+    const userId = req.params.userId;
+    const { name, phone, email, dateOfBirth, Gender } = req.body;
+    const errors = [];
+
+    // Find user first
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (!user.status) {
+      return res.status(403).json({ error: "User account is inactive" });
+    }
+
+    // Validate and prepare updates
+    const updates = {};
+
+    // Name validation
+    if (name !== undefined) {
+      if (typeof name !== "string" || name.trim().length < 2) {
+        errors.push("Name must be at least 2 characters long");
+      } else {
+        updates.name = name.trim();
+      }
+    }
+
+    // Phone validation
+    if (phone !== undefined) {
+      const phoneRegex = /^\+?[\d\s-]{10,}$/;
+      if (!phoneRegex.test(phone)) {
+        errors.push("Invalid phone number format");
+      } else {
+        // Check phone uniqueness
+        const existingUser = await User.findOne({
+          phone,
+          _id: { $ne: userId },
+        });
+        if (existingUser) {
+          errors.push("Phone number already in use");
+        } else {
+          updates.phone = phone;
+        }
+      }
+    }
+
+    // Email validation
+    if (email !== undefined) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        errors.push("Invalid email format");
+      } else {
+        updates.email = email;
+      }
+    }
+
+    // Date of birth validation
+    if (dateOfBirth !== undefined) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(dateOfBirth)) {
+        errors.push("Invalid date format. Use YYYY-MM-DD");
+      } else {
+        updates.dateOfBirth = dateOfBirth;
+      }
+    }
+
+    // Gender validation
+    if (Gender !== undefined) {
+      if (!["MALE", "FEMALE"].includes(Gender)) {
+        errors.push("Gender must be either MALE or FEMALE");
+      } else {
+        updates.Gender = Gender;
+      }
+    }
+
+    // Check if there are any validation errors
+    if (errors.length > 0) {
+      return res.status(400).json({ errors });
+    }
+
+    // Check if there are any fields to update
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: "No valid fields to update" });
+    }
+
+    // Apply updates
+    Object.assign(user, updates);
+    await user.save();
+
+    // Return updated user without sensitive information
+    const { password, otp, otpExpiresAt, ...userWithoutSensitive } =
+      user.toObject();
+
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      user: userWithoutSensitive,
+    });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    return res.status(500).json({
+      error: "An error occurred while updating the profile",
+      details: error.message,
+    });
+  }
+};
 
 exports.searchService = async (req, res, next) => {
   try {
@@ -33,7 +200,6 @@ exports.searchService = async (req, res, next) => {
       search = req.query.search;
       page = req.query.page;
     }
-
     var limit = 20;
     const allServices = await Service.count();
     var num = allServices / limit;
@@ -165,10 +331,17 @@ exports.geUpcomingOrders = async (req, res, next) => {
 exports.getCompletedOrders = async (req, res, next) => {
   try {
     const userId = req.params.userId;
+    console.log("userId is this:", userId);
     var order = await Order.find({
       "user.userId": userId,
-      status: "completed",
+      status: "Completed",
     });
+
+    // for printing orders
+    for (let i = 0; i < order.length; i++) {
+      console.log("these are orders:", order[i]);
+    }
+
     return res.status(200).json({ order: order });
   } catch (err) {
     const error = new Error(err);
@@ -254,20 +427,28 @@ exports.postOrderBooking = async (req, res, next) => {
     const bookingId = req.body.bookingId;
     const rating = req.body.rating;
     const orderId = req.body.orderId;
+    const sellerId = req.body.sellerId;
     const content = req.body.content;
+    const packageId = req.body.packageId;
+    const date = req.body.date;
     console.log(paymentType);
     console.log(req.body);
     const review = await ReviewModel({
       rating: rating,
       content: content,
-      productId: productId,
+      reviewType: "ON-BOOKING",
+      productId: productId ? productId : "",
       orderId: orderId,
       userId: userId,
+      sellerId: sellerId,
+      bookingId: bookingId ? bookingId : "",
+      date: date,
+      packageId: packageId ? packageId : "",
     });
     await review.save();
     const booking = await BookingModel.findById(bookingId).populate({
-      path:'sellerId',
-      model:'Seller'
+      path: "sellerId",
+      model: "Seller",
     });
 
     const order = await Order.findById(orderId);
@@ -279,36 +460,46 @@ exports.postOrderBooking = async (req, res, next) => {
       order.status = "completed";
       await order.save();
     }
-    booking.status = "completed";
+    booking.status = "Completed";
     if (paymentType) {
-      booking.paymentStatus = "completed";
+      booking.paymentStatus = "Completed";
       booking.paymentType = paymentType;
     }
     await booking.save();
-    const foundToken=await tokenSchema.findOne({
-      sellerId:booking.sellerId
-    })
-    if(!foundToken){
+    await updateServiceRating(
+      productId ? productId : packageId,
+      productId ? "product" : "package"
+    );
+
+    const foundToken = await tokenSchema.findOne({
+      sellerId: booking.sellerId,
+    });
+    if (!foundToken) {
       return res.status(400).json({
-        message:"no user found"
-      })
+        message: "no user found",
+      });
     }
-    const token=foundToken.token
-    const deviceType=foundToken.deviceType
-    const appType=foundToken.appType
+    const token = foundToken.token;
+    const deviceType = foundToken.deviceType;
+    const appType = foundToken.appType;
     const message = {
-            notification: {
-                title: "Service completed",
-                body: `Your service has been completed by ${booking.sellerId.name}. Please confirm the service completion.`,
-                // ...(imageUrl && { image: imageUrl }), // Add image if available
-            },
-            token: token, // FCM token of the recipient device
-        };
-    const tokenResponse=await createSendPushNotification(deviceType,token,message,appType)
-    if(!tokenResponse){
+      notification: {
+        title: "Service completed",
+        body: `Your service has been completed by ${booking.sellerId.name}. Please confirm the service completion.`,
+        // ...(imageUrl && { image: imageUrl }), // Add image if available
+      },
+      token: token, // FCM token of the recipient device
+    };
+    const tokenResponse = await createSendPushNotification(
+      deviceType,
+      token,
+      message,
+      appType
+    );
+    if (!tokenResponse) {
       return res.status(400).json({
-        message:'No token found'
-      })
+        message: "No token found",
+      });
     }
     return res.status(200).json({ review });
   } catch (err) {
@@ -340,16 +531,15 @@ exports.getUser = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   try {
-    const {phoneNumber} = req.body;
+    const { phoneNumber } = req.body;
     console.log(phoneNumber);
     var user = await User.findOne({ phone: phoneNumber });
     console.log(user);
     if (!user) {
       return res.status(404).json({ error: "No user Found" });
-    } 
-     
-      return res.status(200).json({ user });
-    
+    }
+
+    return res.status(200).json({ user });
   } catch (err) {
     const error = new Error(err);
     error.httpStatusCode = 500;
@@ -368,7 +558,7 @@ exports.createUser = async (req, res, next) => {
     if (user) {
       return res.status(403).json({ message: "User already exist" });
     } else {
-      const referralCode = shortid.generate();
+      const referralCode = nanoid(8);
       user = await User({
         phone: phoneNumber,
         name: name,
@@ -413,6 +603,7 @@ exports.AddUserAddress = async (req, res, next) => {
     const addressLine = req.body.addressLine;
     const pincode = req.body.pincode;
     const city = req.body.city;
+    const state = req.body.state;
     const userId = req.body.userId;
     const landmark = req.body.landmark;
     const lat = req.body.lat;
@@ -422,6 +613,7 @@ exports.AddUserAddress = async (req, res, next) => {
       pincode: pincode,
       landmark: landmark,
       city: city,
+      state: state,
       userId: userId,
       location: {
         coordinates: [lat, long],
@@ -456,34 +648,138 @@ exports.getUserAddress = async (req, res, next) => {
   }
 };
 
-exports.getUserTickets = async (req, res, next) => {
-  try {
-    console.log("reached");
-    const userId = req.params.userId;
-    console.log(userId);
-    var tickets = await HelpCentre.find({ userId: userId });
-    console.log(tickets);
-    return res.status(200).json({ tickets });
-  } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
-  }
-};
+// exports.getUserTickets = async (req, res, next) => {
+//   try {
+//     console.log("reached");
+//     const userId = req.params.userId;
+//     console.log(userId);
+//     var tickets = await HelpCentre.find({ userId: userId });
+//     console.log(tickets);
+//     return res.status(200).json({ tickets });
+//   } catch (err) {
+//     const error = new Error(err);
+//     error.httpStatusCode = 500;
+//     return next(err);
+//   }
+// };
 
+exports.getUserTickets = catchAsync(async (req, res, next) => {
+  const { page, userId } = req.query;
+  const limit = 10;
+  // Validate userId
+  if (!userId) {
+    return res.status(400).json({
+      status: "fail",
+      message: "User ID is required.",
+    });
+  }
+
+  // Calculate skip value for pagination
+  const skip = (page - 1) * limit;
+
+  // Fetch paginated tickets for the user
+  const tickets = await HelpCentre.find({ userId })
+    .sort({ createdAt: -1 }) // Sort tickets by most recent
+    .skip(skip) // Skip records for previous pages
+    .limit(parseInt(limit)); // Limit the number of records per page
+
+  // Count total tickets for the user
+  const totalTickets = await HelpCentre.countDocuments({ userId });
+
+  // Return the paginated tickets and meta information
+  return res.status(200).json({
+    status: "success",
+    currentPage: parseInt(page),
+    totalPages: Math.ceil(totalTickets / limit),
+    results: tickets.length,
+    totalResults: totalTickets,
+    tickets,
+  });
+});
+
+exports.getSingleTicket = catchAsync(async (req, res, next) => {
+  const { ticketId } = req.params; // Extract ticketId from the route parameters
+
+  // Find the ticket by its ID
+  const ticket = await HelpCenter.findById(ticketId);
+
+  // If the ticket is not found
+  if (!ticket) {
+    return res.status(404).json({
+      status: "fail",
+      message: "Ticket not found.",
+    });
+  }
+
+  // Return the ticket details
+  res.status(200).json({
+    status: "success",
+    ticket,
+  });
+});
 exports.raiseTicket = async (req, res, next) => {
   try {
-    const issue = req.body.issue;
-    const description = req.body.description;
-    const userId = req.body.userId;
+    const {
+      serviceId,
+      date,
+      issue,
+      description,
+      userId,
+      sellerId,
+      raisedBy,
+      bookingId,
+      serviceType,
+      ticketType,
+    } = req.body;
     var ticket = await HelpCentre({
       issue: issue,
       description: description,
       userId: userId,
+      sellerId: sellerId ? sellerId : "",
+      raisedBy: raisedBy,
+      ticketType,
+      serviceType: serviceType ? serviceType : "",
+      serviceId: serviceId ? serviceId : "",
+      bookingId: bookingId ? bookingId : "",
+      date,
+      ticketHistory: [
+        {
+          date: date,
+          status: "raised",
+          resolution: "",
+        },
+      ],
     });
 
     ticket.save();
+
+    // const foundToken=await tokenSchema.findOne({
+    //   sellerId:sellerId
+    // })
+    // if(!foundToken){
+    //   return res.status(400).json({
+    //     message:"no user found"
+    //   })
+    // }
+    // const token=foundToken.token
+    // const deviceType=foundToken.deviceType
+    // const appType=foundToken.appType
+    // const message = {
+    //         notification: {
+    //             title: "Service completed",
+    //             body: `Your service has been completed by ${booking.sellerId.name}. Please confirm the service completion.`,
+    //             // ...(imageUrl && { image: imageUrl }), // Add image if available
+    //         },
+    //         token: token, // FCM token of the recipient device
+    //     };
+    // const tokenResponse=await createSendPushNotification(deviceType,token,message,appType)
+    // if(!tokenResponse){
+    //   return res.status(400).json({
+    //     message:'No token found'
+    //   })
+    // }
     console.log(ticket);
+
     return res.status(200).json({ ticket });
   } catch (err) {
     const error = new Error(err);
@@ -520,37 +816,96 @@ exports.getCouponByName = async (req, res, next) => {
   }
 };
 
+// exports.getCouponByName = catchAsync(async (req, res, next) => {
+//   const { name, userId } = req.body;
+//   console.log(name,userId)
+//   if (!name) {
+//     return next(new AppError("All Fields are required", 400));
+//   }
+
+//   const result = await Coupon.find({ name: name });
+//   if (result.length === 0) {
+//     return next(new AppError("Coupon not found", 404));
+//   }
+
+//   const orders = await Order.find({ "user.userId": userId });
+//   const { noOfTimesPerUser } = result[0];
+//   console.log("noOfTimesPerUser", noOfTimesPerUser);
+
+//   let couponUseCount = 0;
+
+//   orders.forEach((order) => {
+//     if (
+//       order.couponId &&
+//       order.couponId.toString() === result[0]._id.toString()
+//     )
+//       couponUseCount++;
+//   });
+
+//   console.log("couponUseCount", couponUseCount);
+//   if (couponUseCount >= noOfTimesPerUser) {
+//     return next(new AppError("You have already used this coupon!", 400));
+//   }
+
+//   res.status(200).json({ success: true, message: "Your coupon", data: result });
+// });
 exports.getCouponByName = catchAsync(async (req, res, next) => {
-  const { name, userId } = req.body;
-  if (!name) {
-    return next(new AppError("All Fields are required", 400));
+  const { name, serviceCategoryType, userId } = req.body; // serviceCategoryType is an array
+  // const userId = req.user._id;
+
+  if (!name || !serviceCategoryType || !Array.isArray(serviceCategoryType)) {
+    return next(
+      new AppError(
+        "All fields are required and serviceCategoryType must be an array",
+        400
+      )
+    );
   }
 
   const result = await Coupon.find({ name: name });
   if (result.length === 0) {
-    return next(new AppError("Coupon not found", 404));
+    return next(new AppError("Coupon not found", 400));
   }
 
+  // Get the coupon
+  const coupon = result[0];
+
+  // Check if all category IDs in serviceCategoryType match the coupon's categoryType
+  const couponCategoryIds = coupon.categoryType.map((id) => id.toString());
+  const isValidCategoryType = serviceCategoryType.every((id) =>
+    couponCategoryIds.includes(id.toString())
+  );
+
+  if (!isValidCategoryType) {
+    return next(
+      new AppError(
+        "This coupon is not valid for the selected product/service type",
+        400
+      )
+    );
+  }
+
+  // Check if the user has already used this coupon
   const orders = await Order.find({ "user.userId": userId });
-  const { noOfTimesPerUser } = result[0];
+  const { noOfTimesPerUser } = coupon;
+
   console.log("noOfTimesPerUser", noOfTimesPerUser);
 
   let couponUseCount = 0;
 
   orders.forEach((order) => {
-    if (
-      order.couponId &&
-      order.couponId.toString() === result[0]._id.toString()
-    )
+    if (order.couponId && order.couponId.toString() === coupon._id.toString()) {
       couponUseCount++;
+    }
   });
 
   console.log("couponUseCount", couponUseCount);
+
   if (couponUseCount >= noOfTimesPerUser) {
     return next(new AppError("You have already used this coupon!", 400));
   }
 
-  res.status(200).json({ success: true, message: "Your coupon", data: result });
+  res.status(200).json({ success: true, message: "Your coupon", data: coupon });
 });
 
 exports.getAllCoupons = catchAsync(async (req, res, next) => {
@@ -579,4 +934,132 @@ exports.getReferralCredits = catchAsync(async (req, res, next) => {
 exports.getAppHomePageServices = catchAsync(async (req, res, next) => {
   const services = await Service.find({ appHomepage: true });
   res.status(200).json({ success: true, services });
+});
+
+exports.checkServiceability = async (req, res) => {
+  try {
+    const { pinCode } = req.query;
+
+    if (!pinCode) {
+      return res.status(400).json({
+        success: false,
+        error: "Pincode is required",
+      });
+    }
+
+    const validation = await pincodeValidator.validatePincode(pinCode);
+
+    if (validation.isValid) {
+      return res.status(200).json({
+        success: true,
+        isServiceable: true,
+        message: "Location is serviceable",
+        data: validation.data,
+      });
+    } else {
+      return res.status(200).json({
+        success: true,
+        isServiceable: false,
+        message: validation.error,
+      });
+    }
+  } catch (error) {
+    console.error("Serviceability check error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Error checking serviceability",
+    });
+  }
+};
+
+exports.autoReview = async (req, res, next) => {
+  try {
+    const packages = await Package.find();
+    const products = await Product.find();
+    const items = [...packages, ...products];
+    await items.forEach(async (item) => {
+      item.rating = 4.5;
+      item.totalReviews = 3;
+      item.ratingDistribution = {
+        5: 1,
+        4: 2,
+        3: 0,
+        2: 0,
+        1: 0,
+      };
+      await item.save();
+    });
+    res.json({ mes: "jdja" });
+  } catch (err) {
+    res.status(400).json({ er: err });
+  }
+};
+
+exports.addBookingReview = catchAsync(async (req, res, next) => {
+  const { bookingId, rating, title, content, serviceType, serviceId } =
+    req.body;
+
+  // Validate rating
+  if (!rating || rating < 1 || rating > 5) {
+    return next(
+      new AppError("Please provide a valid rating between 1 and 5", 400)
+    );
+  }
+
+  // Find booking and verify ownership
+  const booking = await Booking.findOne({
+    _id: bookingId,
+    userId: req.user._id,
+  });
+
+  if (!booking) {
+    return next(new AppError("Booking not found or unauthorized", 404));
+  }
+
+  // Check if booking is completed
+  if (booking.status !== "COMPLETED") {
+    return next(new AppError("Can only review completed bookings", 400));
+  }
+
+  // Check for existing review
+  const existingReview = await Review.findOne({
+    bookingId,
+    userId: req.user._id,
+  });
+
+  if (existingReview) {
+    return next(new AppError("You have already reviewed this booking", 400));
+  }
+
+  // Determine if it's a product or package
+  const serviceField = serviceType === "product" ? "productId" : "packageId";
+
+  // Create the review
+  const review = await Review.create({
+    title,
+    content,
+    rating,
+    userId: req.user._id,
+    bookingId,
+    [serviceField]: serviceId,
+    reviewType: "ON-BOOKING",
+    status: "APPROVED", // or 'PENDING' based on your requirements
+    serviceType: booking.categoryId, // Assuming categoryId exists in booking
+  });
+
+  // Update service rating
+  await updateServiceRating(serviceId, serviceType);
+
+  return res.status(201).json({
+    status: "success",
+    message: "Review added successfully",
+    data: {
+      review,
+      serviceDetails: {
+        type: serviceType,
+        name: booking.serviceId.name,
+        id: booking.serviceId._id,
+      },
+    },
+  });
 });
