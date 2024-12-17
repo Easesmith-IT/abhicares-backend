@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const AppError = require("../util/appError");
-const shortid = require("shortid");
+const { nanoid } = require('nanoid');
 const catchAsync = require("../util/catchAsync");
 const axios = require("axios");
 const { generateOTP, verifyOTP } = require("../util/otpHandler");
@@ -302,6 +302,7 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
     }
   }
 });
+
 exports.appCreateUser = catchAsync(async (req, res, next) => {
   const { enteredOTP, phone, tempVerf } = req.body;
   if (!tempVerf) {
@@ -317,7 +318,7 @@ exports.appCreateUser = catchAsync(async (req, res, next) => {
     const decoded = jwt.verify(tempVerf, process.env.JWT_SECRET);
     console.log(decoded.otp == enteredOTP, decoded.phone == phone);
     if (decoded.otp == enteredOTP && decoded.phone == phone) {
-      const referralCode = shortid.generate();
+      const referralCode = nanoid(8)
       const psw = "password";
       var user = await User({
         name: decoded.name,
@@ -372,7 +373,7 @@ exports.createUser = catchAsync(async (req, res, next) => {
 
   const decoded = jwt.verify(req.cookies["tempVerf"], process.env.JWT_SECRET);
   if (decoded.otp == enteredOTP.toString() && decoded.phone == phone) {
-    const referralCode = shortid.generate();
+    const referralCode = nanoid(8)
 
     var user = await User({
       name: decoded.name,
