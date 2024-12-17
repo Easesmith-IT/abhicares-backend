@@ -1,34 +1,39 @@
 const AvailableCity = require("../models/availableCities");
 
-class LocationValidator {
+class PincodeValidator {
   constructor() {
-    // Cache for storing city availability data
-    this.cityCache = new Map();
+    this.pincodeCache = new Map();
     this.CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   }
 
-  // Generate cache key
-  getCacheKey(city, state) {
-    return `${city.toUpperCase()}_${state.toUpperCase()}`;
-  }
-
-  // Check and update cache
-  async getCachedCity(city, state) {
-    const key = this.getCacheKey(city, state);
-    const cached = this.cityCache.get(key);
+  // Get cached pincode data
+  async getCachedPincodeData(pinCode) {
+    const cached = this.pincodeCache.get(pinCode);
 
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
       return cached.data;
     }
 
-    // Fetch from database and update cache
-    const cityData = await AvailableCity.findOne({
-      city: city.toUpperCase(),
-      state: state.toUpperCase(),
-      isActive: true,
-    }).lean();
+    // Efficient query using index on pinCodes.code
+    const cityData = await AvailableCity.findOne(
+      {
+        pinCodes: {
+          $elemMatch: {
+            code: parseInt(pinCode),
+            isActive: true,
+          },
+        },
+        isActive: true,
+      },
+      {
+        city: 1,
+        state: 1,
+        "pinCodes.$": 1, // Only return the matched pincode
+      }
+    ).lean();
 
-    this.cityCache.set(key, {
+    // Cache the result (even if null, to prevent repeated DB queries for invalid pincodes)
+    this.pincodeCache.set(pinCode, {
       data: cityData,
       timestamp: Date.now(),
     });
@@ -36,40 +41,40 @@ class LocationValidator {
     return cityData;
   }
 
-  // Clear cache for a specific city or all cities
-  clearCache(city = null, state = null) {
-    if (city && state) {
-      const key = this.getCacheKey(city, state);
-      this.cityCache.delete(key);
+  // Clear specific pincode cache or entire cache
+  clearCache(pinCode = null) {
+    if (pinCode) {
+      this.pincodeCache.delete(pinCode);
     } else {
-      this.cityCache.clear();
+      this.pincodeCache.clear();
     }
   }
 
-  // Validate location
-  async validateLocation(city, state, pinCode) {
+  // Validate pincode
+  async validatePincode(pinCode) {
     try {
-      if (!city || !state || !pinCode) {
-        throw new Error("City, state, and pinCode are required");
+      if (!pinCode) {
+        throw new Error("Pincode is required");
       }
 
-      const cityData = await this.getCachedCity(city, state);
-
-      if (!cityData) {
-        throw new Error(`Service is not available in ${city}, ${state}`);
+      // Validate pincode format
+      if (!/^\d{6}$/.test(pinCode)) {
+        throw new Error("Invalid pincode format. Must be 6 digits");
       }
 
-      const validPinCode = cityData.pinCodes.find(
-        (p) => p.code === parseInt(pinCode) && p.isActive
-      );
+      const locationData = await this.getCachedPincodeData(parseInt(pinCode));
 
-      if (!validPinCode) {
+      if (!locationData) {
         throw new Error(`Service is not available for pincode ${pinCode}`);
       }
 
       return {
         isValid: true,
-        cityData,
+        data: {
+          city: locationData.city,
+          state: locationData.state,
+          pinCode: locationData.pinCodes[0].code,
+        },
       };
     } catch (error) {
       return {
@@ -78,9 +83,25 @@ class LocationValidator {
       };
     }
   }
+
+  // Periodic cache cleanup (optional)
+  startCacheCleanup(interval = 30 * 60 * 1000) {
+    // 30 minutes default
+    setInterval(() => {
+      const now = Date.now();
+      for (const [pincode, data] of this.pincodeCache.entries()) {
+        if (now - data.timestamp > this.CACHE_DURATION) {
+          this.pincodeCache.delete(pincode);
+        }
+      }
+    }, interval);
+  }
 }
 
 // Create singleton instance
-const locationValidator = new LocationValidator();
+const pincodeValidator = new PincodeValidator();
 
-module.exports = locationValidator;
+// Start periodic cache cleanup
+pincodeValidator.startCacheCleanup();
+
+module.exports = pincodeValidator;
