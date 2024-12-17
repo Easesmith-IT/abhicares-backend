@@ -15,6 +15,7 @@ router.post(
   // img_upload.upload,
   adminController.sendNotificationToAll
 );
+router.delete('/delete-sub-admin',adminController.deleteSubAdmin)
 router.get("/get-all-notifications", adminController.getAllNotifications);
 router.get("/search-notifications", adminController.searchNotifications);
 router.get("/filter-notifications", adminController.filterNotification);
@@ -177,8 +178,8 @@ router.post(
   adminController.createSeller
 );
 router.get('/filter-seller',
-  // isAdminAuth,
-  // authorize("partners", "write"),
+  isAdminAuth,
+  authorize("partners", "write"),
   adminController.filterPartner)
 router.get(
   "/get-all-seller",
@@ -309,8 +310,8 @@ router.delete(
 // Available Cities Routes
 router.post(
   "/create-availabe-city",
-  // isAdminAuth,
-  // authorize("availableCities", "write"),
+  isAdminAuth,
+  authorize("availableCities", "write"),
   adminController.createAvailableCities
 );
 router.delete(
@@ -321,8 +322,8 @@ router.delete(
 ); // passing object id
 router.patch(
   "/update-availabe-city/:id",
-  isAdminAuth,
-  authorize("availableCities", "write"),
+  // isAdminAuth,
+  // authorize("availableCities", "write"),
   adminController.updateAvailableCities
 ); // passing object id
 router.get(
@@ -393,8 +394,8 @@ router.patch("/reset-counter-id", adminController.resetCounter);
 router.get("/get-order-count-by-status", adminController.getOrderCountByStatus);
 router.post(
   "/get-monthly-orders",
-  isAdminAuth,
-  authorize("orders", "read"),
+  // isAdminAuth,
+  // authorize("orders", "read"),
   adminController.getMolthlyOrder
 );
 
@@ -466,11 +467,11 @@ router.get(
   authorize("bookings", "read"),
   adminController.getSellerList
 ); // passing service id
-router.patch(
-  "/allot-seller-order/:id",
+router.get(
+  "/get-order-details",
   isAdminAuth,
   authorize("bookings", "write"),
-  adminController.allotSeller
+  adminController.getsingleOrder
 ); // passing seller id
 
 // router.get('/create-order',adminController.createOrderId)
@@ -485,8 +486,8 @@ router.patch(
 ); // passing booking id
 router.get(
   "/get-seller-order-list/:id",
-  isAdminAuth,
-  authorize("partners", "read"),
+  // isAdminAuth,
+  // authorize("partners", "read"),
   adminController.getSellerOrder
 ); // passing seller id
 router.post(
@@ -550,8 +551,8 @@ router.get("/logout-Admin", adminController.logoutAdmin);
 
 router.get(
   "/get-seller-wallet/:id",
-  isAdminAuth,
-  authorize("partners", "read"),
+  // isAdminAuth,
+  // authorize("partners", "read"),
   adminController.getSellerWallet
 );
 

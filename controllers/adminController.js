@@ -48,6 +48,7 @@ const seller = require("../models/seller");
 const booking = require("../models/booking");
 const order = require("../models/order");
 const { counterSchema } = require("../models/counter");
+const admin = require("../models/admin");
 
 // category routes
 exports.genOrderId = catchAsync(async (req, res, next) => {
@@ -600,7 +601,7 @@ exports.getAllSeller = catchAsync(async (req, res, next) => {
     totalPage++;
   }
 
-  const result = await Seller.find({ status: "active" })
+  const result = await Seller.find({ status: "APPROVED" })
     .populate("categoryId")
     .populate({
       path: "services",
@@ -726,44 +727,63 @@ exports.searchSeller = catchAsync(async (req, res, next) => {
 });
 
 exports.changeSellerStatus = catchAsync(async (req, res, next) => {
-  const id = req.params.id;
-  const { status } = req.body;
+  const { id } = req.params; 
+  const { status } = req.body; 
 
-  var result = await Seller.findOne({ _id: id });
-  result.status = status;
-  result.save();
-  res.status(200).json({ success: true, message: "Data updated successful" });
+  
+  if (!id || !status) {
+    return next(new AppError(400, "Seller ID and status are required"));
+  }
+
+  
+  const result = await Seller.findByIdAndUpdate(
+    id,
+    { status }, 
+    { new: true, runValidators: true } 
+  );
+
+  
+  if (!result) {
+    return next(new AppError(404, "Seller not found"));
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Seller status updated successfully",
+    data: result,
+  });
 });
+
 
 exports.getInReviewSeller = catchAsync(async (req, res, next) => {
   const results = await Seller.find({ status: "in-review" })
-    .populate({ path: "categoryId", model: "Category" })
+    .populate({ path: "categoryId", model: "Category" }) // Populate categoryId
     .populate({
-      path: "services",
-      populate: {
-        path: "serviceId",
-        model: "Service",
-      },
+      path: "services.serviceId", // Populate the serviceId within the services array
+      model: "Service",
     });
 
+  // Map the results to format the response
   const sellers = results.map((seller) => ({
     _id: seller._id,
     name: seller.name,
     phone: seller.phone,
     status: seller.status,
     category: seller?.categoryId?.name,
-    services: seller?.services?.map((service) => ({
-      _id: service?.serviceId?._id,
+    services: seller?.services.map((service) => ({
+      _id: service?.serviceId?._id, // Get the populated serviceId details
       name: service?.serviceId?.name,
     })),
   }));
-  // console.log("in-review sellers", result);
+
   res.status(200).json({
     success: true,
     message: "In-review seller list",
     data: sellers,
   });
 });
+
+
 
 exports.getSellerByLocation = catchAsync(async (req, res, next) => {
   const { latitude, longitude, distance } = req.body;
@@ -793,7 +813,11 @@ exports.getSellerByLocation = catchAsync(async (req, res, next) => {
 exports.getSellerWallet = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
-  const wallet = await SellerWallet.findOne({ sellerId: id });
+  const wallet = await SellerWallet.findOne({ sellerId: id })
+  .populate({
+    path:"sellerId",
+    model:"Seller"
+  });
 
   if (!wallet) {
     return next(new AppError("No wallet found", 404));
@@ -847,7 +871,7 @@ exports.approveSellerCashout = catchAsync(async (req, res, next) => {
   const wallet = await SellerWallet.findById(cashout.sellerWalletId.toString());
 
   let data;
-  if (status === "completed") {
+  if (status === "Completed") {
     data = { status, description, accountDetails: { date, paymentId } };
     wallet.balance = wallet.balance - cashout.value;
     await wallet.save();
@@ -1315,6 +1339,17 @@ exports.getSubAdmins = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.deleteSubAdmin=catchAsync(async(req,res,next)=>{
+  const {subAdminId,role}=req.query
+   if(!role && role!=='subAdmin'){
+    return next(new AppError("please select only subadmin"))
+   }
+  await admin.findByIdAndDelete(subAdminId)
+  return res.status(200).json({
+    message:"sub admin deleted successfully",
+    status:true
+  })
+})
 exports.loginAdminUser = catchAsync(async (req, res, next) => {
   console.log("inside admin login");
   const { adminId, password } = req.body;
@@ -1451,19 +1486,27 @@ exports.getOrderById = catchAsync(async (req, res, next) => {
 });
 
 exports.getMolthlyOrder = catchAsync(async (req, res, next) => {
-  const { month, year } = req.body;
+  const { month, year, populateFields } = req.body;
+
   if (!month || !year) {
-    return next(new AppError(400, "All the fields are required"));
-  } else {
-    const startDate = new Date(year, month - 1, 1); // Month is zero-based
-    const endDate = new Date(year, month, 0, 23, 59, 59);
-    const result = await Order.find({
-      createdAt: {
-        $gte: startDate,
-        $lte: endDate,
-      },
-    })
-      .populate({
+    return next(new AppError(400, "Month and year are required"));
+  }
+
+  const startDate = new Date(year, month - 1, 1); // Month is zero-based
+  const endDate = new Date(year, month, 0, 23, 59, 59);
+
+  // Find the orders first
+  const orders = await Order.find({
+    createdAt: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+  });
+
+  // Populate conditionally
+  if (populateFields) {
+    if (populateFields.includes("items")) {
+      await Order.populate(orders, {
         path: "items",
         populate: {
           path: "package",
@@ -1475,13 +1518,20 @@ exports.getMolthlyOrder = catchAsync(async (req, res, next) => {
             },
           },
         },
-      })
-      .populate("couponId");
-    res
-      .status(200)
-      .json({ success: true, message: "Orders list", data: result });
+      });
+    }
+
+    if (populateFields.includes("couponId")) {
+      await Order.populate(orders, { path: "couponId" });
+    }
   }
+
+  // Send the response
+  res
+    .status(200)
+    .json({ success: true, message: "Orders list", data: orders });
 });
+
 
 exports.getAllPayments = catchAsync(async (req, res, next) => {
   const page = req.query.page || 1;
@@ -1560,42 +1610,56 @@ exports.updateHelpCenter = catchAsync(async (req, res, next) => {
 exports.createAvailableCities = catchAsync(async (req, res, next) => {
   const { city, state, pinCode } = req.body;
 
-  if (!city || !state || !pinCode) {
-    return next(new AppError(400, "City, state, and pinCode are required"));
+  if (!city || !state || !pinCode || !Array.isArray(pinCode)) {
+    return next(new AppError("City, state, and pinCode are required, and pinCode must be an array",400));
+  }
+
+  // Extract codes from the pinCode array
+  const pinCodesToAdd = pinCode.map((p) => {
+    if (!p.code) throw new AppError("PinCode objects must contain a code property",400);
+    return parseInt(p.code);
+  });
+
+  if (pinCodesToAdd.some((code) => isNaN(code))) {
+    return next(new AppError("All pinCodes must be valid numbers",400));
   }
 
   // Check if the city-state combination already exists
   const existingCity = await AvailableCity.findOne({ city, state });
 
   if (existingCity) {
-    // Check if the pinCode already exists in this city-state combination
-    const isPinCodeExists = existingCity.pinCodes.some(
-      (p) => p.code === parseInt(pinCode) // Convert pinCode to number for comparison
-    );
+    // Check for duplicate pinCodes
+    const existingPinCodes = existingCity.pinCodes.map((p) => p.code);
+    const newPinCodes = pinCodesToAdd.filter((code) => !existingPinCodes.includes(code));
 
-    if (isPinCodeExists) {
-      return next(new AppError(400, "PinCode already exists for this city"));
+    if (newPinCodes.length === 0) {
+      return next(new AppError("All provided pinCodes already exist for this city",400,));
     }
 
-    // Add the new pinCode to the existing city
-    existingCity.pinCodes.push({ code: parseInt(pinCode) }); // Add new pinCode object
+    // Add only new pinCodes to the existing city
+    existingCity.pinCodes.push(...newPinCodes.map((code) => ({ code })));
     await existingCity.save();
-    return res
-      .status(200)
-      .json({ success: true, message: "PinCode added to existing city" });
+    return res.status(200).json({
+      success: true,
+      message: "New pinCodes added to existing city",
+      data: existingCity,
+    });
   }
 
-  // Create a new city entry with the provided pinCode
+  // Create a new city entry with the provided pinCodes
   const newCity = await AvailableCity.create({
     city,
     state,
-    pinCodes: [{ code: parseInt(pinCode) }], // Save pinCode as an object in the array
+    pinCodes: pinCodesToAdd.map((code) => ({ code })),
   });
 
-  res
-    .status(201)
-    .json({ success: true, message: "City and PinCode added successfully", data: newCity });
+  res.status(201).json({
+    success: true,
+    message: "City and pinCodes added successfully",
+    data: newCity,
+  });
 });
+
 
 
 exports.deleteAvailableCities = catchAsync(async (req, res, next) => {
@@ -1606,19 +1670,60 @@ exports.deleteAvailableCities = catchAsync(async (req, res, next) => {
 
 exports.updateAvailableCities = catchAsync(async (req, res, next) => {
   const { city, state, pinCodes } = req.body;
-  const id = req.params.id; // this is object id of available city
+  const id = req.params.id; // ObjectId of the available city
 
-  if (!city || !state || !pinCodes) {
-    return next(new AppError(400, "All the fields are required"));
-  } else {
-    const result = await AvailableCity.findOne({ _id: id });
-    result.city = city;
-    result.state = state;
-    result.pinCodes = pinCodes;
-    await result.save();
-    res.status(200).json({ success: true, message: "Data updated successful" });
+  if (!city || !state || !pinCodes || !Array.isArray(pinCodes)) {
+    return next(new AppError( "City, state, and pinCodes are required, and pinCodes must be an array",400));
   }
+
+  // Validate pinCodes and ensure each has a valid `code`
+  const validatedPinCodes = pinCodes.map((p) => {
+    if (!p.code) {
+      throw new AppError("Each pinCode object must have a 'code' property",400);
+    }
+    const parsedCode = parseInt(p.code, 10);
+    if (isNaN(parsedCode)) {
+      throw new AppError( "All pinCodes must be valid numbers",400);
+    }
+    return { code: parsedCode };
+  });
+
+  // Check if the city and state combination already exists (excluding the current record)
+  const duplicateCity = await AvailableCity.findOne({
+    _id: { $ne: id }, // Exclude the current city by ID
+    city,
+    state,
+  });
+
+  if (duplicateCity) {
+    return next(new AppError("City and state combination already exists",400));
+  }
+
+  // Find and update the city by ID
+  const existingCity = await AvailableCity.findById(id);
+
+  if (!existingCity) {
+    return next(new AppError("City not found",400));
+  }
+
+  // Update the fields
+  existingCity.city = city;
+  existingCity.state = state;
+
+  // Prevent duplicate pinCodes in the updated data
+  const existingPinCodes = existingCity.pinCodes.map((p) => p.code);
+  const newPinCodes = validatedPinCodes.filter((p) => !existingPinCodes.includes(p.code));
+  existingCity.pinCodes = [...existingCity.pinCodes, ...newPinCodes]; // Merge old and new pinCodes
+
+  await existingCity.save();
+
+  res.status(200).json({
+    success: true,
+    message: "City updated successfully",
+    data: existingCity,
+  });
 });
+
 
 exports.getAvailableCities = catchAsync(async (req, res, next) => {
   const result = await AvailableCity.find();
@@ -1949,6 +2054,26 @@ exports.allotSeller = catchAsync(async (req, res, next) => {
   });
 });
 
+
+exports.getsingleOrder=catchAsync(async(req,res,next)=>{
+  const{orderId}=req.query
+
+  if(!orderId){
+    return next(new AppError('No order id provided',400))
+  }
+
+  const foundOrder= await Order.findOne({
+    _id:orderId
+  })
+  if(!orderId){
+    return next(new AppError("no orders found",400))
+  }
+  return res.status(200).json({
+    message:"here's your order details",
+    data:foundOrder,
+    status:true
+  })
+})
 // Ticket Controllers
 
 exports.getSingleTicket = catchAsync(async (req, res, next) => {
@@ -2167,13 +2292,13 @@ exports.updateSellerOrderStatus = catchAsync(async (req, res, next) => {
   var result = await Booking.findOne({ _id: id });
   const order = await Order.findById(result.orderId);
 
-  if (result.status !== "completed" && status === "completed") {
+  if (result.status !== "Completed" && status === "Completed") {
     order.No_of_left_bookings = order.No_of_left_bookings - 1;
     await order.save();
   }
 
   if (order.No_of_left_bookings === 0) {
-    order.status = "completed";
+    order.status = "Completed";
     await order.save();
   }
 
@@ -2211,7 +2336,8 @@ exports.getSellerDetails = catchAsync(async (req, res, next) => {
 });
 exports.getSellerOrder = catchAsync(async (req, res, next) => {
   const id = req.params.id; // seller id
-  const result = await Booking.find({ sellerId: id }).populate({
+  const result = await Booking.find({ sellerId: id })
+  .populate({
     path: "package",
     populate: {
       path: "products",
@@ -2219,7 +2345,11 @@ exports.getSellerOrder = catchAsync(async (req, res, next) => {
         path: "productId",
         model: "Product",
       },
-    },
+    }
+  })
+  .populate({
+    path:"userId",
+    model:"User"
   });
 
   res.status(200).json({

@@ -118,7 +118,8 @@ const orderSchema = new Schema(
     status: {
       required: true,
       type: String,
-      default: "pending",
+      default: "Pending",
+      enum:['Pending',"Completed","Cancelled",'OutOfDelivery']
     },
     couponId: {
       type: mongoose.Types.ObjectId,
