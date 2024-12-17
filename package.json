@@ -45,7 +45,6 @@
     "pdfjs-dist": "^3.4.120",
     "pdfkit": "^0.13.0",
     "razorpay": "^2.9.2",
-    "shortid": "^2.2.16",
     "socket.io": "^4.7.3",
     "swagger-autogen": "^2.23.7",
     "swagger-ui-express": "^5.0.0",

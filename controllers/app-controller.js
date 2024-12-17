@@ -19,7 +19,7 @@ const { contentSecurityPolicy } = require("helmet");
 const ReviewModel = require("../models/review");
 const catchAsync = require("../util/catchAsync");
 const AppError = require("../util/appError");
-const shortid = require("shortid");
+const { nanoid } = require('nanoid');
 const { tokenSchema } = require("../models/fcmToken");
 const helpCenter = require("../models/helpCenter");
 const locationValidator = require("../util/locationValidator");
@@ -558,7 +558,7 @@ exports.createUser = async (req, res, next) => {
     if (user) {
       return res.status(403).json({ message: "User already exist" });
     } else {
-      const referralCode = shortid.generate();
+      const referralCode = nanoid(8)
       user = await User({
         phone: phoneNumber,
         name: name,
