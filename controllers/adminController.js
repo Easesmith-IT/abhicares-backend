@@ -1993,8 +1993,10 @@ exports.getOrderCountByStatus = catchAsync(async (req, res, next) => {
 exports.getSellerList = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is service id
   const result = await Seller.find({
-    status: "active",
-    "services.serviceId": id,
+    status: "APPROVED",
+    services: { 
+      $elemMatch: { serviceId: id }
+    },
   });
 
   res.status(200).json({
