@@ -19,10 +19,10 @@ const { contentSecurityPolicy } = require("helmet");
 const ReviewModel = require("../models/review");
 const catchAsync = require("../util/catchAsync");
 const AppError = require("../util/appError");
-const { nanoid } = require('nanoid');
+const { nanoid } = require("nanoid");
 const { tokenSchema } = require("../models/fcmToken");
 const helpCenter = require("../models/helpCenter");
-const locationValidator = require("../util/locationValidator");
+const pincodeValidator = require("../util/locationValidator");
 const product = require("../models/product");
 ////////////////////////////////////////////////////////
 const updateServiceRating = async (serviceId, serviceType) => {
@@ -331,17 +331,17 @@ exports.geUpcomingOrders = async (req, res, next) => {
 exports.getCompletedOrders = async (req, res, next) => {
   try {
     const userId = req.params.userId;
-    console.log("userId is this:",userId)
+    console.log("userId is this:", userId);
     var order = await Order.find({
       "user.userId": userId,
       status: "Completed",
     });
 
     // for printing orders
-    for(let i=0;i<order.length;i++){
-      console.log("these are orders:",order[i])
+    for (let i = 0; i < order.length; i++) {
+      console.log("these are orders:", order[i]);
     }
-    
+
     return res.status(200).json({ order: order });
   } catch (err) {
     const error = new Error(err);
@@ -558,7 +558,7 @@ exports.createUser = async (req, res, next) => {
     if (user) {
       return res.status(403).json({ message: "User already exist" });
     } else {
-      const referralCode = nanoid(8)
+      const referralCode = nanoid(8);
       user = await User({
         phone: phoneNumber,
         name: name,
@@ -846,15 +846,20 @@ exports.getCouponByName = async (req, res, next) => {
 //   if (couponUseCount >= noOfTimesPerUser) {
 //     return next(new AppError("You have already used this coupon!", 400));
 //   }
-  
+
 //   res.status(200).json({ success: true, message: "Your coupon", data: result });
 // });
 exports.getCouponByName = catchAsync(async (req, res, next) => {
-  const { name, serviceCategoryType,userId } = req.body; // serviceCategoryType is an array
+  const { name, serviceCategoryType, userId } = req.body; // serviceCategoryType is an array
   // const userId = req.user._id;
 
   if (!name || !serviceCategoryType || !Array.isArray(serviceCategoryType)) {
-    return next(new AppError("All fields are required and serviceCategoryType must be an array", 400));
+    return next(
+      new AppError(
+        "All fields are required and serviceCategoryType must be an array",
+        400
+      )
+    );
   }
 
   const result = await Coupon.find({ name: name });
@@ -873,7 +878,10 @@ exports.getCouponByName = catchAsync(async (req, res, next) => {
 
   if (!isValidCategoryType) {
     return next(
-      new AppError("This coupon is not valid for the selected product/service type", 400)
+      new AppError(
+        "This coupon is not valid for the selected product/service type",
+        400
+      )
     );
   }
 
@@ -928,23 +936,35 @@ exports.getAppHomePageServices = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, services });
 });
 
-exports.checkServiceability = async (req, res, next) => {
+exports.checkServiceability = async (req, res) => {
   try {
-    const { city, state, pinCode } = req.query;
-    const validation = await locationValidator.validateLocation(
-      city,
-      state,
-      pinCode
-    );
+    const { pinCode } = req.query;
 
-    return res.status(200).json({
-      success: true,
-      isServiceable: validation.isValid,
-      message: validation.isValid
-        ? "Location is serviceable"
-        : validation.error,
-    });
+    if (!pinCode) {
+      return res.status(400).json({
+        success: false,
+        error: "Pincode is required",
+      });
+    }
+
+    const validation = await pincodeValidator.validatePincode(pinCode);
+
+    if (validation.isValid) {
+      return res.status(200).json({
+        success: true,
+        isServiceable: true,
+        message: "Location is serviceable",
+        data: validation.data,
+      });
+    } else {
+      return res.status(200).json({
+        success: true,
+        isServiceable: false,
+        message: validation.error,
+      });
+    }
   } catch (error) {
+    console.error("Serviceability check error:", error);
     return res.status(500).json({
       success: false,
       error: "Error checking serviceability",
