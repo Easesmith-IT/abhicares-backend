@@ -331,10 +331,17 @@ exports.geUpcomingOrders = async (req, res, next) => {
 exports.getCompletedOrders = async (req, res, next) => {
   try {
     const userId = req.params.userId;
+    console.log("userId is this:",userId)
     var order = await Order.find({
       "user.userId": userId,
       status: "Completed",
     });
+
+    // for printing orders
+    for(let i=0;i<order.length;i++){
+      console.log("these are orders:",order[i])
+    }
+    
     return res.status(200).json({ order: order });
   } catch (err) {
     const error = new Error(err);
