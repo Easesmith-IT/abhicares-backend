@@ -181,7 +181,7 @@ router.post(
   adminController.createSeller
 );
 
-router.patch('/allot-seller-order',
+router.patch('/allot-seller-order/:id',
   isAdminAuth,
   authorize("partners", "write"),
   adminController.allotSeller)
