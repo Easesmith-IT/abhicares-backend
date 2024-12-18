@@ -321,7 +321,7 @@ exports.geUpcomingOrders = async (req, res, next) => {
     var order = await Order.find({
       "user.userId": userId,
       status: "pending",
-    });
+    })
     return res.status(200).json({ order: order });
   } catch (err) {
     const error = new Error(err);
@@ -334,14 +334,41 @@ exports.getCompletedOrders = async (req, res, next) => {
   try {
     const userId = req.params.userId;
     console.log("userId is this:", userId);
+
     var order = await Order.find({
       "user.userId": userId,
       status: "Completed",
-    });
+    })
+      .populate({
+        path: "items",
+        populate: {
+          path: "package",
+          populate: [
+            {
+              path: "product",
+              populate: [{
+                path: "productId",
+                model:"Product",
+               
+                  populate: {
+                    path: "serviceId",
+                    model: "Service",
+                  }
+                
+                ,
+              }],
+            },
+            {
+              path: "serviceId",
+              model: "Service",
+            },
+          ],
+        },
+      });
 
-    // for printing orders
+    // For printing orders
     for (let i = 0; i < order.length; i++) {
-      console.log("these are orders:", order[i]);
+      console.log("These are orders:", order[i]);
     }
 
     return res.status(200).json({ order: order });
@@ -351,6 +378,8 @@ exports.getCompletedOrders = async (req, res, next) => {
     return next(err);
   }
 };
+
+
 
 exports.getOrderDetails = async (req, res, next) => {
   try {
