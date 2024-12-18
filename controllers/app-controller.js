@@ -347,7 +347,6 @@ exports.getCompletedOrders = async (req, res, next) => {
               populate: [{
                 path: "productId",
                 model:"Product",
-               
                   populate: {
                     path: "serviceId",
                     model: "Service",
