@@ -6,6 +6,7 @@ const appController = require("../controllers/app-controller");
 const paymentController = require("../controllers/paymentsController");
 const authController = require("../controllers/authController");
 const contentController = require("../controllers/contentController.js");
+const shopController=require('../controllers/shopController.js')
 
 router.get("/get-auto", appController.autoReview);
 
@@ -44,6 +45,7 @@ router.post("/track-booking", appController.posttrackBooking);
 router.get("/get-order-booking/:id", appController.getOrderBooking);
 
 router.post("/complete-order-booking", appController.postOrderBooking);
+router.post('/add-booking-review',shopController.addBookingReview)
 
 router.get("/search-service", appController.searchService);
 router.get("/get-tickets", appController.getUserTickets);
