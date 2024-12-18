@@ -24,6 +24,8 @@ const { tokenSchema } = require("../models/fcmToken");
 const helpCenter = require("../models/helpCenter");
 const pincodeValidator = require("../util/locationValidator");
 const product = require("../models/product");
+const Review = require("../models/review");
+
 ////////////////////////////////////////////////////////
 const updateServiceRating = async (serviceId, serviceType) => {
   try {
@@ -1007,7 +1009,7 @@ exports.addBookingReview = catchAsync(async (req, res, next) => {
   }
 
   // Find booking and verify ownership
-  const booking = await Booking.findOne({
+  const booking = await BookingModel.findOne({
     _id: bookingId,
     userId: req.user._id,
   });
@@ -1063,3 +1065,282 @@ exports.addBookingReview = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+const calculateRefundAmount = (bookingDateTime, currentTime, orderValue) => {
+  const timeDifference = (bookingDateTime - currentTime) / (1000 * 60 * 60);
+
+  // Refund policy:
+  // > 72 hours: 100% refund
+  // 48-72 hours: 75% refund
+  // 24-48 hours: 50% refund
+  if (timeDifference >= 72) {
+    return orderValue;
+  } else if (timeDifference >= 48) {
+    return orderValue * 0.75;
+  } else {
+    return orderValue * 0.5;
+  }
+};
+
+const refundSchema = {
+  status: {
+    type: String,
+    enum: ["pending", "processed", "failed", "not-applicable"],
+    default: "not-applicable",
+  },
+  amount: {
+    type: Number,
+    default: 0,
+  },
+  processedAt: Date,
+  refundId: String,
+  reason: String,
+  paymentType: String,
+  refundPercentage: Number,
+  transactionDetails: Object,
+};
+
+// Add this to your booking schema if not already present:
+// refundInfo: refundSchema
+
+// Utility function to check refund eligibility and calculate amount
+const calculateRefundEligibility = (booking, currentTime) => {
+  // If payment not completed or cash payment, no automatic refund
+  if (booking.paymentStatus !== "completed" || booking.paymentType === "cash") {
+    return {
+      isEligible: false,
+      reason:
+        booking.paymentStatus !== "completed"
+          ? "Payment not completed"
+          : "Cash payment requires manual refund",
+      refundPercentage: 0,
+      amount: 0,
+    };
+  }
+
+  // Convert booking date and time to a single Date object
+  const [hours, minutes] = booking.bookingTime.split(":");
+  const bookingDateTime = new Date(booking.bookingDate);
+  bookingDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
+
+  // Calculate time difference in hours
+  const timeDifference = (bookingDateTime - currentTime) / (1000 * 60 * 60);
+
+  // Define refund policy based on time difference
+  // return {
+  //   isEligible: true,
+  //   reason: "Cancelled more than 72 hours before booking",
+  //   refundPercentage: 100,
+  //   amount: booking.orderValue,
+  // };
+  if (timeDifference >= 72) {
+    return {
+      isEligible: true,
+      reason: "Cancelled more than 72 hours before booking",
+      refundPercentage: 100,
+      amount: booking.orderValue,
+    };
+  } else if (timeDifference >= 48) {
+    return {
+      isEligible: true,
+      reason: "Cancelled between 48-72 hours before booking",
+      refundPercentage: 75,
+      amount: booking.orderValue * 0.75,
+    };
+  } else if (timeDifference >= 24) {
+    return {
+      isEligible: true,
+      reason: "Cancelled between 24-48 hours before booking",
+      refundPercentage: 50,
+      amount: booking.orderValue * 0.5,
+    };
+  } else {
+    return {
+      isEligible: false,
+      reason: "Cancelled less than 24 hours before booking",
+      refundPercentage: 0,
+      amount: 0,
+    };
+  }
+};
+
+// Process refund based on payment type
+const processRefund = async (booking, refundDetails) => {
+  try {
+    const refundInfo = {
+      status: "pending",
+      amount: refundDetails.amount,
+      processedAt: new Date(),
+      reason: refundDetails.reason,
+      paymentType: booking.paymentType,
+      refundPercentage: refundDetails.refundPercentage,
+    };
+
+    switch (booking.paymentType) {
+      case "online":
+        // Implement your payment gateway refund logic here
+        // const refundResult = await paymentGateway.refund({
+        //   orderId: booking.orderId,
+        //   amount: refundDetails.amount
+        // });
+
+        // Simulate payment gateway response
+        const refundResult = {
+          success: true,
+          refundId: `REF-${Date.now()}`,
+          transactionDetails: {
+            gatewayResponse: "Success",
+            processedAt: new Date(),
+          },
+        };
+
+        refundInfo.status = "processed";
+        refundInfo.refundId = refundResult.refundId;
+        refundInfo.transactionDetails = refundResult.transactionDetails;
+        break;
+
+      case "onlineCod":
+        // Handle online COD refunds
+        refundInfo.status = "pending";
+        refundInfo.refundId = `RCOD-${Date.now()}`;
+        break;
+
+      case "cash":
+        // Mark cash refunds for manual processing
+        refundInfo.status = "pending";
+        refundInfo.refundId = `CASH-${Date.now()}`;
+        break;
+
+      default:
+        throw new Error("Invalid payment type");
+    }
+
+    return refundInfo;
+  } catch (error) {
+    console.error("Refund processing error:", error);
+    throw error;
+  }
+};
+
+// Cancel booking endpoint
+exports.canacelBooking = async (req, res, next) => {
+  try {
+    const { bookingId } = req.params;
+    const { cancellationReason } = req.body;
+
+    // Find the booking
+    const booking = await BookingModel.findById(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    // Check if booking is already completed or cancelled
+    if (
+      booking.currentLocation.status === "completed" ||
+      booking.status === "cancelled"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot cancel a completed or already cancelled booking",
+      });
+    }
+
+    const currentTime = new Date();
+
+    // Check refund eligibility and calculate amount
+    const refundEligibility = calculateRefundEligibility(booking, currentTime);
+    console.log(refundEligibility);
+    // Process refund if eligible
+    let refundInfo = {
+      status: "not-applicable",
+      amount: 0,
+      reason: "No refund applicable",
+    };
+
+    if (refundEligibility.isEligible) {
+      refundInfo = await processRefund(booking, refundEligibility);
+    }
+    console.log(refundInfo);
+    // Update booking with cancellation and refund information
+    booking.status = "cancelled";
+    booking.currentLocation.status = "cancelled";
+    booking.refundInfo = refundInfo;
+    booking.cancellationReason = cancellationReason || "No reason provided";
+    booking.cancelledAt = currentTime;
+
+    await booking.save();
+
+    // Update order status if needed
+    if (booking.orderId) {
+      await Order.findByIdAndUpdate(booking.orderId, {
+        $set: {
+          status: "cancelled",
+          refundStatus: refundInfo.status,
+          refundAmount: refundInfo.amount,
+          refundId: refundInfo.refundId,
+          cancelledAt: currentTime,
+        },
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Booking cancelled successfully",
+      data: {
+        booking: {
+          _id: booking._id,
+          status: booking.status,
+          refundInfo: booking.refundInfo,
+          cancelledAt: booking.cancelledAt,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error in cancel booking:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// Get refund status endpoint
+exports.refundStatus = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    const booking = await BookingModel.findById(bookingId).select(
+      "refundInfo status paymentStatus paymentType orderValue"
+    );
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        refundInfo: booking.refundInfo,
+        bookingStatus: booking.status,
+        paymentStatus: booking.paymentStatus,
+        paymentType: booking.paymentType,
+        orderValue: booking.orderValue,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching refund status:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};

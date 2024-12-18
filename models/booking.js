@@ -72,9 +72,9 @@ const bookingSchema = new mongoose.Schema(
       default: "not-alloted",
     },
 
-    autoAssigned:{
-      type:Boolean,
-      default:false,
+    autoAssigned: {
+      type: Boolean,
+      default: false,
     },
     orderValue: {
       type: Number,
@@ -86,6 +86,7 @@ const bookingSchema = new mongoose.Schema(
           "booking-placed",
           "out-of-delivery",
           "reached",
+          "cancelled",
           "completed",
           "completeReq",
         ],
@@ -96,10 +97,9 @@ const bookingSchema = new mongoose.Schema(
         default: [0, 0],
       },
     },
-    bookingId:{
-      type:String,
-      
-    }
+    bookingId: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
