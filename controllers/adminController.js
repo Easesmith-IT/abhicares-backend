@@ -1399,17 +1399,21 @@ exports.updateOrderStatus = catchAsync(async (req, res, next) => {
 exports.getAllOrders = catchAsync(async (req, res, next) => {
   var page = 1;
   if (req.query.page) {
-    page = req.query.page;
+    page = parseInt(req.query.page, 10); // Ensure `page` is an integer
   }
   var limit = 10;
-  const allList = await Order.find().count();
+  
+  const allList = await Order.find().countDocuments(); // Updated count function
   var num = allList / limit;
-  var fixedNum = num.toFixed();
+  var fixedNum = Math.floor(num); // Use `Math.floor` to round down
   var totalPage = fixedNum;
   if (num > fixedNum) {
     totalPage++;
   }
+
+  // Fetch orders sorted by createdAt in descending order
   const result = await Order.find()
+    .sort({ createdAt: -1 }) // Sorting by createdAt field in descending order
     .populate({
       path: "items",
       populate: {
@@ -1424,9 +1428,10 @@ exports.getAllOrders = catchAsync(async (req, res, next) => {
       },
     })
     .populate({ path: "couponId", model: "Coupon" })
-    .limit(limit * 1)
+    .limit(limit)
     .skip((page - 1) * limit)
     .exec();
+
   res.status(201).json({
     success: true,
     message: "List of all orders",
@@ -1434,6 +1439,7 @@ exports.getAllOrders = catchAsync(async (req, res, next) => {
     totalPage: totalPage,
   });
 });
+
 
 exports.getRecentOrders = catchAsync(async (req, res, next) => {
   const limit = 10;
