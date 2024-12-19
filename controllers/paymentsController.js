@@ -17,7 +17,10 @@ const { autoAssignBooking } = require("../util/autoAssignBooking");
 const AppError = require("../util/appError");
 const { tokenSchema } = require("../models/fcmToken");
 const { createSendPushNotification } = require("./pushNotificationController");
-const { generateOrderId, generateBookingId } = require("../util/generateOrderId");
+const {
+  generateOrderId,
+  generateBookingId,
+} = require("../util/generateOrderId");
 
 const instance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY,
@@ -38,7 +41,7 @@ exports.appOrder = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    
+
     // Extract cart data from the user's cart
     const products = cart["items"];
     // // Create an array to store order items
@@ -55,6 +58,7 @@ exports.appOrder = async (req, res, next) => {
         orderItems.push({
           product: productItem["prod"],
           quantity: productItem["quantity"],
+          bookingId: null,
           bookingDate: productItem["bookDate"],
           bookingTime: productItem["bookTime"],
         });
@@ -62,12 +66,13 @@ exports.appOrder = async (req, res, next) => {
         orderItems.push({
           package: productItem["prod"],
           quantity: productItem["quantity"],
+          bookingId: null,
           bookingDate: productItem["bookDate"],
           bookingTime: productItem["bookTime"],
         });
       }
     }
-    const orderId=await generateOrderId()
+    const orderId = await generateOrderId();
 
     const userAddress = await UserAddress.findById(userAddressId);
     console.log(totalOrderval);
@@ -111,12 +116,12 @@ exports.appOrder = async (req, res, next) => {
     ///booking creation
     for (const orderItem of orderItems) {
       var booking;
-      const bookingId=await generateBookingId()
+      const bookingId = await generateBookingId();
       if (orderItem.product) {
         booking = new Booking({
           orderId: order._id,
           userId: user._id,
-          bookingId:bookingId,
+          bookingId: bookingId,
           paymentStatus: paymentStatus,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -132,6 +137,7 @@ exports.appOrder = async (req, res, next) => {
           orderValue: orderItem.product.offerPrice * orderItem.quantity,
         });
         await booking.save();
+        orderItem.bookingId = booking._id;
       } else if (orderItem.package) {
         booking = new Booking({
           orderId: order._id,
@@ -154,6 +160,7 @@ exports.appOrder = async (req, res, next) => {
       if (paymentStatus == "completed") {
         booking.paymentType = cart["paymentType"];
       }
+      orderItem.bookingId = booking._id;
       await booking.save();
     }
     return res.status(200).json(order);
@@ -164,7 +171,7 @@ exports.appOrder = async (req, res, next) => {
 };
 
 exports.getAllUserOrders = catchAsync(async (req, res, next) => {
-  const id = req.query.userId
+  const id = req.query.userId;
   const result = await Order.find({ "user.userId": id })
     .populate({
       path: "items",
@@ -175,18 +182,18 @@ exports.getAllUserOrders = catchAsync(async (req, res, next) => {
           populate: {
             path: "productId",
             model: "Product",
-          }
+          },
         },
         populate: {
           path: "serviceId",
-          model: "Service",  
+          model: "Service",
         },
       },
     })
     .populate({ path: "couponId", model: "Coupon" })
     .populate({
-      path:"bookingId",
-      model:"Booking"
+      path: "bookingId",
+      model: "Booking",
     });
   res
     .status(200)
@@ -203,7 +210,7 @@ exports.createOrderInvoice = catchAsync(async (req, res, next) => {
         path: "products",
         populate: {
           path: "productId",
-          model: "Product",  
+          model: "Product",
         },
       },
     },
@@ -392,16 +399,16 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
 
   if (orderItems) {
     const userAddress = await UserAddress.findById(userAddressId);
-    const orderId=await generateOrderId()
-  if(!orderId){
-    return next(new AppError('no response while creating orderId',400))
-  }
+    const orderId = await generateOrderId();
+    if (!orderId) {
+      return next(new AppError("no response while creating orderId", 400));
+    }
     const order = new Order({
       orderPlatform: "website",
       paymentType: "COD",
       No_of_left_bookings: bookings.length,
       orderValue: total,
-      orderId:orderId,
+      orderId: orderId,
       itemTotal,
       discount,
       referalDiscount: referalDis,
@@ -475,7 +482,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
   if (req.body.couponId) {
     couponId = req.body.couponId;
   }
-  
+
   const cart = await Cart.findOne({ userId: user._id }).populate({
     path: "items",
     model: "Cart",
@@ -491,15 +498,14 @@ exports.checkout = catchAsync(async (req, res, next) => {
     ],
   });
 
-  
   const items = cart.items;
 
   const orderItems = await generateOrderItems(items, bookings);
 
   const userAddress = await UserAddress.findById(userAddressId);
-  const orderId=await generateOrderId()
-  if(!orderId){
-    return next(new AppError('Some issues while generating order id',400))
+  const orderId = await generateOrderId();
+  if (!orderId) {
+    return next(new AppError("Some issues while generating order id", 400));
   }
   const order = new TempOrder({
     orderPlatform: "website",
@@ -510,7 +516,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
       status: "pending",
       paymentId: null,
     },
-    orderId:orderId,
+    orderId: orderId,
     itemTotal,
     discount,
     referalDiscount: referalDis,
@@ -542,33 +548,39 @@ exports.checkout = catchAsync(async (req, res, next) => {
     currency: "INR",
   };
   const createdOrder = await instance.orders.create(options);
-// For sending notifications
-  if(platformType==="android"){
-    const foundToken=await tokenSchema.findOne({
-    userId:user._id
-  })
-  if(!foundToken){
-    return res.status(400).json({
-      message:"no user found"
-    })
+  // For sending notifications
+  if (platformType === "android") {
+    const foundToken = await tokenSchema.findOne({
+      userId: user._id,
+    });
+    if (!foundToken) {
+      return res.status(400).json({
+        message: "no user found",
+      });
+    }
+    const token = foundToken.token;
+    const deviceType = foundToken.deviceType;
+    const appType = foundToken.appType;
+    const message = {
+      notification: {
+        title: "payment done",
+        body: "payment done successfully",
+        // ...(imageUrl && { image: imageUrl }), // Add image if available
+      },
+      token: token, // FCM token of the recipient device
+    };
+    const tokenResponse = await createSendPushNotification(
+      deviceType,
+      token,
+      message,
+      appType
+    );
+    if (!tokenResponse) {
+      return res.status(400).json({
+        message: "No token found",
+      });
+    }
   }
-  const token=foundToken.token
-  const deviceType=foundToken.deviceType
-  const appType=foundToken.appType
-  const message = {
-          notification: {
-              title: "payment done",
-              body: "payment done successfully",
-              // ...(imageUrl && { image: imageUrl }), // Add image if available
-          },
-          token: token, // FCM token of the recipient device
-      };
-  const tokenResponse=await createSendPushNotification(deviceType,token,message,appType)
-  if(!tokenResponse){
-    return res.status(400).json({
-      message:'No token found'
-    })
-  }}
   res.status(200).json({
     success: true,
     message: "order created",
@@ -583,7 +595,7 @@ exports.paymentVerification = catchAsync(async (req, res, next) => {
     razorpay_payment_id,
     razorpay_signature,
     productId,
-    orderId
+    orderId,
   } = req.body;
 
   const body = razorpay_order_id + "|" + razorpay_payment_id;
@@ -614,7 +626,7 @@ exports.paymentVerification = catchAsync(async (req, res, next) => {
       items: result.items,
       couponId: result.couponId,
       user: result.user,
-      orderId
+      orderId,
     });
 
     await order.save();

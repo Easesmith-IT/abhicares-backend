@@ -318,10 +318,12 @@ exports.getHomePageContents = async (req, res, next) => {
 exports.geUpcomingOrders = async (req, res, next) => {
   try {
     const userId = req.params.userId;
+    console.log(userId);
     var order = await Order.find({
       "user.userId": userId,
-      status: "pending",
-    })
+      status: "Pending",
+    });
+    console.log(order);
     return res.status(200).json({ order: order });
   } catch (err) {
     const error = new Error(err);
@@ -330,55 +332,198 @@ exports.geUpcomingOrders = async (req, res, next) => {
   }
 };
 
-exports.getCompletedOrders = async (req, res, next) => {
-  try {
-    const userId = req.params.userId;
-    console.log("userId is this:", userId);
+// exports.getCompletedOrders = async (req, res, next) => {
+//   try {
+//     const userId = req.params.userId;
+//     console.log("userId is this:", userId);
 
-    var order = await Order.find({
-      "user.userId": userId,
-      status: "Completed",
+//     var order = await Order.find({
+//       "user.userId": userId,
+//       status: "Completed",
+//     })
+//       .populate({
+//         path: "items",
+//         populate: {
+//           path: "package",
+//           populate: [
+//             {
+//               path: "product",
+//               populate: [{
+//                 path: "productId",
+//                 model:"Product",
+//                   populate: {
+//                     path: "serviceId",
+//                     model: "Service",
+//                   }
+
+//                 ,
+//               }],
+//             },
+//             {
+//               path: "serviceId",
+//               model: "Service",
+//             },
+//           ],
+//         },
+//       });
+
+//     // For printing orders
+//     for (let i = 0; i < order.length; i++) {
+//       console.log("These are orders:", order[i]);
+//     }
+
+//     return res.status(200).json({ order: order });
+//   } catch (err) {
+//     const error = new Error(err);
+//     error.httpStatusCode = 500;
+//     return next(err);
+//   }
+// };
+
+exports.getCompletedOrders = catchAsync(async (req, res, next) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return next(new AppError("User ID is required", 400));
+  }
+
+  // Find completed orders with fully populated service data
+  const orders = await Order.find({
+    "user.userId": userId,
+    status: "Completed",
+  })
+    .populate({
+      path: "items.product",
+      populate: {
+        path: "serviceId",
+        model: "Service",
+        select: "name description imageUrl category isActive", // Include all needed service fields
+      },
     })
-      .populate({
-        path: "items",
-        populate: {
-          path: "package",
-          populate: [
-            {
-              path: "product",
-              populate: [{
-                path: "productId",
-                model:"Product",
-                  populate: {
-                    path: "serviceId",
-                    model: "Service",
-                  }
-                
-                ,
-              }],
-            },
-            {
-              path: "serviceId",
-              model: "Service",
-            },
-          ],
+    .populate({
+      path: "items.package",
+      populate: [
+        {
+          path: "products.productId",
+          populate: {
+            path: "serviceId",
+            model: "Service",
+            select: "name description imageUrl category isActive",
+          },
         },
-      });
+        {
+          path: "serviceId",
+          model: "Service",
+          select: "name description imageUrl category isActive",
+        },
+      ],
+    })
+    .sort({ createdAt: -1 })
+    .lean();
 
-    // For printing orders
-    for (let i = 0; i < order.length; i++) {
-      console.log("These are orders:", order[i]);
-    }
-
-    return res.status(200).json({ order: order });
-  } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+  if (!orders) {
+    return next(new AppError("No orders found", 404));
   }
-};
 
+  // Format the response with full service details
+  const formattedOrders = orders.map((order) => ({
+    orderId: order.orderId,
+    orderValue: order.orderValue,
+    itemTotal: order.itemTotal,
+    discount: order.discount || 0,
+    referalDiscount: order.referalDiscount,
+    tax: order.tax,
+    paymentType: order.paymentType,
+    paymentInfo: order.paymentInfo,
+    status: order.status,
+    orderDate: order.createdAt,
+    items: order.items.map((item) => ({
+      quantity: item.quantity,
+      bookingDate: item.bookingDate,
+      bookingTime: item.bookingTime,
+      product: item.product
+        ? {
+            _id: item.product._id,
+            name: item.product.name,
+            price: item.product.price,
+            offerPrice: item.product.offerPrice,
+            description: item.product.description,
+            imageUrl: item.product.imageUrl,
+            rating: item.product.rating,
+            totalReviews: item.product.totalReviews,
+            ratingDistribution: item.product.ratingDistribution,
+            service: {
+              _id: item.product.serviceId._id,
+              name: item.product.serviceId.name,
+              description: item.product.serviceId.description,
+              imageUrl: item.product.serviceId.imageUrl,
+              category: item.product.serviceId.category,
+              isActive: item.product.serviceId.isActive,
+            },
+            createdAt: item.product.createdAt,
+            updatedAt: item.product.updatedAt,
+          }
+        : null,
+      package: item.package
+        ? {
+            _id: item.package._id,
+            name: item.package.name,
+            price: item.package.price,
+            offerPrice: item.package.offerPrice,
+            imageUrl: item.package.imageUrl,
+            rating: item.package.rating,
+            totalReviews: item.package.totalReviews,
+            ratingDistribution: item.package.ratingDistribution,
+            products: item.package.products.map((prod) => ({
+              productId: {
+                ...prod.productId,
+                service: {
+                  _id: prod.productId.serviceId._id,
+                  name: prod.productId.serviceId.name,
+                  description: prod.productId.serviceId.description,
+                  imageUrl: prod.productId.serviceId.imageUrl,
+                  category: prod.productId.serviceId.category,
+                  isActive: prod.productId.serviceId.isActive,
+                },
+              },
+            })),
+            service: {
+              _id: item.package.serviceId._id,
+              name: item.package.serviceId.name,
+              description: item.package.serviceId.description,
+              imageUrl: item.package.serviceId.imageUrl,
+              category: item.package.serviceId.category,
+              isActive: item.package.serviceId.isActive,
+            },
+            createdAt: item.package.createdAt,
+            updatedAt: item.package.updatedAt,
+          }
+        : null,
+    })),
+    user: {
+      name: order.user.name,
+      phone: order.user.phone,
+      address: {
+        addressLine: order.user.address.addressLine,
+        pincode: order.user.address.pincode,
+        landmark: order.user.address.landmark,
+        city: order.user.address.city,
+        location: {
+          type: order.user.address.location.type,
+          coordinates: order.user.address.location.coordinates,
+        },
+      },
+    },
+  }));
 
+  res.status(200).json({
+    status: "success",
+    data: {
+      orders: formattedOrders,
+    },
+    message: "Completed orders retrieved successfully",
+  });
+});
 
 exports.getOrderDetails = async (req, res, next) => {
   try {
