@@ -106,7 +106,7 @@ exports.appOrder = async (req, res, next) => {
       order.couponId = couponId;
       order.discount = discount;
     }
-    await order.save();
+    // await order.save();
     var paymentStatus;
     if (cart["paymentType"] == "online") {
       paymentStatus = "completed";
@@ -160,6 +160,7 @@ exports.appOrder = async (req, res, next) => {
       if (paymentStatus == "completed") {
         booking.paymentType = cart["paymentType"];
       }
+      await order.save();
       orderItem.bookingId = booking._id;
       await booking.save();
     }
