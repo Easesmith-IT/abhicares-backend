@@ -439,6 +439,7 @@ exports.getCompletedOrders = catchAsync(async (req, res, next) => {
     orderDate: order.createdAt,
     items: order.items.map((item) => ({
       quantity: item.quantity,
+      bookingId: item.bookingId,
       bookingDate: item.bookingDate,
       bookingTime: item.bookingTime,
       product: item.product
