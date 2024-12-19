@@ -115,6 +115,7 @@ exports.appOrder = async (req, res, next) => {
     }
     ///booking creation
     for (const orderItem of orderItems) {
+      // console.log(orderItem);
       var booking;
       const bookingId = await generateBookingId();
       if (orderItem.product) {
@@ -160,10 +161,11 @@ exports.appOrder = async (req, res, next) => {
       if (paymentStatus == "completed") {
         booking.paymentType = cart["paymentType"];
       }
-      await order.save();
       orderItem.bookingId = booking._id;
       await booking.save();
     }
+    order.items = orderItems;
+    await order.save();
     return res.status(200).json(order);
   } catch (err) {
     console.log(err);
@@ -291,10 +293,13 @@ const generateBookings = async (
     console.log("userAddress", userAddress);
 
     for (const orderItem of orderItems) {
+      const bookingId = await generateBookingId();
+      var booking;
       if (orderItem.product) {
-        const booking = new Booking({
+        booking = new Booking({
           orderId: order._id,
           userId: user._id,
+          bookingId: bookingId,
           paymentStatus: paymentStatus,
           paymentType: paymentType,
           userAddress: {
@@ -316,9 +321,10 @@ const generateBookings = async (
           booking._id
         );
       } else if (orderItem.package) {
-        const booking = new Booking({
+        booking = new Booking({
           orderId: order._id,
           userId: user._id,
+          bookingId: bookingId,
           paymentStatus: paymentStatus,
           paymentType: paymentType,
           userAddress: {
@@ -334,14 +340,15 @@ const generateBookings = async (
           bookingTime: orderItem.bookingTime,
           orderValue: orderItem.package.offerPrice * orderItem.quantity,
         });
-
         await booking.save();
         await autoAssignBooking(
           orderItem.package.serviceId.toString(),
           booking._id
         );
       }
+      orderItem.bookingId = booking._id;
     }
+    return orderItems;
   } catch (err) {
     console.log(err);
   }
@@ -430,10 +437,8 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
       },
     });
 
-    await order.save();
-
     // create and save bookings
-    await generateBookings(
+    const newOrderItem = await generateBookings(
       orderItems,
       user,
       order,
@@ -441,7 +446,8 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
       "cash",
       "pending"
     );
-
+    order.items = newOrderItem;
+    await order.save();
     cart.items = [];
     cart.totalPrice = 0;
     console.log("cart cleared");
