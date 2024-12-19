@@ -593,6 +593,20 @@ exports.getOrderBooking = async (req, res, next) => {
   }
 };
 
+exports.getBookingDetail = async (req, res, next) => {
+  try {
+    const { bookingId } = req.params;
+    const booking = await BookingModel.findById(bookingId).populate("sellerId");
+    console.log(booking);
+    return res.status(200).json({ booking });
+  } catch (err) {
+    console.log(err);
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(err);
+  }
+};
+
 exports.postOrderBooking = async (req, res, next) => {
   try {
     const userId = req.body.userId;

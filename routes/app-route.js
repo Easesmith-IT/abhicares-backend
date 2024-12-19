@@ -43,6 +43,7 @@ router.get("/get-complete-order/:userId", appController.getCompletedOrders);
 router.post("/complete-booking", appController.getCompletedOrders);
 router.post("/track-booking", appController.posttrackBooking);
 router.get("/get-order-booking/:id", appController.getOrderBooking);
+router.get("/get-booking-detail/:bookingId", appController.getBookingDetail);
 
 router.post("/complete-order-booking", appController.postOrderBooking);
 router.post("/add-booking-review", shopController.addBookingReview);
