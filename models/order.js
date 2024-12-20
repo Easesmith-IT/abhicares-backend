@@ -73,6 +73,11 @@ const orderSchema = new Schema(
           type: String,
           required: true,
         },
+        refundStatus: {
+          type: String,
+          enum: ["none", "pending", "processed", "failed", "not-applicable"],
+          default: "none",
+        },
       },
     ],
     user: {
@@ -120,6 +125,29 @@ const orderSchema = new Schema(
         },
       },
     },
+    refundInfo: {
+      status: {
+        type: String,
+        enum: ["pending", "processed", "failed", "not-applicable"],
+        default: "not-applicable",
+      },
+      amount: {
+        type: Number,
+        default: 0,
+      },
+      processedAt: Date,
+      refundId: String,
+      reason: String,
+      refundPercentage: Number,
+      transactionDetails: {
+        gatewayResponse: String,
+        processedAt: Date,
+        gatewayRefundId: String,
+        additionalInfo: Schema.Types.Mixed,
+      },
+    },
+    cancelledAt: Date,
+    cancellationReason: String,
     status: {
       required: true,
       type: String,
@@ -147,5 +175,8 @@ const orderSchema = new Schema(
   },
   { timestamps: true }
 );
+
+orderSchema.index({ "refundInfo.status": 1, "paymentInfo.status": 1 });
+orderSchema.index({ orderId: 1, "paymentInfo.status": 1 });
 
 module.exports = mongoose.model("Order", orderSchema);

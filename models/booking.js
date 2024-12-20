@@ -71,7 +71,32 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       default: "not-alloted",
     },
-
+    refundInfo: {
+      status: {
+        type: String,
+        enum: ["pending", "processed", "failed", "not-applicable"],
+        default: "not-applicable",
+      },
+      amount: {
+        type: Number,
+        default: 0,
+      },
+      processedAt: Date,
+      refundId: String,
+      reason: String,
+      refundPercentage: Number,
+      transactionDetails: {
+        gatewayResponse: String,
+        processedAt: Date,
+        gatewayRefundId: String,
+        type: {
+          type: String,
+          enum: ["online_refund", "cod_online_refund", "manual_refund"],
+        },
+      },
+    },
+    cancellationReason: String,
+    cancelledAt: Date,
     autoAssigned: {
       type: Boolean,
       default: false,

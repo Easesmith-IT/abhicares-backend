@@ -52,8 +52,18 @@ router.get("/search-service", appController.searchService);
 router.get("/get-tickets", appController.getUserTickets);
 router.get("/get-single-ticket", appController.getSingleTicket);
 router.post("/raise-ticket", appController.raiseTicket);
-router.post("/cancel-booking/:bookingId", appController.canacelBooking);
-router.get("/refund-status/:bookingId", appController.canacelBooking);
+router.post("/cancel-booking/:bookingId", appController.cancelBooking);
+router.get("/refund-status/:bookingId", appController.getRefundStatus);
+router.get(
+  "/get-cancelled-bookings/:userId",
+  appController.getUserCancelledBookings
+);
+
+// Get cancelled bookings by date range
+router.get(
+  "/get-cancellation-stats/:userId",
+  appController.getUserCancellationStats
+);
 
 // banner route
 router.get("/get-banners", contentController.getHomePageBanners);

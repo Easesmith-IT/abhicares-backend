@@ -1254,164 +1254,139 @@ exports.addBookingReview = catchAsync(async (req, res, next) => {
   });
 });
 
-const calculateRefundAmount = (bookingDateTime, currentTime, orderValue) => {
-  const timeDifference = (bookingDateTime - currentTime) / (1000 * 60 * 60);
-
-  // Refund policy:
-  // > 72 hours: 100% refund
-  // 48-72 hours: 75% refund
-  // 24-48 hours: 50% refund
-  if (timeDifference >= 72) {
-    return orderValue;
-  } else if (timeDifference >= 48) {
-    return orderValue * 0.75;
-  } else {
-    return orderValue * 0.5;
-  }
-};
-
-const refundSchema = {
-  status: {
-    type: String,
-    enum: ["pending", "processed", "failed", "not-applicable"],
-    default: "not-applicable",
-  },
-  amount: {
-    type: Number,
-    default: 0,
-  },
-  processedAt: Date,
-  refundId: String,
-  reason: String,
-  paymentType: String,
-  refundPercentage: Number,
-  transactionDetails: Object,
-};
-
-// Add this to your booking schema if not already present:
-// refundInfo: refundSchema
-
-// Utility function to check refund eligibility and calculate amount
-const calculateRefundEligibility = (booking, currentTime) => {
-  // If payment not completed or cash payment, no automatic refund
-  if (booking.paymentStatus !== "completed" || booking.paymentType === "cash") {
-    return {
-      isEligible: false,
-      reason:
-        booking.paymentStatus !== "completed"
-          ? "Payment not completed"
-          : "Cash payment requires manual refund",
-      refundPercentage: 0,
-      amount: 0,
-    };
-  }
-
-  // Convert booking date and time to a single Date object
-  const [hours, minutes] = booking.bookingTime.split(":");
-  const bookingDateTime = new Date(booking.bookingDate);
-  bookingDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
-
-  // Calculate time difference in hours
-  const timeDifference = (bookingDateTime - currentTime) / (1000 * 60 * 60);
-
-  // Define refund policy based on time difference
-  // return {
-  //   isEligible: true,
-  //   reason: "Cancelled more than 72 hours before booking",
-  //   refundPercentage: 100,
-  //   amount: booking.orderValue,
-  // };
-  if (timeDifference >= 72) {
-    return {
-      isEligible: true,
-      reason: "Cancelled more than 72 hours before booking",
-      refundPercentage: 100,
-      amount: booking.orderValue,
-    };
-  } else if (timeDifference >= 48) {
-    return {
-      isEligible: true,
-      reason: "Cancelled between 48-72 hours before booking",
-      refundPercentage: 75,
-      amount: booking.orderValue * 0.75,
-    };
-  } else if (timeDifference >= 24) {
-    return {
-      isEligible: true,
-      reason: "Cancelled between 24-48 hours before booking",
-      refundPercentage: 50,
-      amount: booking.orderValue * 0.5,
-    };
-  } else {
-    return {
-      isEligible: false,
-      reason: "Cancelled less than 24 hours before booking",
-      refundPercentage: 0,
-      amount: 0,
-    };
-  }
-};
-
-// Process refund based on payment type
-const processRefund = async (booking, refundDetails) => {
+// Manage refund eligibility and calculations
+const manageRefund = async (booking, currentTime) => {
   try {
-    const refundInfo = {
-      status: "pending",
-      amount: refundDetails.amount,
-      processedAt: new Date(),
-      reason: refundDetails.reason,
-      paymentType: booking.paymentType,
-      refundPercentage: refundDetails.refundPercentage,
-    };
-
-    switch (booking.paymentType) {
-      case "online":
-        // Implement your payment gateway refund logic here
-        // const refundResult = await paymentGateway.refund({
-        //   orderId: booking.orderId,
-        //   amount: refundDetails.amount
-        // });
-
-        // Simulate payment gateway response
-        const refundResult = {
-          success: true,
-          refundId: `REF-${Date.now()}`,
-          transactionDetails: {
-            gatewayResponse: "Success",
-            processedAt: new Date(),
-          },
-        };
-
-        refundInfo.status = "processed";
-        refundInfo.refundId = refundResult.refundId;
-        refundInfo.transactionDetails = refundResult.transactionDetails;
-        break;
-
-      case "onlineCod":
-        // Handle online COD refunds
-        refundInfo.status = "pending";
-        refundInfo.refundId = `RCOD-${Date.now()}`;
-        break;
-
-      case "cash":
-        // Mark cash refunds for manual processing
-        refundInfo.status = "pending";
-        refundInfo.refundId = `CASH-${Date.now()}`;
-        break;
-
-      default:
-        throw new Error("Invalid payment type");
+    // If payment not completed or cash payment, no automatic refund
+    if (booking.paymentStatus !== "completed") {
+      return {
+        refundGranted: false,
+        refundInfo: {
+          status: "not-applicable",
+          amount: 0,
+          reason: "Payment not completed",
+          paymentType: booking.paymentType,
+          refundPercentage: 0,
+          processedAt: currentTime,
+        },
+      };
     }
 
-    return refundInfo;
+    // Handle cash payments
+    if (booking.paymentType === "cash") {
+      return {
+        refundGranted: true,
+        refundInfo: {
+          status: "pending",
+          amount: booking.orderValue,
+          reason: "Manual refund required for cash payment",
+          paymentType: "cash",
+          refundPercentage: 100,
+          processedAt: currentTime,
+          transactionDetails: {
+            type: "manual_refund",
+            processedAt: currentTime,
+          },
+        },
+      };
+    }
+
+    // Convert booking date and time to a single Date object
+    const [hours, minutes] = booking.bookingTime.split(":");
+    const bookingDateTime = new Date(booking.bookingDate);
+    bookingDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
+
+    // Calculate time difference in hours
+    const timeDifference = (bookingDateTime - currentTime) / (1000 * 60 * 60);
+
+    let refundDetails;
+
+    // Define refund policy based on time difference
+    if (timeDifference >= 72) {
+      refundDetails = {
+        refundGranted: true,
+        refundInfo: {
+          status: "pending",
+          amount: booking.orderValue,
+          reason: "Cancelled more than 72 hours before booking",
+          paymentType: booking.paymentType,
+          refundPercentage: 100,
+          processedAt: currentTime,
+        },
+      };
+    } else if (timeDifference >= 48) {
+      refundDetails = {
+        refundGranted: true,
+        refundInfo: {
+          status: "pending",
+          amount: booking.orderValue * 0.75,
+          reason: "Cancelled between 48-72 hours before booking",
+          paymentType: booking.paymentType,
+          refundPercentage: 75,
+          processedAt: currentTime,
+        },
+      };
+    } else if (timeDifference >= 24) {
+      refundDetails = {
+        refundGranted: true,
+        refundInfo: {
+          status: "pending",
+          amount: booking.orderValue * 0.5,
+          reason: "Cancelled between 24-48 hours before booking",
+          paymentType: booking.paymentType,
+          refundPercentage: 50,
+          processedAt: currentTime,
+        },
+      };
+    } else {
+      refundDetails = {
+        refundGranted: false,
+        refundInfo: {
+          status: "not-applicable",
+          amount: 0,
+          reason: "Cancelled less than 24 hours before booking",
+          paymentType: booking.paymentType,
+          refundPercentage: 0,
+          processedAt: currentTime,
+        },
+      };
+    }
+
+    // If refund is granted, add refund ID and process online payments
+    if (refundDetails.refundGranted) {
+      const timestamp = Date.now();
+      switch (booking.paymentType) {
+        case "online":
+          refundDetails.refundInfo.refundId = `REF-${timestamp}`;
+          refundDetails.refundInfo.transactionDetails = {
+            type: "online_refund",
+            processedAt: currentTime,
+            gatewayResponse: "Initiated",
+            gatewayRefundId: `GREF-${timestamp}`,
+          };
+          break;
+
+        case "onlineCod":
+          refundDetails.refundInfo.refundId = `RCOD-${timestamp}`;
+          refundDetails.refundInfo.transactionDetails = {
+            type: "cod_online_refund",
+            processedAt: currentTime,
+            gatewayResponse: "Initiated",
+            gatewayRefundId: `GCOD-${timestamp}`,
+          };
+          break;
+      }
+    }
+
+    return refundDetails;
   } catch (error) {
-    console.error("Refund processing error:", error);
+    console.error("Error in refund management:", error);
     throw error;
   }
 };
 
-// Cancel booking endpoint
-exports.canacelBooking = async (req, res, next) => {
+// Cancel booking controller
+exports.cancelBooking = async (req, res) => {
   try {
     const { bookingId } = req.params;
     const { cancellationReason } = req.body;
@@ -1429,51 +1404,74 @@ exports.canacelBooking = async (req, res, next) => {
     // Check if booking is already completed or cancelled
     if (
       booking.currentLocation.status === "completed" ||
-      booking.status === "cancelled"
+      booking.currentLocation.status === "cancelled"
     ) {
       return res.status(400).json({
         success: false,
-        message: "Cannot cancel a completed or already cancelled booking",
+        message: `Cannot cancel a ${booking.currentLocation.status} booking`,
       });
     }
 
     const currentTime = new Date();
 
-    // Check refund eligibility and calculate amount
-    const refundEligibility = calculateRefundEligibility(booking, currentTime);
-    console.log(refundEligibility);
-    // Process refund if eligible
-    let refundInfo = {
-      status: "not-applicable",
-      amount: 0,
-      reason: "No refund applicable",
-    };
+    // Check refund eligibility and get refund details
+    const refundDetails = await manageRefund(booking, currentTime);
 
-    if (refundEligibility.isEligible) {
-      refundInfo = await processRefund(booking, refundEligibility);
-    }
-    console.log(refundInfo);
     // Update booking with cancellation and refund information
     booking.status = "cancelled";
     booking.currentLocation.status = "cancelled";
-    booking.refundInfo = refundInfo;
+    booking.refundInfo = refundDetails.refundInfo;
     booking.cancellationReason = cancellationReason || "No reason provided";
     booking.cancelledAt = currentTime;
 
-    await booking.save();
-
-    // Update order status if needed
-    if (booking.orderId) {
-      await Order.findByIdAndUpdate(booking.orderId, {
-        $set: {
-          status: "cancelled",
-          refundStatus: refundInfo.status,
-          refundAmount: refundInfo.amount,
-          refundId: refundInfo.refundId,
-          cancelledAt: currentTime,
-        },
+    // Handle order update if there's an associated order
+    const order = await Order.findById(booking.orderId);
+    if (order) {
+      // Get all bookings associated with this order
+      const allOrderBookings = await BookingModel.find({
+        orderId: booking.orderId,
       });
+
+      // Update No_of_left_bookings
+      const activeBookings = allOrderBookings.filter(
+        (b) =>
+          b.currentLocation.status !== "cancelled" &&
+          b.currentLocation.status !== "completed"
+      );
+      order.No_of_left_bookings = activeBookings.length;
+
+      // Only update order status if no active bookings remain
+      if (activeBookings.length === 0) {
+        const allCompleted = allOrderBookings.every(
+          (b) =>
+            b.currentLocation.status === "completed" ||
+            b.currentLocation.status === "cancelled"
+        );
+        if (allCompleted) {
+          order.status = allOrderBookings.every(
+            (b) => b.currentLocation.status === "cancelled"
+          )
+            ? "Cancelled"
+            : "Completed";
+        }
+      }
+
+      // Update refund information in order items
+      if (order.items && order.items.length > 0) {
+        order.items = order.items.map((item) => {
+          if (item.bookingId.toString() === bookingId) {
+            return {
+              ...item,
+              refundStatus: refundDetails.refundInfo.status,
+            };
+          }
+          return item;
+        });
+      }
+
+      await order.save();
     }
+    await booking.save();
 
     return res.status(200).json({
       success: true,
@@ -1485,6 +1483,8 @@ exports.canacelBooking = async (req, res, next) => {
           refundInfo: booking.refundInfo,
           cancelledAt: booking.cancelledAt,
         },
+        orderStatus: order?.status || null,
+        remainingBookings: order?.No_of_left_bookings || 0,
       },
     });
   } catch (error) {
@@ -1498,13 +1498,15 @@ exports.canacelBooking = async (req, res, next) => {
 };
 
 // Get refund status endpoint
-exports.refundStatus = async (req, res) => {
+exports.getRefundStatus = async (req, res) => {
   try {
     const { bookingId } = req.params;
 
-    const booking = await BookingModel.findById(bookingId).select(
-      "refundInfo status paymentStatus paymentType orderValue"
-    );
+    const booking = await BookingModel.findById(bookingId)
+      .select(
+        "refundInfo currentLocation.status paymentStatus paymentType orderValue cancelledAt"
+      )
+      .lean();
 
     if (!booking) {
       return res.status(404).json({
@@ -1513,18 +1515,230 @@ exports.refundStatus = async (req, res) => {
       });
     }
 
+    // Get order details if refund is pending/processed
+    let orderStatus = null;
+    if (
+      booking.refundInfo?.status === "pending" ||
+      booking.refundInfo?.status === "processed"
+    ) {
+      const order = await Order.findOne({
+        "items.bookingId": bookingId,
+      })
+        .select("status No_of_left_bookings")
+        .lean();
+
+      if (order) {
+        orderStatus = {
+          status: order.status,
+          remainingBookings: order.No_of_left_bookings,
+        };
+      }
+    }
+
     return res.status(200).json({
       success: true,
       data: {
+        bookingId: booking._id,
+        bookingStatus: booking.currentLocation.status,
         refundInfo: booking.refundInfo,
-        bookingStatus: booking.status,
         paymentStatus: booking.paymentStatus,
         paymentType: booking.paymentType,
         orderValue: booking.orderValue,
+        cancelledAt: booking.cancelledAt,
+        orderStatus,
       },
     });
   } catch (error) {
     console.error("Error fetching refund status:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+exports.getUserCancelledBookings = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "cancelledAt",
+      sortOrder = "desc",
+    } = req.query;
+
+    // Build filter object
+    const filter = {
+      userId: userId,
+      status: "cancelled",
+    };
+
+    // Calculate skip value for pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Create sort object
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
+
+    // Get user's cancelled bookings
+    const bookings = await BookingModel.find(filter)
+      .select([
+        "bookingId",
+        "orderId",
+        "paymentType",
+        "paymentStatus",
+        "orderValue",
+        "bookingDate",
+        "bookingTime",
+        "cancelledAt",
+        "cancellationReason",
+        "refundInfo",
+        "product",
+        "package",
+        "quantity",
+        "status",
+      ])
+      .populate("orderId", "orderId status")
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Get total count for pagination
+    const total = await BookingModel.countDocuments(filter);
+
+    // Calculate total refund amount for the user
+    const refundStats = await BookingModel.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          totalRefundAmount: { $sum: "$refundInfo.amount" },
+          totalOrderValue: { $sum: "$orderValue" },
+        },
+      },
+    ]);
+
+    // Transform bookings data for response
+    const transformedBookings = bookings.map((booking) => ({
+      bookingId: booking.bookingId,
+      order: {
+        id: booking.orderId?._id,
+        orderId: booking.orderId?.orderId,
+        status: booking.orderId?.status,
+      },
+      payment: {
+        type: booking.paymentType,
+        status: booking.paymentStatus,
+        value: booking.orderValue,
+      },
+      booking: {
+        date: booking.bookingDate,
+        time: booking.bookingTime,
+        cancelledAt: booking.cancelledAt,
+        reason: booking.cancellationReason,
+      },
+      refund: {
+        status: booking.refundInfo?.status,
+        amount: booking.refundInfo?.amount,
+        processedAt: booking.refundInfo?.processedAt,
+      },
+      service: {
+        product: booking.product,
+        package: booking.package,
+        quantity: booking.quantity,
+      },
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        bookings: transformedBookings,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(total / parseInt(limit)),
+        },
+        summary: {
+          totalCancellations: total,
+          totalOrderValue: refundStats[0]?.totalOrderValue || 0,
+          totalRefundAmount: refundStats[0]?.totalRefundAmount || 0,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching user's cancelled bookings:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// Get user's cancelled bookings count
+exports.getUserCancellationStats = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const stats = await BookingModel.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          status: "cancelled",
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m", date: "$cancelledAt" },
+          },
+          count: { $sum: 1 },
+          totalOrderValue: { $sum: "$orderValue" },
+          totalRefundAmount: { $sum: "$refundInfo.amount" },
+        },
+      },
+      {
+        $sort: { _id: -1 },
+      },
+    ]);
+
+    // Get refund status distribution
+    const refundStatusDist = await BookingModel.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          status: "cancelled",
+        },
+      },
+      {
+        $group: {
+          _id: "$refundInfo.status",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        monthlyStats: stats,
+        refundDistribution: refundStatusDist,
+        summary: {
+          totalCancellations: stats.reduce(
+            (sum, month) => sum + month.count,
+            0
+          ),
+          totalRefundAmount: stats.reduce(
+            (sum, month) => sum + month.totalRefundAmount,
+            0
+          ),
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching user cancellation stats:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
