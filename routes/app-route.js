@@ -35,6 +35,9 @@ router.post("/signup", authController.appCreateUser);
 //
 router.post("/add-address", appController.AddUserAddress);
 router.get("/get-address/:userId", appController.getUserAddress);
+router.put("/upate-address/:addressId", appController.updateAddress);
+router.delete("/delete-address/:addressId", appController.deleteAddress);
+
 ////
 router.post("/create-order", paymentController.appOrder);
 router.get("/get-upcoming-order/:userId", appController.geUpcomingOrders);

@@ -1723,3 +1723,123 @@ exports.getUserCancellationStats = async (req, res) => {
     });
   }
 };
+
+// Update address
+exports.updateAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+
+    // Validate if addressId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(addressId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid address ID format",
+      });
+    }
+
+    // Check if address exists and belongs to the user
+    const existingAddress = await UserAddress.findOne({
+      _id: addressId,
+    });
+
+    if (!existingAddress) {
+      return res.status(404).json({
+        success: false,
+        message: "Address not found or unauthorized",
+      });
+    }
+
+    // Extract updateable fields from request body
+    const {
+      addressLine,
+      pincode,
+      landmark,
+      city,
+      state,
+      location,
+      defaultAddress,
+    } = req.body;
+
+    // Create update object with only provided fields
+    const updateData = {};
+    if (addressLine) updateData.addressLine = addressLine;
+    if (pincode) updateData.pincode = pincode;
+    if (landmark) updateData.landmark = landmark;
+    if (city) updateData.city = city;
+    if (state) updateData.state = state;
+    if (location) updateData.location = location;
+    if (typeof defaultAddress === "boolean") {
+      updateData.defaultAddress = defaultAddress;
+
+      // If setting as default, unset other default addresses
+      if (defaultAddress) {
+        await UserAddress.updateMany(
+          { userId: userId, _id: { $ne: addressId } },
+          { $set: { defaultAddress: false } }
+        );
+      }
+    }
+
+    // Update the address
+    const updatedAddress = await UserAddress.findByIdAndUpdate(
+      addressId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Address updated successfully",
+      data: updatedAddress,
+    });
+  } catch (error) {
+    console.error("Error updating address:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating address",
+      error: error.message,
+    });
+  }
+};
+
+// Delete address
+exports.deleteAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+
+    // Validate if addressId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(addressId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid address ID format",
+      });
+    }
+
+    // Check if address exists and belongs to the user
+    const address = await UserAddress.findOne({
+      _id: addressId,
+    });
+
+    if (!address) {
+      return res.status(404).json({
+        success: false,
+        message: "Address not found or unauthorized",
+      });
+    }
+
+    // Delete the address
+    await UserAddress.findByIdAndDelete(addressId);
+
+    res.status(200).json({
+      success: true,
+      message: "Address deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting address:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error deleting address",
+      error: error.message,
+    });
+  }
+};
