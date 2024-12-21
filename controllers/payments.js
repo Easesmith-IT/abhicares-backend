@@ -1,5 +1,5 @@
 const Razorpay = require("razorpay");
-var crypto = require("crypto");
+const crypto = require("crypto");
 const { logger } = require("../server");
 
 //Importing Models

@@ -124,6 +124,7 @@ const bookingSchema = new mongoose.Schema(
     },
     bookingId: {
       type: String,
+      required: true,
     },
   },
   { timestamps: true }

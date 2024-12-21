@@ -25,6 +25,7 @@ const helpCenter = require("../models/helpCenter");
 const pincodeValidator = require("../util/locationValidator");
 const product = require("../models/product");
 const Review = require("../models/review");
+const { serve } = require("swagger-ui-express");
 
 ////////////////////////////////////////////////////////
 const updateServiceRating = async (serviceId, serviceType) => {
@@ -1558,124 +1559,100 @@ exports.getRefundStatus = async (req, res) => {
   }
 };
 
-exports.getUserCancelledBookings = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const {
-      page = 1,
-      limit = 10,
-      sortBy = "cancelledAt",
-      sortOrder = "desc",
-    } = req.query;
+exports.getUserCancelledBookings = catchAsync(async (req, res) => {
+  const { userId } = req.params;
+  const {
+    page = 1,
+    limit = 10,
+    sortBy = "cancelledAt",
+    sortOrder = "desc",
+  } = req.query;
 
-    // Build filter object
-    const filter = {
-      userId: userId,
-      status: "cancelled",
-    };
+  // Build filter object
+  const filter = {
+    userId: userId,
+    status: "cancelled",
+  };
 
-    // Calculate skip value for pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+  // Calculate skip value for pagination
+  const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // Create sort object
-    const sortOptions = {};
-    sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
+  // Create sort object
+  const sortOptions = {};
+  sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
 
-    // Get user's cancelled bookings
-    const bookings = await BookingModel.find(filter)
-      .select([
-        "bookingId",
-        "orderId",
-        "paymentType",
-        "paymentStatus",
-        "orderValue",
-        "bookingDate",
-        "bookingTime",
-        "cancelledAt",
-        "cancellationReason",
-        "refundInfo",
-        "product",
-        "package",
-        "quantity",
-        "status",
-      ])
-      .populate("orderId", "orderId status")
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(parseInt(limit));
+  // Get user's cancelled bookings
+  const bookings = await BookingModel.find(filter)
+    .select([
+      "bookingId",
+      "orderId",
+      "paymentType",
+      "paymentStatus",
+      "orderValue",
+      "bookingDate",
+      "bookingTime",
+      "cancelledAt",
+      "cancellationReason",
+      "refundInfo",
+      "product",
+      "package",
+      "quantity",
+      "status",
+    ])
+    .sort(sortOptions)
+    .skip(skip)
+    .limit(parseInt(limit));
 
-    // Get total count for pagination
-    const total = await BookingModel.countDocuments(filter);
+  // Get total count for pagination
+  const total = await BookingModel.countDocuments(filter);
 
-    // Calculate total refund amount for the user
-    const refundStats = await BookingModel.aggregate([
-      { $match: filter },
-      {
-        $group: {
-          _id: null,
-          totalRefundAmount: { $sum: "$refundInfo.amount" },
-          totalOrderValue: { $sum: "$orderValue" },
-        },
-      },
-    ]);
-
-    // Transform bookings data for response
-    const transformedBookings = bookings.map((booking) => ({
+  // Transform bookings data for response
+  const transformedBookings = bookings.map((booking) => {
+    var service;
+    if (booking.product) {
+      service = {
+        name: booking.product["name"],
+        imageUrl: booking.product["imageUrl"][0],
+        type: "Product",
+      };
+    } else if (booking.package) {
+      service = {
+        name: booking.package["name"],
+        imageUrl: booking.package["imageUrl"][0],
+        type: "Package",
+      };
+    }
+    return {
+      _id: booking._id,
       bookingId: booking.bookingId,
-      order: {
-        id: booking.orderId?._id,
-        orderId: booking.orderId?.orderId,
-        status: booking.orderId?.status,
-      },
       payment: {
         type: booking.paymentType,
         status: booking.paymentStatus,
         value: booking.orderValue,
       },
-      booking: {
-        date: booking.bookingDate,
-        time: booking.bookingTime,
-        cancelledAt: booking.cancelledAt,
-        reason: booking.cancellationReason,
-      },
-      refund: {
-        status: booking.refundInfo?.status,
-        amount: booking.refundInfo?.amount,
-        processedAt: booking.refundInfo?.processedAt,
-      },
-      service: {
-        product: booking.product,
-        package: booking.package,
-        quantity: booking.quantity,
-      },
-    }));
+      date: booking.bookingDate,
+      time: booking.bookingTime,
+      cancelledAt: booking.cancelledAt,
+      reason: booking.cancellationReason,
+      refundStatus: booking.refundInfo?.status,
+      amount: booking.refundInfo?.amount,
+      service: service,
+    };
+  });
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        bookings: transformedBookings,
-        pagination: {
-          total,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          pages: Math.ceil(total / parseInt(limit)),
-        },
-        summary: {
-          totalCancellations: total,
-          totalOrderValue: refundStats[0]?.totalOrderValue || 0,
-          totalRefundAmount: refundStats[0]?.totalRefundAmount || 0,
-        },
+  return res.status(200).json({
+    success: true,
+    data: {
+      bookings: transformedBookings,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total / parseInt(limit)),
       },
-    });
-  } catch (error) {
-    console.error("Error fetching user's cancelled bookings:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: error.message,
-    });
-  }
-};
+    },
+  });
+});
 
 // Get user's cancelled bookings count
 exports.getUserCancellationStats = async (req, res) => {

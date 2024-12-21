@@ -1,5 +1,5 @@
 const Razorpay = require("razorpay");
-var crypto = require("crypto");
+const crypto = require("crypto");
 const catchAsync = require("../util/catchAsync");
 
 //Importing Models
@@ -143,6 +143,7 @@ exports.appOrder = async (req, res, next) => {
         booking = new Booking({
           orderId: order._id,
           userId: user._id,
+          bookingId: bookingId,
           paymentStatus: paymentStatus,
           userAddress: {
             addressLine: userAddress.addressLine,
