@@ -994,76 +994,184 @@ exports.getSingleTicket = catchAsync(async (req, res, next) => {
     ticket,
   });
 });
-exports.raiseTicket = async (req, res, next) => {
-  try {
-    const {
-      serviceId,
-      date,
-      issue,
-      description,
-      userId,
-      sellerId,
-      raisedBy,
-      bookingId,
-      serviceType,
-      ticketType,
-    } = req.body;
-    var ticket = await HelpCentre({
-      issue: issue,
-      description: description,
-      userId: userId,
-      sellerId: sellerId ? sellerId : "",
-      raisedBy: raisedBy,
-      ticketType,
-      serviceType: serviceType ? serviceType : "",
-      serviceId: serviceId ? serviceId : "",
-      bookingId: bookingId ? bookingId : "",
-      date,
-      ticketHistory: [
-        {
-          date: date,
-          status: "raised",
-          resolution: "",
-        },
-      ],
-    });
 
-    ticket.save();
+exports.raiseTicket = catchAsync(async (req, res, next) => {
+  const {
+    serviceId,
+    date,
+    issue,
+    description,
+    userId,
+    sellerId,
+    raisedBy,
+    bookingId,
+    serviceType,
+    ticketType,
+  } = req.body;
 
-    // const foundToken=await tokenSchema.findOne({
-    //   sellerId:sellerId
-    // })
-    // if(!foundToken){
-    //   return res.status(400).json({
-    //     message:"no user found"
-    //   })
-    // }
-    // const token=foundToken.token
-    // const deviceType=foundToken.deviceType
-    // const appType=foundToken.appType
-    // const message = {
-    //         notification: {
-    //             title: "Service completed",
-    //             body: `Your service has been completed by ${booking.sellerId.name}. Please confirm the service completion.`,
-    //             // ...(imageUrl && { image: imageUrl }), // Add image if available
-    //         },
-    //         token: token, // FCM token of the recipient device
-    //     };
-    // const tokenResponse=await createSendPushNotification(deviceType,token,message,appType)
-    // if(!tokenResponse){
-    //   return res.status(400).json({
-    //     message:'No token found'
-    //   })
-    // }
-    console.log(ticket);
-
-    return res.status(200).json({ ticket });
-  } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+  // Input validation
+  if (!userId || !description || !raisedBy || !ticketType) {
+    return next(
+      new AppError(
+        "Please provide required fields: userId, description, raisedBy, and ticketType",
+        400
+      )
+    );
   }
-};
+
+  // Validate raisedBy enum value
+  if (!["customer", "partner"].includes(raisedBy)) {
+    return next(
+      new AppError('raisedBy must be either "customer" or "partner"', 400)
+    );
+  }
+
+  // Create ticket object with validated fields
+  const ticketData = {
+    issue,
+    description,
+    userId,
+    raisedBy,
+    ticketType,
+    date: date || new Date().toISOString(),
+    ticketHistory: [
+      {
+        date: date || new Date().toISOString(),
+        status: "raised",
+        resolution: "",
+      },
+    ],
+  };
+
+  // Add optional fields if they exist
+  if (sellerId) ticketData.sellerId = sellerId;
+  if (serviceType) ticketData.serviceType = serviceType;
+  if (serviceId) ticketData.serviceId = serviceId;
+  if (bookingId) ticketData.bookingId = bookingId;
+
+  // Create and save ticket
+  const ticket = await HelpCentre.create(ticketData);
+
+  // Populate relevant fields for response
+  const populatedTicket = await HelpCentre.findById(ticket._id)
+    .populate("userId", "name email phone")
+    .populate("serviceId", "name price")
+    .populate("bookingId", "bookingNumber date")
+    .populate("serviceType", "name");
+
+  // Send success response
+  return res.status(201).json({
+    status: "success",
+    message: "Ticket raised successfully",
+    data: {
+      ticket: populatedTicket,
+      ticketId: ticket._id,
+      status: ticket.status,
+      createdAt: ticket.createdAt,
+    },
+  });
+});
+
+// Optional: Add ticket statistics tracking
+exports.getTicketStats = catchAsync(async (req, res, next) => {
+  const stats = await HelpCentre.aggregate([
+    {
+      $group: {
+        _id: "$status",
+        count: { $sum: 1 },
+        avgResolutionTime: {
+          $avg: {
+            $cond: [
+              { $eq: ["$status", "completed"] },
+              {
+                $subtract: [
+                  { $dateFromString: { dateString: "$completedAt" } },
+                  { $dateFromString: { dateString: "$date" } },
+                ],
+              },
+              null,
+            ],
+          },
+        },
+      },
+    },
+  ]);
+
+  return res.status(200).json({
+    status: "success",
+    data: { stats },
+  });
+});
+// exports.raiseTicket = async (req, res, next) => {
+//   try {
+//     const {
+//       serviceId,
+//       date,
+//       issue,
+//       description,
+//       userId,
+//       sellerId,
+//       raisedBy,
+//       bookingId,
+//       serviceType,
+//       ticketType,
+//     } = req.body;
+//     var ticket = await HelpCentre({
+//       issue: issue,
+//       description: description,
+//       userId: userId,
+//       sellerId: sellerId ? sellerId : "",
+//       raisedBy: raisedBy,
+//       ticketType,
+//       serviceType: serviceType ? serviceType : "",
+//       serviceId: serviceId ? serviceId : "",
+//       bookingId: bookingId ? bookingId : "",
+//       date,
+//       ticketHistory: [
+//         {
+//           date: date,
+//           status: "raised",
+//           resolution: "",
+//         },
+//       ],
+//     });
+
+//     ticket.save();
+
+//     // const foundToken=await tokenSchema.findOne({
+//     //   sellerId:sellerId
+//     // })
+//     // if(!foundToken){
+//     //   return res.status(400).json({
+//     //     message:"no user found"
+//     //   })
+//     // }
+//     // const token=foundToken.token
+//     // const deviceType=foundToken.deviceType
+//     // const appType=foundToken.appType
+//     // const message = {
+//     //         notification: {
+//     //             title: "Service completed",
+//     //             body: `Your service has been completed by ${booking.sellerId.name}. Please confirm the service completion.`,
+//     //             // ...(imageUrl && { image: imageUrl }), // Add image if available
+//     //         },
+//     //         token: token, // FCM token of the recipient device
+//     //     };
+//     // const tokenResponse=await createSendPushNotification(deviceType,token,message,appType)
+//     // if(!tokenResponse){
+//     //   return res.status(400).json({
+//     //     message:'No token found'
+//     //   })
+//     // }
+//     console.log(ticket);
+
+//     return res.status(200).json({ ticket });
+//   } catch (err) {
+//     const error = new Error(err);
+//     error.httpStatusCode = 500;
+//     return next(err);
+//   }
+// };
 
 // coupon controller
 
