@@ -670,47 +670,45 @@ exports.getSellerCashout = async (req, res, next) => {
 };
 
 exports.checkSellerStatus = catchAsync(async (req, res, next) => {
-  
-    // Get sellerId from params or query
-    const {sellerId} = req.query
-    console.log('seller id',sellerId)
-    if (!sellerId) {
-      return res.status(400).json({
-        error: "Seller ID is required",
-      });
-    }
-
-    // Find seller with minimal fields projection
-    const seller = await SellerModel.findById(sellerId)
-      .select("name status partnerId legalName")
-      .lean();
-
-    if (!seller) {
-      return res.status(404).json({
-        error: "Seller not found",
-      });
-    }
-
-    // Prepare response with status details
-    const statusDetails = {
-      current: seller.status,
-      isApproved: seller.status === "APPROVED",
-      isRejected: seller.status === "REJECTED",
-      isOnHold: seller.status === "HOLD",
-      isInReview: seller.status === "IN-REVIEW",
-      canOperate: seller.status === "APPROVED", // Business logic - only approved sellers can operate
-      lastUpdated: seller._id.getTimestamp(), // Get timestamp from MongoDB ObjectId
-    };
-
-    return res.status(200).json({
-      success: true,
-      seller: {
-        id: seller._id,
-        name: seller.name,
-        legalName: seller.legalName,
-        partnerId: seller.partnerId,
-      },
-      status: statusDetails,
+  // Get sellerId from params or query
+  const { sellerId } = req.query;
+  console.log("seller id", sellerId);
+  if (!sellerId) {
+    return res.status(400).json({
+      error: "Seller ID is required",
     });
+  }
 
-})
+  // Find seller with minimal fields projection
+  const seller = await SellerModel.findById(sellerId)
+    .select("name status partnerId legalName")
+    .lean();
+
+  if (!seller) {
+    return res.status(404).json({
+      error: "Seller not found",
+    });
+  }
+
+  // Prepare response with status details
+  const statusDetails = {
+    current: seller.status,
+    isApproved: seller.status === "APPROVED",
+    isRejected: seller.status === "REJECTED",
+    isOnHold: seller.status === "HOLD",
+    isInReview: seller.status === "IN-REVIEW",
+    canOperate: seller.status === "APPROVED", // Business logic - only approved sellers can operate
+    lastUpdated: seller._id.getTimestamp(), // Get timestamp from MongoDB ObjectId
+  };
+
+  return res.status(200).json({
+    success: true,
+    seller: {
+      id: seller._id,
+      name: seller.name,
+      legalName: seller.legalName,
+      partnerId: seller.partnerId,
+    },
+    status: statusDetails,
+  });
+});

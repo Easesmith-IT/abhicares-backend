@@ -855,38 +855,124 @@ exports.getUserAddress = async (req, res, next) => {
 // };
 
 exports.getUserTickets = catchAsync(async (req, res, next) => {
-  const { page, userId } = req.query;
-  const limit = 10;
-  // Validate userId
+  const {
+    page = 1,
+    limit = 10,
+    status,
+    sortBy = "createdAt",
+    order = "desc",
+  } = req.query;
+  const userId = req.query.userId;
+
+  // Input validation
   if (!userId) {
     return res.status(400).json({
       status: "fail",
-      message: "User ID is required.",
+      message: "User ID is required",
     });
   }
 
-  // Calculate skip value for pagination
-  const skip = (page - 1) * limit;
+  if (page < 1) {
+    return res.status(400).json({
+      status: "fail",
+      message: "Page number must be greater than 0",
+    });
+  }
 
-  // Fetch paginated tickets for the user
-  const tickets = await HelpCentre.find({ userId })
-    .sort({ createdAt: -1 }) // Sort tickets by most recent
-    .skip(skip) // Skip records for previous pages
-    .limit(parseInt(limit)); // Limit the number of records per page
+  // Build query
+  const query = { userId };
+  if (status) {
+    query.status = status;
+  }
 
-  // Count total tickets for the user
-  const totalTickets = await HelpCentre.countDocuments({ userId });
+  // Build sort object
+  const sortObject = {};
+  sortObject[sortBy] = order === "asc" ? 1 : -1;
 
-  // Return the paginated tickets and meta information
-  return res.status(200).json({
-    status: "success",
-    currentPage: parseInt(page),
-    totalPages: Math.ceil(totalTickets / limit),
-    results: tickets.length,
-    totalResults: totalTickets,
-    tickets,
-  });
+  // Calculate skip value
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  try {
+    // Execute query with pagination
+    const [tickets, totalTickets] = await Promise.all([
+      HelpCentre.find(query)
+        .sort(sortObject)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate("serviceId", "name price")
+        .populate("bookingId", "bookingNumber date")
+        .populate("serviceType", "name")
+        .lean(),
+      HelpCentre.countDocuments(query),
+    ]);
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalTickets / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    // Return response
+    return res.status(200).json({
+      status: "success",
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalResults: totalTickets,
+        resultsPerPage: parseInt(limit),
+        hasNextPage,
+        hasPrevPage,
+        nextPage: hasNextPage ? parseInt(page) + 1 : null,
+        prevPage: hasPrevPage ? parseInt(page) - 1 : null,
+      },
+      results: tickets.length,
+      data: {
+        tickets: tickets.map((ticket) => ({
+          ...ticket,
+          createdAt: ticket.createdAt,
+          ticketAge: Math.floor(
+            (Date.now() - new Date(ticket.createdAt)) / (1000 * 60 * 60 * 24)
+          ), // Add ticket age in days
+        })),
+      },
+    });
+  } catch (error) {
+    return next(new AppError("Error fetching tickets", 500));
+  }
 });
+
+// exports.getUserTickets = catchAsync(async (req, res, next) => {
+//   const { page, userId } = req.query;
+//   const limit = 10;
+//   // Validate userId
+//   if (!userId) {
+//     return res.status(400).json({
+//       status: "fail",
+//       message: "User ID is required.",
+//     });
+//   }
+
+//   // Calculate skip value for pagination
+//   const skip = (page - 1) * limit;
+
+//   // Fetch paginated tickets for the user
+//   const tickets = await HelpCentre.find({ userId })
+//     .sort({ createdAt: -1 }) // Sort tickets by most recent
+//     .skip(skip) // Skip records for previous pages
+//     .limit(parseInt(limit)); // Limit the number of records per page
+
+//   // Count total tickets for the user
+//   const totalTickets = await HelpCentre.countDocuments({ userId });
+
+//   // Return the paginated tickets and meta information
+//   return res.status(200).json({
+//     status: "success",
+//     currentPage: parseInt(page),
+//     totalPages: Math.ceil(totalTickets / limit),
+//     results: tickets.length,
+//     totalResults: totalTickets,
+//     tickets,
+//   });
+// });
 
 exports.getSingleTicket = catchAsync(async (req, res, next) => {
   const { ticketId } = req.params; // Extract ticketId from the route parameters
