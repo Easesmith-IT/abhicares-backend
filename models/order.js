@@ -66,11 +66,11 @@ const orderSchema = new Schema(
           required: true,
         },
         bookingDate: {
-          type: String,
+          type: Date,
           required: true,
         },
         bookingTime: {
-          type: String,
+          type: Date,
           required: true,
         },
         refundStatus: {
