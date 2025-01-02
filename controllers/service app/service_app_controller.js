@@ -748,6 +748,50 @@ exports.changeSellerOnlineStatus = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getSeller = catchAsync(async (req, res, next) => {
+  // Get sellerId from params or query
+  const sellerId = req.params.id;
+  console.log("seller id", sellerId);
+  if (!sellerId) {
+    return res.status(400).json({
+      error: "Seller ID is required",
+    });
+  }
+
+  // Find seller with minimal fields projection
+  const seller = await SellerModel.findById(sellerId);
+
+  if (!seller) {
+    return res.status(404).json({
+      error: "Seller not found",
+    });
+  }
+  await seller.save();
+  return res.status(200).json(seller);
+});
+
+exports.getSeller = catchAsync(async (req, res, next) => {
+  // Get sellerId from params or query
+  const sellerId = req.params.id;
+  console.log("seller id", sellerId);
+  if (!sellerId) {
+    return res.status(400).json({
+      error: "Seller ID is required",
+    });
+  }
+
+  // Find seller with minimal fields projection
+  const seller = await SellerModel.findById(sellerId);
+
+  if (!seller) {
+    return res.status(404).json({
+      error: "Seller not found",
+    });
+  }
+  await seller.save();
+  return res.status(200).json({ sellerOnline: seller.online });
+});
+
 // exports.tempstatus = catchAsync(async (req, res, next) => {
 //   const seller = await SellerModel.find();
 //   seller.forEach(async (seller) => {
