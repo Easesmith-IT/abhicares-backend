@@ -78,4 +78,11 @@ router.get(
   serviceAppController.checkSellerStatus
 );
 
+router.get(
+  "/change-online-status/:id",
+  serviceAppController.changeSellerOnlineStatus
+);
+
+// router.get("/test", serviceAppController.tempstatus);
+
 module.exports = router;

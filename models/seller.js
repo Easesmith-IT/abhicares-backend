@@ -18,6 +18,10 @@ const sellerSchema = new Schema(
     gstNumber: {
       type: String,
     },
+    online: {
+      type: Boolean,
+      default: false,
+    },
     phone: {
       type: String,
       required: true,

@@ -713,3 +713,48 @@ exports.checkSellerStatus = catchAsync(async (req, res, next) => {
     status: statusDetails,
   });
 });
+
+exports.changeSellerOnlineStatus = catchAsync(async (req, res, next) => {
+  // Get sellerId from params or query
+  const sellerId = req.params.id;
+  console.log("seller id", sellerId);
+  if (!sellerId) {
+    return res.status(400).json({
+      error: "Seller ID is required",
+    });
+  }
+
+  // Find seller with minimal fields projection
+  const seller = await SellerModel.findById(sellerId);
+
+  if (!seller) {
+    return res.status(404).json({
+      error: "Seller not found",
+    });
+  }
+
+  seller.online = !seller.online;
+
+  await seller.save();
+  return res.status(200).json({
+    success: true,
+    seller: {
+      id: seller._id,
+      name: seller.name,
+      legalName: seller.legalName,
+      partnerId: seller.partnerId,
+      online: seller.online,
+    },
+  });
+});
+
+// exports.tempstatus = catchAsync(async (req, res, next) => {
+//   const seller = await SellerModel.find();
+//   seller.forEach(async (seller) => {
+//     seller.online = false;
+//     await seller.save();
+//   });
+//   return res.status(200).json({
+//     success: true,
+//   });
+// });
