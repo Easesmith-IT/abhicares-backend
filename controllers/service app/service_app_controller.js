@@ -385,16 +385,17 @@ exports.raiseTicket = async (req, res, next) => {
       serviceType,
       ticketType,
     } = req.body;
+    console.log(req.body, "Ticlet raised");
     var ticket = await HelpCentre({
       issue: issue,
       description: description,
-      userId: userId ? userId : "",
-      sellerId: sellerId ? sellerId : "",
+      userId: userId ? userId : null,
+      sellerId: sellerId ? sellerId : null,
       raisedBy: raisedBy,
       ticketType,
-      serviceType: serviceType ? serviceType : "",
-      serviceId: serviceId ? serviceId : "",
-      bookingId: bookingId ? bookingId : "",
+      serviceType: serviceType ? serviceType : null,
+      serviceId: serviceId ? serviceId : null,
+      bookingId: bookingId ? bookingId : null,
       date,
     });
 
