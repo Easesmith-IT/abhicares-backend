@@ -4,98 +4,79 @@ const order = require("../../models/order");
 const { createSendPushNotification } = require("../pushNotificationController");
 const catchAsync = require("../../util/catchAsync");
 
-exports.getSellerOrderHistory = async (req, res, next) => {
-  try {
-    const id = req.params.id; // seller id
-    const result = await BookingModel.find({
-      sellerId: id,
-      status: "completed",
+exports.getSellerOrderHistory = catchAsync(async (req, res, next) => {
+  const id = req.params.id; // seller id
+  const result = await BookingModel.find({
+    sellerId: id,
+    status: "completed",
+  })
+    .populate({
+      path: "package",
+      populate: {
+        path: "products",
+        populate: {
+          path: "productId",
+          model: "Product",
+        },
+      },
     })
-      .populate({
-        path: "package",
+    .populate("userId", "-password");
+
+  res.status(200).json({
+    success: true,
+    message: "Your order list",
+    sellerOrders: result == null ? [] : result,
+  });
+});
+
+exports.getSellerUpcomingOrder = catchAsync(async (req, res, next) => {
+  const id = req.params.id; // seller id
+  const result = await BookingModel.find({
+    sellerId: id,
+    status: "alloted",
+  }).populate("userId", "-password");
+
+  res.status(200).json({
+    success: true,
+    message: "Your order list",
+    sellerOrders: result,
+  });
+});
+
+exports.getSellerCompletedOrder = catchAsync(async (req, res, next) => {
+  const id = req.params.id; // seller id
+  const result = await BookingModel.find({
+    sellerId: id,
+    status: "Completed",
+  }).populate("userId", "-password");
+
+  res.status(200).json({
+    success: true,
+    message: "Your order list",
+    sellerOrders: result,
+  });
+});
+
+exports.getBooking = catchAsync(async (req, res, next) => {
+  const id = req.params.id; // seller id
+  const result = await BookingModel.findById(id)
+    .populate({
+      path: "package",
+      populate: {
+        path: "products",
         populate: {
-          path: "products",
-          populate: {
-            path: "productId",
-            model: "Product",
-          },
+          path: "productId",
+          model: "Product",
         },
-      })
-      .populate("userId", "-password");
+      },
+    })
+    .populate("userId", "-password");
 
-    res.status(200).json({
-      success: true,
-      message: "Your order list",
-      sellerOrders: result,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.getSellerUpcomingOrder = async (req, res, next) => {
-  try {
-    const id = req.params.id; // seller id
-    const result = await BookingModel.find({
-      sellerId: id,
-      status: "alloted",
-    }).populate("userId", "-password");
-
-    res.status(200).json({
-      success: true,
-      message: "Your order list",
-      sellerOrders: result,
-    });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
-
-exports.getSellerCompletedOrder = async (req, res, next) => {
-  try {
-    const id = req.params.id; // seller id
-    const result = await BookingModel.find({
-      sellerId: id,
-      status: "Completed",
-    }).populate("userId", "-password");
-
-    res.status(200).json({
-      success: true,
-      message: "Your order list",
-      sellerOrders: result,
-    });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
-
-exports.getBooking = async (req, res, next) => {
-  try {
-    const id = req.params.id; // seller id
-    const result = await BookingModel.findById(id)
-      .populate({
-        path: "package",
-        populate: {
-          path: "products",
-          populate: {
-            path: "productId",
-            model: "Product",
-          },
-        },
-      })
-      .populate("userId", "-password");
-
-    res.status(200).json({
-      success: true,
-      booking: result,
-    });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
+  res.status(200).json({
+    success: true,
+    booking: result,
+  });
+});
 
 exports.postStartBooking = async (req, res, next) => {
   try {
@@ -274,24 +255,19 @@ exports.postBookingCompletionReq = async (req, res, next) => {
   }
 };
 
-exports.getSellerRunningOrder = async (req, res, next) => {
-  try {
-    const id = req.params.id; // seller id
-    const result = await BookingModel.findOne({
-      sellerId: id,
-      status: "started",
-    }).populate("userId", "-password");
-    console.log(result);
-    res.status(200).json({
-      success: true,
-      message: "Your order list",
-      sellerOrder: result,
-    });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
+exports.getSellerRunningOrder = catchAsync(async (req, res, next) => {
+  const id = req.params.id; // seller id
+  const result = await BookingModel.findOne({
+    sellerId: id,
+    status: "started",
+  }).populate("userId", "-password");
+  console.log(result);
+  res.status(200).json({
+    success: true,
+    message: "Your order list",
+    sellerOrder: result,
+  });
+});
 
 exports.getSellerTodayOrder = catchAsync(async (req, res, next) => {
   // Get today's date at midnight UTC

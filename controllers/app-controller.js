@@ -26,6 +26,7 @@ const pincodeValidator = require("../util/locationValidator");
 const product = require("../models/product");
 const Review = require("../models/review");
 const { serve } = require("swagger-ui-express");
+// const catchAsync = require("../util/catchAsync");
 
 ////////////////////////////////////////////////////////
 const updateServiceRating = async (serviceId, serviceType) => {
@@ -527,6 +528,83 @@ exports.getCompletedOrders = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.completeBooking = catchAsync(async (req, res, next) => {
+  const { bookingId } = req.params;
+
+  // Find and update the booking status
+  // const booking = await BookingModel.findOneAndUpdate(
+  //   { _id: bookingId },
+  //   {
+  //     status: "completed",
+  //     "currentLocation.status": "completed",
+  //   },
+  //   { new: true }
+  // );
+  const booking = await BookingModel.findById(bookingId);
+  booking.status = "completed";
+  booking.currentLocation.status = "completed";
+  await booking.save();
+
+  if (!booking) {
+    return next(new AppError("Booking not found", 404));
+  }
+
+  // Find the associated order
+  const order = await Order.findById(booking.orderId);
+
+  if (!order) {
+    return next(new AppError("Associated order not found", 404));
+  }
+
+  // Update the booking status in order items
+  const updatedItems = order.items.map((item) => {
+    if (item.bookingId.toString() === booking._id.toString()) {
+      return {
+        ...item,
+        status: "completed",
+      };
+    }
+    return item;
+  });
+
+  order.items = updatedItems;
+
+  // Check if all bookings in the order are completed
+  const allBookingsCompleted =
+    (await BookingModel.find({
+      orderId: order._id,
+      status: { $ne: "completed" },
+    }).countDocuments()) === 0;
+
+  // If all bookings are completed, update order status
+  if (allBookingsCompleted) {
+    order.status = "Completed";
+    order.No_of_left_bookings = 0;
+  } else {
+    // Update remaining bookings count
+    const remainingBookings = await BookingModel.find({
+      orderId: order._id,
+      status: { $ne: "completed" },
+    }).countDocuments();
+    order.No_of_left_bookings = remainingBookings;
+  }
+
+  await order.save();
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      booking,
+      order: {
+        orderId: order.orderId,
+        status: order.status,
+        remainingBookings: order.No_of_left_bookings,
+      },
+    },
+    message: "Booking completed successfully",
+  });
+});
+
 exports.getOrderDetails = async (req, res, next) => {
   try {
     const orderId = req.params.orderId;
@@ -595,19 +673,12 @@ exports.getOrderBooking = async (req, res, next) => {
   }
 };
 
-exports.getBookingDetail = async (req, res, next) => {
-  try {
-    const { bookingId } = req.params;
-    const booking = await BookingModel.findById(bookingId).populate("sellerId");
-    console.log(booking);
-    return res.status(200).json({ booking });
-  } catch (err) {
-    console.log(err);
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
-  }
-};
+exports.getBookingDetail = catchAsync(async (req, res, next) => {
+  const { bookingId } = req.params;
+  const booking = await BookingModel.findById(bookingId).populate("sellerId");
+  // console.log(booking);
+  return res.status(200).json({ booking });
+});
 
 exports.postOrderBooking = async (req, res, next) => {
   try {
@@ -700,6 +771,103 @@ exports.postOrderBooking = async (req, res, next) => {
     return next(err);
   }
 };
+
+exports.completeBookingWithReview = catchAsync(async (req, res, next) => {
+  const {
+    userId,
+    productId,
+    packageId,
+    paymentType,
+    bookingId,
+    rating,
+    orderId,
+    sellerId,
+    content,
+    date,
+  } = req.body;
+
+  // Create and save review
+  const review = new Review({
+    rating,
+    content,
+    reviewType: "ON-BOOKING",
+    productId: productId || "",
+    orderId,
+    userId,
+    sellerId,
+    bookingId: bookingId || "",
+    date,
+    packageId: packageId || "",
+  });
+  await review.save();
+
+  // Update booking status
+  const booking = await Booking.findById(bookingId).populate({
+    path: "sellerId",
+    model: "Seller",
+  });
+
+  if (!booking) {
+    return next(new AppError("Booking not found", 404));
+  }
+
+  // Update order status
+  const order = await Order.findById(orderId);
+
+  if (!order) {
+    return next(new AppError("Order not found", 404));
+  }
+
+  // Update order completion status
+  order.No_of_left_bookings--;
+  if (order.No_of_left_bookings === 0) {
+    order.status = "Completed";
+  }
+  await order.save();
+
+  // Update booking status
+  booking.status = "Completed";
+  if (paymentType) {
+    booking.paymentStatus = "completed";
+    booking.paymentType = paymentType;
+  }
+  await booking.save();
+
+  // Update service rating
+  await updateServiceRating(
+    productId || packageId,
+    productId ? "product" : "package"
+  );
+
+  // Send notification to seller
+  const token = await tokenSchema.findOne({ sellerId: booking.sellerId });
+
+  if (token) {
+    const message = {
+      notification: {
+        title: "Service completed",
+        body: `Your service has been completed by ${booking.sellerId.name}. Please confirm the service completion.`,
+      },
+      token: token.token,
+    };
+
+    await createSendPushNotification(
+      token.deviceType,
+      token.token,
+      message,
+      token.appType
+    );
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      review,
+      booking,
+      order,
+    },
+  });
+});
 
 /////////////////////////////////////////////////////////////////////////////
 
