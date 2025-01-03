@@ -802,7 +802,7 @@ exports.completeBookingWithReview = catchAsync(async (req, res, next) => {
   await review.save();
 
   // Update booking status
-  const booking = await Booking.findById(bookingId).populate({
+  const booking = await BookingModel.findById(bookingId).populate({
     path: "sellerId",
     model: "Seller",
   });
@@ -851,12 +851,12 @@ exports.completeBookingWithReview = catchAsync(async (req, res, next) => {
       token: token.token,
     };
 
-    await createSendPushNotification(
-      token.deviceType,
-      token.token,
-      message,
-      token.appType
-    );
+    // await createSendPushNotification(
+    //   token.deviceType,
+    //   token.token,
+    //   message,
+    //   token.appType
+    // );
   }
 
   res.status(200).json({
