@@ -1,9 +1,8 @@
-
 const BookingModel = require("../../models/booking");
 const { tokenSchema } = require("../../models/fcmToken");
 const order = require("../../models/order");
 const { createSendPushNotification } = require("../pushNotificationController");
-
+const catchAsync = require("../../util/catchAsync");
 
 exports.getSellerOrderHistory = async (req, res, next) => {
   try {
@@ -125,38 +124,43 @@ exports.postUpdateLiveLocation = async (req, res, next) => {
     const long = req.body.long;
     console.log(req.body);
     const booking = await BookingModel.findById(id).populate({
-      path:"sellerId",
-      model:"Seller"
+      path: "sellerId",
+      model: "Seller",
     });
     // console.log(booking);
     booking.currentLocation.location = [lat, long];
     await booking.save();
 
     // For sending live notification
-    const foundToken=await tokenSchema.findOne({
-      userId:booking.userId
-    })
-    if(!foundToken){
+    const foundToken = await tokenSchema.findOne({
+      userId: booking.userId,
+    });
+    if (!foundToken) {
       return res.status(400).json({
-        message:"no user found"
-      })
+        message: "no user found",
+      });
     }
-    const token=foundToken.token
-    const deviceType=foundToken.deviceType
-    const appType=foundToken.appType
+    const token = foundToken.token;
+    const deviceType = foundToken.deviceType;
+    const appType = foundToken.appType;
     const message = {
-            notification: {
-                title: "Your service partner is on the way",
-                body:`${booking.sellerId.name} is on their way to your location.`,
-                // ...(imageUrl && { image: imageUrl }), // Add image if available
-            },
-            token: token, // FCM token of the recipient device
-        };
-    const tokenResponse=await createSendPushNotification(deviceType,token,message,appType)
-    if(!tokenResponse){
+      notification: {
+        title: "Your service partner is on the way",
+        body: `${booking.sellerId.name} is on their way to your location.`,
+        // ...(imageUrl && { image: imageUrl }), // Add image if available
+      },
+      token: token, // FCM token of the recipient device
+    };
+    const tokenResponse = await createSendPushNotification(
+      deviceType,
+      token,
+      message,
+      appType
+    );
+    if (!tokenResponse) {
       return res.status(400).json({
-        message:'No token found'
-      })
+        message: "No token found",
+      });
     }
     return res.status(200).json({
       success: true,
@@ -174,34 +178,38 @@ exports.postLocationReached = async (req, res, next) => {
     const lat = req.body.lat;
     const long = req.body.long;
     const booking = await BookingModel.findById(id);
-    const foundUser=booking.userId
+    const foundUser = booking.userId;
     booking.currentLocation.location = [lat, long];
     booking.currentLocation.status = "reached";
     booking.save();
 
-    const foundToken=await tokenSchema.findOne({
-      userId:booking.userId
-    })
-    if(!foundToken){
+    const foundToken = await tokenSchema.findOne({
+      userId: booking.userId,
+    });
+    if (!foundToken) {
       return res.status(400).json({
-        message:"no user found"
-      })
+        message: "no user found",
+      });
     }
-    const token=foundToken.token
-    const deviceType=foundToken.deviceType
+    const token = foundToken.token;
+    const deviceType = foundToken.deviceType;
     const message = {
-            notification: {
-                title: "reached on location",
-                body: "I have reached at your location",
-                // ...(imageUrl && { image: imageUrl }), // Add image if available
-            },
-            token: token, // FCM token of the recipient device
-        };
-    const tokenResponse=await createSendPushNotification(deviceType,token,message)
-    if(!tokenResponse){
+      notification: {
+        title: "reached on location",
+        body: "I have reached at your location",
+        // ...(imageUrl && { image: imageUrl }), // Add image if available
+      },
+      token: token, // FCM token of the recipient device
+    };
+    const tokenResponse = await createSendPushNotification(
+      deviceType,
+      token,
+      message
+    );
+    if (!tokenResponse) {
       return res.status(400).json({
-        message:'No token found'
-      })
+        message: "No token found",
+      });
     }
     res.status(200).json({
       success: true,
@@ -217,20 +225,20 @@ exports.postBookingCompletionReq = async (req, res, next) => {
   try {
     const id = req.body.id; // Booking id
     const booking = await BookingModel.findById(id).populate({
-      path:'userId',
-      model:"User"
+      path: "userId",
+      model: "User",
     });
     booking.currentLocation.status = "completeReq";
     booking.save();
     const updatedOrder = await order.findOneAndUpdate(
-      { _id: booking.orderId }, 
+      { _id: booking.orderId },
       { bookingId: booking._id },
-      {new:true} 
+      { new: true }
     );
-    if(!updatedOrder){
+    if (!updatedOrder) {
       return res.status(400).json({
-        message:"somethng went wrong while updating the order"
-      })
+        message: "somethng went wrong while updating the order",
+      });
     }
     // const foundToken=await tokenSchema.findOne({
     //   userId:booking.userId
@@ -285,23 +293,29 @@ exports.getSellerRunningOrder = async (req, res, next) => {
   }
 };
 
-exports.getSellerTodayOrder = async (req, res, next) => {
-  try {
-    var todayDate = new Date().toISOString().slice(0, 10);
-    console.log(todayDate);
-    const id = req.params.id; // seller id
-    const result = await BookingModel.find({
-      sellerId: id,
-      status: "alloted",
-      bookingDate: todayDate,
-    }).populate("userId", "-password");
-    res.status(200).json({
-      success: true,
-      message: "Your order list",
-      sellerOrders: result,
-    });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
+exports.getSellerTodayOrder = catchAsync(async (req, res, next) => {
+  // Get today's date at midnight UTC
+  const startOfDay = new Date();
+  startOfDay.setUTCHours(0, 0, 0, 0);
+
+  // Get end of today (tomorrow at midnight UTC)
+  const endOfDay = new Date();
+  endOfDay.setUTCHours(24, 0, 0, 0);
+
+  const id = req.params.id; // seller id
+
+  const result = await BookingModel.find({
+    sellerId: id,
+    status: "alloted",
+    bookingDate: {
+      $gte: startOfDay,
+      $lt: endOfDay,
+    },
+  }).populate("userId", "-password");
+
+  res.status(200).json({
+    success: true,
+    message: "Your order list",
+    sellerOrders: result,
+  });
+});
