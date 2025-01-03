@@ -773,99 +773,100 @@ exports.postOrderBooking = async (req, res, next) => {
 };
 
 exports.completeBookingWithReview = catchAsync(async (req, res, next) => {
-  const {
-    userId,
-    productId,
-    packageId,
-    paymentType,
-    bookingId,
-    rating,
-    orderId,
-    sellerId,
-    content,
-    date,
-  } = req.body;
+  // Get required fields from request body
+  const { userId, rating, content, date, bookingId } = req.body;
 
-  // Create and save review
-  const review = new Review({
-    rating,
-    content,
-    reviewType: "ON-BOOKING",
-    productId: productId || "",
-    orderId,
-    userId,
-    sellerId,
-    bookingId: bookingId || "",
-    date,
-    packageId: packageId || "",
-  });
-  await review.save();
-
-  // Update booking status
+  // Find and validate booking
   const booking = await BookingModel.findById(bookingId).populate({
     path: "sellerId",
     model: "Seller",
+    select: "name", // Only get required seller fields
   });
 
   if (!booking) {
     return next(new AppError("Booking not found", 404));
   }
 
-  // Update order status
-  const order = await Order.findById(orderId);
-
+  // Find and validate order
+  const order = await Order.findById(booking.orderId);
   if (!order) {
     return next(new AppError("Order not found", 404));
   }
+  // 1. Create and save review
+  const review = new Review({
+    rating,
+    content,
+    reviewType: "ON-BOOKING",
+    productId: booking.product?._id || "",
+    packageId: booking.package?._id || "",
+    orderId: booking.orderId,
+    userId,
+    sellerId: booking.sellerId._id,
+    bookingId,
+    date,
+  });
+  await review.save();
 
-  // Update order completion status
-  order.No_of_left_bookings--;
+  // 2. Update order completion status
+  order.No_of_left_bookings = Math.max(0, order.No_of_left_bookings - 1);
   if (order.No_of_left_bookings === 0) {
     order.status = "Completed";
   }
   await order.save();
 
-  // Update booking status
+  // 3. Update booking status
   booking.status = "Completed";
-  if (paymentType) {
+  if (req.body.paymentType) {
     booking.paymentStatus = "completed";
-    booking.paymentType = paymentType;
+    booking.paymentType = req.body.paymentType;
   }
   await booking.save();
 
-  // Update service rating
-  await updateServiceRating(
-    productId || packageId,
-    productId ? "product" : "package"
-  );
+  // 4. Update service rating
+  const serviceId = booking.product?._id || booking.package?._id;
+  const serviceType = booking.product ? "product" : "package";
+  await updateServiceRating(serviceId, serviceType);
 
-  // Send notification to seller
-  const token = await tokenSchema.findOne({ sellerId: booking.sellerId });
-
-  if (token) {
-    const message = {
+  // 5. Send notification to seller if token exists
+  const tokenDoc = await tokenSchema.findOne({
+    sellerId: booking.sellerId._id,
+  });
+  if (tokenDoc) {
+    const notificationMessage = {
       notification: {
         title: "Service completed",
         body: `Your service has been completed by ${booking.sellerId.name}. Please confirm the service completion.`,
       },
-      token: token.token,
+      token: tokenDoc.token,
     };
 
+    // Uncomment when notification service is ready
     // await createSendPushNotification(
-    //   token.deviceType,
-    //   token.token,
-    //   message,
-    //   token.appType
+    //   tokenDoc.deviceType,
+    //   tokenDoc.token,
+    //   notificationMessage,
+    //   tokenDoc.appType
     // );
   }
 
+  // Send success response
   res.status(200).json({
     status: "success",
     data: {
       review,
-      booking,
-      order,
+      booking: {
+        _id: booking._id,
+        status: booking.status,
+        paymentStatus: booking.paymentStatus,
+        paymentType: booking.paymentType,
+      },
+      order: {
+        _id: order._id,
+        status: order.status,
+        remainingBookings: order.No_of_left_bookings,
+      },
     },
+    message: "Booking completed and review submitted successfully",
   });
 });
 
