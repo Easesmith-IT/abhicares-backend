@@ -815,8 +815,8 @@ exports.completeBookingWithReview = catchAsync(async (req, res, next) => {
   await order.save();
 
   // 3. Update booking status
-  booking.status = "Completed";
-  booking.currentLocation.status = "Completed";
+  booking.status = "completed";
+  booking.currentLocation.status = "completed";
   if (req.body.paymentType) {
     booking.paymentStatus = "completed";
     booking.paymentType = req.body.paymentType;
