@@ -389,8 +389,14 @@ exports.createSeller = catchAsync(async (req, res, next) => {
   ) {
     return next(new AppError(400, "All the fields are required"));
   } else {
+    let serviceIds = [];
+    services.forEach((service) => {
+      serviceIds.push({ serviceId: service._id });
+    });
     console.log("create seller");
-    console.log(services);
+    console.log("services", services);
+    console.log("services Ids", serviceIds);
+
     console.log(req.body);
     const partnerId = await generatePartnerId();
     bcrypt.genSalt(10, function (err, salt) {
@@ -402,7 +408,9 @@ exports.createSeller = catchAsync(async (req, res, next) => {
         } else {
           req.body.password = hash;
           req.body.partnerId = partnerId;
-          var seller = await SellerModel.create(req.body);
+          var seller = SellerModel(req.body);
+          seller.services = serviceIds;
+          await seller.save();
           await SellerWallet.create({ sellerId: seller._id });
           res.status(201).json({
             success: true,
