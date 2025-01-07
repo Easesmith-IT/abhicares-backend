@@ -383,12 +383,15 @@ exports.createSeller = catchAsync(async (req, res, next) => {
     !phone ||
     !address ||
     !password ||
+    !services ||
     // !contactPerson ||
     !categoryId
   ) {
     return next(new AppError(400, "All the fields are required"));
   } else {
+    console.log("create seller");
     console.log(services);
+    console.log(req.body);
     const partnerId = await generatePartnerId();
     bcrypt.genSalt(10, function (err, salt) {
       bcrypt.hash(password, salt, async function (err, hash) {
