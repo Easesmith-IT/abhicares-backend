@@ -360,58 +360,56 @@ exports.getServiceByCategory = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.createSeller = catchAsync(
-  catchAsync(async (req, res, next) => {
-    var {
-      name,
-      legalName,
-      gstNumber,
-      phone,
-      status,
-      address,
-      password,
-      contactPerson,
-      categoryId,
-      services,
-    } = req.body;
-    // const {state,city,addressLine,pincode,location}=address
-    // const {name,phone,email}=contactPerson
+exports.createSeller = catchAsync(async (req, res, next) => {
+  var {
+    name,
+    legalName,
+    gstNumber,
+    phone,
+    status,
+    address,
+    password,
+    contactPerson,
+    categoryId,
+    services,
+  } = req.body;
+  // const {state,city,addressLine,pincode,location}=address
+  // const {name,phone,email}=contactPerson
 
-    if (
-      !name ||
-      // !legalName ||
-      // !gstNumber ||
-      !phone ||
-      !address ||
-      !password ||
-      // !contactPerson ||
-      !categoryId
-    ) {
-      return next(new AppError(400, "All the fields are required"));
-    } else {
-      const partnerId = await generatePartnerId();
-      bcrypt.genSalt(10, function (err, salt) {
-        bcrypt.hash(password, salt, async function (err, hash) {
-          if (err) {
-            res
-              .status(400)
-              .json({ success: false, message: "password enctyption error" });
-          } else {
-            req.body.password = hash;
-            req.body.partnerId = partnerId;
-            var seller = await SellerModel.create(req.body);
-            await SellerWallet.create({ sellerId: seller._id });
-            res.status(201).json({
-              success: true,
-              message: "Seller created successful",
-              seller: seller,
-            });
-          }
-        });
+  if (
+    !name ||
+    // !legalName ||
+    // !gstNumber ||
+    !phone ||
+    !address ||
+    !password ||
+    // !contactPerson ||
+    !categoryId
+  ) {
+    return next(new AppError(400, "All the fields are required"));
+  } else {
+    const partnerId = await generatePartnerId();
+    bcrypt.genSalt(10, function (err, salt) {
+      bcrypt.hash(password, salt, async function (err, hash) {
+        if (err) {
+          res
+            .status(400)
+            .json({ success: false, message: "password enctyption error" });
+        } else {
+          req.body.password = hash;
+          req.body.partnerId = partnerId;
+          var seller = await SellerModel.create(req.body);
+          await SellerWallet.create({ sellerId: seller._id });
+          res.status(201).json({
+            success: true,
+            message: "Seller created successful",
+            seller: seller,
+          });
+        }
       });
-    }
-  })
-);
+    });
+  }
+});
 
 exports.getAllSeller = catchAsync(async (req, res, next) => {
   if (req.perm.partners === "write" || req.perm.partners === "read") {
