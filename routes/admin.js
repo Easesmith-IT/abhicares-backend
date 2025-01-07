@@ -15,7 +15,7 @@ router.post(
   // img_upload.upload,
   adminController.sendNotificationToAll
 );
-router.delete('/delete-sub-admin',adminController.deleteSubAdmin)
+router.delete("/delete-sub-admin", adminController.deleteSubAdmin);
 router.get("/get-all-notifications", adminController.getAllNotifications);
 router.get("/search-notifications", adminController.searchNotifications);
 router.get("/filter-notifications", adminController.filterNotification);
@@ -170,10 +170,12 @@ router.delete(
 ///////////////////////////////////////////////
 // Seller Routes
 
-router.get("/get-seller", 
+router.get(
+  "/get-seller",
   isAdminAuth,
   authorize("partners", "write"),
-  adminController.getSellerDetails);
+  adminController.getSellerDetails
+);
 router.post(
   "/create-seller",
   isAdminAuth,
@@ -181,15 +183,19 @@ router.post(
   adminController.createSeller
 );
 
-router.patch('/allot-seller-order/:id',
+router.patch(
+  "/allot-seller-order/:id",
   isAdminAuth,
   authorize("partners", "write"),
-  adminController.allotSeller)
+  adminController.allotSeller
+);
 
-router.get('/filter-seller',
+router.get(
+  "/filter-seller",
   isAdminAuth,
   authorize("partners", "write"),
-  adminController.filterPartner)
+  adminController.filterPartner
+);
 router.get(
   "/get-all-seller",
   isAdminAuth,
@@ -222,8 +228,8 @@ router.patch(
 ); // passing object id
 router.get(
   "/in-review-seller",
-  isAdminAuth,
-  authorize("partners", "read"),
+  // isAdminAuth,
+  // authorize("partners", "read"),
   adminController.getInReviewSeller
 );
 router.post(

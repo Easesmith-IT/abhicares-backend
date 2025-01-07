@@ -388,6 +388,7 @@ exports.createSeller = catchAsync(async (req, res, next) => {
   ) {
     return next(new AppError(400, "All the fields are required"));
   } else {
+    console.log(services);
     const partnerId = await generatePartnerId();
     bcrypt.genSalt(10, function (err, salt) {
       bcrypt.hash(password, salt, async function (err, hash) {

@@ -727,22 +727,19 @@ exports.searchSeller = catchAsync(async (req, res, next) => {
 });
 
 exports.changeSellerStatus = catchAsync(async (req, res, next) => {
-  const { id } = req.params; 
-  const { status } = req.body; 
+  const { id } = req.params;
+  const { status } = req.body;
 
-  
   if (!id || !status) {
     return next(new AppError(400, "Seller ID and status are required"));
   }
 
-  
   const result = await Seller.findByIdAndUpdate(
     id,
-    { status }, 
-    { new: true, runValidators: true } 
+    { status },
+    { new: true, runValidators: true }
   );
 
-  
   if (!result) {
     return next(new AppError(404, "Seller not found"));
   }
@@ -754,9 +751,8 @@ exports.changeSellerStatus = catchAsync(async (req, res, next) => {
   });
 });
 
-
 exports.getInReviewSeller = catchAsync(async (req, res, next) => {
-  const results = await Seller.find({ status: "in-review" })
+  const results = await Seller.find({ status: "IN-REVIEW" })
     .populate({ path: "categoryId", model: "Category" }) // Populate categoryId
     .populate({
       path: "services.serviceId", // Populate the serviceId within the services array
@@ -782,8 +778,6 @@ exports.getInReviewSeller = catchAsync(async (req, res, next) => {
     data: sellers,
   });
 });
-
-
 
 exports.getSellerByLocation = catchAsync(async (req, res, next) => {
   const { latitude, longitude, distance } = req.body;
@@ -813,10 +807,9 @@ exports.getSellerByLocation = catchAsync(async (req, res, next) => {
 exports.getSellerWallet = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
-  const wallet = await SellerWallet.findOne({ sellerId: id })
-  .populate({
-    path:"sellerId",
-    model:"Seller"
+  const wallet = await SellerWallet.findOne({ sellerId: id }).populate({
+    path: "sellerId",
+    model: "Seller",
   });
 
   if (!wallet) {
@@ -992,34 +985,32 @@ exports.getAllAddressesByUserId = catchAsync(async (req, res, next) => {
 
 exports.updateUserByAdmin = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is object id
-  const { name, phone,email, dateOfBirth, Gender  } = req.body;
-  
-    const user={}
-    if(name){
-      user.name=name
-    }
-    if(phone){
-      user.phone=phone
-    }
-    if(email){
-      user.email=email
-    }
-    if(dateOfBirth){
-      user.name=name
-    }
-    if(Gender){
-      user.Gender=Gender
-    }
-    var result = await User.findOneAndUpdate({ _id: id },
-      user,
-      {new:true}
-    );
+  const { name, phone, email, dateOfBirth, Gender } = req.body;
 
-   if(!result){
-    return next(new AppError('somethng went wrong while updating user Details'))
-   }
-    res.status(200).json({ success: true, message: "user updated successful" });
- 
+  const user = {};
+  if (name) {
+    user.name = name;
+  }
+  if (phone) {
+    user.phone = phone;
+  }
+  if (email) {
+    user.email = email;
+  }
+  if (dateOfBirth) {
+    user.name = name;
+  }
+  if (Gender) {
+    user.Gender = Gender;
+  }
+  var result = await User.findOneAndUpdate({ _id: id }, user, { new: true });
+
+  if (!result) {
+    return next(
+      new AppError("somethng went wrong while updating user Details")
+    );
+  }
+  res.status(200).json({ success: true, message: "user updated successful" });
 });
 
 exports.deleteUser = catchAsync(async (req, res, next) => {
@@ -1339,17 +1330,17 @@ exports.getSubAdmins = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.deleteSubAdmin=catchAsync(async(req,res,next)=>{
-  const {subAdminId,role}=req.query
-   if(!role && role!=='subAdmin'){
-    return next(new AppError("please select only subadmin"))
-   }
-  await admin.findByIdAndDelete(subAdminId)
+exports.deleteSubAdmin = catchAsync(async (req, res, next) => {
+  const { subAdminId, role } = req.query;
+  if (!role && role !== "subAdmin") {
+    return next(new AppError("please select only subadmin"));
+  }
+  await admin.findByIdAndDelete(subAdminId);
   return res.status(200).json({
-    message:"sub admin deleted successfully",
-    status:true
-  })
-})
+    message: "sub admin deleted successfully",
+    status: true,
+  });
+});
 exports.loginAdminUser = catchAsync(async (req, res, next) => {
   console.log("inside admin login");
   const { adminId, password } = req.body;
@@ -1402,7 +1393,7 @@ exports.getAllOrders = catchAsync(async (req, res, next) => {
     page = parseInt(req.query.page, 10); // Ensure `page` is an integer
   }
   var limit = 10;
-  
+
   const allList = await Order.find().countDocuments(); // Updated count function
   var num = allList / limit;
   var fixedNum = Math.floor(num); // Use `Math.floor` to round down
@@ -1439,7 +1430,6 @@ exports.getAllOrders = catchAsync(async (req, res, next) => {
     totalPage: totalPage,
   });
 });
-
 
 exports.getRecentOrders = catchAsync(async (req, res, next) => {
   const limit = 10;
@@ -1533,11 +1523,8 @@ exports.getMolthlyOrder = catchAsync(async (req, res, next) => {
   }
 
   // Send the response
-  res
-    .status(200)
-    .json({ success: true, message: "Orders list", data: orders });
+  res.status(200).json({ success: true, message: "Orders list", data: orders });
 });
-
 
 exports.getAllPayments = catchAsync(async (req, res, next) => {
   const page = req.query.page || 1;
@@ -1617,17 +1604,23 @@ exports.createAvailableCities = catchAsync(async (req, res, next) => {
   const { city, state, pinCode } = req.body;
 
   if (!city || !state || !pinCode || !Array.isArray(pinCode)) {
-    return next(new AppError("City, state, and pinCode are required, and pinCode must be an array",400));
+    return next(
+      new AppError(
+        "City, state, and pinCode are required, and pinCode must be an array",
+        400
+      )
+    );
   }
 
   // Extract codes from the pinCode array
   const pinCodesToAdd = pinCode.map((p) => {
-    if (!p.code) throw new AppError("PinCode objects must contain a code property",400);
+    if (!p.code)
+      throw new AppError("PinCode objects must contain a code property", 400);
     return parseInt(p.code);
   });
 
   if (pinCodesToAdd.some((code) => isNaN(code))) {
-    return next(new AppError("All pinCodes must be valid numbers",400));
+    return next(new AppError("All pinCodes must be valid numbers", 400));
   }
 
   // Check if the city-state combination already exists
@@ -1636,10 +1629,14 @@ exports.createAvailableCities = catchAsync(async (req, res, next) => {
   if (existingCity) {
     // Check for duplicate pinCodes
     const existingPinCodes = existingCity.pinCodes.map((p) => p.code);
-    const newPinCodes = pinCodesToAdd.filter((code) => !existingPinCodes.includes(code));
+    const newPinCodes = pinCodesToAdd.filter(
+      (code) => !existingPinCodes.includes(code)
+    );
 
     if (newPinCodes.length === 0) {
-      return next(new AppError("All provided pinCodes already exist for this city",400,));
+      return next(
+        new AppError("All provided pinCodes already exist for this city", 400)
+      );
     }
 
     // Add only new pinCodes to the existing city
@@ -1666,8 +1663,6 @@ exports.createAvailableCities = catchAsync(async (req, res, next) => {
   });
 });
 
-
-
 exports.deleteAvailableCities = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is object id
   await AvailableCity.findByIdAndDelete({ _id: id });
@@ -1679,17 +1674,25 @@ exports.updateAvailableCities = catchAsync(async (req, res, next) => {
   const id = req.params.id; // ObjectId of the available city
 
   if (!city || !state || !pinCodes || !Array.isArray(pinCodes)) {
-    return next(new AppError( "City, state, and pinCodes are required, and pinCodes must be an array",400));
+    return next(
+      new AppError(
+        "City, state, and pinCodes are required, and pinCodes must be an array",
+        400
+      )
+    );
   }
 
   // Validate pinCodes and ensure each has a valid `code`
   const validatedPinCodes = pinCodes.map((p) => {
     if (!p.code) {
-      throw new AppError("Each pinCode object must have a 'code' property",400);
+      throw new AppError(
+        "Each pinCode object must have a 'code' property",
+        400
+      );
     }
     const parsedCode = parseInt(p.code, 10);
     if (isNaN(parsedCode)) {
-      throw new AppError( "All pinCodes must be valid numbers",400);
+      throw new AppError("All pinCodes must be valid numbers", 400);
     }
     return { code: parsedCode };
   });
@@ -1702,14 +1705,14 @@ exports.updateAvailableCities = catchAsync(async (req, res, next) => {
   });
 
   if (duplicateCity) {
-    return next(new AppError("City and state combination already exists",400));
+    return next(new AppError("City and state combination already exists", 400));
   }
 
   // Find and update the city by ID
   const existingCity = await AvailableCity.findById(id);
 
   if (!existingCity) {
-    return next(new AppError("City not found",400));
+    return next(new AppError("City not found", 400));
   }
 
   // Update the fields
@@ -1718,7 +1721,9 @@ exports.updateAvailableCities = catchAsync(async (req, res, next) => {
 
   // Prevent duplicate pinCodes in the updated data
   const existingPinCodes = existingCity.pinCodes.map((p) => p.code);
-  const newPinCodes = validatedPinCodes.filter((p) => !existingPinCodes.includes(p.code));
+  const newPinCodes = validatedPinCodes.filter(
+    (p) => !existingPinCodes.includes(p.code)
+  );
   existingCity.pinCodes = [...existingCity.pinCodes, ...newPinCodes]; // Merge old and new pinCodes
 
   await existingCity.save();
@@ -1729,7 +1734,6 @@ exports.updateAvailableCities = catchAsync(async (req, res, next) => {
     data: existingCity,
   });
 });
-
 
 exports.getAvailableCities = catchAsync(async (req, res, next) => {
   const result = await AvailableCity.find();
@@ -2000,8 +2004,8 @@ exports.getSellerList = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is service id
   const result = await Seller.find({
     status: "APPROVED",
-    services: { 
-      $elemMatch: { serviceId: id }
+    services: {
+      $elemMatch: { serviceId: id },
     },
   });
 
@@ -2062,26 +2066,25 @@ exports.allotSeller = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getsingleOrder = catchAsync(async (req, res, next) => {
+  const { orderId } = req.query;
 
-exports.getsingleOrder=catchAsync(async(req,res,next)=>{
-  const{orderId}=req.query
-
-  if(!orderId){
-    return next(new AppError('No order id provided',400))
+  if (!orderId) {
+    return next(new AppError("No order id provided", 400));
   }
 
-  const foundOrder= await Order.findOne({
-    _id:orderId
-  })
-  if(!orderId){
-    return next(new AppError("no orders found",400))
+  const foundOrder = await Order.findOne({
+    _id: orderId,
+  });
+  if (!orderId) {
+    return next(new AppError("no orders found", 400));
   }
   return res.status(200).json({
-    message:"here's your order details",
-    data:foundOrder,
-    status:true
-  })
-})
+    message: "here's your order details",
+    data: foundOrder,
+    status: true,
+  });
+});
 // Ticket Controllers
 
 exports.getSingleTicket = catchAsync(async (req, res, next) => {
@@ -2125,7 +2128,7 @@ exports.getSingleTicket = catchAsync(async (req, res, next) => {
   });
 });
 exports.filterUserTickets = catchAsync(async (req, res, next) => {
-  const { date, serviceType, raisedBy, page=1 } = req.query;
+  const { date, serviceType, raisedBy, page = 1 } = req.query;
   const limit = 10;
   console.log(req.query, "req query");
 
@@ -2149,7 +2152,7 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
   const pageNumber = parseInt(page, 10);
   // Pagination setup
   const skip = (pageNumber - 1) * limit;
-  console.log(pageNumber,skip,'page number and skip')
+  console.log(pageNumber, skip, "page number and skip");
   // Query the HelpCenter collection with the filters
   const tickets = await HelpCenter.find(filter)
     .populate({
@@ -2345,20 +2348,20 @@ exports.getSellerDetails = catchAsync(async (req, res, next) => {
 exports.getSellerOrder = catchAsync(async (req, res, next) => {
   const id = req.params.id; // seller id
   const result = await Booking.find({ sellerId: id })
-  .populate({
-    path: "package",
-    populate: {
-      path: "products",
+    .populate({
+      path: "package",
       populate: {
-        path: "productId",
-        model: "Product",
+        path: "products",
+        populate: {
+          path: "productId",
+          model: "Product",
+        },
       },
-    }
-  })
-  .populate({
-    path:"userId",
-    model:"User"
-  });
+    })
+    .populate({
+      path: "userId",
+      model: "User",
+    });
 
   res.status(200).json({
     success: true,
@@ -2451,23 +2454,20 @@ exports.deleteBooking = catchAsync(async (req, res, next) => {
 // coupon controllers
 exports.filterPartner = catchAsync(async (req, res, next) => {
   const { status, page = 1, limit = 10 } = req.query;
-  
-  
+
   if (!status) {
-    return next(new AppError('No status found', 400));
+    return next(new AppError("No status found", 400));
   }
 
-  
   const pageNumber = parseInt(page, 10);
   const limitNumber = parseInt(limit, 10);
 
   const skip = (pageNumber - 1) * limitNumber;
 
   const foundPartners = await Seller.find({ status: status.toUpperCase() })
-    .skip(skip) 
-    .limit(limitNumber); 
+    .skip(skip)
+    .limit(limitNumber);
 
-  
   if (!foundPartners || foundPartners.length === 0) {
     return res.status(200).json({
       message: "No partners found",
@@ -2475,21 +2475,20 @@ exports.filterPartner = catchAsync(async (req, res, next) => {
     });
   }
 
-  
-  const totalPartners = await Seller.countDocuments({ status: status.toUpperCase() });
+  const totalPartners = await Seller.countDocuments({
+    status: status.toUpperCase(),
+  });
 
-  
   res.status(200).json({
     message: "Partners fetched successfully",
     data: foundPartners,
     pagination: {
-      total: totalPartners, 
+      total: totalPartners,
       currentPage: pageNumber,
-      totalPages: Math.ceil(totalPartners / limitNumber), 
+      totalPages: Math.ceil(totalPartners / limitNumber),
     },
   });
 });
-
 
 exports.createCoupon = catchAsync(async (req, res, next) => {
   const {
@@ -2500,12 +2499,17 @@ exports.createCoupon = catchAsync(async (req, res, next) => {
     discountType,
     description,
     noOfTimesPerUser,
-    couponFixedValue
+    couponFixedValue,
   } = req.body;
 
   // Validate required fields
   if (!name || !description || !categoryType || categoryType.length === 0) {
-    return next(new AppError(400, "All fields, including at least one category, are required"));
+    return next(
+      new AppError(
+        400,
+        "All fields, including at least one category, are required"
+      )
+    );
   }
 
   // Check if coupon already exists
@@ -2517,13 +2521,13 @@ exports.createCoupon = catchAsync(async (req, res, next) => {
   // Create the coupon
   await Coupon.create({
     name,
-    offPercentage:offPercentage?offPercentage:"",
+    offPercentage: offPercentage ? offPercentage : "",
     categoryType,
     maxDiscount,
     discountType,
     description,
     noOfTimesPerUser,
-    couponFixedValue:couponFixedValue?couponFixedValue:""
+    couponFixedValue: couponFixedValue ? couponFixedValue : "",
   });
 
   res.status(201).json({
@@ -2531,7 +2535,6 @@ exports.createCoupon = catchAsync(async (req, res, next) => {
     message: "Coupon created successfully",
   });
 });
-
 
 exports.deleteCoupon = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is object id
@@ -2550,7 +2553,7 @@ exports.updateCoupon = catchAsync(async (req, res, next) => {
     maxDiscount,
     discountType,
     couponFixedValue,
-    id
+    id,
   } = req.body;
 
   // Validate mandatory fields
@@ -2569,22 +2572,20 @@ exports.updateCoupon = catchAsync(async (req, res, next) => {
   coupon.offPercentage = offPercentage;
   coupon.description = description;
   coupon.status = status;
-  coupon.noOfTimesPerUser = noOfTimesPerUser || coupon.noOfTimesPerUser; 
+  coupon.noOfTimesPerUser = noOfTimesPerUser || coupon.noOfTimesPerUser;
   coupon.categoryType = categoryType;
-  coupon.maxDiscount = maxDiscount || coupon.maxDiscount; 
-  coupon.discountType = discountType || coupon.discountType; 
+  coupon.maxDiscount = maxDiscount || coupon.maxDiscount;
+  coupon.discountType = discountType || coupon.discountType;
   coupon.couponFixedValue = couponFixedValue || coupon.couponFixedValue;
 
-  
   await coupon.save();
 
- 
   res.status(200).json({
     success: true,
     message: "Data updated successfully",
-    data: coupon, 
+    data: coupon,
+  });
 });
-})
 
 exports.getAllCoupons = catchAsync(async (req, res, next) => {
   const result = await Coupon.find();
@@ -2933,7 +2934,7 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 
 exports.sendNotificationToAll = async (req, res) => {
   const { description, date, time, title } = req.body;
-  console.log('req.body',req.body)
+  console.log("req.body", req.body);
   // Validate input
   if (!description || !title) {
     return next(new AppError("Please provide title and description", 400));
@@ -2955,19 +2956,19 @@ exports.sendNotificationToAll = async (req, res) => {
 
   try {
     // Retrieve FCM tokens and their corresponding appTypes from tokenSchema
-    console.log('description',description)
+    console.log("description", description);
     const tokensByDeviceType = await tokenSchema.aggregate([
       {
         $group: {
           _id: "$deviceType", // Group by deviceType
-          tokens: { 
-            $push: { 
-              token: "$token",  // Include the token
+          tokens: {
+            $push: {
+              token: "$token", // Include the token
               appType: "$appType",
-              deviceType:"$deviceType" // Include the appType
-            } 
-          }
-        }
+              deviceType: "$deviceType", // Include the appType
+            },
+          },
+        },
       },
     ]);
 
@@ -2976,8 +2977,8 @@ exports.sendNotificationToAll = async (req, res) => {
         new AppError("No FCM tokens found to send notifications", 404)
       );
     }
-    for(let i=0;i<tokensByDeviceType.length;i++){
-      console.log(tokensByDeviceType[i])
+    for (let i = 0; i < tokensByDeviceType.length; i++) {
+      console.log(tokensByDeviceType[i]);
     }
     // Prepare the notification message
     const message = {
@@ -3041,14 +3042,22 @@ exports.sendNotificationToAll = async (req, res) => {
     // Send notifications to all tokens by appType immediately
     for (const { _id: deviceType, tokens } of tokensByDeviceType) {
       // Log to verify deviceType and tokens
-      console.log('DeviceType:', deviceType, 'Tokens:', tokens);
-      
+      console.log("DeviceType:", deviceType, "Tokens:", tokens);
+
       for (const { token, appType, deviceType } of tokens) {
         // Log to verify token and appType
-        console.log('Sending notification to token:', token, 'with appType:', appType);
-        
+        console.log(
+          "Sending notification to token:",
+          token,
+          "with appType:",
+          appType
+        );
+
         // Send the notification, passing appType as a separate argument
-        await sendPushNotification(deviceType, appType, token, { ...message, token });
+        await sendPushNotification(deviceType, appType, token, {
+          ...message,
+          token,
+        });
       }
     }
 
