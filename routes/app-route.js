@@ -6,6 +6,7 @@ const appController = require("../controllers/app-controller");
 const paymentController = require("../controllers/paymentsController");
 const authController = require("../controllers/authController");
 const contentController = require("../controllers/contentController.js");
+const shopController = require("../controllers/shopController.js");
 
 router.get("/get-auto", appController.autoReview);
 
@@ -34,21 +35,41 @@ router.post("/signup", authController.appCreateUser);
 //
 router.post("/add-address", appController.AddUserAddress);
 router.get("/get-address/:userId", appController.getUserAddress);
+router.put("/upate-address/:addressId", appController.updateAddress);
+router.delete("/delete-address/:addressId", appController.deleteAddress);
+
 ////
 router.post("/create-order", paymentController.appOrder);
 router.get("/get-upcoming-order/:userId", appController.geUpcomingOrders);
 router.get("/get-complete-order/:userId", appController.getCompletedOrders);
 //booking
-router.post("/complete-booking", appController.getCompletedOrders);
+// router.post("/complete-booking", appController.getCompletedOrders);
+// router.get("/get-complete-booking", appController.completeBooking);
 router.post("/track-booking", appController.posttrackBooking);
 router.get("/get-order-booking/:id", appController.getOrderBooking);
+router.get("/get-booking-detail/:bookingId", appController.getBookingDetail);
 
-router.post("/complete-order-booking", appController.postOrderBooking);
+// router.post("/complete-order-booking", appController.postOrderBooking);
+router.post("/complete-order-booking", appController.completeBookingWithReview);
+
+router.post("/add-booking-review", shopController.addBookingReview);
 
 router.get("/search-service", appController.searchService);
 router.get("/get-tickets", appController.getUserTickets);
 router.get("/get-single-ticket", appController.getSingleTicket);
 router.post("/raise-ticket", appController.raiseTicket);
+router.post("/cancel-booking/:bookingId", appController.cancelBooking);
+router.get("/refund-status/:bookingId", appController.getRefundStatus);
+router.get(
+  "/get-cancelled-bookings/:userId",
+  appController.getUserCancelledBookings
+);
+
+// Get cancelled bookings by date range
+router.get(
+  "/get-cancellation-stats/:userId",
+  appController.getUserCancellationStats
+);
 
 // banner route
 router.get("/get-banners", contentController.getHomePageBanners);

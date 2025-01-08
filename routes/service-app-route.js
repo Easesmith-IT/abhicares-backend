@@ -74,9 +74,18 @@ router.post(
 router.get("/get-booking-location/:id", traceOrder_controller.getOrderLocation); // passing booking id
 router.get(
   "/get-partner-status",
-  
+
   serviceAppController.checkSellerStatus
 );
 
+router.get(
+  "/change-online-status/:id",
+  serviceAppController.changeSellerOnlineStatus
+);
+
+router.get("/get-seller/:id", serviceAppController.getSeller);
+router.get("/get-seller-online-status/:id", serviceAppController.getSeller);
+
+// router.get("/test", serviceAppController.tempstatus);
 
 module.exports = router;

@@ -64,17 +64,42 @@ const bookingSchema = new mongoose.Schema(
       required: true,
     },
     bookingTime: {
-      type: String,
+      type: Date,
       required: true,
     },
     status: {
       type: String,
       default: "not-alloted",
     },
-
-    autoAssigned:{
-      type:Boolean,
-      default:false,
+    refundInfo: {
+      status: {
+        type: String,
+        enum: ["pending", "processed", "failed", "not-applicable"],
+        default: "not-applicable",
+      },
+      amount: {
+        type: Number,
+        default: 0,
+      },
+      processedAt: Date,
+      refundId: String,
+      reason: String,
+      refundPercentage: Number,
+      transactionDetails: {
+        gatewayResponse: String,
+        processedAt: Date,
+        gatewayRefundId: String,
+        type: {
+          type: String,
+          enum: ["online_refund", "cod_online_refund", "manual_refund"],
+        },
+      },
+    },
+    cancellationReason: String,
+    cancelledAt: Date,
+    autoAssigned: {
+      type: Boolean,
+      default: false,
     },
     orderValue: {
       type: Number,
@@ -86,6 +111,7 @@ const bookingSchema = new mongoose.Schema(
           "booking-placed",
           "out-of-delivery",
           "reached",
+          "cancelled",
           "completed",
           "completeReq",
         ],
@@ -96,10 +122,10 @@ const bookingSchema = new mongoose.Schema(
         default: [0, 0],
       },
     },
-    bookingId:{
-      type:String,
-      
-    }
+    bookingId: {
+      type: String,
+      required: true,
+    },
   },
   { timestamps: true }
 );

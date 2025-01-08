@@ -11,9 +11,9 @@ const orderSchema = new Schema(
     },
     orderId: {
       type: String,
-      unique: true, 
+      unique: true,
       required: true,
-  },
+    },
     paymentInfo: {
       status: {
         type: String,
@@ -60,13 +60,23 @@ const orderSchema = new Schema(
         quantity: {
           type: Number,
         },
+        bookingId: {
+          type: Schema.Types.ObjectId,
+          ref: "Booking",
+          required: true,
+        },
         bookingDate: {
-          type: String,
+          type: Date,
           required: true,
         },
         bookingTime: {
-          type: String,
+          type: Date,
           required: true,
+        },
+        refundStatus: {
+          type: String,
+          enum: ["none", "pending", "processed", "failed", "not-applicable"],
+          default: "none",
         },
       },
     ],
@@ -115,11 +125,34 @@ const orderSchema = new Schema(
         },
       },
     },
+    refundInfo: {
+      status: {
+        type: String,
+        enum: ["pending", "processed", "failed", "not-applicable"],
+        default: "not-applicable",
+      },
+      amount: {
+        type: Number,
+        default: 0,
+      },
+      processedAt: Date,
+      refundId: String,
+      reason: String,
+      refundPercentage: Number,
+      transactionDetails: {
+        gatewayResponse: String,
+        processedAt: Date,
+        gatewayRefundId: String,
+        additionalInfo: Schema.Types.Mixed,
+      },
+    },
+    cancelledAt: Date,
+    cancellationReason: String,
     status: {
       required: true,
       type: String,
       default: "Pending",
-      enum:['Pending',"Completed","Cancelled",'OutOfDelivery']
+      enum: ["Pending", "Completed", "Cancelled", "OutOfDelivery"],
     },
     couponId: {
       type: mongoose.Types.ObjectId,
@@ -134,14 +167,16 @@ const orderSchema = new Schema(
     No_of_left_bookings: {
       type: Number,
       required: true,
-
     },
-    bookingId:{
-      type:mongoose.Types.ObjectId,
-      ref:"Booking"
-    }
+    bookingId: {
+      type: mongoose.Types.ObjectId,
+      ref: "Booking",
+    },
   },
   { timestamps: true }
 );
+
+orderSchema.index({ "refundInfo.status": 1, "paymentInfo.status": 1 });
+orderSchema.index({ orderId: 1, "paymentInfo.status": 1 });
 
 module.exports = mongoose.model("Order", orderSchema);

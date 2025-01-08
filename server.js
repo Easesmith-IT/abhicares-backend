@@ -15,11 +15,11 @@ const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const { initializeCounter } = require("./util/counterInit");
 
-process.on('uncaughtException',err=>{
-  console.log('UNCAUGHT EXCEPTION! Shutting down...');
-  console.log(err.name,err.message);
-  process.exit(1)
-})
+process.on("uncaughtException", (err) => {
+  console.log("UNCAUGHT EXCEPTION! Shutting down...");
+  console.log(err.name, err.message);
+  process.exit(1);
+});
 
 const app = express();
 const server = http.createServer(app);
@@ -77,15 +77,14 @@ const port = process.env.PORT || 5000;
 server.listen(port, function () {
   console.log(`Server is running on port http://localhost:${port}`);
 });
-initializeCounter()
+initializeCounter();
 
-process.on('unhandledRejection',err=>{
-  console.log('UNHANDLED REJECTION! Shutting down...');
-  console.log(err)
-  console.log(err.name,err.message);
+process.on("unhandledRejection", (err) => {
+  console.log("UNHANDLED REJECTION! Shutting down...");
+  console.log(err);
+  console.log(err.name, err.message);
 
-  process.exit(1)
+  process.exit(1);
 });
 
-
-module.exports =  {app,server};
+module.exports = { app, server };
