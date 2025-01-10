@@ -394,7 +394,6 @@ exports.createSeller = catchAsync(async (req, res, next) => {
       serviceIds.push({ serviceId: service._id });
     });
     console.log("create seller");
-    console.log("services", services);
     console.log("services Ids", serviceIds);
 
     console.log(req.body);
