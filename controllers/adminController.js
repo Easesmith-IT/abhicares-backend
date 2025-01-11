@@ -2932,7 +2932,7 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 //     }
 // };
 
-exports.sendNotificationToAll = async (req, res) => {
+exports.sendNotificationToAll = async (req, res,next) => {
   const { description, date, time, title } = req.body;
   console.log("req.body", req.body);
   // Validate input
