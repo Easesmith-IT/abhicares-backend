@@ -634,4 +634,11 @@ router.post(
   adminController.updateSellerStatus
 );
 
+router.post(
+  "/update-category-data",
+  isAdminAuth,
+  authorize("settings", "write"),
+  adminController.updateCategory
+);
+
 module.exports = router;

@@ -3278,3 +3278,26 @@ exports.updateSellerStatus = async (req, res) => {
     });
   }
 };
+
+exports.updateCategory = async (req, res) => {
+  try {
+    const { categoryId, commission, convenience } = req.body;
+    const category = await Category.findById(categoryId);
+    // console.log(categories);
+    if (!category) {
+      return res.status(404).json({
+        error: "No Category FOund",
+      });
+    }
+    category.commission = commission;
+    category.convenience = convenience;
+    await category.save();
+    res.status(200).json({ status: "true", data: category });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      error: "An error occurred while updating seller status",
+      details: error.message,
+    });
+  }
+};

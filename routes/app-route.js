@@ -82,5 +82,6 @@ router.get("/get-coupons", appController.getAllCoupons);
 router.get("/get-services-app-homepage", appController.getAppHomePageServices);
 ///
 router.get("/check-city-serviceability", appController.checkServiceability);
+// router.get("/test-com", appController.setCommision);
 
 module.exports = router;

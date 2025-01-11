@@ -16,7 +16,7 @@ const Content = require("../../models/content");
 const HelpCentre = require("../../models/helpCenter");
 const SellerModel = require("../../models/seller");
 const SellerCashOut = require("../../models/sellerCashout");
-
+const { toObjectId } = require("../../util/toMongodbId");
 //controller
 const AppError = require("../../util/appError");
 
@@ -391,10 +391,10 @@ exports.createSeller = catchAsync(async (req, res, next) => {
   } else {
     let serviceIds = [];
     services.forEach((service) => {
-      serviceIds.push({ serviceId: service._id });
+      const servID = toObjectId(service._id);
+      serviceIds.push({ serviceId: servID });
     });
     console.log("create seller");
-    console.log("services", services);
     console.log("services Ids", serviceIds);
 
     console.log(req.body);
