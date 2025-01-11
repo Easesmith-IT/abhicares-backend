@@ -26,6 +26,9 @@ const pincodeValidator = require("../util/locationValidator");
 const product = require("../models/product");
 const Review = require("../models/review");
 const { serve } = require("swagger-ui-express");
+const category = require("../models/category");
+const { toObjectId } = require("../util/toMongodbId");
+
 // const catchAsync = require("../util/catchAsync");
 
 ////////////////////////////////////////////////////////
@@ -2207,3 +2210,14 @@ exports.deleteAddress = async (req, res) => {
     });
   }
 };
+
+// exports.setCommision = async (req, res) => {
+//   const categories = await Category.find();
+//   console.log(categories);
+//   categories.forEach(async (cate) => {
+//     cate.commission = 0;
+//     cate.convenience = 0;
+//     await cate.save();
+//   });
+//   res.status(200).json({ ty: "true" });
+// };
