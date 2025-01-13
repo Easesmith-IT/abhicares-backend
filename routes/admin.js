@@ -521,8 +521,8 @@ router.get(
 ); // passing booking id
 router.get(
   "/get-booking-list",
-  isAdminAuth,
-  authorize("bookings", "read"),
+  // isAdminAuth,
+  // authorize("bookings", "read"),
   adminController.getAllBooking
 );
 router.delete(
