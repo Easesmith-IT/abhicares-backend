@@ -1109,6 +1109,78 @@ exports.getAllEnquiry = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.searchEnquiries = catchAsync(async (req, res, next) => {
+  const {
+    city,
+    name,
+    phone,
+    state,
+    serviceType,
+    page = 1,
+    limit = 10,
+    sortBy = 'createdAt',
+    sortOrder = 'desc'
+  } = req.query;
+
+  // Build filter object
+  const filter = {};
+
+  // Add filters only if they are provided
+  if (city) {
+    filter.city = new RegExp(city, 'i');
+  }
+
+  if (name) {
+    filter.name = new RegExp(name, 'i');
+  }
+
+  if (phone) {
+    filter.phone = phone;
+  }
+
+  if (state) {
+    filter.state = new RegExp(state, 'i');
+  }
+
+  if (serviceType) {
+    filter.serviceType = new RegExp(serviceType, 'i');
+  }
+
+  // Execute query with filters and pagination
+  const [enquiries, totalCount] = await Promise.all([
+    Enquiry.find(filter)
+      .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(parseInt(limit))
+      .lean(),
+    Enquiry.countDocuments(filter)
+  ]);
+
+  const totalPages = Math.ceil(totalCount / parseInt(limit));
+
+  // Send response
+  res.status(200).json({
+    success: true,
+    message: 'Enquiries retrieved successfully',
+    data: enquiries,
+    pagination: {
+      currentPage: parseInt(page),
+      totalPages,
+      totalItems: totalCount,
+      itemsPerPage: parseInt(limit)
+    },
+    filters: {
+      appliedFilters: {
+        city: city || null,
+        name: name || null,
+        phone: phone || null,
+        state: state || null,
+        serviceType: serviceType || null
+      }
+    }
+  });
+});
+
 exports.deleteEnquiry = catchAsync(async (req, res, next) => {
   const id = req.params.id;
   await Enquiry.findByIdAndDelete({ _id: id });
@@ -2137,7 +2209,7 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
 
   // Date filter (for a specific day stored as a string)
   if (date) {
-    filter.date = date; // Match exact string date
+    filter.date = new RegExp('^' + date);
   }
 
   // Service type filter
@@ -2441,6 +2513,85 @@ exports.getAllBooking = catchAsync(async (req, res, next) => {
     success: true,
     message: "All booking list",
     data: result,
+  });
+});
+
+exports.searchBookingWithFilters = catchAsync(async (req, res, next) => {
+  const {
+    bookingId,
+    status,
+    paymentStatus,
+    bookingDate
+  } = req.query;
+
+  // Build filter object
+  const filter = {};
+
+  // Add bookingId filter if provided
+  if (bookingId) {
+    filter.bookingId = new RegExp(bookingId, 'i');
+  }
+
+  // Add status filter if provided
+  if (status) {
+    filter.status = status;
+  }
+
+  // Add payment status filter if provided
+  if (paymentStatus) {
+    filter.paymentStatus = paymentStatus;
+  }
+
+  // Add date range filter if provided
+  if (bookingDate) {
+    const startOfDay = new Date(bookingDate);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(bookingDate);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    filter.bookingDate = {
+      $gte: startOfDay,
+      $lte: endOfDay
+    };
+  }
+
+  const bookings = await Booking.find(filter)
+    .populate('userId', 'name email phone')
+    .populate('sellerId', 'name email phone')
+    .populate('orderId', 'orderId orderValue status')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  // Format response
+  res.status(200).json({
+    success: true,
+    message: 'Bookings retrieved successfully',
+    count: bookings.length,
+    data: bookings,
+    filters: {
+      appliedFilters: {
+        bookingId: bookingId || null,
+        status: status || null,
+        paymentStatus: paymentStatus || null,
+      }
+    }
+  });
+});
+
+exports.getBookingById = catchAsync(async (req, res, next) => {
+  const bookingId = req.query.bookingId;
+  const booking = await Booking.find({ bookingId });
+
+  if (!booking) {
+    res.status(404).json({
+      message: "No booking found!",
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    data: booking,
   });
 });
 
@@ -2933,7 +3084,7 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 //     }
 // };
 
-exports.sendNotificationToAll = async (req, res,next) => {
+exports.sendNotificationToAll = async (req, res, next) => {
   const { description, date, time, title } = req.body;
   console.log("req.body", req.body);
   // Validate input
@@ -3280,7 +3431,7 @@ exports.updateSellerStatus = async (req, res) => {
   }
 };
 
-exports.updateCategory = async (req, res) => {
+exports. = async (req, res) => {
   try {
     const { categoryId, commission, convenience } = req.body;
     const category = await Category.findById(categoryId);
