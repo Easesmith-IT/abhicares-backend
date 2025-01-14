@@ -1530,82 +1530,293 @@ exports.updateOrderStatus = catchAsync(async (req, res, next) => {
     .json({ success: true, message: "Order status changed successfull" });
 });
 
+// exports.getAllOrders = catchAsync(async (req, res, next) => {
+//   var page = 1;
+//   if (req.query.page) {
+//     page = parseInt(req.query.page, 10); // Ensure `page` is an integer
+//   }
+//   var limit = 10;
+
+//   const allList = await Order.find().countDocuments(); // Updated count function
+//   var num = allList / limit;
+//   var fixedNum = Math.floor(num); // Use `Math.floor` to round down
+//   var totalPage = fixedNum;
+//   if (num > fixedNum) {
+//     totalPage++;
+//   }
+
+//   // Fetch orders sorted by createdAt in descending order
+//   const result = await Order.find()
+//     .sort({ createdAt: -1 }) // Sorting by createdAt field in descending order
+//     .populate({
+//       path: "items",
+//       populate: {
+//         path: "package",
+//         populate: {
+//           path: "products",
+//           populate: {
+//             path: "productId",
+//             model: "Product",
+//           },
+//         },
+//       },
+//     })
+//     .populate({ path: "couponId", model: "Coupon" })
+//     .limit(limit)
+//     .skip((page - 1) * limit)
+//     .exec();
+
+//   res.status(201).json({
+//     success: true,
+//     message: "List of all orders",
+//     data: result,
+//     totalPage: totalPage,
+//   });
+// });
+
+// exports.getRecentOrders = catchAsync(async (req, res, next) => {
+//   const limit = 10;
+//   const page = req.query.page || 1;
+
+//   const result = await Order.find()
+//     .sort({ createdAt: -1 })
+//     .limit(limit * 1)
+//     .skip((page - 1) * limit)
+//     .populate({
+//       path: "items",
+//       populate: {
+//         path: "package",
+//         populate: {
+//           path: "products",
+//           populate: {
+//             path: "productId",
+//             model: "Product",
+//           },
+//         },
+//       },
+//     })
+//     .populate({ path: "couponId", model: "Coupon" })
+//     .exec();
+
+//   const totalPage = Math.ceil((await Order.countDocuments()) / limit);
+
+//   res.status(201).json({
+//     success: true,
+//     message: "List of recent orders",
+//     data: result,
+//     totalPage: totalPage,
+//   });
+// });
+
+const ORDERS_PER_PAGE = 10;
+const ORDER_STATUS = {
+  PENDING: "Pending",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+  OUT_OF_DELIVERY: "OutOfDelivery",
+};
+
+// Helper function to validate date format YYYY-MM-DD
+const isValidDateFormat = (dateStr) => {
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!regex.test(dateStr)) return false;
+
+  const date = new Date(dateStr);
+  return date instanceof Date && !isNaN(date);
+};
+
+// Helper function to build date filter
+const buildDateFilter = (startDate, endDate) => {
+  const dateFilter = {};
+
+  if (startDate) {
+    if (!isValidDateFormat(startDate)) {
+      throw new AppError("Invalid start date format. Use YYYY-MM-DD", 400);
+    }
+    dateFilter.$gte = new Date(startDate);
+  }
+
+  if (endDate) {
+    if (!isValidDateFormat(endDate)) {
+      throw new AppError("Invalid end date format. Use YYYY-MM-DD", 400);
+    }
+    // Add one day to include the end date fully
+    const endDateTime = new Date(endDate);
+    endDateTime.setHours(23, 59, 59, 999);
+    dateFilter.$lte = endDateTime;
+  }
+
+  if (startDate && endDate && dateFilter.$gte > dateFilter.$lte) {
+    throw new AppError("Start date cannot be after end date", 400);
+  }
+
+  return Object.keys(dateFilter).length ? { createdAt: dateFilter } : {};
+};
+
+// Helper function to validate and build status filter
+const buildStatusFilter = (status) => {
+  if (!status) return {};
+
+  const statusArray = status.split(",").map((s) => s.trim());
+  const validStatuses = statusArray.filter((s) =>
+    Object.values(ORDER_STATUS).includes(s)
+  );
+
+  return validStatuses.length > 0 ? { status: { $in: validStatuses } } : {};
+};
+
+// Controller functions
 exports.getAllOrders = catchAsync(async (req, res, next) => {
-  var page = 1;
-  if (req.query.page) {
-    page = parseInt(req.query.page, 10); // Ensure `page` is an integer
-  }
-  var limit = 10;
+  const {
+    page = 1,
+    startDate,
+    endDate,
+    status,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = req.query;
 
-  const allList = await Order.find().countDocuments(); // Updated count function
-  var num = allList / limit;
-  var fixedNum = Math.floor(num); // Use `Math.floor` to round down
-  var totalPage = fixedNum;
-  if (num > fixedNum) {
-    totalPage++;
-  }
+  const currentPage = Math.max(1, parseInt(page));
+  const limit = ORDERS_PER_PAGE;
 
-  // Fetch orders sorted by createdAt in descending order
-  const result = await Order.find()
-    .sort({ createdAt: -1 }) // Sorting by createdAt field in descending order
-    .populate({
-      path: "items",
-      populate: {
-        path: "package",
-        populate: {
-          path: "products",
+  // Build filter object
+  const dateFilter = buildDateFilter(startDate, endDate);
+  const statusFilter = buildStatusFilter(status);
+
+  const filter = {
+    ...dateFilter,
+    ...statusFilter,
+  };
+
+  // Build sort object
+  const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+  try {
+    // Execute query with filters
+    const [orders, totalCount] = await Promise.all([
+      Order.find(filter)
+        .sort(sort)
+        .skip((currentPage - 1) * limit)
+        .limit(limit)
+        .populate({
+          path: "items",
           populate: {
-            path: "productId",
-            model: "Product",
+            path: "package",
+            populate: {
+              path: "products",
+              populate: {
+                path: "productId",
+                model: "Product",
+              },
+            },
           },
-        },
-      },
-    })
-    .populate({ path: "couponId", model: "Coupon" })
-    .limit(limit)
-    .skip((page - 1) * limit)
-    .exec();
+        })
+        .populate({ path: "couponId", model: "Coupon" })
+        .lean(),
+      Order.countDocuments(filter),
+    ]);
 
-  res.status(201).json({
-    success: true,
-    message: "List of all orders",
-    data: result,
-    totalPage: totalPage,
-  });
+    const totalPages = Math.ceil(totalCount / limit);
+
+    if (currentPage > totalPages && totalCount > 0) {
+      return next(new AppError("Page not found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "List of filtered orders",
+      data: orders,
+      pagination: {
+        currentPage,
+        totalPages,
+        totalItems: totalCount,
+        itemsPerPage: limit,
+      },
+      filters: {
+        date: dateFilter,
+        status: statusFilter,
+      },
+    });
+  } catch (error) {
+    return next(new AppError(`Error fetching orders: ${error.message}`, 500));
+  }
 });
 
 exports.getRecentOrders = catchAsync(async (req, res, next) => {
-  const limit = 10;
-  const page = req.query.page || 1;
+  const {
+    page = 1,
+    status,
+    days = 7,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = req.query;
 
-  const result = await Order.find()
-    .sort({ createdAt: -1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit)
-    .populate({
-      path: "items",
-      populate: {
-        path: "package",
-        populate: {
-          path: "products",
+  const currentPage = Math.max(1, parseInt(page));
+  const limit = ORDERS_PER_PAGE;
+  const daysNum = parseInt(days);
+
+  if (isNaN(daysNum) || daysNum <= 0) {
+    throw new AppError("Days parameter must be a positive number", 400);
+  }
+
+  // Calculate start date based on days parameter
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - daysNum);
+
+  const filter = {
+    createdAt: { $gte: startDate },
+    ...(status && buildStatusFilter(status)),
+  };
+
+  // Build sort object
+  const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+  try {
+    const [orders, totalCount] = await Promise.all([
+      Order.find(filter)
+        .sort(sort)
+        .skip((currentPage - 1) * limit)
+        .limit(limit)
+        .populate({
+          path: "items",
           populate: {
-            path: "productId",
-            model: "Product",
+            path: "package",
+            populate: {
+              path: "products",
+              populate: {
+                path: "productId",
+                model: "Product",
+              },
+            },
           },
-        },
+        })
+        .populate({ path: "couponId", model: "Coupon" })
+        .lean(),
+      Order.countDocuments(filter),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    res.status(200).json({
+      success: true,
+      message: "List of recent filtered orders",
+      data: orders,
+      pagination: {
+        currentPage,
+        totalPages,
+        totalItems: totalCount,
+        itemsPerPage: limit,
       },
-    })
-    .populate({ path: "couponId", model: "Coupon" })
-    .exec();
-
-  const totalPage = Math.ceil((await Order.countDocuments()) / limit);
-
-  res.status(201).json({
-    success: true,
-    message: "List of recent orders",
-    data: result,
-    totalPage: totalPage,
-  });
+      filters: {
+        daysAgo: daysNum,
+        status: status || "All",
+      },
+    });
+  } catch (error) {
+    return next(
+      new AppError(`Error fetching recent orders: ${error.message}`, 500)
+    );
+  }
 });
 
 exports.getOrderById = catchAsync(async (req, res, next) => {
