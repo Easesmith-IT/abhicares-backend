@@ -1118,8 +1118,8 @@ exports.filterEnquiries = catchAsync(async (req, res, next) => {
     serviceType,
     page = 1,
     limit = 10,
-    sortBy = 'createdAt',
-    sortOrder = 'desc'
+    sortBy = "createdAt",
+    sortOrder = "desc",
   } = req.query;
 
   // Build filter object
@@ -1127,11 +1127,11 @@ exports.filterEnquiries = catchAsync(async (req, res, next) => {
 
   // Add filters only if they are provided
   if (city) {
-    filter.city = new RegExp(city, 'i');
+    filter.city = new RegExp(city, "i");
   }
 
   if (name) {
-    filter.name = new RegExp(name, 'i');
+    filter.name = new RegExp(name, "i");
   }
 
   if (phone) {
@@ -1139,21 +1139,21 @@ exports.filterEnquiries = catchAsync(async (req, res, next) => {
   }
 
   if (state) {
-    filter.state = new RegExp(state, 'i');
+    filter.state = new RegExp(state, "i");
   }
 
   if (serviceType) {
-    filter.serviceType = new RegExp(serviceType, 'i');
+    filter.serviceType = new RegExp(serviceType, "i");
   }
 
   // Execute query with filters and pagination
   const [enquiries, totalCount] = await Promise.all([
     Enquiry.find(filter)
-      .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
+      .sort({ [sortBy]: sortOrder === "asc" ? 1 : -1 })
       .skip((parseInt(page) - 1) * parseInt(limit))
       .limit(parseInt(limit))
       .lean(),
-    Enquiry.countDocuments(filter)
+    Enquiry.countDocuments(filter),
   ]);
 
   const totalPages = Math.ceil(totalCount / parseInt(limit));
@@ -1161,13 +1161,13 @@ exports.filterEnquiries = catchAsync(async (req, res, next) => {
   // Send response
   res.status(200).json({
     success: true,
-    message: 'Enquiries retrieved successfully',
+    message: "Enquiries retrieved successfully",
     data: enquiries,
     pagination: {
       currentPage: parseInt(page),
       totalPages,
       totalItems: totalCount,
-      itemsPerPage: parseInt(limit)
+      itemsPerPage: parseInt(limit),
     },
     filters: {
       appliedFilters: {
@@ -1175,37 +1175,37 @@ exports.filterEnquiries = catchAsync(async (req, res, next) => {
         name: name || null,
         phone: phone || null,
         state: state || null,
-        serviceType: serviceType || null
-      }
-    }
+        serviceType: serviceType || null,
+      },
+    },
   });
 });
 
 exports.searchEnquiries = catchAsync(async (req, res, next) => {
-  const { query, page = 1, limit = ITEMS_PER_PAGE } = req.query;
+  const { query, page = 1, limit = 10 } = req.query;
 
-  if (!query || query.trim() === '') {
-    return next(new AppError('Please provide a search query', 400));
+  if (!query || query.trim() === "") {
+    return next(new AppError("Please provide a search query", 400));
   }
 
   // Clean and prepare the search query
   const searchQuery = query.trim();
-  
+
   // Create search filter
   const searchFilter = {
     $or: [
       // For phone number - exact match
-      { 
-        phone: searchQuery.replace(/\D/g, '') // Remove any non-digit characters
+      {
+        phone: searchQuery.replace(/\D/g, ""), // Remove any non-digit characters
       },
       // For name - case insensitive and flexible matching
-      { 
+      {
         name: {
-          $regex: searchQuery.split(' ').join('.*'),
-          $options: 'i'
-        }
-      }
-    ]
+          $regex: searchQuery.split(" ").join(".*"),
+          $options: "i",
+        },
+      },
+    ],
   };
 
   try {
@@ -1215,36 +1215,38 @@ exports.searchEnquiries = catchAsync(async (req, res, next) => {
         .skip((parseInt(page) - 1) * parseInt(limit))
         .limit(parseInt(limit))
         .lean(),
-      Enquiry.countDocuments(searchFilter)
+      Enquiry.countDocuments(searchFilter),
     ]);
 
     const totalPages = Math.ceil(totalCount / parseInt(limit));
 
     // Determine which field matched for each result
-    const results = enquiries.map(enquiry => {
-      const matchedOn = enquiry.phone === searchQuery ? 'phone' : 'name';
+    const results = enquiries.map((enquiry) => {
+      const matchedOn = enquiry.phone === searchQuery ? "phone" : "name";
       return {
         ...enquiry,
-        _matchedOn: matchedOn // Add match information
+        _matchedOn: matchedOn, // Add match information
       };
     });
 
     res.status(200).json({
       success: true,
-      message: results.length > 0 ? 'Search results found' : 'No matching results found',
+      message:
+        results.length > 0
+          ? "Search results found"
+          : "No matching results found",
       data: results,
       pagination: {
         currentPage: parseInt(page),
         totalPages,
         totalItems: totalCount,
-        itemsPerPage: parseInt(limit)
+        itemsPerPage: parseInt(limit),
       },
       searchInfo: {
         searchedFor: searchQuery,
-        totalMatches: results.length
-      }
+        totalMatches: results.length,
+      },
     });
-
   } catch (error) {
     return next(new AppError(`Search failed: ${error.message}`, 500));
   }
@@ -2278,7 +2280,7 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
 
   // Date filter (for a specific day stored as a string)
   if (date) {
-    filter.date = new RegExp('^' + date);
+    filter.date = new RegExp("^" + date);
   }
 
   // Service type filter
@@ -2585,19 +2587,14 @@ exports.getAllBooking = catchAsync(async (req, res, next) => {
 });
 
 exports.searchBookingWithFilters = catchAsync(async (req, res, next) => {
-  const {
-    bookingId,
-    status,
-    paymentStatus,
-    bookingDate
-  } = req.query;
+  const { bookingId, status, paymentStatus, bookingDate } = req.query;
 
   // Build filter object
   const filter = {};
 
   // Add bookingId filter if provided
   if (bookingId) {
-    filter.bookingId = new RegExp(bookingId, 'i');
+    filter.bookingId = new RegExp(bookingId, "i");
   }
 
   // Add status filter if provided
@@ -2620,21 +2617,21 @@ exports.searchBookingWithFilters = catchAsync(async (req, res, next) => {
 
     filter.bookingDate = {
       $gte: startOfDay,
-      $lte: endOfDay
+      $lte: endOfDay,
     };
   }
 
   const bookings = await Booking.find(filter)
-    .populate('userId', 'name email phone')
-    .populate('sellerId', 'name email phone')
-    .populate('orderId', 'orderId orderValue status')
+    .populate("userId", "name email phone")
+    .populate("sellerId", "name email phone")
+    .populate("orderId", "orderId orderValue status")
     .sort({ createdAt: -1 })
     .lean();
 
   // Format response
   res.status(200).json({
     success: true,
-    message: 'Bookings retrieved successfully',
+    message: "Bookings retrieved successfully",
     count: bookings.length,
     data: bookings,
     filters: {
@@ -2642,8 +2639,8 @@ exports.searchBookingWithFilters = catchAsync(async (req, res, next) => {
         bookingId: bookingId || null,
         status: status || null,
         paymentStatus: paymentStatus || null,
-      }
-    }
+      },
+    },
   });
 });
 
@@ -3499,7 +3496,7 @@ exports.updateSellerStatus = async (req, res) => {
   }
 };
 
-exports. = async (req, res) => {
+exports.updateCategoryData = async (req, res) => {
   try {
     const { categoryId, commission, convenience } = req.body;
     const category = await Category.findById(categoryId);
