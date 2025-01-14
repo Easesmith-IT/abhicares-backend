@@ -293,6 +293,13 @@ router.get(
   adminController.searchEnquiries
 );
 
+router.get(
+  "/filter-enquiries",
+  isAdminAuth,
+  authorize("enquiry", "read"),
+  adminController.filterEnquiries
+);
+
 router.delete(
   "/delete-enquiry/:id",
   isAdminAuth,

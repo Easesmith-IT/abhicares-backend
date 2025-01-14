@@ -1109,7 +1109,7 @@ exports.getAllEnquiry = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.searchEnquiries = catchAsync(async (req, res, next) => {
+exports.filterEnquiries = catchAsync(async (req, res, next) => {
   const {
     city,
     name,
@@ -1179,6 +1179,75 @@ exports.searchEnquiries = catchAsync(async (req, res, next) => {
       }
     }
   });
+});
+
+exports.searchEnquiries = catchAsync(async (req, res, next) => {
+  const { query, page = 1, limit = ITEMS_PER_PAGE } = req.query;
+
+  if (!query || query.trim() === '') {
+    return next(new AppError('Please provide a search query', 400));
+  }
+
+  // Clean and prepare the search query
+  const searchQuery = query.trim();
+  
+  // Create search filter
+  const searchFilter = {
+    $or: [
+      // For phone number - exact match
+      { 
+        phone: searchQuery.replace(/\D/g, '') // Remove any non-digit characters
+      },
+      // For name - case insensitive and flexible matching
+      { 
+        name: {
+          $regex: searchQuery.split(' ').join('.*'),
+          $options: 'i'
+        }
+      }
+    ]
+  };
+
+  try {
+    const [enquiries, totalCount] = await Promise.all([
+      Enquiry.find(searchFilter)
+        .sort({ createdAt: -1 })
+        .skip((parseInt(page) - 1) * parseInt(limit))
+        .limit(parseInt(limit))
+        .lean(),
+      Enquiry.countDocuments(searchFilter)
+    ]);
+
+    const totalPages = Math.ceil(totalCount / parseInt(limit));
+
+    // Determine which field matched for each result
+    const results = enquiries.map(enquiry => {
+      const matchedOn = enquiry.phone === searchQuery ? 'phone' : 'name';
+      return {
+        ...enquiry,
+        _matchedOn: matchedOn // Add match information
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      message: results.length > 0 ? 'Search results found' : 'No matching results found',
+      data: results,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems: totalCount,
+        itemsPerPage: parseInt(limit)
+      },
+      searchInfo: {
+        searchedFor: searchQuery,
+        totalMatches: results.length
+      }
+    });
+
+  } catch (error) {
+    return next(new AppError(`Search failed: ${error.message}`, 500));
+  }
 });
 
 exports.deleteEnquiry = catchAsync(async (req, res, next) => {
