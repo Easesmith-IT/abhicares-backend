@@ -1191,14 +1191,22 @@ exports.searchEnquiries = catchAsync(async (req, res, next) => {
   // Clean and prepare the search query
   const searchQuery = query.trim();
 
+  // Convert query to a number if it's a valid numeric string
+  const numericQuery = !isNaN(query) ? Number(query) : null;
+  console.log("numericQuery", numericQuery, typeof numericQuery);
+
   // Create search filter
   const searchFilter = {
     $or: [
-      // For phone number - exact match
       {
-        phone: searchQuery.replace(/\D/g, ""), // Remove any non-digit characters
+        $expr: {
+          $regexMatch: {
+            input: { $toString: "$phone" }, // Convert phone to string
+            regex: searchQuery, // Use the user's input
+            options: "i", // Case insensitive
+          },
+        },
       },
-      // For name - case insensitive and flexible matching
       {
         name: {
           $regex: searchQuery.split(" ").join(".*"),
@@ -1222,7 +1230,7 @@ exports.searchEnquiries = catchAsync(async (req, res, next) => {
 
     // Determine which field matched for each result
     const results = enquiries.map((enquiry) => {
-      const matchedOn = enquiry.phone === searchQuery ? "phone" : "name";
+      const matchedOn = enquiry.phone === numericQuery ? "phone" : "name";
       return {
         ...enquiry,
         _matchedOn: matchedOn, // Add match information
@@ -1251,6 +1259,7 @@ exports.searchEnquiries = catchAsync(async (req, res, next) => {
     return next(new AppError(`Search failed: ${error.message}`, 500));
   }
 });
+
 
 exports.deleteEnquiry = catchAsync(async (req, res, next) => {
   const id = req.params.id;
@@ -1676,12 +1685,13 @@ exports.getAllOrders = catchAsync(async (req, res, next) => {
     sortOrder = "desc",
   } = req.query;
 
+  console.log("req.query", req.query)
   const currentPage = Math.max(1, parseInt(page));
   const limit = ORDERS_PER_PAGE;
 
   // Build filter object
-  const dateFilter = buildDateFilter(startDate, endDate);
-  const statusFilter = buildStatusFilter(status);
+  const dateFilter = startDate && endDate && buildDateFilter(startDate, endDate);
+  const statusFilter = status && buildStatusFilter(status);
 
   const filter = {
     ...dateFilter,
