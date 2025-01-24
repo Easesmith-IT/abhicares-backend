@@ -233,14 +233,14 @@ exports.getCart = catchAsync(async (req, res, next) => {
         populate: {
           path: "productId",
           model: "Product",
-          populate:{
-              path:"serviceId",
-              model:"Service",
-              populate:{
-                path:"categoryId",
-                model:"Category"
-              }          
-          }
+          populate: {
+            path: "serviceId",
+            model: "Service",
+            populate: {
+              path: "categoryId",
+              model: "Category",
+            },
+          },
         },
       },
       {
@@ -252,24 +252,24 @@ exports.getCart = catchAsync(async (req, res, next) => {
             populate: {
               path: "productId",
               model: "Product",
-              populate:{
-                path:"serviceId",
-                model:"Service",
-                populate:{
-                  path:"categoryId",
-                  model:"Category"
-                }
-              }
+              populate: {
+                path: "serviceId",
+                model: "Service",
+                populate: {
+                  path: "categoryId",
+                  model: "Category",
+                },
+              },
             },
           },
-          populate:{
-            path:"serviceId",
-            model:"Service",
-            populate:{
-              path:"categoryId",
-              model:"Category"
-            }        
-        }
+          populate: {
+            path: "serviceId",
+            model: "Service",
+            populate: {
+              path: "categoryId",
+              model: "Category",
+            },
+          },
         },
       },
     ]);
@@ -293,14 +293,14 @@ exports.getCart = catchAsync(async (req, res, next) => {
           populate: {
             path: "productId",
             model: "Product",
-            populate:{
-              path:"serviceId",
-              model:"Service",
-              populate:{
-                path:"categoryId",
-                model:"Category"
-              }
-            }
+            populate: {
+              path: "serviceId",
+              model: "Service",
+              populate: {
+                path: "categoryId",
+                model: "Category",
+              },
+            },
           },
         });
         var item = {
@@ -789,11 +789,16 @@ exports.getUserHelpCenter = catchAsync(async (req, res, next) => {
 });
 
 exports.getCouponByName = catchAsync(async (req, res, next) => {
-  const { name, serviceCategoryType,userId } = req.body; // serviceCategoryType is an array
+  const { name, serviceCategoryType, userId } = req.body; // serviceCategoryType is an array
   // const userId = req.user._id;
 
   if (!name || !serviceCategoryType || !Array.isArray(serviceCategoryType)) {
-    return next(new AppError("All fields are required and serviceCategoryType must be an array", 400));
+    return next(
+      new AppError(
+        "All fields are required and serviceCategoryType must be an array",
+        400
+      )
+    );
   }
 
   const result = await Coupon.find({ name: name });
@@ -812,7 +817,10 @@ exports.getCouponByName = catchAsync(async (req, res, next) => {
 
   if (!isValidCategoryType) {
     return next(
-      new AppError("This coupon is not valid for the selected product/service type", 400)
+      new AppError(
+        "This coupon is not valid for the selected product/service type",
+        400
+      )
     );
   }
 
@@ -839,7 +847,6 @@ exports.getCouponByName = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, message: "Your coupon", data: coupon });
 });
 
-
 exports.getReferralCredits = catchAsync(async (req, res, next) => {
   const userId = req.user._id;
 
@@ -859,9 +866,9 @@ exports.getReferralCredits = catchAsync(async (req, res, next) => {
 });
 
 exports.addBookingReview = catchAsync(async (req, res, next) => {
-  const { userId,bookingId, rating, title, content, serviceType, serviceId } =
+  const { userId, bookingId, rating, title, content, serviceType, serviceId } =
     req.body;
-   console.log(req.body,'req.body')
+  console.log(req.body, "req.body");
   // Validate rating
   if (!rating || rating < 1 || rating > 5) {
     return next(
@@ -936,12 +943,12 @@ exports.raiseTicket = async (req, res, next) => {
       issue: issue,
       description: description,
       userId: userId,
-      sellerId: sellerId ? sellerId : "",
+      sellerId: sellerId ? sellerId : null,
       raisedBy: raisedBy,
       ticketType,
-      serviceType: serviceType ? serviceType : "",
-      serviceId: serviceId ? serviceId : "",
-      bookingId: bookingId ? bookingId : "",
+      serviceType: serviceType ? serviceType : null,
+      serviceId: serviceId ? serviceId : null,
+      bookingId: bookingId ? bookingId : null,
       date,
       ticketHistory: [
         {
