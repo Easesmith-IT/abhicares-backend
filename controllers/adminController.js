@@ -2788,17 +2788,18 @@ exports.getBookingDetails = catchAsync(async (req, res, next) => {
 
 exports.getAllBooking = catchAsync(async (req, res, next) => {
   const result = await Booking.find()
-    .populate({
-      path: "package",
-      populate: {
-        path: "products",
-        populate: {
-          path: "productId",
-          model: "Product",
-        },
-      },
-    })
-    .populate({ path: "sellerId", model: "Seller" })
+    // .populate({
+    //   path: "package",
+    //   populate: {
+    //     path: "products",
+    //     populate: {
+    //       path: "productId",
+    //       model: "Product",
+    //     },
+    //   },
+    // })
+    .populate("orderId")
+    // .populate({ path: "sellerId", model: "Seller" })
     .sort({ createdAt: -1 });
   res.status(200).json({
     success: true,
