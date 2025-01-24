@@ -1109,7 +1109,7 @@ exports.getAllEnquiry = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.searchEnquiries = catchAsync(async (req, res, next) => {
+exports.filterEnquiries = catchAsync(async (req, res, next) => {
   const {
     city,
     name,
@@ -1118,8 +1118,8 @@ exports.searchEnquiries = catchAsync(async (req, res, next) => {
     serviceType,
     page = 1,
     limit = 10,
-    sortBy = 'createdAt',
-    sortOrder = 'desc'
+    sortBy = "createdAt",
+    sortOrder = "desc",
   } = req.query;
 
   // Build filter object
@@ -1127,11 +1127,11 @@ exports.searchEnquiries = catchAsync(async (req, res, next) => {
 
   // Add filters only if they are provided
   if (city) {
-    filter.city = new RegExp(city, 'i');
+    filter.city = new RegExp(city, "i");
   }
 
   if (name) {
-    filter.name = new RegExp(name, 'i');
+    filter.name = new RegExp(name, "i");
   }
 
   if (phone) {
@@ -1139,21 +1139,21 @@ exports.searchEnquiries = catchAsync(async (req, res, next) => {
   }
 
   if (state) {
-    filter.state = new RegExp(state, 'i');
+    filter.state = new RegExp(state, "i");
   }
 
   if (serviceType) {
-    filter.serviceType = new RegExp(serviceType, 'i');
+    filter.serviceType = new RegExp(serviceType, "i");
   }
 
   // Execute query with filters and pagination
   const [enquiries, totalCount] = await Promise.all([
     Enquiry.find(filter)
-      .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
+      .sort({ [sortBy]: sortOrder === "asc" ? 1 : -1 })
       .skip((parseInt(page) - 1) * parseInt(limit))
       .limit(parseInt(limit))
       .lean(),
-    Enquiry.countDocuments(filter)
+    Enquiry.countDocuments(filter),
   ]);
 
   const totalPages = Math.ceil(totalCount / parseInt(limit));
@@ -1161,13 +1161,13 @@ exports.searchEnquiries = catchAsync(async (req, res, next) => {
   // Send response
   res.status(200).json({
     success: true,
-    message: 'Enquiries retrieved successfully',
+    message: "Enquiries retrieved successfully",
     data: enquiries,
     pagination: {
       currentPage: parseInt(page),
       totalPages,
       totalItems: totalCount,
-      itemsPerPage: parseInt(limit)
+      itemsPerPage: parseInt(limit),
     },
     filters: {
       appliedFilters: {
@@ -1175,11 +1175,91 @@ exports.searchEnquiries = catchAsync(async (req, res, next) => {
         name: name || null,
         phone: phone || null,
         state: state || null,
-        serviceType: serviceType || null
-      }
-    }
+        serviceType: serviceType || null,
+      },
+    },
   });
 });
+
+exports.searchEnquiries = catchAsync(async (req, res, next) => {
+  const { query, page = 1, limit = 10 } = req.query;
+
+  if (!query || query.trim() === "") {
+    return next(new AppError("Please provide a search query", 400));
+  }
+
+  // Clean and prepare the search query
+  const searchQuery = query.trim();
+
+  // Convert query to a number if it's a valid numeric string
+  const numericQuery = !isNaN(query) ? Number(query) : null;
+  console.log("numericQuery", numericQuery, typeof numericQuery);
+
+  // Create search filter
+  const searchFilter = {
+    $or: [
+      {
+        $expr: {
+          $regexMatch: {
+            input: { $toString: "$phone" }, // Convert phone to string
+            regex: searchQuery, // Use the user's input
+            options: "i", // Case insensitive
+          },
+        },
+      },
+      {
+        name: {
+          $regex: searchQuery.split(" ").join(".*"),
+          $options: "i",
+        },
+      },
+    ],
+  };
+
+  try {
+    const [enquiries, totalCount] = await Promise.all([
+      Enquiry.find(searchFilter)
+        .sort({ createdAt: -1 })
+        .skip((parseInt(page) - 1) * parseInt(limit))
+        .limit(parseInt(limit))
+        .lean(),
+      Enquiry.countDocuments(searchFilter),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / parseInt(limit));
+
+    // Determine which field matched for each result
+    const results = enquiries.map((enquiry) => {
+      const matchedOn = enquiry.phone === numericQuery ? "phone" : "name";
+      return {
+        ...enquiry,
+        _matchedOn: matchedOn, // Add match information
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      message:
+        results.length > 0
+          ? "Search results found"
+          : "No matching results found",
+      data: results,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems: totalCount,
+        itemsPerPage: parseInt(limit),
+      },
+      searchInfo: {
+        searchedFor: searchQuery,
+        totalMatches: results.length,
+      },
+    });
+  } catch (error) {
+    return next(new AppError(`Search failed: ${error.message}`, 500));
+  }
+});
+
 
 exports.deleteEnquiry = catchAsync(async (req, res, next) => {
   const id = req.params.id;
@@ -1459,82 +1539,294 @@ exports.updateOrderStatus = catchAsync(async (req, res, next) => {
     .json({ success: true, message: "Order status changed successfull" });
 });
 
+// exports.getAllOrders = catchAsync(async (req, res, next) => {
+//   var page = 1;
+//   if (req.query.page) {
+//     page = parseInt(req.query.page, 10); // Ensure `page` is an integer
+//   }
+//   var limit = 10;
+
+//   const allList = await Order.find().countDocuments(); // Updated count function
+//   var num = allList / limit;
+//   var fixedNum = Math.floor(num); // Use `Math.floor` to round down
+//   var totalPage = fixedNum;
+//   if (num > fixedNum) {
+//     totalPage++;
+//   }
+
+//   // Fetch orders sorted by createdAt in descending order
+//   const result = await Order.find()
+//     .sort({ createdAt: -1 }) // Sorting by createdAt field in descending order
+//     .populate({
+//       path: "items",
+//       populate: {
+//         path: "package",
+//         populate: {
+//           path: "products",
+//           populate: {
+//             path: "productId",
+//             model: "Product",
+//           },
+//         },
+//       },
+//     })
+//     .populate({ path: "couponId", model: "Coupon" })
+//     .limit(limit)
+//     .skip((page - 1) * limit)
+//     .exec();
+
+//   res.status(201).json({
+//     success: true,
+//     message: "List of all orders",
+//     data: result,
+//     totalPage: totalPage,
+//   });
+// });
+
+// exports.getRecentOrders = catchAsync(async (req, res, next) => {
+//   const limit = 10;
+//   const page = req.query.page || 1;
+
+//   const result = await Order.find()
+//     .sort({ createdAt: -1 })
+//     .limit(limit * 1)
+//     .skip((page - 1) * limit)
+//     .populate({
+//       path: "items",
+//       populate: {
+//         path: "package",
+//         populate: {
+//           path: "products",
+//           populate: {
+//             path: "productId",
+//             model: "Product",
+//           },
+//         },
+//       },
+//     })
+//     .populate({ path: "couponId", model: "Coupon" })
+//     .exec();
+
+//   const totalPage = Math.ceil((await Order.countDocuments()) / limit);
+
+//   res.status(201).json({
+//     success: true,
+//     message: "List of recent orders",
+//     data: result,
+//     totalPage: totalPage,
+//   });
+// });
+
+const ORDERS_PER_PAGE = 10;
+const ORDER_STATUS = {
+  PENDING: "Pending",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+  OUT_OF_DELIVERY: "OutOfDelivery",
+};
+
+// Helper function to validate date format YYYY-MM-DD
+const isValidDateFormat = (dateStr) => {
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!regex.test(dateStr)) return false;
+
+  const date = new Date(dateStr);
+  return date instanceof Date && !isNaN(date);
+};
+
+// Helper function to build date filter
+const buildDateFilter = (startDate, endDate) => {
+  const dateFilter = {};
+
+  if (startDate) {
+    if (!isValidDateFormat(startDate)) {
+      throw new AppError("Invalid start date format. Use YYYY-MM-DD", 400);
+    }
+    dateFilter.$gte = new Date(startDate);
+  }
+
+  if (endDate) {
+    if (!isValidDateFormat(endDate)) {
+      throw new AppError("Invalid end date format. Use YYYY-MM-DD", 400);
+    }
+    // Add one day to include the end date fully
+    const endDateTime = new Date(endDate);
+    endDateTime.setHours(23, 59, 59, 999);
+    dateFilter.$lte = endDateTime;
+  }
+
+  if (startDate && endDate && dateFilter.$gte > dateFilter.$lte) {
+    throw new AppError("Start date cannot be after end date", 400);
+  }
+
+  return Object.keys(dateFilter).length ? { createdAt: dateFilter } : {};
+};
+
+// Helper function to validate and build status filter
+const buildStatusFilter = (status) => {
+  if (!status) return {};
+
+  const statusArray = status.split(",").map((s) => s.trim());
+  const validStatuses = statusArray.filter((s) =>
+    Object.values(ORDER_STATUS).includes(s)
+  );
+
+  return validStatuses.length > 0 ? { status: { $in: validStatuses } } : {};
+};
+
+// Controller functions
 exports.getAllOrders = catchAsync(async (req, res, next) => {
-  var page = 1;
-  if (req.query.page) {
-    page = parseInt(req.query.page, 10); // Ensure `page` is an integer
-  }
-  var limit = 10;
+  const {
+    page = 1,
+    startDate,
+    endDate,
+    status,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = req.query;
 
-  const allList = await Order.find().countDocuments(); // Updated count function
-  var num = allList / limit;
-  var fixedNum = Math.floor(num); // Use `Math.floor` to round down
-  var totalPage = fixedNum;
-  if (num > fixedNum) {
-    totalPage++;
-  }
+  console.log("req.query", req.query)
+  const currentPage = Math.max(1, parseInt(page));
+  const limit = ORDERS_PER_PAGE;
 
-  // Fetch orders sorted by createdAt in descending order
-  const result = await Order.find()
-    .sort({ createdAt: -1 }) // Sorting by createdAt field in descending order
-    .populate({
-      path: "items",
-      populate: {
-        path: "package",
-        populate: {
-          path: "products",
+  // Build filter object
+  const dateFilter = startDate && endDate && buildDateFilter(startDate, endDate);
+  const statusFilter = status && buildStatusFilter(status);
+
+  const filter = {
+    ...dateFilter,
+    ...statusFilter,
+  };
+
+  // Build sort object
+  const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+  try {
+    // Execute query with filters
+    const [orders, totalCount] = await Promise.all([
+      Order.find(filter)
+        .sort(sort)
+        .skip((currentPage - 1) * limit)
+        .limit(limit)
+        .populate({
+          path: "items",
           populate: {
-            path: "productId",
-            model: "Product",
+            path: "package",
+            populate: {
+              path: "products",
+              populate: {
+                path: "productId",
+                model: "Product",
+              },
+            },
           },
-        },
-      },
-    })
-    .populate({ path: "couponId", model: "Coupon" })
-    .limit(limit)
-    .skip((page - 1) * limit)
-    .exec();
+        })
+        .populate({ path: "couponId", model: "Coupon" })
+        .lean(),
+      Order.countDocuments(filter),
+    ]);
 
-  res.status(201).json({
-    success: true,
-    message: "List of all orders",
-    data: result,
-    totalPage: totalPage,
-  });
+    const totalPages = Math.ceil(totalCount / limit);
+
+    if (currentPage > totalPages && totalCount > 0) {
+      return next(new AppError("Page not found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "List of filtered orders",
+      data: orders,
+      pagination: {
+        currentPage,
+        totalPages,
+        totalItems: totalCount,
+        itemsPerPage: limit,
+      },
+      filters: {
+        date: dateFilter,
+        status: statusFilter,
+      },
+    });
+  } catch (error) {
+    return next(new AppError(`Error fetching orders: ${error.message}`, 500));
+  }
 });
 
 exports.getRecentOrders = catchAsync(async (req, res, next) => {
-  const limit = 10;
-  const page = req.query.page || 1;
+  const {
+    page = 1,
+    status,
+    days = 7,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = req.query;
 
-  const result = await Order.find()
-    .sort({ createdAt: -1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit)
-    .populate({
-      path: "items",
-      populate: {
-        path: "package",
-        populate: {
-          path: "products",
+  const currentPage = Math.max(1, parseInt(page));
+  const limit = ORDERS_PER_PAGE;
+  const daysNum = parseInt(days);
+
+  if (isNaN(daysNum) || daysNum <= 0) {
+    throw new AppError("Days parameter must be a positive number", 400);
+  }
+
+  // Calculate start date based on days parameter
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - daysNum);
+
+  const filter = {
+    createdAt: { $gte: startDate },
+    ...(status && buildStatusFilter(status)),
+  };
+
+  // Build sort object
+  const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+  try {
+    const [orders, totalCount] = await Promise.all([
+      Order.find(filter)
+        .sort(sort)
+        .skip((currentPage - 1) * limit)
+        .limit(limit)
+        .populate({
+          path: "items",
           populate: {
-            path: "productId",
-            model: "Product",
+            path: "package",
+            populate: {
+              path: "products",
+              populate: {
+                path: "productId",
+                model: "Product",
+              },
+            },
           },
-        },
+        })
+        .populate({ path: "couponId", model: "Coupon" })
+        .lean(),
+      Order.countDocuments(filter),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    res.status(200).json({
+      success: true,
+      message: "List of recent filtered orders",
+      data: orders,
+      pagination: {
+        currentPage,
+        totalPages,
+        totalItems: totalCount,
+        itemsPerPage: limit,
       },
-    })
-    .populate({ path: "couponId", model: "Coupon" })
-    .exec();
-
-  const totalPage = Math.ceil((await Order.countDocuments()) / limit);
-
-  res.status(201).json({
-    success: true,
-    message: "List of recent orders",
-    data: result,
-    totalPage: totalPage,
-  });
+      filters: {
+        daysAgo: daysNum,
+        status: status || "All",
+      },
+    });
+  } catch (error) {
+    return next(
+      new AppError(`Error fetching recent orders: ${error.message}`, 500)
+    );
+  }
 });
 
 exports.getOrderById = catchAsync(async (req, res, next) => {
@@ -2209,7 +2501,7 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
 
   // Date filter (for a specific day stored as a string)
   if (date) {
-    filter.date = new RegExp('^' + date);
+    filter.date = new RegExp("^" + date);
   }
 
   // Service type filter
@@ -2517,19 +2809,14 @@ exports.getAllBooking = catchAsync(async (req, res, next) => {
 });
 
 exports.searchBookingWithFilters = catchAsync(async (req, res, next) => {
-  const {
-    bookingId,
-    status,
-    paymentStatus,
-    bookingDate
-  } = req.query;
+  const { bookingId, status, paymentStatus, bookingDate } = req.query;
 
   // Build filter object
   const filter = {};
 
   // Add bookingId filter if provided
   if (bookingId) {
-    filter.bookingId = new RegExp(bookingId, 'i');
+    filter.bookingId = new RegExp(bookingId, "i");
   }
 
   // Add status filter if provided
@@ -2552,21 +2839,21 @@ exports.searchBookingWithFilters = catchAsync(async (req, res, next) => {
 
     filter.bookingDate = {
       $gte: startOfDay,
-      $lte: endOfDay
+      $lte: endOfDay,
     };
   }
 
   const bookings = await Booking.find(filter)
-    .populate('userId', 'name email phone')
-    .populate('sellerId', 'name email phone')
-    .populate('orderId', 'orderId orderValue status')
+    .populate("userId", "name email phone")
+    .populate("sellerId", "name email phone")
+    .populate("orderId", "orderId orderValue status")
     .sort({ createdAt: -1 })
     .lean();
 
   // Format response
   res.status(200).json({
     success: true,
-    message: 'Bookings retrieved successfully',
+    message: "Bookings retrieved successfully",
     count: bookings.length,
     data: bookings,
     filters: {
@@ -2574,8 +2861,8 @@ exports.searchBookingWithFilters = catchAsync(async (req, res, next) => {
         bookingId: bookingId || null,
         status: status || null,
         paymentStatus: paymentStatus || null,
-      }
-    }
+      },
+    },
   });
 });
 
@@ -3431,7 +3718,7 @@ exports.updateSellerStatus = async (req, res) => {
   }
 };
 
-exports. = async (req, res) => {
+exports.updateCategoryData = async (req, res) => {
   try {
     const { categoryId, commission, convenience } = req.body;
     const category = await Category.findById(categoryId);
