@@ -2933,9 +2933,9 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 // };
 
 exports.sendNotificationToAll = async (req, res,next) => {
-  const { description, date, time, title } = req.body;
+  const { description, date, time, title,appType } = req.body;
   console.log("req.body", req.body);
-  // Validate input
+  
   if (!description || !title) {
     return next(new AppError("Please provide title and description", 400));
   }
@@ -2957,25 +2957,36 @@ exports.sendNotificationToAll = async (req, res,next) => {
   try {
     // Retrieve FCM tokens and their corresponding appTypes from tokenSchema
     console.log("description", description);
-    const tokensByDeviceType = await tokenSchema.aggregate([
-      {
-        $group: {
-          _id: "$deviceType", // Group by deviceType
-          tokens: {
-            $push: {
-              token: "$token", // Include the token
-              appType: "$appType",
-              deviceType: "$deviceType", // Include the appType
-            },
+    const pipeline = [];
+
+    if (req.body.appType && req.body.appType !== "all") {
+      pipeline.push({ $match: { appType: req.body.appType } });
+    }
+    
+    pipeline.push({
+      $group: {
+        _id: {
+          deviceType: "$deviceType",
+          ...(req.body.appType && req.body.appType !== "all" && { appType: "$appType" }),
+        },
+        tokens: {
+          $push: {
+            token: "$token",
+            appType: "$appType",
+            deviceType: "$deviceType",
           },
         },
       },
-    ]);
+    });
+    
+    const tokensByDeviceType = await tokenSchema.aggregate(pipeline);
 
     if (!tokensByDeviceType || tokensByDeviceType.length === 0) {
-      return next(
-        new AppError("No FCM tokens found to send notifications", 404)
-      );
+      return res.status(200).json({
+          message:"No users found",
+          status:false
+        })
+     
     }
     for (let i = 0; i < tokensByDeviceType.length; i++) {
       console.log(tokensByDeviceType[i]);
