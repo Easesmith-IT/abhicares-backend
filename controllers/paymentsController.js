@@ -213,8 +213,12 @@ exports.getAllUserOrders = catchAsync(async (req, res, next) => {
     })
     .populate({
       path: 'items.bookingId',
-      model:"Booking"
+      populate: {
+        path: 'sellerId',
+        model: 'Seller'
+      }
     })
+    
     .populate({ path: "couponId", model: "Coupon" })
     .populate({
       path: "bookingId",
