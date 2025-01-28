@@ -44,8 +44,15 @@ exports.generateOtpseller = async (req, res, next) => {
 
 exports.verifySellerOtp = async (req, res, next) => {
   try {
-    const { appType,fcmToken,deviceType,enteredOTP, phoneNumber } = req.body;
+    const { appType, fcmToken, deviceType, enteredOTP, phoneNumber } = req.body;
     let seller;
+    let otpVerified;
+    if (!enteredOTP || !phoneNumber) {
+      console.log(enteredOTP, phoneNumber);
+      return res
+        .status(400)
+        .json({ success: false, message: "OTP and phoneNumber is required" });
+    }
     if (phoneNumber == "9994448880") {
       seller = await sellerModel.findById("65ab9df28e5dafb1fe1fd8bd");
     } else {
@@ -58,37 +65,40 @@ exports.verifySellerOtp = async (req, res, next) => {
           .json({ success: false, message: "seller does not exist" });
       }
 
-      await sellerVerifyOTP(phoneNumber, enteredOTP, seller, res);
+      otpVerified = await sellerVerifyOTP(phoneNumber, enteredOTP, seller, res);
     }
-    const payload = { id: seller._id };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "2d",
-    });
-    if(deviceType==="android" || deviceType==='ios'){
+    // const payload = { id: seller._id };
+    // const token = jwt.sign(payload, process.env.JWT_SECRET, {
+    //   expiresIn: "2d",
+    // });
+    if (otpVerified != true) {
+      return;
+    }
+    if (deviceType === "android" || deviceType === "ios") {
+      let newToken;
+      const foundUserToken = await tokenSchema.findOne({
+        sellerId: seller._id,
+      });
+      if (foundUserToken) {
+        foundUserToken.token = fcmToken;
+        await foundUserToken.save();
+      }
 
-      const foundUserToken=await tokenSchema.findOne({sellerId:seller._id})
-        if(foundUserToken){
-          foundUserToken.token=fcmToken;
-          await foundUserToken.save();
-        }
-      
-       if(!foundUserToken){
-        newToken=await tokenSchema.create({
-          sellerId:seller._id,
-          token:fcmToken,
-          deviceType:deviceType,
-          appType:appType
-        })
-        if(!newToken){
+      if (!foundUserToken) {
+        newToken = await tokenSchema.create({
+          sellerId: seller._id,
+          token: fcmToken,
+          deviceType: deviceType,
+          appType: appType,
+        });
+        if (!newToken) {
           return res.status(400).json({
-            message:'something went wrong while saving the fcm token',
-      
-          })
-        
+            message: "something went wrong while saving the fcm token",
+          });
         }
-       }
+      }
     }
-    res.status(200).json({
+    return res.status(200).json({
       message: "Logged In",
       success: true,
       partner: seller,

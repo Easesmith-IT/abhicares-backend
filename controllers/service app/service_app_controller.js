@@ -559,7 +559,7 @@ exports.getSellerCashout = catchAsync(async (req, res, next) => {
 
 exports.checkSellerStatus = catchAsync(async (req, res, next) => {
   // Get sellerId from params or query
-  const sellerId = req.params.partnerId;
+  const { sellerId } = req.query;
   console.log("seller id", sellerId);
   if (!sellerId) {
     return res.status(400).json({
