@@ -759,6 +759,7 @@ exports.getAllFaq = catchAsync(async (req, res, next) => {
 exports.createHelpCenter = catchAsync(async (req, res, next) => {
   const id = req.user._id;
   const { description, issue, others } = req.body;
+  console.log(description, issue, others);
   if (!description) {
     return next(new AppError(400, "All the fields are required"));
   } else {
