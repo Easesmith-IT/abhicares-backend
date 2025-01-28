@@ -48,7 +48,6 @@ const helpCenterSchema = new mongoose.Schema(
     },
     sellerId: {
       type: mongoose.Types.ObjectId,
-      default: "",
       ref: "Seller",
     },
     bookingId: {
