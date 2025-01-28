@@ -72,10 +72,7 @@ router.post(
   traceOrder_controller.addLocationToDatabase
 ); // passing booking id
 router.get("/get-booking-location/:id", traceOrder_controller.getOrderLocation); // passing booking id
-router.get(
-  "/get-partner-status/:partnerId",
-  serviceAppController.checkSellerStatus
-);
+router.get("/get-partner-status", serviceAppController.checkSellerStatus);
 
 router.get(
   "/change-online-status/:id",
