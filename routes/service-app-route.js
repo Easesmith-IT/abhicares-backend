@@ -73,8 +73,7 @@ router.post(
 ); // passing booking id
 router.get("/get-booking-location/:id", traceOrder_controller.getOrderLocation); // passing booking id
 router.get(
-  "/get-partner-status",
-
+  "/get-partner-status/:partnerId",
   serviceAppController.checkSellerStatus
 );
 
