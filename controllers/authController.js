@@ -445,6 +445,7 @@ exports.createUser = catchAsync(async (req, res, next) => {
     return res.status(200).json({
       message: "Logged In",
       success: true,
+      user,
       userName: user.name,
       userPhone: user.phone,
     });

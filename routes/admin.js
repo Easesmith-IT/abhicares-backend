@@ -285,6 +285,21 @@ router.get(
   authorize("enquiry", "read"),
   adminController.getAllEnquiry
 );
+
+router.get(
+  "/search-enquiries",
+  isAdminAuth,
+  authorize("enquiry", "read"),
+  adminController.searchEnquiries
+);
+
+router.get(
+  "/filter-enquiries",
+  isAdminAuth,
+  authorize("enquiry", "read"),
+  adminController.filterEnquiries
+);
+
 router.delete(
   "/delete-enquiry/:id",
   isAdminAuth,
@@ -521,10 +536,25 @@ router.get(
 ); // passing booking id
 router.get(
   "/get-booking-list",
-  isAdminAuth,
-  authorize("bookings", "read"),
+  // isAdminAuth,
+  // authorize("bookings", "read"),
   adminController.getAllBooking
 );
+
+router.get(
+  "/search-filter-bookings",
+  isAdminAuth,
+  authorize("bookings", "read"),
+  adminController.searchBookingWithFilters
+);
+
+router.get(
+  "/get-booking-by-id",
+  isAdminAuth,
+  authorize("bookings", "read"),
+  adminController.getBookingById
+);
+
 router.delete(
   "/delete-booking/:id",
   isAdminAuth,
@@ -638,7 +668,7 @@ router.post(
   "/update-category-data",
   isAdminAuth,
   authorize("settings", "write"),
-  adminController.updateCategory
+  adminController.updateCategoryData
 );
 
 module.exports = router;

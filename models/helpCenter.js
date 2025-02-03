@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 const helpCenterSchema = new mongoose.Schema(
   {
+    ticketId: {
+      type: String,
+    },
     userId: {
       type: mongoose.Types.ObjectId,
       ref: "User",
@@ -47,8 +50,8 @@ const helpCenterSchema = new mongoose.Schema(
       // required:true
     },
     sellerId: {
-      type: String,
-      default: "",
+      type: mongoose.Types.ObjectId,
+      ref: "Seller",
     },
     bookingId: {
       type: mongoose.Types.ObjectId,

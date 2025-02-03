@@ -20,7 +20,6 @@ app.use("/api/app", appRoute);
 app.use("/api/service-app", serviceAppRoute);
 app.use("/api/shopping", shoppingRoute);
 app.use("/api/content", contentRoute);
-
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // app.get("/admin", (req, res) => {

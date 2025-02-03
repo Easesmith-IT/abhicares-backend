@@ -441,7 +441,7 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
       orderPlatform: "website",
       paymentType: "COD",
       No_of_left_bookings: bookings.length,
-      orderValue: total,
+      orderValue: Math.floor(total),
       orderId: orderId,
       itemTotal,
       discount,

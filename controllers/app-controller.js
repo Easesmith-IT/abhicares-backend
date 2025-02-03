@@ -28,6 +28,7 @@ const Review = require("../models/review");
 const { serve } = require("swagger-ui-express");
 const category = require("../models/category");
 const { toObjectId } = require("../util/toMongodbId");
+const { generateTicketId } = require("../util/generateOrderId");
 
 // const catchAsync = require("../util/catchAsync");
 
@@ -1198,9 +1199,10 @@ exports.raiseTicket = catchAsync(async (req, res, next) => {
       new AppError('raisedBy must be either "customer" or "partner"', 400)
     );
   }
-
+  const ticketId = await generateTicketId();
   // Create ticket object with validated fields
   const ticketData = {
+    ticketId: ticketId,
     issue,
     description,
     userId,
