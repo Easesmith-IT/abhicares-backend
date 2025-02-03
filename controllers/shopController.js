@@ -11,6 +11,7 @@ const HelpCenter = require("../models/helpCenter");
 const Coupon = require("../models/offerCoupon");
 // const User = require("../models/user");
 const UserReferalLink = require("../models/userReferealLink");
+const { generateTicketId } = require("../util/generateOrderId");
 
 const AppError = require("../util/appError");
 const catchAsync = require("../util/catchAsync");
@@ -763,7 +764,9 @@ exports.createHelpCenter = catchAsync(async (req, res, next) => {
   if (!description) {
     return next(new AppError(400, "All the fields are required"));
   } else {
+    const ticketId = await generateTicketId();
     await HelpCenter.create({
+      ticketId: ticketId,
       userId: id,
       description: description,
       issue: issue,
@@ -940,7 +943,9 @@ exports.raiseTicket = async (req, res, next) => {
       serviceType,
       ticketType,
     } = req.body;
+    const ticketId = await generateTicketId();
     var ticket = await HelpCenter({
+      ticketId: ticketId,
       issue: issue,
       description: description,
       userId: userId,

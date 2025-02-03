@@ -23,7 +23,10 @@ const AppError = require("../../util/appError");
 //middleware
 const { auth } = require("../../middleware/auth");
 const review = require("../../models/review");
-const { generatePartnerId } = require("../../util/generateOrderId");
+const {
+  generatePartnerId,
+  generateTicketId,
+} = require("../../util/generateOrderId");
 /////////////////////////////////////////////////////////////////////////////
 //app routes
 
@@ -307,7 +310,9 @@ exports.raiseTicket = catchAsync(async (req, res, next) => {
     ticketType,
   } = req.body;
   console.log(req.body, "Ticlet raised");
+  const ticketId = await generateTicketId();
   var ticket = await HelpCentre({
+    ticketId: ticketId,
     issue: issue,
     description: description,
     userId: userId ? userId : null,
