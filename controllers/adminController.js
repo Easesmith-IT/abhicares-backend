@@ -49,6 +49,7 @@ const booking = require("../models/booking");
 const order = require("../models/order");
 const { counterSchema } = require("../models/counter");
 const admin = require("../models/admin");
+const { generateRefreshToken, generateAccessToken } = require("./websiteAuth");
 
 // category routes
 exports.genOrderId = catchAsync(async (req, res, next) => {
@@ -1495,6 +1496,7 @@ exports.deleteSubAdmin = catchAsync(async (req, res, next) => {
 });
 exports.loginAdminUser = catchAsync(async (req, res, next) => {
   console.log("inside admin login");
+  role='admin'
   const { adminId, password } = req.body;
   const admin = await Admin.findOne({ adminId: adminId });
   if (!admin) {
@@ -1504,12 +1506,24 @@ exports.loginAdminUser = catchAsync(async (req, res, next) => {
   const isMatch = await bcrypt.compare(password, admin.password);
 
   if (isMatch) {
-    var token = jwt.sign(
-      { adminId: adminId, permissions: admin.permissions },
-      jwtkey.secretJwtKey,
-      { expiresIn: "2d" }
-    );
-    res.cookie("admtoken", token, { secure: true, httpOnly: true });
+    // var token = jwt.sign(
+    //   { adminId: adminId, permissions: admin.permissions },
+    //   jwtkey.secretJwtKey,
+    //   { expiresIn: "2d" }
+    // );
+    const refreshToken=await generateRefreshToken(
+      admin._id,
+      role,
+      admin.tokenVersion
+    )
+
+    const accessToken=await generateAccessToken(
+      admin._id,
+      role,
+      admin.tokenVersion
+    )
+    res.cookie("accessToken", accessToken, { secure: true, httpOnly: true });
+    res.cookie("refreshToken", refreshToken, { secure: true, httpOnly: true });
 
     return res.status(200).json({
       success: true,

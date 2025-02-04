@@ -4,7 +4,7 @@ const { authorize } = require("../middleware/authorization");
 
 const router = express.Router();
 const img_upload = require("../middleware/imageMiddleware");
-
+const websiteAuth=require('../controllers/websiteAuth')
 const adminController = require("../controllers/adminController");
 
 // Category Routes
@@ -585,12 +585,15 @@ router.patch(
 
 router.get(
   "/get-sub-admins",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("settings", "write"),
   adminController.getSubAdmins
 );
 router.post("/login-Admin", adminController.loginAdminUser);
 router.get("/logout-Admin", adminController.logoutAdmin);
+router.post("/status", websiteAuth.checkAuthStatus);
+router.post("/refresh", websiteAuth.refresh);
+router.post("/logout-all", websiteAuth.logoutAll);
 
 // seller wallet routes (inside partners)
 
