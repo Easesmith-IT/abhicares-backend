@@ -407,6 +407,9 @@ const generateAccessToken = (userId, role, tokenVersion) => {
     }
     
     const payload = { id: user._id };
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: "2d",
+      });
     const refreshToken=await generateRefreshToken(
       user._id,
       role,
@@ -456,7 +459,7 @@ const generateAccessToken = (userId, role, tokenVersion) => {
     }
   
     res.clearCookie("guestCart");
-    // res.cookie("token", token, { secure: true, httpOnly: true });
+    res.cookie("token", token, { secure: true, httpOnly: true });
     setTokenCookies(res, accessToken, refreshToken, user, role);
   
     // res.status(200).json({
