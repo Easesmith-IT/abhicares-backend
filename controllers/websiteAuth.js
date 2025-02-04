@@ -4,8 +4,9 @@ const AppError = require("../util/appError");
 const Cart = require("../models/cart");
 const catchAsync = require("../util/catchAsync");
 const { generateOTP, verifyOTP } = require("../util/otpHandler");
+const admin = require("../models/admin");
 
-const generateAccessToken = (userId, role, tokenVersion) => {
+exports.generateAccessToken = (userId, role, tokenVersion) => {
     // console.log(userId, role, tokenVersion);
     return jwt.sign(
       { id: userId, role: role, tokenVersion: tokenVersion },
@@ -13,7 +14,7 @@ const generateAccessToken = (userId, role, tokenVersion) => {
       { expiresIn: "15m" } // 30 minutes
     );
   };
-  const setTokenCookies = (res, accessToken, refreshToken, user, role) => {
+  exports.setTokenCookies = (res, accessToken, refreshToken, user, role) => {
     // Set HttpOnly cookie for refresh token
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -49,7 +50,7 @@ const generateAccessToken = (userId, role, tokenVersion) => {
     );
   };
   // Generate refresh token (long-lived)
-  const generateRefreshToken = (userId, role, tokenVersion) => {
+  exports.generateRefreshToken = (userId, role, tokenVersion) => {
     return jwt.sign(
       { id: userId, role: role, tokenVersion: tokenVersion },
       process.env.JWT_REFRESH_SECRET,
@@ -73,7 +74,7 @@ const generateAccessToken = (userId, role, tokenVersion) => {
       if (decoded.role === "user") {
         user = await User.findById(decoded.id).select("+tokenVersion");
       } else {
-        user = await User.findById(decoded.id);
+        user = await admin.findById(decoded.id);
       }
   
       if (!user) {
@@ -87,7 +88,7 @@ const generateAccessToken = (userId, role, tokenVersion) => {
         return next(new AppError("Invalid refresh token", 401));
       }
   
-      const accessToken = generateAccessToken(
+      const accessToken = this.generateAccessToken(
         user._id,
         decoded.role,
         user.tokenVersion
@@ -148,12 +149,10 @@ const generateAccessToken = (userId, role, tokenVersion) => {
   
         console.log(decoded.role == "deliveryPartner");
         let user;
-        if (decoded.role === "restaurant") {
-          user = await Restaurant.findById(decoded.id);
+        if (decoded.role === "admin") {
+          user = await admin.findById(decoded.id);
         } else if (decoded.role == "superAdmin" || decoded.role == "subAdmin") {
-          user = await Admin.findById(decoded.id);
-        } else if (decoded.role == "deliveryPartner") {
-          user = await DeliveryPartner.findById(decoded.id);
+          user = await admin.findById(decoded.id);
         } else {
           user = await User.findById(decoded.id);
         }
@@ -201,8 +200,8 @@ const generateAccessToken = (userId, role, tokenVersion) => {
         const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
         console.log(decoded, "refreshToken");
         let user;
-        if (decoded.role === "restaurant") {
-          user = await Restaurant.findById(decoded.id).select("+tokenVersion");
+        if (decoded.role === "admin") {
+          user = await admin.findById(decoded.id).select("+tokenVersion");
         } else if (decoded.role === "deliveryPartner") {
           user = DeliveryPartner.findById(decoded.id).select("+tokenVersion");
         } else {
@@ -217,12 +216,10 @@ const generateAccessToken = (userId, role, tokenVersion) => {
               isAuthenticated: true,
               data: {
                 id: user._id,
-                name: user.personalInfo.name,
-                email: user.personalInfo.email,
-                phone: user.personalInfo.phone,
-                status: user.accountStatus.currentStatus,
+                name: user.name,
+                email: user.email,
+                phone: user?.phone||"none",
                 role: decoded.role,
-                image: user.personalInfo.profileImage,
               },
             });
           } else {
@@ -233,9 +230,9 @@ const generateAccessToken = (userId, role, tokenVersion) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                phone: user.phone,
+                phone: user?.phone||"none",
                 role: decoded.role,
-                image: user.image,
+               
               },
             });
           }
@@ -248,13 +245,7 @@ const generateAccessToken = (userId, role, tokenVersion) => {
           });
         }
       }
-      // If both tokens are invalid
-      // res.status(200).json({
-      //   success: true,
-      //   isAuthenticated: false,
-      //   shouldLoggOut: true,
-      //   message: "both Toekn invalid",
-      // });
+    
     } catch (error) {
       res.status(200).json({
         success: false,
@@ -319,10 +310,8 @@ const generateAccessToken = (userId, role, tokenVersion) => {
       let user;
       if (decoded.role === "user") {
         user = await User.findById(decoded.id);
-      } else if (decoded.role === "deliveryPartner") {
-        user = await DeliveryPartner.findById(decoded.id);
-      } else if (decoded.role === "subAdmin" || decoded.role === "superAdmin") {
-        user = await Admin.findById(decoded.id);
+      } else if (decoded.role === "admin") {
+        user = await admin.findById(decoded.id);
       } else {
         user = await User.findById(decoded.id);
       }
@@ -331,6 +320,8 @@ const generateAccessToken = (userId, role, tokenVersion) => {
         req.user = user;
         // console.log(req.user, "user line 551");
         req.role = decoded.role;
+        req.perm=user.permissions
+        req.id=user._id
         return next();
       }
     }
@@ -342,10 +333,8 @@ const generateAccessToken = (userId, role, tokenVersion) => {
       let user;
       if (decoded.role === "user") {
         user = await User.findById(decoded.id).select("+tokenVersion");
-      } else if (decoded.role === "deliveryPartner") {
-        user = await DeliveryPartner.findById(decoded.id).select("+tokenVersion");
       } else {
-        user = await User.findById(decoded.id).select("+tokenVersion");
+        user = await admin.findById(decoded.id).select("+tokenVersion");
       }
       console.log(user, "user", user.tokenVersion, decoded.tokenVersion);
       // Verify token version
@@ -410,12 +399,12 @@ const generateAccessToken = (userId, role, tokenVersion) => {
       const token = jwt.sign(payload, process.env.JWT_SECRET, {
         expiresIn: "2d",
       });
-    const refreshToken=await generateRefreshToken(
+    const refreshToken=this.generateRefreshToken(
       user._id,
       role,
       user.tokenVersion
     )
-    const accessToken=await generateAccessToken(user._id,role,user.tokenVersion)
+    const accessToken=this.generateAccessToken(user._id,role,user.tokenVersion)
     console.log(refreshToken,accessToken ,"this is refresh and access token");
     
     await user.save();
@@ -460,7 +449,7 @@ const generateAccessToken = (userId, role, tokenVersion) => {
   
     res.clearCookie("guestCart");
     res.cookie("token", token, { secure: true, httpOnly: true });
-    setTokenCookies(res, accessToken, refreshToken, user, role);
+    this.setTokenCookies(res, accessToken, refreshToken, user, role);
   
     // res.status(200).json({
     //   message: "Logged In",
@@ -479,3 +468,4 @@ const generateAccessToken = (userId, role, tokenVersion) => {
       // permissions: user.permis,
     });
   });
+

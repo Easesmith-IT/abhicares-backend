@@ -5,9 +5,9 @@ const AppError = require("../util/appError");
 exports.authorize = (section,accessType) => {
    return (req, res, next) => {
      const adminPermissions = req.perm || {};
-    //  console.log('section', section)
-    //  console.log("accessType", accessType);
-            // console.log("perm", adminPermissions);
+     console.log('section', section)
+     console.log("accessType", accessType);
+            console.log("perm", adminPermissions);
 
      if (
        (accessType === "read" || accessType === "write") &&

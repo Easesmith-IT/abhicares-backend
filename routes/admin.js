@@ -1,10 +1,10 @@
 const express = require("express");
-const { isAdminAuth } = require("../middleware/auth");
+
 const { authorize } = require("../middleware/authorization");
 
 const router = express.Router();
 const img_upload = require("../middleware/imageMiddleware");
-
+const websiteAuth=require('../controllers/websiteAuth')
 const adminController = require("../controllers/adminController");
 
 // Category Routes
@@ -21,25 +21,25 @@ router.get("/search-notifications", adminController.searchNotifications);
 router.get("/filter-notifications", adminController.filterNotification);
 router.post(
   "/create-category",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   adminController.postCreateCategory
 );
 router.get(
   "/get-all-category",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "read"),
   adminController.getAllCategory
 );
 router.patch(
   "/update-category/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   adminController.updateCategory
 ); // passing object id
 router.delete(
   "/delete-category/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   adminController.deleteCategory
 ); // passing object id
@@ -49,7 +49,7 @@ router.delete(
 
 router.post(
   "/create-service",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   img_upload.upload,
   // sharpUpload.sharpUpload,
@@ -59,7 +59,7 @@ router.post(
 // service-feature routes
 router.post(
   "/add-service-feature/:serviceId",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   img_upload.upload,
   // sharpUpload.sharpUpload,
@@ -68,7 +68,7 @@ router.post(
 
 router.patch(
   "/update-service-feature/:serviceId",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   img_upload.upload,
   // sharpUpload.sharpUpload,
@@ -77,20 +77,20 @@ router.patch(
 
 router.post(
   "/delete-service-feature/:serviceId",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   adminController.deleteServiceFeature
 );
 
 router.get(
   "/get-service-details/:serviceId",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "read"),
   adminController.getServiceDetails
 );
 router.post(
   "/upload-service-icon/:serviceId",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   img_upload.upload,
   // sharpUpload.sharpUpload,
@@ -98,19 +98,19 @@ router.post(
 );
 router.get(
   "/get-all-service",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "read"),
   adminController.getAllService
 );
 router.get(
   "/get-category-service/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "read"),
   adminController.getCategoryService
 ); // passing category id
 router.patch(
   "/update-service/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   img_upload.upload,
   // sharpUpload.sharpUpload,
@@ -118,13 +118,13 @@ router.patch(
 ); // passing object id
 router.delete(
   "/delete-service/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   adminController.deleteCategoryService
 ); // passing object id
 router.get(
   "/search-service",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "read"),
   adminController.searchService
 );
@@ -134,7 +134,7 @@ router.get(
 
 router.post(
   "/create-product",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   img_upload.upload,
   // sharpUpload.sharpUpload,
@@ -142,19 +142,19 @@ router.post(
 );
 router.get(
   "/get-all-product",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "read"),
   adminController.getAllProduct
 );
 router.get(
   "/get-service-product/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "read"),
   adminController.getServiceProduct
 ); // passing service id
 router.patch(
   "/update-product/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   img_upload.upload,
   // sharpUpload.sharpUpload,
@@ -162,7 +162,7 @@ router.patch(
 ); // passing object id
 router.delete(
   "/delete-product/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   adminController.deleteServiceProduct
 );
@@ -172,69 +172,69 @@ router.delete(
 
 router.get(
   "/get-seller",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("partners", "write"),
   adminController.getSellerDetails
 );
 router.post(
   "/create-seller",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("partners", "write"),
   adminController.createSeller
 );
 
 router.patch(
   "/allot-seller-order/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("partners", "write"),
   adminController.allotSeller
 );
 
 router.get(
   "/filter-seller",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("partners", "write"),
   adminController.filterPartner
 );
 router.get(
   "/get-all-seller",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("partners", "read"),
   adminController.getAllSeller
 );
 router.patch(
   "/update-seller/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("partners", "write"),
   adminController.updateSeller
 ); // passing object id
 router.delete(
   "/delete-seller/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("partners", "write"),
   adminController.deleteSeller
 ); // passing object id
 router.get(
   "/search-seller",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("partners", "read"),
   adminController.searchSeller
 );
 router.patch(
   "/update-seller-status/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("partners", "write"),
   adminController.changeSellerStatus
 ); // passing object id
 router.get(
   "/in-review-seller",
-  // isAdminAuth,
+  // websiteAuth.protect,
   // authorize("partners", "read"),
   adminController.getInReviewSeller
 );
 router.post(
   "/get-seller-by-location",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("partners", "read"),
   adminController.getSellerByLocation
 );
@@ -242,38 +242,38 @@ router.post(
 // User Routes
 router.get(
   "/get-all-user",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("customers", "read"),
   adminController.getAllUser
 );
 router.get(
   "/get-all-addresses/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("customers", "read"),
   adminController.getAllAddressesByUserId
 );
 router.patch(
   "/update-user/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("customers", "write"),
   adminController.updateUserByAdmin
 ); // passing object id
 router.delete(
   "/delete-user/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("customers", "write"),
   adminController.deleteUser
 ); // passing object id
 router.get(
   "/search-user",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("customers", "read"),
   adminController.searchUser
 );
 
 router.get(
   "/get-users-data",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("customers", "read"),
   adminController.getUserData
 );
@@ -281,28 +281,28 @@ router.get(
 // Enquiry Routes
 router.get(
   "/get-all-enquiry",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("enquiry", "read"),
   adminController.getAllEnquiry
 );
 
 router.get(
   "/search-enquiries",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("enquiry", "read"),
   adminController.searchEnquiries
 );
 
 router.get(
   "/filter-enquiries",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("enquiry", "read"),
   adminController.filterEnquiries
 );
 
 router.delete(
   "/delete-enquiry/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("enquiry", "write"),
   adminController.deleteEnquiry
 );
@@ -310,7 +310,7 @@ router.delete(
 // Package Routes
 router.post(
   "/create-package",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   img_upload.upload,
   // sharpUpload.sharpUpload,
@@ -318,7 +318,7 @@ router.post(
 );
 router.patch(
   "/update-package/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   img_upload.upload,
   // sharpUpload.sharpUpload,
@@ -326,13 +326,13 @@ router.patch(
 );
 router.get(
   "/get-service-package/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "read"),
   adminController.getServicePackage
 ); //passing service id
 router.delete(
   "/delete-package/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("services", "write"),
   adminController.deletePackage
 ); //passing object id
@@ -340,25 +340,25 @@ router.delete(
 // Available Cities Routes
 router.post(
   "/create-availabe-city",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("availableCities", "write"),
   adminController.createAvailableCities
 );
 router.delete(
   "/delete-availabe-city/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("availableCities", "write"),
   adminController.deleteAvailableCities
 ); // passing object id
 router.patch(
   "/update-availabe-city/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("availableCities", "write"),
   adminController.updateAvailableCities
 ); // passing object id
 router.get(
   "/get-availabe-city",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("availableCities", "read"),
   adminController.getAvailableCities
 );
@@ -366,25 +366,25 @@ router.get(
 // coupons Routes
 router.post(
   "/create-coupon",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("offers", "write"),
   adminController.createCoupon
 );
 router.delete(
   "/delete-coupon/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("offers", "write"),
   adminController.deleteCoupon
 ); // passing object id
 router.patch(
   "/update-coupon",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("offers", "write"),
   adminController.updateCoupon
 ); // passing object id
 router.get(
   "/get-coupons",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("offers", "read"),
   adminController.getAllCoupons
 );
@@ -393,27 +393,27 @@ router.get(
 
 router.post(
   "/change-order-status/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("orders", "write"),
   adminController.updateOrderStatus
 ); // passing order id
 router.get(
   "/get-all-orders",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("orders", "read"),
   adminController.getAllOrders
 );
 // same route as above but for dashboard(authorization)
 router.get(
   "/get-recent-orders",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("dashboard", "read"),
   adminController.getRecentOrders
 );
 
 router.get(
   "/get-order-by-id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("orders", "read"),
   adminController.getOrderById
 );
@@ -424,7 +424,7 @@ router.patch("/reset-counter-id", adminController.resetCounter);
 router.get("/get-order-count-by-status", adminController.getOrderCountByStatus);
 router.post(
   "/get-monthly-orders",
-  // isAdminAuth,
+  // websiteAuth.protect,
   // authorize("orders", "read"),
   adminController.getMolthlyOrder
 );
@@ -433,25 +433,25 @@ router.post(
 
 router.post(
   "/create-faq",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("helpCenter", "write"),
   adminController.createFaq
 );
 router.get(
   "/get-all-faq",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("helpCenter", "read"),
   adminController.getAllFaq
 );
 router.patch(
   "/update-faq/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("helpCenter", "write"),
   adminController.updateFaq
 );
 router.delete(
   "/delete-faq/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("helpCenter", "write"),
   adminController.deleteFaq
 );
@@ -472,20 +472,20 @@ router.get("/review-detail", adminController.getSingleReview);
 //Help Center Routes
 router.post(
   "/get-all-help-list",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("helpCenter", "read"),
   adminController.getAllHelpCenter
 );
 router.post("/gen-order-id", adminController.genOrderId);
 router.delete(
   "/delete-help-list/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("helpCenter", "write"),
   adminController.deleteHelpCenter
 ); // passing object id
 router.patch(
   "/update-help-list/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("helpCenter", "write"),
   adminController.updateHelpCenter
 ); // passing object id
@@ -493,13 +493,13 @@ router.patch(
 //Seller order Routes
 router.get(
   "/get-seller-list/:id",
-  // isAdminAuth,
+  // websiteAuth.protect,
   // authorize("bookings", "read"),
   adminController.getSellerList
 ); // passing service id
 router.get(
   "/get-order-details",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("bookings", "write"),
   adminController.getsingleOrder
 ); // passing seller id
@@ -510,19 +510,19 @@ router.get("/get-bookingId", adminController.getBookingId);
 router.patch("/update-bookingId", adminController.updateBookingId);
 router.patch(
   "/update-seller-order-status/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("bookings", "write"),
   adminController.updateSellerOrderStatus
 ); // passing booking id
 router.get(
   "/get-seller-order-list/:id",
-  // isAdminAuth,
+  // websiteAuth.protect,
   // authorize("partners", "read"),
   adminController.getSellerOrder
 ); // passing seller id
 router.post(
   "/get-seller-order-by-status/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("partners", "read"),
   adminController.getSellerOrderByStatus
 ); // passing seller id
@@ -530,107 +530,110 @@ router.post(
 //Booking Routes
 router.get(
   "/get-booking-details/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("bookings", "read"),
   adminController.getBookingDetails
 ); // passing booking id
 router.get(
   "/get-booking-list",
-  // isAdminAuth,
+  // websiteAuth.protect,
   // authorize("bookings", "read"),
   adminController.getAllBooking
 );
 
 router.get(
   "/search-filter-bookings",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("bookings", "read"),
   adminController.searchBookingWithFilters
 );
 
 router.get(
   "/get-booking-by-id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("bookings", "read"),
   adminController.getBookingById
 );
 
 router.delete(
   "/delete-booking/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("bookings", "write"),
   adminController.deleteBooking
 ); // passing booking id
 
 //Admin Routes
-router.get("/check-token-expiration", isAdminAuth);
+router.get("/check-token-expiration", websiteAuth.protect);
 router.post(
   "/create-Admin",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("settings", "write"),
   adminController.addAminUser
 );
 router.patch(
   "/update-admin-password",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("settings", "write"),
   adminController.updateAdminPassword
 );
 router.patch(
   "/update-sub-admin/:id",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("settings", "write"),
   adminController.updateAdminUser
 );
 
 router.get(
   "/get-sub-admins",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("settings", "write"),
   adminController.getSubAdmins
 );
 router.post("/login-Admin", adminController.loginAdminUser);
 router.get("/logout-Admin", adminController.logoutAdmin);
+router.post("/status", websiteAuth.checkAuthStatus);
+router.post("/refresh", websiteAuth.refresh);
+router.post("/logout-all", websiteAuth.logoutAll);
 
 // seller wallet routes (inside partners)
 
 router.get(
   "/get-seller-wallet/:id",
-  // isAdminAuth,
-  // authorize("partners", "read"),
+  websiteAuth.protect,
+  authorize("partners", "read"),
   adminController.getSellerWallet
 );
 
 router.get(
   "/get-seller-wallet-cashout-requests/:id", //passing wallet id
-  isAdminAuth,
+ websiteAuth.protect,
   authorize("partners", "read"),
   adminController.getCashoutRequests
 );
 
 router.get(
   "/get-seller-wallet-recent-cashout-requests/:id", //passing wallet id
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("partners", "read"),
   adminController.getRecentCashoutRequests
 );
 
 router.patch(
   "/approve-cashout/:id", //passing seller-cashout id
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("partners", "write"),
   adminController.approveSellerCashout
 );
 
 router.get(
   "/get-the-distance-routes",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("bookings", "read"),
   adminController.getDistance
 );
 router.get(
   "/get-the-path-from-source-to-destination",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("bookings", "read"),
   adminController.getPath
 );
@@ -639,34 +642,34 @@ router.get(
 
 router.get(
   "/get-all-payments",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("payments", "read"),
   adminController.getAllPayments
 );
 
 router.get(
   "/get-refer-and-earn-amount",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("settings", "read"),
   adminController.getReferAndEarnAmt
 );
 router.post(
   "/update-refer-and-earn-amount",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("settings", "write"),
   adminController.updateReferAndEarnAmt
 );
 
 router.post(
   "/update-partner-status",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("settings", "write"),
   adminController.updateSellerStatus
 );
 
 router.post(
   "/update-category-data",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("settings", "write"),
   adminController.updateCategoryData
 );
