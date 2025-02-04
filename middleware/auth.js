@@ -60,6 +60,38 @@ exports.userAuthForCart = async (req, res, next) => {
     next(err);
   }
 };
+exports.userWebsiteAuthForCart = async (req, res, next) => {
+  try {
+    const {accessToken,refreshToken} = req.cookies["token"];
+    // console.log('token inside', req.cookies)
+    // const token = req.header('Authorization')
+    //token is missing
+
+    try {
+      if (refreshToken) {
+        const validatedToken = await jwt.verify(refreshToken, process.env.JWT_ACCESS_REFRESH);
+        const userId = validatedToken.id;
+        const user = await User.findById(userId);
+        req.user = user;
+      
+      } else {
+        req.user = null;
+      }
+    } catch (err) {
+      if ((err.name === "TokenExpiredError")) {
+        res.clearCookie("accessToken");
+        return next(new AppError("Token expired",400))
+
+      }
+      return next(new AppError("Invalid Token",401))
+    }
+    //if token is valid move on to next middleware
+    next();
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+};
 
 exports.isAdminAuth = async (req, res, next) => {
   try {
