@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { userWebsiteAuthForCart } = require("../middleware/auth");
+const { userAuth, userAuthForCart } = require("../middleware/auth");
 const isCity = require("../middleware/availableCity");
 
 // controllers
@@ -28,20 +28,20 @@ router.get("/get-service-package/:id", shoppingController.getServicePackage);
 router.get("/get-package-product/:id", shoppingController.getPackageProduct);
 
 //Cart Routes
-router.get("/cart-details", userWebsiteAuthForCart, shoppingController.getCart);
+router.get("/cart-details", userAuthForCart, shoppingController.getCart);
 router.post(
   "/remove-cart-item/:id",
-  userWebsiteAuthForCart,
+  userAuthForCart,
   shoppingController.removeItemFromCart
 ); //product id
 router.post(
   "/add-item-cart",
-  userWebsiteAuthForCart,
+  userAuthForCart,
   shoppingController.addItemToCart
 );
 router.post(
   "/update-item-quantity/:id",
-  userWebsiteAuthForCart,
+  userAuthForCart,
   shoppingController.updateItemQuantity
 ); //product id
 // User Routes
@@ -53,7 +53,7 @@ router.get("/logout-user",websiteAuth.protect, authController.logoutUser);
 // special routes
 // router.post("/get-user-by-token", auth_controller.getUserByToken);
 // User Address Routes
-router.post("/create-user-address", websiteAuth.protect, authController.addUserAddress);
+router.post("/create-user-address",  websiteAuth.protect, authController.addUserAddress);
 router.get("/get-user-address", websiteAuth.protect, authController.getAllAddresses); //passing user id
 router.delete(
   "/delete-user-address/:id",
@@ -126,14 +126,14 @@ router.get("/get-all-faq", websiteAuth.protect, shoppingController.getAllFaq);
 
 // Help Center Routes
 router.post("/create-help", websiteAuth.protect, shoppingController.createHelpCenter);
-router.get("/get-user-help", websiteAuth.protect, shoppingController.getUserHelpCenter);
+router.get("/get-user-help",  websiteAuth.protect, shoppingController.getUserHelpCenter);
 
 // Coupon routes
 router.post("/get-coupon-details", shoppingController.getCouponByName);
-router.post("/get-referralCredits", websiteAuth.protect, shoppingController.getReferralCredits);
+router.post("/get-referralCredits",  websiteAuth.protect, shoppingController.getReferralCredits);
 
 // user profile routes
-router.post("/update-email", websiteAuth.protect, authController.updateEmail);
-router.get("/user-info", websiteAuth.protect, authController.userInfo);
+router.post("/update-email",  websiteAuth.protect, authController.updateEmail);
+router.get("/user-info",  websiteAuth.protect, authController.userInfo);
 
 module.exports = router;
