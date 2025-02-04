@@ -97,7 +97,10 @@ exports.getHomePageBanners = async (req, res, next) => {
     if (heroBanners) {
       if (section == "app-homepage") {
         console.log("inside if");
-        doc = await Content.find({ section, page });
+        doc = await Content.find({ section, page }).populate(
+          "serviceId",
+          "name"
+        );
 
         var banners = { homepage: doc, banner: [] };
         page = "home-banners";
