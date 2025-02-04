@@ -302,8 +302,13 @@ exports.getHomePageHeroBanners = async (req, res, next) => {
 exports.getHomePageBanners = async (req, res, next) => {
   try {
     const contents = await Content.find({
-      section: "app-homePage",
-      type: "banner",
+      section: "app-homepage",
+      type: {
+        $in: [
+          "banner1", // Initial state
+          "banner2", // Restaurant accepted
+        ],
+      },
     });
     res.status(200).json({ banners: contents, length: contents.length });
   } catch (error) {}
