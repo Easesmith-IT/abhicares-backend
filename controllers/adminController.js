@@ -49,6 +49,7 @@ const booking = require("../models/booking");
 const order = require("../models/order");
 const { counterSchema } = require("../models/counter");
 const admin = require("../models/admin");
+const { generateRefreshToken, generateAccessToken } = require("./websiteAuth");
 
 // category routes
 exports.genOrderId = catchAsync(async (req, res, next) => {
@@ -1495,6 +1496,7 @@ exports.deleteSubAdmin = catchAsync(async (req, res, next) => {
 });
 exports.loginAdminUser = catchAsync(async (req, res, next) => {
   console.log("inside admin login");
+  role='admin'
   const { adminId, password } = req.body;
   const admin = await Admin.findOne({ adminId: adminId });
   if (!admin) {
@@ -1504,12 +1506,24 @@ exports.loginAdminUser = catchAsync(async (req, res, next) => {
   const isMatch = await bcrypt.compare(password, admin.password);
 
   if (isMatch) {
-    var token = jwt.sign(
-      { adminId: adminId, permissions: admin.permissions },
-      jwtkey.secretJwtKey,
-      { expiresIn: "2d" }
-    );
-    res.cookie("admtoken", token, { secure: true, httpOnly: true });
+    // var token = jwt.sign(
+    //   { adminId: adminId, permissions: admin.permissions },
+    //   jwtkey.secretJwtKey,
+    //   { expiresIn: "2d" }
+    // );
+    const refreshToken=await generateRefreshToken(
+      admin._id,
+      role,
+      admin.tokenVersion
+    )
+
+    const accessToken=await generateAccessToken(
+      admin._id,
+      role,
+      admin.tokenVersion
+    )
+    res.cookie("accessToken", accessToken, { secure: true, httpOnly: true });
+    res.cookie("refreshToken", refreshToken, { secure: true, httpOnly: true });
 
     return res.status(200).json({
       success: true,
@@ -3371,10 +3385,10 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 //     }
 // };
 
-exports.sendNotificationToAll = async (req, res, next) => {
-  const { description, date, time, title } = req.body;
+exports.sendNotificationToAll = async (req, res,next) => {
+  const { description, date, time, title,appType } = req.body;
   console.log("req.body", req.body);
-  // Validate input
+  
   if (!description || !title) {
     return next(new AppError("Please provide title and description", 400));
   }
@@ -3396,25 +3410,36 @@ exports.sendNotificationToAll = async (req, res, next) => {
   try {
     // Retrieve FCM tokens and their corresponding appTypes from tokenSchema
     console.log("description", description);
-    const tokensByDeviceType = await tokenSchema.aggregate([
-      {
-        $group: {
-          _id: "$deviceType", // Group by deviceType
-          tokens: {
-            $push: {
-              token: "$token", // Include the token
-              appType: "$appType",
-              deviceType: "$deviceType", // Include the appType
-            },
+    const pipeline = [];
+
+    if (req.body.appType && req.body.appType !== "all") {
+      pipeline.push({ $match: { appType: req.body.appType } });
+    }
+    
+    pipeline.push({
+      $group: {
+        _id: {
+          deviceType: "$deviceType",
+          ...(req.body.appType && req.body.appType !== "all" && { appType: "$appType" }),
+        },
+        tokens: {
+          $push: {
+            token: "$token",
+            appType: "$appType",
+            deviceType: "$deviceType",
           },
         },
       },
-    ]);
+    });
+    
+    const tokensByDeviceType = await tokenSchema.aggregate(pipeline);
 
     if (!tokensByDeviceType || tokensByDeviceType.length === 0) {
-      return next(
-        new AppError("No FCM tokens found to send notifications", 404)
-      );
+      return res.status(200).json({
+          message:"No users found",
+          status:false
+        })
+     
     }
     for (let i = 0; i < tokensByDeviceType.length; i++) {
       console.log(tokensByDeviceType[i]);

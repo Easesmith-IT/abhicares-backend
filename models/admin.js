@@ -100,6 +100,14 @@ const userSchema = new Schema(
         required: true,
       },
     },
+    tokenVersion:{
+      type:Number,
+      default:0
+    },
+    refreshToken:{
+      type:String,
+      
+    }
   },
   { timestamps: true }
 );
