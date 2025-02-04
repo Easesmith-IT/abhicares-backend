@@ -109,7 +109,10 @@ exports.getHomePageBanners = async (req, res, next) => {
       });
     } else {
       console.log("inside else");
-      doc = await Content.findOne({ type, section, page });
+      doc = await Content.findOne({ type, section, page }).populate(
+        "serviceId",
+        "name"
+      );
       let serviceId = null;
       if (doc?.serviceId) {
         serviceId = await Service.findById(doc.serviceId);
