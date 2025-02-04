@@ -95,24 +95,38 @@ exports.getHomePageBanners = async (req, res, next) => {
     var { type, section, page, heroBanners } = req.query;
     let doc;
     if (heroBanners) {
-      console.log("inside if");
-      doc = await Content.find({ section, page });
+      if (section == "app-homepage") {
+        console.log("inside if");
+        doc = await Content.find({ section, page });
 
-      var banners = { homepage: doc, banner: [] };
-      page = "home-banners";
-      doc = await Content.find({ section, page });
-      banners.banner.push(...doc);
-      console.log(banners);
-      res.status(200).json({
-        success: true,
-        banners: banners,
-      });
+        var banners = { homepage: doc, banner: [] };
+        page = "home-banners";
+        doc = await Content.find({ section, page }).populate(
+          "serviceId",
+          "name"
+        );
+        banners.banner.push(...doc);
+        // console.log(banners);
+        res.status(200).json({
+          success: true,
+          banners: banners,
+        });
+      } else {
+        console.log("inside if");
+        doc = await Content.find({ section, page });
+        var banners = { homepage: doc, banner: [] };
+        page = "home-banners";
+        doc = await Content.find({ section, page });
+        banners.banner.push(...doc);
+        // console.log(banners);
+        res.status(200).json({
+          success: true,
+          banners: banners,
+        });
+      }
     } else {
       console.log("inside else");
-      doc = await Content.findOne({ type, section, page }).populate(
-        "serviceId",
-        "name"
-      );
+      doc = await Content.findOne({ type, section, page });
       let serviceId = null;
       if (doc?.serviceId) {
         serviceId = await Service.findById(doc.serviceId);
