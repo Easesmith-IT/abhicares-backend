@@ -49,6 +49,13 @@ const userSchema = new Schema(
       unique: true,
       required: true,
     },
+    tokenVersion:{
+      type:Number,
+      default:0
+    },
+    refreshToken:{
+      type:String
+    }
   },
   { timestamps: true }
 );
