@@ -50,6 +50,7 @@ router.post("/verify-otp", websiteAuth.verifyUserOtp);
 router.post("/signup-otp", authController.signupOtp);
 router.post("/verify-signup", authController.createUser);
 router.get("/logout-user",websiteAuth.protect, authController.logoutUser);
+router.post("/logout-all",websiteAuth.protect, authController.logoutUser);
 // special routes
 // router.post("/get-user-by-token", auth_controller.getUserByToken);
 // User Address Routes
