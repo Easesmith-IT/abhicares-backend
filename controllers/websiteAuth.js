@@ -20,7 +20,7 @@ exports.generateAccessToken = (userId, role, tokenVersion) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 90 * 24 * 60 * 60 * 1000, // 90 days
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 90 days
     });
   
     // Set HttpOnly cookie for access token
@@ -28,24 +28,24 @@ exports.generateAccessToken = (userId, role, tokenVersion) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 30 * 60 * 1000, // 30 minutes
+      maxAge: 15 * 60 * 1000, // 30 minutes
     });
   
     // Set user info in non-HttpOnly cookie for frontend access
     res.cookie(
-      "userInfo",
+        role === "admin" ? "adminInfo" : "userInfo",
       JSON.stringify({
         id: user._id,
         name: user.name,
-        email: user.email,
-        phone: user.phone,
+        email: user.email||"",
+        phone: user.phone||"",
         role,
       }),
       {
         httpOnly: false,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 90 * 24 * 60 * 60 * 1000,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       }
     );
   };
@@ -258,15 +258,13 @@ exports.generateAccessToken = (userId, role, tokenVersion) => {
   
   
   exports.logoutAll = catchAsync(async (req, res, next) => {
-    const { phone, role } = req.body;
+    const {adminId,phone, role } = req.body;
   
     let user;
   
     // Find the user based on the role
-    if (role === "restaurant") {
-      user = await Restaurant.findOne({ phone: phone });
-    } else if (role === "admin" || "subAdmin") {
-      user = await Admin.findOne({ phone: phone });
+    if (role === "admin") {
+      user = await admin.findOne({ _id: adminId });
     } else {
       user = await User.findOne({ phone: phone });
     }
@@ -286,7 +284,9 @@ exports.generateAccessToken = (userId, role, tokenVersion) => {
     // Clear cookies
     res.cookie("accessToken", "", { maxAge: 0 });
     res.cookie("refreshToken", "", { maxAge: 0 });
+    res.cookie('token','',{maxAge:0})
     res.cookie("userInfo", "", { maxAge: 0 });
+    res.cookie('adminInfo','',{maxAge:0});
   
     res.status(200).json({
       success: true,
