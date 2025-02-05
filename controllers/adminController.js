@@ -49,7 +49,7 @@ const booking = require("../models/booking");
 const order = require("../models/order");
 const { counterSchema } = require("../models/counter");
 const admin = require("../models/admin");
-const { generateRefreshToken, generateAccessToken } = require("./websiteAuth");
+const { generateRefreshToken, generateAccessToken, setTokenCookies } = require("./websiteAuth");
 
 // category routes
 exports.genOrderId = catchAsync(async (req, res, next) => {
@@ -1506,11 +1506,7 @@ exports.loginAdminUser = catchAsync(async (req, res, next) => {
   const isMatch = await bcrypt.compare(password, admin.password);
 
   if (isMatch) {
-    // var token = jwt.sign(
-    //   { adminId: adminId, permissions: admin.permissions },
-    //   jwtkey.secretJwtKey,
-    //   { expiresIn: "2d" }
-    // );
+    
     const refreshToken=await generateRefreshToken(
       admin._id,
       role,
@@ -1522,13 +1518,14 @@ exports.loginAdminUser = catchAsync(async (req, res, next) => {
       role,
       admin.tokenVersion
     )
-    res.cookie("accessToken", accessToken, { secure: true, httpOnly: true });
-    res.cookie("refreshToken", refreshToken, { secure: true, httpOnly: true });
-
+    // res.cookie("accessToken", accessToken, { secure: true, httpOnly: true });
+    // res.cookie("refreshToken", refreshToken, { secure: true, httpOnly: true });
+    setTokenCookies(res, accessToken, refreshToken, admin, role);
     return res.status(200).json({
       success: true,
       message: "Login successful",
       perm: admin.permissions,
+      
     });
   } else {
     return next(new AppError("Incorrect Password!", 400));
@@ -1536,7 +1533,9 @@ exports.loginAdminUser = catchAsync(async (req, res, next) => {
 });
 
 exports.logoutAdmin = catchAsync(async (req, res, next) => {
-  res.clearCookie("admtoken");
+  res.clearCookie("accessToken");
+  res.clearCookie('refreshToken')
+  res.clearCookie("admininfo")
   return res.json({ success: true, message: "Logout successful" });
 });
 

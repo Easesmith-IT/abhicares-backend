@@ -458,6 +458,7 @@ exports.logoutUser = catchAsync(async (req, res, next) => {
   res.clearCookie("token");
   res.clearCookie("accessToken");
   res.clearCookie("refreshToken");
+  res.clearCookie("userInfo");
   return res.json({ success: true, message: "Logout successful" });
 });
 
