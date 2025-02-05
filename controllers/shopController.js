@@ -782,9 +782,14 @@ exports.getUserHelpCenter = catchAsync(async (req, res, next) => {
   const id = req.user._id;
   const result = await HelpCenter.find({ userId: id });
   if (result.length == 0) {
-    return next(new AppError(400, "Data not found"));
+    return res.status(201).json({
+      success: true,
+      message: " No data found",
+      data: result,
+    });
+    // return next(new AppError(400, "Data not found"));
   } else {
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "data updated successful",
       data: result,
