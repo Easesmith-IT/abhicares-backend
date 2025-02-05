@@ -29,7 +29,6 @@ const { serve } = require("swagger-ui-express");
 const category = require("../models/category");
 const { toObjectId } = require("../util/toMongodbId");
 const { generateTicketId } = require("../util/generateOrderId");
-
 // const catchAsync = require("../util/catchAsync");
 
 ////////////////////////////////////////////////////////
@@ -289,35 +288,34 @@ exports.getPackageDetails = async (req, res, next) => {
   } catch (error) {}
 };
 
-exports.getHomePageHeroBanners = async (req, res, next) => {
-  try {
-    const contents = await Content.find({
-      section: "app-homePage",
-      type: "hero-banner",
-    });
-    res.status(200).json({ banners: contents, length: contents.length });
-  } catch (error) {}
-};
+exports.getHomePageHeroBanners = catchAsync(async (req, res, next) => {
+  const contents = await Content.find({
+    section: "app-homePage",
+    type: "hero-banner",
+  });
+  res.status(200).json({ banners: contents, length: contents.length });
+});
 
-exports.getHomePageBanners = async (req, res, next) => {
-  try {
-    const contents = await Content.find({
-      section: "app-homePage",
-      type: "banner",
-    });
-    res.status(200).json({ banners: contents, length: contents.length });
-  } catch (error) {}
-};
+exports.getHomePageBanners = catchAsync(async (req, res, next) => {
+  const contents = await Content.find({
+    section: "app-homepage",
+    type: {
+      $in: [
+        "banner1", // Initial state
+        "banner2", // Restaurant accepted
+      ],
+    },
+  }).populate("serviceId", "name");
+  res.status(200).json({ banners: contents, length: contents.length });
+});
 
-exports.getHomePageContents = async (req, res, next) => {
-  try {
-    const contents = await Content.find({
-      section: "app-homePage",
-      type: "content",
-    });
-    res.status(200).json({ banners: contents, length: contents.length });
-  } catch (error) {}
-};
+exports.getHomePageContents = catchAsync(async (req, res, next) => {
+  const contents = await Content.find({
+    section: "app-homePage",
+    type: "content",
+  });
+  res.status(200).json({ banners: contents, length: contents.length });
+});
 
 // Order Controller
 
