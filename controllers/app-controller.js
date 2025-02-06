@@ -637,20 +637,35 @@ exports.getOrders = async (req, res, next) => {
 
 exports.posttrackBooking = async (req, res, next) => {
   try {
-    const orderId = req.body.orderId;
-    const prodId = req.body.prodId;
-    const packageId = req.body.packId;
-    var bookings = await BookingModel.find({
-      orderId: orderId,
-    });
-    var booking;
-    for (var i in bookings) {
-      if (bookings[i]["product"]["_id"].toString() == prodId) {
-        booking = bookings[i];
-      }
+    const { orderId, prodId, packId } = req.body;
+
+    console.log(orderId, prodId, packId, "orderId, productId, packageId");
+
+    // Create the query object based on available parameters
+    let query = { orderId: orderId };
+
+    // Add productId filter if provided
+    if (prodId) {
+      query["product._id"] = prodId;
     }
-    console.log("booking", booking);
-    return res.status(200).json({ booking });
+
+    // Add packageId filter if provided
+    if (packId) {
+      query["package._id"] = packId;
+    }
+
+    // Find bookings based on the dynamically built query
+    const bookings = await BookingModel.find(query);
+
+    console.log("bookings:", bookings);
+
+    // If no bookings are found, return a 404
+    if (bookings.length === 0) {
+      return res.status(200).json({ message: "No bookings found" });
+    }
+
+    // If bookings are found, return the matching booking
+    return res.status(200).json({ bookings });
   } catch (err) {
     console.log(err);
     const error = new Error(err);
@@ -658,6 +673,30 @@ exports.posttrackBooking = async (req, res, next) => {
     return next(err);
   }
 };
+
+// exports.posttrackBooking = async (req, res, next) => {
+//   try {
+//     const orderId = req.body.orderId;
+//     const prodId = req.body.prodId;
+//     const packageId = req.body.packId;
+//     var bookings = await BookingModel.find({
+//       orderId: orderId,
+//     });
+//     var booking;
+//     for (var i in bookings) {
+//       if (bookings[i]["product"]["_id"].toString() == prodId) {
+//         booking = bookings[i];
+//       }
+//     }
+//     console.log("booking", booking);
+//     return res.status(200).json({ booking });
+//   } catch (err) {
+//     console.log(err);
+//     const error = new Error(err);
+//     error.httpStatusCode = 500;
+//     return next(err);
+//   }
+// };
 
 exports.getOrderBooking = async (req, res, next) => {
   try {
