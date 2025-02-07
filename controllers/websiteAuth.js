@@ -492,7 +492,7 @@ exports.refreshUserToken = catchAsync(async (req, res, next) => {
           return next(new AppError("Invalid user refresh token", 401));
       }
 
-      const newAccessToken = generateAccessToken(normalUser._id, "user", normalUser.tokenVersion);
+      const newAccessToken = this.generateAccessToken(normalUser._id, "user", normalUser.tokenVersion);
       console.log("Generated new user access token");
 
       res.cookie("userAccessToken", newAccessToken, {
@@ -531,7 +531,7 @@ exports.refreshUserToken = catchAsync(async (req, res, next) => {
             return next(new AppError("Invalid admin refresh token", 401));
         }
   
-        const newAccessToken = generateAccessToken(adminUser._id, "admin", adminUser.tokenVersion);
+        const newAccessToken = this.generateAccessToken(adminUser._id, "admin", adminUser.tokenVersion);
         console.log("Generated new admin access token");
   
         res.cookie("adminAccessToken", newAccessToken, {
