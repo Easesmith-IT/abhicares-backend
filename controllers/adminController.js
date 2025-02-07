@@ -1496,7 +1496,10 @@ exports.deleteSubAdmin = catchAsync(async (req, res, next) => {
 });
 exports.loginAdminUser = catchAsync(async (req, res, next) => {
   console.log("inside admin login");
-  role='admin'
+  // role='admin'
+  console.log(req.originalUrl,'original url')
+  const role=req.originalUrl.startsWith('/api/admin')?"admin":"user"
+  console.log(role)
   const { adminId, password } = req.body;
   const admin = await Admin.findOne({ adminId: adminId });
   if (!admin) {
@@ -1533,9 +1536,9 @@ exports.loginAdminUser = catchAsync(async (req, res, next) => {
 });
 
 exports.logoutAdmin = catchAsync(async (req, res, next) => {
-  res.clearCookie("accessToken");
-  res.clearCookie('refreshToken')
-  res.clearCookie("admininfo")
+  res.clearCookie("adminAccessToken");
+  res.clearCookie('aminRefreshToken')
+  res.clearCookie("adminInfo")
   return res.json({ success: true, message: "Logout successful" });
 });
 
