@@ -126,7 +126,7 @@ exports.refresh = catchAsync(async (req, res, next) => {
     try {
         const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
         console.log("Decoded payload:", decoded);
-
+          console.log(decoded.role,'line 129')
         if (decoded.role === "admin") {
             user = await admin.findById(decoded.id).select("+tokenVersion");
         } else {
@@ -145,7 +145,7 @@ exports.refresh = catchAsync(async (req, res, next) => {
             return next(new AppError("Invalid refresh token", 401));
         }
 
-        const newAccessToken = generateAccessToken(user._id, decoded.role, user.tokenVersion);
+        const newAccessToken = this.generateAccessToken(user._id, decoded.role, user.tokenVersion);
         console.log("Generated new access token");
 
         if (decoded.role === "admin") {
@@ -447,7 +447,7 @@ exports.checkAuthStatus = catchAsync(async (req, res, next) => {
     const { userAccessToken, userRefreshToken,adminAccessToken,adminRefreshToken } = req.cookies;
     console.log(req.cookies);
     // console.log(accessToken, refreshToken, "this is line 531");
-    const role='admin'
+    const role=req.originalUrl.startsWith('/api/admin')?"admin":"user"
     if(role==='admin'){
         if (!adminAccessToken || !adminRefreshToken) {
           console.log("accessToken---", adminAccessToken);
