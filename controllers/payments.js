@@ -665,27 +665,6 @@ exports.calculateCartCharges = async (req, res, next) => {
       const service = await Service.findById(item.serviceId);
       const category = await Category.findById(service.categoryId);
       console.log(itemDetails, category);
-      // Get category details - handle both service and package paths
-      // let category;
-      // if (item.prod) {
-      //   // For services/products, get category directly
-      //   const service = await Service.findById(itemDetails._id);
-      //   if (!service) {
-      //     return res.status(404).json({
-      //       message: `Service not found for ID ${itemDetails._id}`,
-      //     });
-      //   }
-      //   category = await Category.findById(service.categoryId);
-      // } else {
-      //   // For packages, follow package -> service -> category path
-      //   const service = await Service.findById(itemDetails.serviceId);
-      //   if (!service) {
-      //     return res.status(404).json({
-      //       message: `Service not found for package ${itemDetails._id}`,
-      //     });
-      //   }
-      //   category = await Category.findById(service.categoryId);
-      // }
 
       if (!category) {
         return res.status(404).json({
@@ -719,17 +698,19 @@ exports.calculateCartCharges = async (req, res, next) => {
 
       // Update totals
       response.totalAmount += itemTotal;
-      response.totalCommission += commissionAmount;
-      response.totalTaxOnCommission += taxOnCommission;
-      response.totalConvenience += convenienceCharge;
+      // response.totalTax += taxOnCommission + convenienceCharge;
+      response.totalTaxOnCommission += Math.round(taxOnCommission);
+      response.totalConvenience += Math.round(convenienceCharge);
     }
 
     // Calculate final total
-    response.totalPayable =
+    response.totalPayable = Math.round(
       response.totalAmount +
-      response.totalCommission +
-      response.totalTaxOnCommission +
-      response.totalConvenience;
+        response.totalTaxOnCommission +
+        response.totalConvenience
+    );
+    response.totalTax =
+      response.totalTaxOnCommission + response.totalConvenience;
 
     return res.status(200).json(response);
   } catch (err) {
