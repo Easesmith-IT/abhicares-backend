@@ -591,7 +591,7 @@ router.get(
 );
 router.post("/login-Admin", adminController.loginAdminUser);
 router.get("/logout-Admin", adminController.logoutAdmin);
-router.post("/status", websiteAuth.checkAuthStatus);
+router.get("/status", websiteAuth.checkAuthStatus);
 router.post("/refresh", websiteAuth.refresh);
 router.post("/logout-all", websiteAuth.logoutAll);
 

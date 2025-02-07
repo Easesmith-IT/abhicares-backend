@@ -262,7 +262,7 @@ exports.signupOtp = catchAsync(async (req, res, next) => {
 });
 
 exports.appSignupOtp = catchAsync(async (req, res, next) => {
-  const { name, phone, referralCode } = req.body;
+  const { name, phone, referralCode,appType,fcmToken,deviceType } = req.body;
   if (!name || !phone) {
     res
       .status(400)
@@ -289,6 +289,28 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
         },
         config
       );
+      // For saving FCM token
+      if (deviceType === "android" || deviceType === "ios") {
+        const foundUserToken = await tokenSchema.findOne({ userId: resultData._id });
+    
+        if (foundUserToken) {
+          foundUserToken.token = fcmToken;
+          await foundUserToken.save();
+        } else {
+          newToken = await tokenSchema.create({
+            userId: resultData._id,
+            token: fcmToken,
+            deviceType: deviceType,
+            appType: appType,
+          });
+    
+          if (!newToken) {
+            return res.status(400).json({
+              message: "Something went wrong while saving the FCM token",
+            });
+          }
+        }
+      }
       var payload = {
         phone: phone,
         otp: otp,
@@ -456,8 +478,8 @@ exports.createUser = catchAsync(async (req, res, next) => {
 
 exports.logoutUser = catchAsync(async (req, res, next) => {
   res.clearCookie("token");
-  res.clearCookie("accessToken");
-  res.clearCookie("refreshToken");
+  res.clearCookie("userAccessToken");
+  res.clearCookie("userRefreshToken");
   res.clearCookie("userInfo");
   return res.json({ success: true, message: "Logout successful" });
 });
