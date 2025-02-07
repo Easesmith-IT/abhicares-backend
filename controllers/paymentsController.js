@@ -12,6 +12,8 @@ const Products = require("../models/product");
 const Cart = require("../models/cart");
 const Booking = require("../models/booking");
 const Package = require("../models/packages");
+const Category = require("../models/category");
+const Service = require("../models/service");
 const TempOrder = require("../models/tempOrder");
 const { autoAssignBooking } = require("../util/autoAssignBooking");
 const AppError = require("../util/appError");
@@ -41,7 +43,7 @@ exports.appOrder = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-
+    console.log(cart);
     // Extract cart data from the user's cart
     const products = cart["items"];
     // // Create an array to store order items
@@ -199,26 +201,26 @@ exports.getAllUserOrders = catchAsync(async (req, res, next) => {
       },
     })
     .populate({
-      path: 'items.product',
+      path: "items.product",
       populate: [
         {
-          path: 'productId',
-          model: 'Product'
+          path: "productId",
+          model: "Product",
         },
         {
-          path: 'serviceId',
-          model: 'Service'
-        }
-      ]
+          path: "serviceId",
+          model: "Service",
+        },
+      ],
     })
     .populate({
-      path: 'items.bookingId',
+      path: "items.bookingId",
       populate: {
-        path: 'sellerId',
-        model: 'Seller'
-      }
+        path: "sellerId",
+        model: "Seller",
+      },
     })
-    
+
     .populate({ path: "couponId", model: "Coupon" })
     .populate({
       path: "bookingId",

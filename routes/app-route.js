@@ -4,6 +4,7 @@ const router = express.Router();
 
 const appController = require("../controllers/app-controller");
 const paymentController = require("../controllers/paymentsController");
+const Payment = require("../controllers/payments");
 const authController = require("../controllers/authController");
 const contentController = require("../controllers/contentController.js");
 const shopController = require("../controllers/shopController.js");
@@ -83,5 +84,6 @@ router.get("/get-services-app-homepage", appController.getAppHomePageServices);
 ///
 router.get("/check-city-serviceability", appController.checkServiceability);
 // router.get("/test-com", appController.setCommision);
+router.post("/caluclate-charge", Payment.calculateCartCharges);
 
 module.exports = router;
