@@ -57,23 +57,25 @@ exports.appOrder = async (req, res, next) => {
       }
 
       if (prod) {
+        const itemTotalBooking =
+          productItem["prod"]["offerPrice"] * productItem["quantity"];
         orderItems.push({
           product: productItem["prod"],
           quantity: productItem["quantity"],
           bookingId: null,
-          itemTotal:
-            productItem["prod"]["offerPrice"] + productItem["itemTotaltax"],
+          itemTotal: itemTotalBooking + productItem["itemTotaltax"],
           itemTotalTax: productItem["itemTotaltax"],
           bookingDate: productItem["bookDate"],
           bookingTime: productItem["bookTime"],
         });
       } else if (pack) {
+        const itemTotalBooking =
+          productItem["prod"]["offerPrice"] * productItem["quantity"];
         orderItems.push({
           package: productItem["prod"],
           quantity: productItem["quantity"],
           bookingId: null,
-          itemTotal:
-            productItem["prod"]["offerPrice"] + productItem["itemTotaltax"],
+          itemTotal: itemTotalBooking + productItem["itemTotaltax"],
           itemTotalTax: productItem["itemTotaltax"],
           bookingDate: productItem["bookDate"],
           bookingTime: productItem["bookTime"],
@@ -438,9 +440,7 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
   // console.log('inside cod order');
   console.log("items", items);
   // console.log('bookings',bookings)
-
   const orderItems = await generateOrderItems(items, bookings);
-
   console.log("orderItems", orderItems);
 
   if (orderItems) {

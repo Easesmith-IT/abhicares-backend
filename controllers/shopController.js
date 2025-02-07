@@ -17,65 +17,65 @@ const AppError = require("../util/appError");
 const catchAsync = require("../util/catchAsync");
 const mongoose = require("mongoose");
 const Booking = require("../models/booking");
-
+const updateServiceRating = require("../util/upateServiceReview");
 /////////////////////////
 
-const updateServiceRating = async (serviceId, serviceType) => {
-  try {
-    const Model = serviceType === "product" ? Product : Package;
+// const updateServiceRating = async (serviceId, serviceType) => {
+//   try {
+//     const Model = serviceType === "product" ? Product : Package;
 
-    const stats = await Review.aggregate([
-      {
-        $match: {
-          [serviceType === "product" ? "productId" : "packageId"]:
-            new mongoose.Types.ObjectId(serviceId),
-          reviewType: "ON-BOOKING",
-          status: "APPROVED",
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          averageRating: { $avg: "$rating" },
-          totalReviews: { $sum: 1 },
-          ratingCounts: { $push: "$rating" },
-        },
-      },
-    ]);
+//     const stats = await Review.aggregate([
+//       {
+//         $match: {
+//           [serviceType === "product" ? "productId" : "packageId"]:
+//             new mongoose.Types.ObjectId(serviceId),
+//           reviewType: "ON-BOOKING",
+//           status: "APPROVED",
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: null,
+//           averageRating: { $avg: "$rating" },
+//           totalReviews: { $sum: 1 },
+//           ratingCounts: { $push: "$rating" },
+//         },
+//       },
+//     ]);
 
-    const ratingData =
-      stats.length > 0
-        ? {
-            rating: parseFloat(stats[0].averageRating.toFixed(1)),
-            totalReviews: stats[0].totalReviews,
-            ratingDistribution: {
-              5: stats[0].ratingCounts.filter((r) => r === 5).length,
-              4: stats[0].ratingCounts.filter((r) => r === 4).length,
-              3: stats[0].ratingCounts.filter((r) => r === 3).length,
-              2: stats[0].ratingCounts.filter((r) => r === 2).length,
-              1: stats[0].ratingCounts.filter((r) => r === 1).length,
-            },
-          }
-        : {
-            rating: 0,
-            totalReviews: 0,
-            ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
-          };
+//     const ratingData =
+//       stats.length > 0
+//         ? {
+//             rating: parseFloat(stats[0].averageRating.toFixed(1)),
+//             totalReviews: stats[0].totalReviews,
+//             ratingDistribution: {
+//               5: stats[0].ratingCounts.filter((r) => r === 5).length,
+//               4: stats[0].ratingCounts.filter((r) => r === 4).length,
+//               3: stats[0].ratingCounts.filter((r) => r === 3).length,
+//               2: stats[0].ratingCounts.filter((r) => r === 2).length,
+//               1: stats[0].ratingCounts.filter((r) => r === 1).length,
+//             },
+//           }
+//         : {
+//             rating: 0,
+//             totalReviews: 0,
+//             ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+//           };
 
-    await Model.findByIdAndUpdate(serviceId, {
-      $set: {
-        rating: ratingData.rating,
-        totalReviews: ratingData.totalReviews,
-        ratingDistribution: ratingData.ratingDistribution,
-      },
-    });
+//     await Model.findByIdAndUpdate(serviceId, {
+//       $set: {
+//         rating: ratingData.rating,
+//         totalReviews: ratingData.totalReviews,
+//         ratingDistribution: ratingData.ratingDistribution,
+//       },
+//     });
 
-    return ratingData;
-  } catch (error) {
-    console.error("Error updating service rating:", error);
-    throw error;
-  }
-};
+//     return ratingData;
+//   } catch (error) {
+//     console.error("Error updating service rating:", error);
+//     throw error;
+//   }
+// };
 
 /////////////////////////
 exports.getAllCategory = catchAsync(async (req, res, next) => {
@@ -478,8 +478,6 @@ exports.addItemToCart = catchAsync(async (req, res, next) => {
   }
 });
 
-
-
 exports.updateItemQuantity = catchAsync(async (req, res, next) => {
   // const cartId = req.params.id //cart id
   const { quantity, userId } = req.body;
@@ -768,6 +766,7 @@ exports.createHelpCenter = catchAsync(async (req, res, next) => {
   } else {
     const ticketId = await generateTicketId();
     await HelpCenter.create({
+      raisedBy: "customer",
       ticketId: ticketId,
       userId: id,
       description: description,
