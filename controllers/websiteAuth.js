@@ -405,8 +405,148 @@ exports.checkAuthStatus = catchAsync(async (req, res, next) => {
     }
 });
 
+exports.checkUserAuthStatus = catchAsync(async (req, res, next) => {
+    const { userAccessToken, userRefreshToken } = req.cookies;
+    
+    console.log(userAccessToken, userRefreshToken, "checkUserAuthStatus");
+
+    if (!userRefreshToken || userRefreshToken === "undefined") {
+        console.log("User refresh token expired");
+        return res.status(200).json({
+            success: true,
+            isAuthenticated: false,
+            message: "Refresh token expired",
+            shouldLogOut: true,
+        });
+    }
+
+    if (!userAccessToken || userAccessToken === "undefined") {
+        console.log("User access token expired");
+        return res.status(200).json({
+            success: true,
+            isAuthenticated: false,
+            message: "Access token expired",
+            shouldLogOut: false,
+        });
+    }
+
+    try {
+        let decoded = jwt.verify(userAccessToken, process.env.JWT_ACCESS_SECRET);
+        console.log(decoded, "User accessToken");
+
+        const normalUser = await User.findById(decoded.id);
+
+        if (!normalUser) {
+            return res.status(200).json({
+                success: true,
+                isAuthenticated: false,
+                shouldLogOut: true,
+                message: "No user found",
+            });
+        }
+
+        const userData = {
+            id: normalUser._id,
+            name: normalUser.personalInfo?.name,
+            email: normalUser.personalInfo?.email,
+            phone: normalUser.personalInfo?.phone || "none",
+            role: decoded.role,
+            image: normalUser.personalInfo?.profileImage,
+        };
+
+        return res.status(200).json({
+            success: true,
+            isAuthenticated: true,
+            data: userData,
+        });
+    } catch (error) {
+        return res.status(200).json({
+            success: false,
+            isAuthenticated: false,
+            message: error.message || "Authentication error",
+            shouldLogOut: true,
+        });
+    }
+});
+
+exports.refreshUserToken = catchAsync(async (req, res, next) => {
+  const { userRefreshToken } = req.cookies;
+
+  if (!userRefreshToken) {
+      return next(new AppError("No user refresh token", 401));
+  }
+
+  try {
+      const decoded = jwt.verify(userRefreshToken, process.env.JWT_REFRESH_SECRET);
+      console.log("Decoded user payload:", decoded);
+
+      const normalUser = await User.findById(decoded.id).select("+tokenVersion");
+
+      if (!normalUser) {
+          console.log("User not found");
+          return next(new AppError("Invalid user refresh token", 401));
+      }
+
+      if (normalUser.tokenVersion !== decoded.tokenVersion) {
+          console.log("User token version mismatch");
+          return next(new AppError("Invalid user refresh token", 401));
+      }
+
+      const newAccessToken = generateAccessToken(normalUser._id, "user", normalUser.tokenVersion);
+      console.log("Generated new user access token");
+
+      res.cookie("userAccessToken", newAccessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 15 * 60 * 1000,
+      });
+
+      return res.status(200).json({ success: true, message: "User access token refreshed" });
+  } catch (error) {
+      console.error("Error verifying user refresh token:", error.message);
+      return next(new AppError("Invalid user refresh token", 401));
+  }
+});
+  exports.refreshAdminToken = catchAsync(async (req, res, next) => {
+    const { adminRefreshToken } = req.cookies;
   
+    if (!adminRefreshToken) {
+        return next(new AppError("No admin refresh token", 401));
+    }
   
+    try {
+        const decoded = jwt.verify(adminRefreshToken, process.env.JWT_REFRESH_SECRET);
+        console.log("Decoded admin payload:", decoded);
+  
+        const adminUser = await admin.findById(decoded.id).select("+tokenVersion");
+  
+        if (!adminUser) {
+            console.log("Admin not found");
+            return next(new AppError("Invalid admin refresh token", 401));
+        }
+  
+        if (adminUser.tokenVersion !== decoded.tokenVersion) {
+            console.log("Admin token version mismatch");
+            return next(new AppError("Invalid admin refresh token", 401));
+        }
+  
+        const newAccessToken = generateAccessToken(adminUser._id, "admin", adminUser.tokenVersion);
+        console.log("Generated new admin access token");
+  
+        res.cookie("adminAccessToken", newAccessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 15 * 60 * 1000,
+        });
+  
+        return res.status(200).json({ success: true, message: "Admin access token refreshed" });
+    } catch (error) {
+        console.error("Error verifying admin refresh token:", error.message);
+        return next(new AppError("Invalid admin refresh token", 401));
+    }
+  });
   exports.logoutAll = catchAsync(async (req, res, next) => {
     const {adminId,phone } = req.query;
   
@@ -483,7 +623,7 @@ exports.checkAuthStatus = catchAsync(async (req, res, next) => {
             
             console.log(user, "user", user.tokenVersion, decoded.tokenVersion);
             // Verify token version
-            if (!user || user.tokenVersion !== decoded.tokenVersion) {
+            if (!user || user.tokenVersion !== decoded.tokenVersion ) {
               return next(new AppError("Invalid refresh token", 401));
             }
             req.user = user;

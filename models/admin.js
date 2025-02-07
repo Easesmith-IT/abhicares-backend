@@ -104,9 +104,7 @@ const userSchema = new Schema(
       type:Number,
       default:0
     },
-    refreshToken:{
-      type:String,
-    }
+  
   },
   { timestamps: true }
 );

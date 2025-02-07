@@ -591,8 +591,8 @@ router.get(
 );
 router.post("/login-Admin", adminController.loginAdminUser);
 router.get("/logout-Admin", adminController.logoutAdmin);
-router.get("/status", websiteAuth.checkAuthStatus);
-router.post("/refresh", websiteAuth.refresh);
+router.get("/status", adminController.checkAdminAuthStatus);
+router.post("/refresh", websiteAuth.refreshAdminToken);
 router.post("/logout-all", websiteAuth.logoutAll);
 
 // seller wallet routes (inside partners)
