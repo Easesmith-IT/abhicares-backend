@@ -811,3 +811,45 @@ exports.refreshUserToken = catchAsync(async (req, res, next) => {
     });
   });
 
+  exports.logoutAllAdmin = catchAsync(async (req, res, next) => {
+    const { adminId } = req.body;
+    if (!adminId) {
+        return res.status(400).json({ success: false, message: "Admin ID is required" });
+    }
+
+    const adminUser = await admin.findById(adminId);
+    if (!adminUser) {
+        return res.status(200).json({ success: false, message: "Admin not found" });
+    }
+
+    adminUser.tokenVersion = 0;
+    await adminUser.save();
+
+    res.clearCookie("adminAccessToken");
+    res.clearCookie("adminRefreshToken");
+    res.clearCookie("adminInfo");
+
+    res.status(200).json({ success: true, message: "Admin logged out from all devices" });
+});
+exports.logoutAllUser = catchAsync(async (req, res, next) => {
+    const { phone } = req.body;
+    if (!phone) {
+        return res.status(400).json({ success: false, message: "Phone number is required" });
+    }
+
+    const user = await User.findOne({ phone });
+    if (!user) {
+        return res.status(200).json({ success: false, message: "User not found" });
+    }
+
+    user.tokenVersion = 0;
+    await user.save();
+
+    res.clearCookie("userAccessToken");
+    res.clearCookie("userRefreshToken");
+    res.clearCookie("userInfo");
+
+    res.status(200).json({ success: true, message: "User logged out from all devices" });
+});
+
+
