@@ -12,6 +12,7 @@ const Cart = require("../models/cart");
 const Booking = require("../models/booking");
 const packageModel = require("../models/packages");
 const tempOrder = require("../models/tempOrder");
+const Category = require("../models/category");
 const { autoAssignBooking } = require("../util/autoAssignBooking");
 const { generateOrderId } = require("../util/generateOrderId");
 const locationValidator = require("../util/locationValidator");
@@ -29,7 +30,7 @@ exports.appOrder = async (req, res, next) => {
     const totalOrderval = cart.totalAmount;
     const coupon = cart.coupon;
     const discount = cart.discount;
-
+    console.log(cart);
     const couponId = cart.couponId;
     const payId = req.body.payId;
     if (!user) {
@@ -627,3 +628,127 @@ exports.getApiKey = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.calculateCartCharges = async (req, res, next) => {
+  try {
+    const { cart } = req.body;
+
+    if (!cart || !cart.items || !Array.isArray(cart.items)) {
+      return res.status(400).json({
+        message: "Invalid request. Please provide cart with items array.",
+      });
+    }
+
+    const response = {
+      totalAmount: 0,
+      totalCommission: 0,
+      totalTaxOnCommission: 0,
+      totalConvenience: 0,
+      totalPayable: 0,
+      items: [],
+    };
+
+    // Calculate charges for each item in cart
+    for (const item of cart.items) {
+      const { quantity } = item;
+      const itemDetails = item.prod || item.package;
+      // categoryId =
+      const price = itemDetails.offerPrice || itemDetails.price;
+
+      // Get category details - handle both service and package paths
+      let category;
+      if (item.prod) {
+        // For services/products, get category directly
+        const service = await Service.findById(itemDetails._id);
+        if (!service) {
+          return res.status(404).json({
+            message: `Service not found for ID ${itemDetails._id}`,
+          });
+        }
+        category = await Category.findById(service.categoryId);
+      } else {
+        // For packages, follow package -> service -> category path
+        const service = await Service.findById(itemDetails.serviceId);
+        if (!service) {
+          return res.status(404).json({
+            message: `Service not found for package ${itemDetails._id}`,
+          });
+        }
+        category = await Category.findById(service.categoryId);
+      }
+
+      if (!category) {
+        return res.status(404).json({
+          message: `Category not found for item ${itemDetails._id}`,
+        });
+      }
+
+      // Calculate item level charges
+      const itemTotal = price * quantity;
+      const commissionRate = category.commission / 100;
+      const commissionAmount = itemTotal * commissionRate;
+      const taxOnCommission = commissionAmount * 0.18;
+      const convenienceCharge = category.convenience;
+
+      // Add item details to response
+      response.items.push({
+        itemName: itemDetails.name,
+        basePrice: price,
+        quantity: quantity,
+        charges: {
+          itemAmount: itemTotal,
+          commission: commissionAmount,
+          taxOnCommission: taxOnCommission,
+          convenienceCharge: convenienceCharge,
+          totalForItem:
+            itemTotal + commissionAmount + taxOnCommission + convenienceCharge,
+        },
+      });
+
+      // Update totals
+      response.totalAmount += itemTotal;
+      response.totalCommission += commissionAmount;
+      response.totalTaxOnCommission += taxOnCommission;
+      response.totalConvenience += convenienceCharge;
+    }
+
+    // Calculate final total
+    response.totalPayable =
+      response.totalAmount +
+      response.totalCommission +
+      response.totalTaxOnCommission +
+      response.totalConvenience;
+
+    return res.status(200).json(response);
+  } catch (err) {
+    console.error("Error calculating charges:", err);
+    return res.status(500).json({
+      message: "Error calculating charges",
+      error: err.message,
+    });
+  }
+};
+
+/* Example Response:
+{
+  "totalAmount": 5000,           // Base amount
+  "totalCommission": 500,        // Total commission
+  "totalTaxOnCommission": 90,    // Total tax on commission (18%)
+  "totalConvenience": 100,       // Total convenience charges
+  "totalPayable": 5690,          // Final amount to be paid
+  "items": [
+    {
+      "itemName": "Full repair",
+      "basePrice": 2500,
+      "quantity": 2,
+      "charges": {
+        "itemAmount": 5000,
+        "commission": 500,
+        "taxOnCommission": 90,
+        "convenienceCharge": 100,
+        "totalForItem": 5690
+      }
+    }
+  ]
+}
+*/
