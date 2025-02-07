@@ -639,18 +639,23 @@ exports.posttrackBooking = async (req, res, next) => {
   try {
     const { orderId, prodId, packId } = req.body;
 
-    console.log(orderId, prodId, packId, "orderId, productId, packageId");
+
+    console.log(orderId, prodId, packId, 'orderId, productId, packageId');
+
 
     // Create the query object based on available parameters
     let query = { orderId: orderId };
 
     // Add productId filter if provided
     if (prodId) {
+
       query["product._id"] = prodId;
+
     }
 
     // Add packageId filter if provided
     if (packId) {
+
       query["package._id"] = packId;
     }
 
@@ -673,30 +678,6 @@ exports.posttrackBooking = async (req, res, next) => {
     return next(err);
   }
 };
-
-// exports.posttrackBooking = async (req, res, next) => {
-//   try {
-//     const orderId = req.body.orderId;
-//     const prodId = req.body.prodId;
-//     const packageId = req.body.packId;
-//     var bookings = await BookingModel.find({
-//       orderId: orderId,
-//     });
-//     var booking;
-//     for (var i in bookings) {
-//       if (bookings[i]["product"]["_id"].toString() == prodId) {
-//         booking = bookings[i];
-//       }
-//     }
-//     console.log("booking", booking);
-//     return res.status(200).json({ booking });
-//   } catch (err) {
-//     console.log(err);
-//     const error = new Error(err);
-//     error.httpStatusCode = 500;
-//     return next(err);
-//   }
-// };
 
 exports.getOrderBooking = async (req, res, next) => {
   try {

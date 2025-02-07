@@ -1496,7 +1496,10 @@ exports.deleteSubAdmin = catchAsync(async (req, res, next) => {
 });
 exports.loginAdminUser = catchAsync(async (req, res, next) => {
   console.log("inside admin login");
-  role='admin'
+  // role='admin'
+  console.log(req.originalUrl,'original url')
+  const role=req.originalUrl.startsWith('/api/admin')?"admin":"user"
+  console.log(role)
   const { adminId, password } = req.body;
   const admin = await Admin.findOne({ adminId: adminId });
   if (!admin) {
@@ -1518,8 +1521,7 @@ exports.loginAdminUser = catchAsync(async (req, res, next) => {
       role,
       admin.tokenVersion
     )
-    // res.cookie("accessToken", accessToken, { secure: true, httpOnly: true });
-    // res.cookie("refreshToken", refreshToken, { secure: true, httpOnly: true });
+
     setTokenCookies(res, accessToken, refreshToken, admin, role);
     return res.status(200).json({
       success: true,
@@ -1532,10 +1534,77 @@ exports.loginAdminUser = catchAsync(async (req, res, next) => {
   }
 });
 
+exports.checkAdminAuthStatus = catchAsync(async (req, res, next) => {
+  const { adminAccessToken, adminRefreshToken } = req.cookies;
+  
+  console.log(adminAccessToken, adminRefreshToken, "checkAdminAuthStatus");
+
+  if (!adminRefreshToken || adminRefreshToken === "undefined") {
+      console.log("Admin refresh token expired");
+      return res.status(200).json({
+          success: true,
+          isAuthenticated: false,
+          message: "Refresh token expired",
+          shouldLogOut: true,
+      });
+  }
+
+  if (!adminAccessToken || adminAccessToken === "undefined") {
+      console.log("Admin access token expired");
+      return res.status(200).json({
+          success: true,
+          isAuthenticated: false,
+          message: "Access token expired",
+          shouldLogOut: false,
+      });
+  }
+
+  try {
+      let decoded = jwt.verify(adminAccessToken, process.env.JWT_ACCESS_SECRET);
+      console.log(decoded, "Admin accessToken");
+
+      const adminUser = await admin.findById(decoded.id);
+
+      if (!adminUser) {
+          return res.status(200).json({
+              success: true,
+              isAuthenticated: false,
+              shouldLogOut: true,
+              message: "No admin found",
+          });
+      }
+
+      const userData = {
+          id: adminUser._id,
+          name: adminUser.name,
+          email: adminUser.email,
+          phone: adminUser.phone || "none",
+          role: decoded.role,
+          image: adminUser.image,
+      };
+
+      return res.status(200).json({
+          success: true,
+          isAuthenticated: true,
+          data: userData,
+      });
+  } catch (error) {
+      return res.status(200).json({
+          success: false,
+          isAuthenticated: false,
+          message: error.message || "Authentication error",
+          shouldLogOut: true,
+      });
+  }
+});
+
+
+
+
 exports.logoutAdmin = catchAsync(async (req, res, next) => {
-  res.clearCookie("accessToken");
-  res.clearCookie('refreshToken')
-  res.clearCookie("admininfo")
+  res.clearCookie("adminAccessToken");
+  res.clearCookie('aminRefreshToken')
+  res.clearCookie("adminInfo")
   return res.json({ success: true, message: "Logout successful" });
 });
 
