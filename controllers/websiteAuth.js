@@ -408,20 +408,22 @@ exports.checkAuthStatus = catchAsync(async (req, res, next) => {
   
   
   exports.logoutAll = catchAsync(async (req, res, next) => {
-    const {adminId,phone, role } = req.body;
+    const {adminId,phone } = req.query;
   
     let user;
-  
+    const role=req.originalUrl.startsWith('/api/admin')?"admin":"user"
+    console.log(role,'role')
     // Find the user based on the role
     if (role === "admin") {
       user = await admin.findOne({ _id: adminId });
+      console.log(user,'user')
     } else {
       user = await User.findOne({ phone: phone });
     }
   
     // If user doesn't exist, return an error
     if (!user) {
-      return res.status(404).json({
+      return res.status(200).json({
         success: false,
         message: "User not found",
       });
@@ -448,6 +450,7 @@ exports.checkAuthStatus = catchAsync(async (req, res, next) => {
     console.log(req.cookies);
     // console.log(accessToken, refreshToken, "this is line 531");
     const role=req.originalUrl.startsWith('/api/admin')?"admin":"user"
+    console.log(role,'role')
     if(role==='admin'){
         if (!adminAccessToken || !adminRefreshToken) {
           console.log("accessToken---", adminAccessToken);
