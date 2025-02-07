@@ -1521,8 +1521,8 @@ exports.loginAdminUser = catchAsync(async (req, res, next) => {
       role,
       admin.tokenVersion
     )
-    // res.cookie("accessToken", accessToken, { secure: true, httpOnly: true });
-    // res.cookie("refreshToken", refreshToken, { secure: true, httpOnly: true });
+    admin.refreshToken=refreshToken
+    admin.save()
     setTokenCookies(res, accessToken, refreshToken, admin, role);
     return res.status(200).json({
       success: true,
