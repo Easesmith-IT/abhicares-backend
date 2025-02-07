@@ -14,8 +14,9 @@ const websiteAuth = require("../controllers/websiteAuth");
 router.post("/caluclate-charge", Payment.calculateCartCharges);
 
 // Authentication Routes
-router.get("/status", websiteAuth.checkAuthStatus);
-router.post("/refresh", websiteAuth.refresh);
+router.get('/status',websiteAuth.checkUserAuthStatus)
+router.post('/refresh',websiteAuth.refreshUserToken)
+
 // Category routes
 router.get("/get-all-category", shoppingController.getAllCategory);
 // Service routes
@@ -53,8 +54,8 @@ router.post("/generate-otp", authController.generateOtpUser);
 router.post("/verify-otp", websiteAuth.verifyUserOtp);
 router.post("/signup-otp", authController.signupOtp);
 router.post("/verify-signup", authController.createUser);
-router.get("/logout-user", websiteAuth.protect, authController.logoutUser);
-router.post("/logout-all", websiteAuth.protect, websiteAuth.logoutAll);
+router.get("/logout-user",websiteAuth.protect, authController.logoutUser);
+router.post("/logout-all", websiteAuth.logoutAllUser);
 // special routes
 // router.post("/get-user-by-token", auth_controller.getUserByToken);
 // User Address Routes
