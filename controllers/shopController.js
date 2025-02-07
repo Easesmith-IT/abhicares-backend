@@ -478,6 +478,8 @@ exports.addItemToCart = catchAsync(async (req, res, next) => {
   }
 });
 
+
+
 exports.updateItemQuantity = catchAsync(async (req, res, next) => {
   // const cartId = req.params.id //cart id
   const { quantity, userId } = req.body;

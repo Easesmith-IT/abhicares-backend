@@ -10,8 +10,8 @@ const paymentController = require("../controllers/paymentsController");
 const websiteAuth=require('../controllers/websiteAuth')
 
 // Authentication Routes
-router.get('/status',websiteAuth.checkAuthStatus)
-router.post('/refresh',websiteAuth.refresh)
+router.get('/status',websiteAuth.checkUserAuthStatus)
+router.post('/refresh',websiteAuth.refreshUserToken)
 // Category routes
 router.get("/get-all-category", shoppingController.getAllCategory);
 // Service routes
