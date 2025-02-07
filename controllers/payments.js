@@ -708,9 +708,9 @@ exports.calculateCartCharges = async (req, res, next) => {
         charges: {
           itemAmount: itemTotal,
           itemTotaltax: Math.round(taxOnCommission + convenienceCharge),
-          commission: commissionAmount,
-          taxOnCommission: taxOnCommission,
-          convenienceCharge: convenienceCharge,
+          // commission: commissionAmount,
+          // taxOnCommission: taxOnCommission,
+          // convenienceCharge: convenienceCharge,
           totalForItem: Math.round(
             itemTotal + taxOnCommission + convenienceCharge
           ),

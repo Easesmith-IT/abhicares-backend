@@ -7,11 +7,15 @@ const isCity = require("../middleware/availableCity");
 const shoppingController = require("../controllers/shopController");
 const authController = require("../controllers/authController");
 const paymentController = require("../controllers/paymentsController");
-const websiteAuth=require('../controllers/websiteAuth')
+const Payment = require("../controllers/payments");
+
+const websiteAuth = require("../controllers/websiteAuth");
+
+router.post("/caluclate-charge", Payment.calculateCartCharges);
 
 // Authentication Routes
-router.get('/status',websiteAuth.checkAuthStatus)
-router.post('/refresh',websiteAuth.refresh)
+router.get("/status", websiteAuth.checkAuthStatus);
+router.post("/refresh", websiteAuth.refresh);
 // Category routes
 router.get("/get-all-category", shoppingController.getAllCategory);
 // Service routes
@@ -49,13 +53,21 @@ router.post("/generate-otp", authController.generateOtpUser);
 router.post("/verify-otp", websiteAuth.verifyUserOtp);
 router.post("/signup-otp", authController.signupOtp);
 router.post("/verify-signup", authController.createUser);
-router.get("/logout-user",websiteAuth.protect, authController.logoutUser);
-router.post("/logout-all",websiteAuth.protect, websiteAuth.logoutAll);
+router.get("/logout-user", websiteAuth.protect, authController.logoutUser);
+router.post("/logout-all", websiteAuth.protect, websiteAuth.logoutAll);
 // special routes
 // router.post("/get-user-by-token", auth_controller.getUserByToken);
 // User Address Routes
-router.post("/create-user-address",  websiteAuth.protect, authController.addUserAddress);
-router.get("/get-user-address", websiteAuth.protect, authController.getAllAddresses); //passing user id
+router.post(
+  "/create-user-address",
+  websiteAuth.protect,
+  authController.addUserAddress
+);
+router.get(
+  "/get-user-address",
+  websiteAuth.protect,
+  authController.getAllAddresses
+); //passing user id
 router.delete(
   "/delete-user-address/:id",
   websiteAuth.protect,
@@ -102,8 +114,16 @@ router.post(
   isCity.isCityAvailable,
   paymentController.websiteCodOrder
 );
-router.get("/get-user-orders",websiteAuth.protect, paymentController.getAllUserOrders);
-router.post('/raise-ticket',websiteAuth.protect,shoppingController.raiseTicket)
+router.get(
+  "/get-user-orders",
+  websiteAuth.protect,
+  paymentController.getAllUserOrders
+);
+router.post(
+  "/raise-ticket",
+  websiteAuth.protect,
+  shoppingController.raiseTicket
+);
 router.get(
   "/get-product-invoice/:id",
   websiteAuth.protect,
@@ -114,7 +134,11 @@ router.post(
   websiteAuth.protect,
   paymentController.updateOrderStatus
 ); // passing order id
-router.post("/create-online-order", websiteAuth.protect, paymentController.checkout);
+router.post(
+  "/create-online-order",
+  websiteAuth.protect,
+  paymentController.checkout
+);
 router.post(
   "/payment-verification",
   websiteAuth.protect,
@@ -126,15 +150,27 @@ router.post("/get-api-key", websiteAuth.protect, paymentController.getApiKey);
 router.get("/get-all-faq", websiteAuth.protect, shoppingController.getAllFaq);
 
 // Help Center Routes
-router.post("/create-help", websiteAuth.protect, shoppingController.createHelpCenter);
-router.get("/get-user-help",  websiteAuth.protect, shoppingController.getUserHelpCenter);
+router.post(
+  "/create-help",
+  websiteAuth.protect,
+  shoppingController.createHelpCenter
+);
+router.get(
+  "/get-user-help",
+  websiteAuth.protect,
+  shoppingController.getUserHelpCenter
+);
 
 // Coupon routes
 router.post("/get-coupon-details", shoppingController.getCouponByName);
-router.post("/get-referralCredits",  websiteAuth.protect, shoppingController.getReferralCredits);
+router.post(
+  "/get-referralCredits",
+  websiteAuth.protect,
+  shoppingController.getReferralCredits
+);
 
 // user profile routes
-router.post("/update-email",  websiteAuth.protect, authController.updateEmail);
-router.get("/user-info",  websiteAuth.protect, authController.userInfo);
+router.post("/update-email", websiteAuth.protect, authController.updateEmail);
+router.get("/user-info", websiteAuth.protect, authController.userInfo);
 
 module.exports = router;
