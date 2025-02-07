@@ -633,8 +633,8 @@ exports.getApiKey = async (req, res, next) => {
 
 exports.calculateCartCharges = async (req, res, next) => {
   try {
-    const { cart } = req.body;
-    if (!cart || !cart.items || !Array.isArray(cart.items)) {
+    const { items } = req.body;
+    if (!items || !Array.isArray(items)) {
       return res.status(400).json({
         message: "Invalid request. Please provide cart with items array.",
       });
@@ -650,7 +650,7 @@ exports.calculateCartCharges = async (req, res, next) => {
     };
 
     // Calculate charges for each item in cart
-    for (const item of cart.items) {
+    for (const item of items) {
       const { quantity } = item;
       let itemDetails;
       // categoryId =
