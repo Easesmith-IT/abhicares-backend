@@ -321,13 +321,15 @@ const generateBookings = async (
     console.log("userAddress", userAddress);
 
     for (const orderItem of orderItems) {
-      const bookingId = await generateBookingId();
+      const customBookingId = await generateBookingId();
       var booking;
+      
       if (orderItem.product) {
         booking = new Booking({
           orderId: order._id,
           userId: user._id,
-          bookingId: bookingId,
+          customBookingId: customBookingId, // Store generated ID here
+          bookingId: booking._id, // This will be set automatically by MongoDB
           paymentStatus: paymentStatus,
           paymentType: paymentType,
           userAddress: {
@@ -352,7 +354,8 @@ const generateBookings = async (
         booking = new Booking({
           orderId: order._id,
           userId: user._id,
-          bookingId: bookingId,
+          customBookingId: customBookingId, // Store generated ID here
+          bookingId: booking?._id, // This will be set automatically by MongoDB
           paymentStatus: paymentStatus,
           paymentType: paymentType,
           userAddress: {
@@ -374,7 +377,7 @@ const generateBookings = async (
           booking._id
         );
       }
-      orderItem.bookingId = booking._id;
+      orderItem.bookingId = booking._id; // Store MongoDB _id in orderItem.bookingId
     }
     return orderItems;
   } catch (err) {
@@ -644,7 +647,7 @@ exports.paymentVerification = catchAsync(async (req, res, next) => {
 
   if (isAuthentic) {
     const result = await TempOrder.findOne({ _id: productId });
-
+    console.log(result,'result line 645')
     const order = new Order({
       orderPlatform: result.orderPlatform,
       paymentType: result.paymentType,
