@@ -39,7 +39,6 @@ exports.appOrder = async (req, res, next) => {
       return res.status(404).json({ message: "User not found." });
     }
     const userAddress = await UserAddress.findById(userAddressId);
-
     const validation = await locationValidator.validateLocation(
       userAddress.userAddresscity,
       userAddress.state,

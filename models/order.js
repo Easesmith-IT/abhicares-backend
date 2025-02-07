@@ -73,6 +73,12 @@ const orderSchema = new Schema(
           type: Date,
           required: true,
         },
+        itemTotalTax: {
+          type: Number,
+        },
+        itemTotal: {
+          type: Number,
+        },
         refundStatus: {
           type: String,
           enum: ["none", "pending", "processed", "failed", "not-applicable"],

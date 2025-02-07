@@ -793,17 +793,17 @@ exports.postOrderBooking = async (req, res, next) => {
       },
       token: token, // FCM token of the recipient device
     };
-    const tokenResponse = await createSendPushNotification(
-      deviceType,
-      token,
-      message,
-      appType
-    );
-    if (!tokenResponse) {
-      return res.status(400).json({
-        message: "No token found",
-      });
-    }
+    // const tokenResponse = await createSendPushNotification(
+    //   deviceType,
+    //   token,
+    //   message,
+    //   appType
+    // );
+    // if (!tokenResponse) {
+    //   return res.status(400).json({
+    //     message: "No token found",
+    //   });
+    // }
     return res.status(200).json({ review });
   } catch (err) {
     console.log(err);

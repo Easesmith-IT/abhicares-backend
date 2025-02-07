@@ -61,6 +61,9 @@ exports.appOrder = async (req, res, next) => {
           product: productItem["prod"],
           quantity: productItem["quantity"],
           bookingId: null,
+          itemTotal:
+            productItem["prod"]["offerPrice"] + productItem["itemTotaltax"],
+          itemTotalTax: productItem["itemTotaltax"],
           bookingDate: productItem["bookDate"],
           bookingTime: productItem["bookTime"],
         });
@@ -69,6 +72,9 @@ exports.appOrder = async (req, res, next) => {
           package: productItem["prod"],
           quantity: productItem["quantity"],
           bookingId: null,
+          itemTotal:
+            productItem["prod"]["offerPrice"] + productItem["itemTotaltax"],
+          itemTotalTax: productItem["itemTotaltax"],
           bookingDate: productItem["bookDate"],
           bookingTime: productItem["bookTime"],
         });
@@ -80,11 +86,11 @@ exports.appOrder = async (req, res, next) => {
     console.log(totalOrderval);
     const order = new Order({
       paymentType: cart["paymentType"],
-      orderValue: totalOrderval,
+      orderValue: cart["totalvalue"] + cart["totalTax"],
       itemTotal: cart["totalvalue"],
       No_of_left_bookings: orderItems.length,
       discount: 0,
-      tax: (cart["totalvalue"] * 18) / 100,
+      tax: cart["totalTax"],
       items: orderItems,
       orderId,
       orderPlatform: "app",
@@ -126,6 +132,8 @@ exports.appOrder = async (req, res, next) => {
           userId: user._id,
           bookingId: bookingId,
           paymentStatus: paymentStatus,
+          itemTotalValue: orderItem.itemTotal,
+          itemTotalTax: orderItem.itemTotalTax,
           userAddress: {
             addressLine: userAddress.addressLine,
             pincode: userAddress.pincode,
@@ -146,6 +154,8 @@ exports.appOrder = async (req, res, next) => {
           orderId: order._id,
           userId: user._id,
           bookingId: bookingId,
+          itemTotalValue: orderItem.itemTotal,
+          itemTotalTax: orderItem.itemTotalTax,
           paymentStatus: paymentStatus,
           userAddress: {
             addressLine: userAddress.addressLine,
