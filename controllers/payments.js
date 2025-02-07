@@ -8,6 +8,9 @@ const User = require("../models/user");
 const Order = require("../models/order");
 const Payment = require("../models/payments");
 const Products = require("../models/product");
+const Package = require("../models/packages");
+const Category = require("../models/category");
+const Service = require("../models/service");
 const Cart = require("../models/cart");
 const Booking = require("../models/booking");
 const packageModel = require("../models/packages");
@@ -29,7 +32,7 @@ exports.appOrder = async (req, res, next) => {
     const totalOrderval = cart.totalAmount;
     const coupon = cart.coupon;
     const discount = cart.discount;
-
+    console.log(cart);
     const couponId = cart.couponId;
     const payId = req.body.payId;
     if (!user) {
@@ -627,3 +630,118 @@ exports.getApiKey = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.calculateCartCharges = async (req, res, next) => {
+  try {
+    const { items } = req.body;
+    if (!items || !Array.isArray(items)) {
+      return res.status(400).json({
+        message: "Invalid request. Please provide cart with items array.",
+      });
+    }
+
+    const response = {
+      totalAmount: 0,
+      totalCommission: 0,
+      totalTaxOnCommission: 0,
+      totalConvenience: 0,
+      totalPayable: 0,
+      items: [],
+    };
+
+    // Calculate charges for each item in cart
+    for (const item of items) {
+      const { quantity } = item;
+      let itemDetails;
+      // categoryId =
+      if (item.type == "product") {
+        itemDetails = await Products.findById(item.prodId);
+      } else if (item.type == "package") {
+        itemDetails = await Package.findById(item.prodId);
+      } else {
+        return res.status(400).json({ message: "item type is not defiend" });
+      }
+      const price = itemDetails.offerPrice || itemDetails.price;
+      const service = await Service.findById(item.serviceId);
+      const category = await Category.findById(service.categoryId);
+      console.log(itemDetails, category);
+
+      if (!category) {
+        return res.status(404).json({
+          message: `Category not found for item ${itemDetails._id}`,
+        });
+      }
+
+      // Calculate item level charges
+      const itemTotal = price * quantity;
+      const commissionRate = category.commission / 100;
+      const commissionAmount = itemTotal * commissionRate;
+      const taxOnCommission = commissionAmount * 0.18;
+      const convenienceCharge = category.convenience;
+
+      // Add item details to response
+      response.items.push({
+        itemName: itemDetails.name,
+        basePrice: price,
+        quantity: quantity,
+        charges: {
+          itemAmount: itemTotal,
+          itemTotaltax: Math.round(taxOnCommission + convenienceCharge),
+          // commission: commissionAmount,
+          // taxOnCommission: taxOnCommission,
+          // convenienceCharge: convenienceCharge,
+          totalForItem: Math.round(
+            itemTotal + taxOnCommission + convenienceCharge
+          ),
+        },
+      });
+
+      // Update totals
+      response.totalAmount += itemTotal;
+      // response.totalTax += taxOnCommission + convenienceCharge;
+      response.totalTaxOnCommission += Math.round(taxOnCommission);
+      response.totalConvenience += Math.round(convenienceCharge);
+    }
+
+    // Calculate final total
+    response.totalPayable = Math.round(
+      response.totalAmount +
+        response.totalTaxOnCommission +
+        response.totalConvenience
+    );
+    response.totalTax =
+      response.totalTaxOnCommission + response.totalConvenience;
+
+    return res.status(200).json(response);
+  } catch (err) {
+    console.error("Error calculating charges:", err);
+    return res.status(500).json({
+      message: "Error calculating charges",
+      error: err.message,
+    });
+  }
+};
+
+/* Example Response:
+{
+  "totalAmount": 5000,           // Base amount
+  "totalCommission": 500,        // Total commission
+  "totalTaxOnCommission": 90,    // Total tax on commission (18%)
+  "totalConvenience": 100,       // Total convenience charges
+  "totalPayable": 5690,          // Final amount to be paid
+  "items": [
+    {
+      "itemName": "Full repair",
+      "basePrice": 2500,
+      "quantity": 2,
+      "charges": {
+        "itemAmount": 5000,
+        "commission": 500,
+        "taxOnCommission": 90,
+        "convenienceCharge": 100,
+        "totalForItem": 5690
+      }
+    }
+  ]
+}
+*/
