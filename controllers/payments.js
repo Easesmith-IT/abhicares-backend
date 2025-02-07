@@ -8,6 +8,9 @@ const User = require("../models/user");
 const Order = require("../models/order");
 const Payment = require("../models/payments");
 const Products = require("../models/product");
+const Package = require("../models/packages");
+const Category = require("../models/category");
+const Service = require("../models/service");
 const Cart = require("../models/cart");
 const Booking = require("../models/booking");
 const packageModel = require("../models/packages");
@@ -651,31 +654,39 @@ exports.calculateCartCharges = async (req, res, next) => {
     // Calculate charges for each item in cart
     for (const item of cart.items) {
       const { quantity } = item;
-      const itemDetails = item.prod || item.package;
+      let itemDetails;
       // categoryId =
-      const price = itemDetails.offerPrice || itemDetails.price;
-
-      // Get category details - handle both service and package paths
-      let category;
-      if (item.prod) {
-        // For services/products, get category directly
-        const service = await Service.findById(itemDetails._id);
-        if (!service) {
-          return res.status(404).json({
-            message: `Service not found for ID ${itemDetails._id}`,
-          });
-        }
-        category = await Category.findById(service.categoryId);
+      if (item.type == "product") {
+        itemDetails = await Products.findById(item.prodId);
+      } else if (item.type == "package") {
+        itemDetails = await Package.findById(item.prodId);
       } else {
-        // For packages, follow package -> service -> category path
-        const service = await Service.findById(itemDetails.serviceId);
-        if (!service) {
-          return res.status(404).json({
-            message: `Service not found for package ${itemDetails._id}`,
-          });
-        }
-        category = await Category.findById(service.categoryId);
+        return res.status(400).json({ message: "item type is not defiend" });
       }
+      const price = itemDetails.offerPrice || itemDetails.price;
+      const service = await Service.findById(item.serviceId);
+      const category = Category.findById(service.categoryId);
+      // Get category details - handle both service and package paths
+      // let category;
+      // if (item.prod) {
+      //   // For services/products, get category directly
+      //   const service = await Service.findById(itemDetails._id);
+      //   if (!service) {
+      //     return res.status(404).json({
+      //       message: `Service not found for ID ${itemDetails._id}`,
+      //     });
+      //   }
+      //   category = await Category.findById(service.categoryId);
+      // } else {
+      //   // For packages, follow package -> service -> category path
+      //   const service = await Service.findById(itemDetails.serviceId);
+      //   if (!service) {
+      //     return res.status(404).json({
+      //       message: `Service not found for package ${itemDetails._id}`,
+      //     });
+      //   }
+      //   category = await Category.findById(service.categoryId);
+      // }
 
       if (!category) {
         return res.status(404).json({
@@ -697,9 +708,10 @@ exports.calculateCartCharges = async (req, res, next) => {
         quantity: quantity,
         charges: {
           itemAmount: itemTotal,
-          commission: commissionAmount,
-          taxOnCommission: taxOnCommission,
-          convenienceCharge: convenienceCharge,
+          itemTotaltax: commissionAmount + taxOnCommission + convenienceCharge,
+          // commission: commissionAmount,
+          // taxOnCommission: taxOnCommission,
+          // convenienceCharge: convenienceCharge,
           totalForItem:
             itemTotal + commissionAmount + taxOnCommission + convenienceCharge,
         },
