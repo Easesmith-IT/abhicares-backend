@@ -15,7 +15,6 @@ const Cart = require("../models/cart");
 const Booking = require("../models/booking");
 const packageModel = require("../models/packages");
 const tempOrder = require("../models/tempOrder");
-const Category = require("../models/category");
 const { autoAssignBooking } = require("../util/autoAssignBooking");
 const { generateOrderId } = require("../util/generateOrderId");
 const locationValidator = require("../util/locationValidator");
@@ -635,7 +634,6 @@ exports.getApiKey = async (req, res, next) => {
 exports.calculateCartCharges = async (req, res, next) => {
   try {
     const { cart } = req.body;
-
     if (!cart || !cart.items || !Array.isArray(cart.items)) {
       return res.status(400).json({
         message: "Invalid request. Please provide cart with items array.",
@@ -665,7 +663,8 @@ exports.calculateCartCharges = async (req, res, next) => {
       }
       const price = itemDetails.offerPrice || itemDetails.price;
       const service = await Service.findById(item.serviceId);
-      const category = Category.findById(service.categoryId);
+      const category = await Category.findById(service.categoryId);
+      console.log(itemDetails, category);
       // Get category details - handle both service and package paths
       // let category;
       // if (item.prod) {
@@ -708,12 +707,13 @@ exports.calculateCartCharges = async (req, res, next) => {
         quantity: quantity,
         charges: {
           itemAmount: itemTotal,
-          itemTotaltax: commissionAmount + taxOnCommission + convenienceCharge,
-          // commission: commissionAmount,
-          // taxOnCommission: taxOnCommission,
-          // convenienceCharge: convenienceCharge,
-          totalForItem:
-            itemTotal + commissionAmount + taxOnCommission + convenienceCharge,
+          itemTotaltax: Math.round(taxOnCommission + convenienceCharge),
+          commission: commissionAmount,
+          taxOnCommission: taxOnCommission,
+          convenienceCharge: convenienceCharge,
+          totalForItem: Math.round(
+            itemTotal + taxOnCommission + convenienceCharge
+          ),
         },
       });
 
