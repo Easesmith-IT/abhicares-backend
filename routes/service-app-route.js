@@ -6,7 +6,7 @@ const serviceAppController = require("../controllers/service app/service_app_con
 const traceOrder_controller = require("../controllers/traceOrderController");
 const bookingControler = require("../controllers/service app/bookings_controller");
 const serviceAuthController = require("../controllers/service app/service_app_auth_controller");
-
+const authController = require("../controllers/authController");
 //homepage route
 router.get(
   "/get-homepage-hero-banners",
@@ -81,6 +81,8 @@ router.get(
 
 router.get("/get-seller/:id", serviceAppController.getSeller);
 router.get("/get-seller-online-status/:id", serviceAppController.getSeller);
+
+router.post("/completion-otp", authController.generateOtpBooking);
 
 // router.get("/test", serviceAppController.tempstatus);
 

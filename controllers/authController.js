@@ -1,9 +1,13 @@
 const jwt = require("jsonwebtoken");
 const AppError = require("../util/appError");
-const { nanoid } = require('nanoid');
+const { nanoid } = require("nanoid");
 const catchAsync = require("../util/catchAsync");
 const axios = require("axios");
-const { generateOTP, verifyOTP } = require("../util/otpHandler");
+const {
+  generateOTP,
+  verifyOTP,
+  generateBookingOTP,
+} = require("../util/otpHandler");
 
 const Cart = require("../models/cart");
 const User = require("../models/user");
@@ -11,7 +15,7 @@ const UserAddress = require("../models/useraddress");
 const ReferAndEarn = require("../models/referAndEarn");
 const UserReferalLink = require("../models/userReferealLink");
 const { tokenSchema } = require("../models/fcmToken");
-
+const BookingModel = require("../models/booking");
 const authKey = "T1PhA56LPJysMHFZ62B5";
 const authToken = "8S2pMXV8IRpZP6P37p4SWrVErk2N6CzSEa458pt1";
 const credentials = `${authKey}:${authToken}`;
@@ -24,10 +28,9 @@ const config = {
   },
 };
 
-
 exports.generateOtpUser = catchAsync(async (req, res, next) => {
   const { phoneNumber } = req.body;
-  console.log(phoneNumber,'phone')
+  console.log(phoneNumber, "phone");
   const user = await User.findOne({ phone: phoneNumber }).select("-password");
   console.log(user);
   if (!user) {
@@ -35,6 +38,19 @@ exports.generateOtpUser = catchAsync(async (req, res, next) => {
   }
 
   await generateOTP(phoneNumber, user);
+
+  res.status(200).json({ message: "otp sent successful" });
+});
+
+exports.generateOtpBooking = catchAsync(async (req, res, next) => {
+  const { bookingId, sellerId } = req.body;
+  const booking = await BookingModel.findById(bookingId);
+  const user = await User.findById(booking.userId).select("-password");
+  console.log(user);
+  if (!user) {
+    return next(new AppError("User does not exist", 404));
+  }
+  await generateBookingOTP(user.phone, user, sellerId, bookingId);
 
   res.status(200).json({ message: "otp sent successful" });
 });
@@ -55,7 +71,7 @@ exports.generateOtpUser = catchAsync(async (req, res, next) => {
 //         foundUserToken.token=fcmToken;
 //         await foundUserToken.save();
 //       }
-    
+
 //      if(!foundUserToken){
 //       newToken=await tokenSchema.create({
 //         userId:user._id,
@@ -66,13 +82,13 @@ exports.generateOtpUser = catchAsync(async (req, res, next) => {
 //       if(!newToken){
 //         return res.status(400).json({
 //           message:'something went wrong while saving the fcm token',
-    
+
 //         })
-      
+
 //       }
 //      }
 //   }
-  
+
 //   const payload = { id: user._id };
 //   const token = jwt.sign(payload, process.env.JWT_SECRET, {
 //     expiresIn: "2d",
@@ -133,7 +149,7 @@ exports.verifyUserOtp = catchAsync(async (req, res, next) => {
 
   let otpVerified = false;
 
-  if (enteredOTP === '000000') {
+  if (enteredOTP === "000000") {
     // Bypass OTP verification if enteredOTP is '0000'
     otpVerified = true;
   } else {
@@ -221,7 +237,6 @@ exports.verifyUserOtp = catchAsync(async (req, res, next) => {
   });
 });
 
-
 exports.signupOtp = catchAsync(async (req, res, next) => {
   const { name, phone, referralCode } = req.body;
   if (!name || !phone) {
@@ -262,7 +277,7 @@ exports.signupOtp = catchAsync(async (req, res, next) => {
 });
 
 exports.appSignupOtp = catchAsync(async (req, res, next) => {
-  const { name, phone, referralCode,appType,fcmToken,deviceType } = req.body;
+  const { name, phone, referralCode, appType, fcmToken, deviceType } = req.body;
   if (!name || !phone) {
     res
       .status(400)
@@ -291,8 +306,10 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
       );
       // For saving FCM token
       if (deviceType === "android" || deviceType === "ios") {
-        const foundUserToken = await tokenSchema.findOne({ userId: resultData._id });
-    
+        const foundUserToken = await tokenSchema.findOne({
+          userId: resultData._id,
+        });
+
         if (foundUserToken) {
           foundUserToken.token = fcmToken;
           await foundUserToken.save();
@@ -303,7 +320,7 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
             deviceType: deviceType,
             appType: appType,
           });
-    
+
           if (!newToken) {
             return res.status(400).json({
               message: "Something went wrong while saving the FCM token",
@@ -340,7 +357,7 @@ exports.appCreateUser = catchAsync(async (req, res, next) => {
     const decoded = jwt.verify(tempVerf, process.env.JWT_SECRET);
     console.log(decoded.otp == enteredOTP, decoded.phone == phone);
     if (decoded.otp == enteredOTP && decoded.phone == phone) {
-      const referralCode = nanoid(8)
+      const referralCode = nanoid(8);
       const psw = "password";
       var user = await User({
         name: decoded.name,
@@ -395,7 +412,7 @@ exports.createUser = catchAsync(async (req, res, next) => {
 
   const decoded = jwt.verify(req.cookies["tempVerf"], process.env.JWT_SECRET);
   if (decoded.otp == enteredOTP.toString() && decoded.phone == phone) {
-    const referralCode = nanoid(8)
+    const referralCode = nanoid(8);
 
     var user = await User({
       name: decoded.name,

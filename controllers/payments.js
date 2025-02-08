@@ -680,6 +680,7 @@ exports.calculateCartCharges = async (req, res, next) => {
 
       // Add item details to response
       response.items.push({
+        itemId: itemDetails._id,
         itemName: itemDetails.name,
         basePrice: price,
         quantity: quantity,
