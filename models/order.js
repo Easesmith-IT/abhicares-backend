@@ -63,7 +63,7 @@ const orderSchema = new Schema(
         bookingId: {
           type: Schema.Types.ObjectId,
           ref: "Booking",
-          required: true,
+          required: false,
         },
         bookingDate: {
           type: Date,
