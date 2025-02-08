@@ -1603,7 +1603,7 @@ exports.checkAdminAuthStatus = catchAsync(async (req, res, next) => {
 
 exports.logoutAdmin = catchAsync(async (req, res, next) => {
   res.clearCookie("adminAccessToken");
-  res.clearCookie('aminRefreshToken')
+  res.clearCookie('adminRefreshToken')
   res.clearCookie("adminInfo")
   return res.json({ success: true, message: "Logout successful" });
 });
