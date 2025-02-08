@@ -39,7 +39,6 @@ exports.appOrder = async (req, res, next) => {
       return res.status(404).json({ message: "User not found." });
     }
     const userAddress = await UserAddress.findById(userAddressId);
-
     const validation = await locationValidator.validateLocation(
       userAddress.userAddresscity,
       userAddress.state,
@@ -681,6 +680,7 @@ exports.calculateCartCharges = async (req, res, next) => {
 
       // Add item details to response
       response.items.push({
+        itemId: itemDetails._id,
         itemName: itemDetails.name,
         basePrice: price,
         quantity: quantity,

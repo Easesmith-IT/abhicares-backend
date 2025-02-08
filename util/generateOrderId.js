@@ -48,7 +48,31 @@ const generateTicketId = async () => {
   return `TC${numericWithDashes}${alphabets}`;
 };
 
-console.log(generateOrderId());
+// console.log(generateOrderId());
+
+const sellerCashoutId = async () => {
+  // Generate a unique UUID
+  const uuid = uuidv4();
+
+  const numericPart = uuid.replace(/[^0-9]/g, "").slice(0, 12);
+
+  const numericWithDashes =
+    numericPart.slice(0, 4) +
+    "-" +
+    numericPart.slice(4, 8) +
+    "-" +
+    numericPart.slice(8, 10) +
+    "-" +
+    numericPart.slice(10);
+
+  // Generate two random alphabets
+  const alphabets =
+    String.fromCharCode(Math.floor(Math.random() * 26) + 65) +
+    String.fromCharCode(Math.floor(Math.random() * 26) + 65); // Two random uppercase letters
+
+  return `SCH${numericWithDashes}${alphabets}`;
+};
+
 const generateBookingId = async () => {
   // Generate a unique UUID
   const uuid = uuidv4();
@@ -101,4 +125,5 @@ module.exports = {
   generateBookingId,
   generatePartnerId,
   generateTicketId,
+  sellerCashoutId,
 };

@@ -49,7 +49,11 @@ const booking = require("../models/booking");
 const order = require("../models/order");
 const { counterSchema } = require("../models/counter");
 const admin = require("../models/admin");
-const { generateRefreshToken, generateAccessToken, setTokenCookies } = require("./websiteAuth");
+const {
+  generateRefreshToken,
+  generateAccessToken,
+  setTokenCookies,
+} = require("./websiteAuth");
 
 // category routes
 exports.genOrderId = catchAsync(async (req, res, next) => {
@@ -1261,7 +1265,6 @@ exports.searchEnquiries = catchAsync(async (req, res, next) => {
   }
 });
 
-
 exports.deleteEnquiry = catchAsync(async (req, res, next) => {
   const id = req.params.id;
   await Enquiry.findByIdAndDelete({ _id: id });
@@ -1497,9 +1500,9 @@ exports.deleteSubAdmin = catchAsync(async (req, res, next) => {
 exports.loginAdminUser = catchAsync(async (req, res, next) => {
   console.log("inside admin login");
   // role='admin'
-  console.log(req.originalUrl,'original url')
-  const role=req.originalUrl.startsWith('/api/admin')?"admin":"user"
-  console.log(role)
+  console.log(req.originalUrl, "original url");
+  const role = req.originalUrl.startsWith("/api/admin") ? "admin" : "user";
+  console.log(role);
   const { adminId, password } = req.body;
   const admin = await Admin.findOne({ adminId: adminId });
   if (!admin) {
@@ -1509,25 +1512,23 @@ exports.loginAdminUser = catchAsync(async (req, res, next) => {
   const isMatch = await bcrypt.compare(password, admin.password);
 
   if (isMatch) {
-    
-    const refreshToken=await generateRefreshToken(
+    const refreshToken = await generateRefreshToken(
       admin._id,
       role,
       admin.tokenVersion
-    )
+    );
 
-    const accessToken=await generateAccessToken(
+    const accessToken = await generateAccessToken(
       admin._id,
       role,
       admin.tokenVersion
-    )
+    );
 
     setTokenCookies(res, accessToken, refreshToken, admin, role);
     return res.status(200).json({
       success: true,
       message: "Login successful",
       perm: admin.permissions,
-      
     });
   } else {
     return next(new AppError("Incorrect Password!", 400));
@@ -1536,70 +1537,67 @@ exports.loginAdminUser = catchAsync(async (req, res, next) => {
 
 exports.checkAdminAuthStatus = catchAsync(async (req, res, next) => {
   const { adminAccessToken, adminRefreshToken } = req.cookies;
-  
+
   console.log(adminAccessToken, adminRefreshToken, "checkAdminAuthStatus");
 
   if (!adminRefreshToken || adminRefreshToken === "undefined") {
-      console.log("Admin refresh token expired");
-      return res.status(200).json({
-          success: true,
-          isAuthenticated: false,
-          message: "Refresh token expired",
-          shouldLogOut: true,
-      });
+    console.log("Admin refresh token expired");
+    return res.status(200).json({
+      success: true,
+      isAuthenticated: false,
+      message: "Refresh token expired",
+      shouldLogOut: true,
+    });
   }
 
   if (!adminAccessToken || adminAccessToken === "undefined") {
-      console.log("Admin access token expired");
-      return res.status(200).json({
-          success: true,
-          isAuthenticated: false,
-          message: "Access token expired",
-          shouldLogOut: false,
-      });
+    console.log("Admin access token expired");
+    return res.status(200).json({
+      success: true,
+      isAuthenticated: false,
+      message: "Access token expired",
+      shouldLogOut: false,
+    });
   }
 
   try {
-      let decoded = jwt.verify(adminAccessToken, process.env.JWT_ACCESS_SECRET);
-      console.log(decoded, "Admin accessToken");
+    let decoded = jwt.verify(adminAccessToken, process.env.JWT_ACCESS_SECRET);
+    console.log(decoded, "Admin accessToken");
 
-      const adminUser = await admin.findById(decoded.id);
+    const adminUser = await admin.findById(decoded.id);
 
-      if (!adminUser) {
-          return res.status(200).json({
-              success: true,
-              isAuthenticated: false,
-              shouldLogOut: true,
-              message: "No admin found",
-          });
-      }
-
-      const userData = {
-          id: adminUser._id,
-          name: adminUser.name,
-          email: adminUser.email,
-          phone: adminUser.phone || "none",
-          role: decoded.role,
-          image: adminUser.image,
-      };
-
+    if (!adminUser) {
       return res.status(200).json({
-          success: true,
-          isAuthenticated: true,
-          data: userData,
+        success: true,
+        isAuthenticated: false,
+        shouldLogOut: true,
+        message: "No admin found",
       });
+    }
+
+    const userData = {
+      id: adminUser._id,
+      name: adminUser.name,
+      email: adminUser.email,
+      phone: adminUser.phone || "none",
+      role: decoded.role,
+      image: adminUser.image,
+    };
+
+    return res.status(200).json({
+      success: true,
+      isAuthenticated: true,
+      data: userData,
+    });
   } catch (error) {
-      return res.status(200).json({
-          success: false,
-          isAuthenticated: false,
-          message: error.message || "Authentication error",
-          shouldLogOut: true,
-      });
+    return res.status(200).json({
+      success: false,
+      isAuthenticated: false,
+      message: error.message || "Authentication error",
+      shouldLogOut: true,
+    });
   }
 });
-
-
-
 
 exports.logoutAdmin = catchAsync(async (req, res, next) => {
   res.clearCookie("adminAccessToken");
@@ -1767,12 +1765,13 @@ exports.getAllOrders = catchAsync(async (req, res, next) => {
     sortOrder = "desc",
   } = req.query;
 
-  console.log("req.query", req.query)
+  console.log("req.query", req.query);
   const currentPage = Math.max(1, parseInt(page));
   const limit = ORDERS_PER_PAGE;
 
   // Build filter object
-  const dateFilter = startDate && endDate && buildDateFilter(startDate, endDate);
+  const dateFilter =
+    startDate && endDate && buildDateFilter(startDate, endDate);
   const statusFilter = status && buildStatusFilter(status);
 
   const filter = {
@@ -2630,13 +2629,13 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
 });
 
 exports.getAllTickets = catchAsync(async (req, res, next) => {
-  const { page=1,ticketId } = req.query;
+  const { page = 1, ticketId } = req.query;
   const limit = 10;
   // Calculate skip value for pagination
   const skip = (page - 1) * limit;
-  const searchQuery={}
-  if(ticketId){
-    searchQuery.ticketId=ticketId
+  const searchQuery = {};
+  if (ticketId) {
+    searchQuery.ticketId = ticketId;
   }
   // Fetch paginated tickets
   const tickets = await HelpCenter.find(searchQuery)
@@ -3456,10 +3455,10 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 //     }
 // };
 
-exports.sendNotificationToAll = async (req, res,next) => {
+exports.sendNotificationToAll = async (req, res, next) => {
   const { description, date, time, title } = req.body;
   console.log("req.body", req.body);
-  
+
   if (!description || !title) {
     return next(new AppError("Please provide title and description", 400));
   }
@@ -3486,12 +3485,13 @@ exports.sendNotificationToAll = async (req, res,next) => {
     if (req.body.appType && req.body.appType !== "all") {
       pipeline.push({ $match: { appType: req.body.appType } });
     }
-    
+
     pipeline.push({
       $group: {
         _id: {
           deviceType: "$deviceType",
-          ...(req.body.appType && req.body.appType !== "all" && { appType: "$appType" }),
+          ...(req.body.appType &&
+            req.body.appType !== "all" && { appType: "$appType" }),
         },
         tokens: {
           $push: {
@@ -3502,15 +3502,14 @@ exports.sendNotificationToAll = async (req, res,next) => {
         },
       },
     });
-    
+
     const tokensByDeviceType = await tokenSchema.aggregate(pipeline);
 
     if (!tokensByDeviceType || tokensByDeviceType.length === 0) {
       return res.status(200).json({
-          message:"No users found",
-          status:false
-        })
-     
+        message: "No users found",
+        status: false,
+      });
     }
     for (let i = 0; i < tokensByDeviceType.length; i++) {
       console.log(tokensByDeviceType[i]);
@@ -3828,6 +3827,24 @@ exports.updateCategoryData = async (req, res) => {
     category.convenience = convenience;
     await category.save();
     res.status(200).json({ status: "true", data: category });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      error: "An error occurred while updating seller status",
+      details: error.message,
+    });
+  }
+};
+
+exports.getSellerCashouts = async (req, res) => {
+  try {
+    const cashouts = await SellerCashout.find({)
+      .skip((page - 1) * limit)
+      .limit(limit * 1)
+      .sort({ createdAt: -1 })
+      .populate('sellerWalletId')
+      .populate("sellerWalletId.sellerId");
+    res.status(200).json({ status: "true", data: cashouts });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
