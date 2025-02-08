@@ -83,6 +83,7 @@ router.get("/get-seller/:id", serviceAppController.getSeller);
 router.get("/get-seller-online-status/:id", serviceAppController.getSeller);
 
 router.post("/completion-otp", authController.generateOtpBooking);
+router.post("/verify-completion-otp", authController.verifyBookingOtp);
 
 // router.get("/test", serviceAppController.tempstatus);
 
