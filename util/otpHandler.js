@@ -192,6 +192,27 @@ exports.generateBookingOTP = async (phoneNumber, user, sellerId, bookingId) => {
   }
 };
 
+exports.verifyBookingOTP = async (enteredOTP, sellerId, bookingId, res) => {
+  const otpDoc = await userOtpLinkModel
+    .findOne({ bookingId: bookingId, sellerId: sellerId })
+    .lean();
+  console.log("otpDoc", otpDoc);
+
+  if (enteredOTP * 1 !== otpDoc.otp) {
+    return res
+      .status(400)
+      .json({ success: false, message: "OTP does not match" });
+  }
+
+  const currentTime = new Date().getTime(); // Current time
+  if (currentTime > otpDoc.otpExpiresAt.getTime()) {
+    return res
+      .status(400)
+      .json({ success: false, message: "OTP has expired!" });
+  }
+  otpDoc.otp = null;
+};
+
 exports.verifyOTP = async (phoneNumber, enteredOTP, user, res) => {
   const otpDoc = await userOtpLinkModel.findOne({ userId: user._id }).lean();
   console.log("otpDoc", otpDoc);

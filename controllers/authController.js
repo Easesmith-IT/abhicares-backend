@@ -7,6 +7,7 @@ const {
   generateOTP,
   verifyOTP,
   generateBookingOTP,
+  verifyBookingOTP,
 } = require("../util/otpHandler");
 
 const Cart = require("../models/cart");
@@ -53,6 +54,33 @@ exports.generateOtpBooking = catchAsync(async (req, res, next) => {
   await generateBookingOTP(user.phone, user, sellerId, bookingId);
 
   res.status(200).json({ message: "otp sent successful" });
+});
+
+exports.verifyBookingOtp = catchAsync(async (req, res, next) => {
+  const { enteredOTP, bookingId, sellerId } = req.body;
+
+  let otpVerified = false;
+  await verifyBookingOTP(enteredOTP, sellerId, bookingId, res);
+  otpVerified = true; // Set as verified if no errors occurred in verifyOTP
+
+  if (!otpVerified) {
+    return res.status(401).json({ message: "OTP verification failed" });
+  }
+  const booking = await BookingModel.findById(bookingId).populate({
+    path: "sellerId",
+    model: "Seller",
+    select: "name", // Only get required seller fields
+  });
+  if (!booking) {
+    return next(new AppError("Booking not found", 404));
+  }
+  booking.currentLocation.status = "completed";
+  booking.save();
+  res.status(200).json({
+    success: true,
+    booking: booking,
+    paymentStatus: booking.paymentStatus,
+  });
 });
 
 // exports.verifyUserOtp = catchAsync(async (req, res, next) => {
