@@ -31,16 +31,23 @@ const cartSchema = new Schema(
         },
       },
     ],
-    totalPrice: {
-      type: Number,
-      default: 0,
-    },
+    // totalPrice: {
+    //   type: Number,
+    //   default: 0,
+    // },
+    // totalTax: {
+    //   type: Number,
+    //   default: 0,
+    // },
+    // totalCartValue: {
+    //   type: Number,
+    //   default: 0,
+    // },
   },
   { timestamps: true }
 );
 
-cartSchema.methods.addToCart = function ( prod, type ) {
- 
+cartSchema.methods.addToCart = function (prod, type) {
   let newQuantity = 1;
   const updatedCartItems = [...this.items];
   if (type == "product") {
@@ -77,7 +84,7 @@ cartSchema.methods.addToCart = function ( prod, type ) {
   return this.save();
 };
 
-cartSchema.methods.deleteFromCart = function (prod,type) {
+cartSchema.methods.deleteFromCart = function (prod, type) {
   let updatedCartItems = [...this.items];
   if (type == "product") {
     const cartProductIndex = this.items.findIndex(
@@ -94,7 +101,7 @@ cartSchema.methods.deleteFromCart = function (prod,type) {
     }
   } else if (type == "package") {
     const cartProductIndex = this.items.findIndex(
-      (cp) =>String(cp.packageId) === prod._id.toString()
+      (cp) => String(cp.packageId) === prod._id.toString()
     );
     let quantity = updatedCartItems[cartProductIndex].quantity;
     if (quantity > 1) {
@@ -102,7 +109,7 @@ cartSchema.methods.deleteFromCart = function (prod,type) {
       updatedCartItems[cartProductIndex].quantity = quantity;
     } else {
       updatedCartItems = this.items.filter(
-        (item) =>String(item.packageId) !== prod._id.toString()
+        (item) => String(item.packageId) !== prod._id.toString()
       );
     }
   }

@@ -4,7 +4,7 @@ const { authorize } = require("../middleware/authorization");
 
 const router = express.Router();
 const img_upload = require("../middleware/imageMiddleware");
-const websiteAuth=require('../controllers/websiteAuth')
+const websiteAuth = require("../controllers/websiteAuth");
 const adminController = require("../controllers/adminController");
 
 // Category Routes
@@ -606,7 +606,7 @@ router.get(
 
 router.get(
   "/get-seller-wallet-cashout-requests/:id", //passing wallet id
- websiteAuth.protect,
+  websiteAuth.protect,
   authorize("partners", "read"),
   adminController.getCashoutRequests
 );
@@ -672,6 +672,12 @@ router.post(
   websiteAuth.protect,
   authorize("settings", "write"),
   adminController.updateCategoryData
+);
+
+router.get(
+  "/get-seller-cashout",
+  websiteAuth.protect,
+  adminController.getSellerCashouts
 );
 
 module.exports = router;

@@ -16,10 +16,17 @@ const bookingSchema = new mongoose.Schema(
       ref: "Order",
       required: true,
     },
-
+    itemTotalValue: {
+      type: Number,
+      default: 0,
+    },
+    itemTotalTax: {
+      type: Number,
+      default: 0,
+    },
     paymentStatus: {
       type: String,
-      enum: ["completed", "pending"],
+      enum: ["completed", "pending", "completeReq"],
     },
     paymentType: {
       type: String,

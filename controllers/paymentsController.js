@@ -29,6 +29,96 @@ const instance = new Razorpay({
   key_secret: process.env.RAZORPAY_API_SECRET,
 });
 
+const calculateCartCharges = async (items) => {
+  try {
+    if (!items || !Array.isArray(items)) {
+      return {
+        res: false,
+        message: "Invalid request. Please provide cart with items array.",
+      };
+    }
+
+    const response = {
+      totalAmount: 0,
+      totalCommission: 0,
+      totalTaxOnCommission: 0,
+      totalConvenience: 0,
+      totalPayable: 0,
+      items: [],
+    };
+
+    // Calculate charges for each item in cart
+    for (const item of items) {
+      const { quantity } = item;
+      let itemDetails;
+      // categoryId =
+      if (item.type == "product") {
+        itemDetails = await Products.findById(item.prodId);
+      } else if (item.type == "package") {
+        itemDetails = await Package.findById(item.prodId);
+      } else {
+        return { res: false, message: "item type is not defiend" };
+      }
+      const price = itemDetails.offerPrice || itemDetails.price;
+      const service = await Service.findById(item.serviceId);
+      const category = await Category.findById(service.categoryId);
+      console.log(itemDetails, category);
+      if (!category) {
+        return {
+          res: false,
+          message: `Category not found for item ${itemDetails._id}`,
+        };
+      }
+
+      // Calculate item level charges
+      const itemTotal = price * quantity;
+      const commissionRate = category.commission / 100;
+      const commissionAmount = itemTotal * commissionRate;
+      const taxOnCommission = commissionAmount * 0.18;
+      const convenienceCharge = category.convenience;
+
+      // Add item details to response
+      response.items.push({
+        itemId: itemDetails._id,
+        itemName: itemDetails.name,
+        basePrice: price,
+        quantity: quantity,
+        charges: {
+          itemAmount: itemTotal,
+          itemTotaltax: Math.round(taxOnCommission + convenienceCharge),
+          totalForItem: Math.round(
+            itemTotal + taxOnCommission + convenienceCharge
+          ),
+        },
+      });
+
+      // Update totals
+      response.totalAmount += itemTotal;
+      // response.totalTax += taxOnCommission + convenienceCharge;
+      response.totalTaxOnCommission += Math.round(taxOnCommission);
+      response.totalConvenience += Math.round(convenienceCharge);
+    }
+
+    // Calculate final total
+    response.totalPayable = Math.round(
+      response.totalAmount +
+        response.totalTaxOnCommission +
+        response.totalConvenience
+    );
+    response.totalTax =
+      response.totalTaxOnCommission + response.totalConvenience;
+
+    return { res: true, data: response };
+  } catch (err) {
+    console.error("Error calculating charges:", err);
+    return {
+      res: false,
+      message: "Error calculating charges",
+      error: err.message,
+    };
+  }
+};
+
 exports.appOrder = async (req, res, next) => {
   try {
     const userId = req.body.userId;
@@ -57,18 +147,26 @@ exports.appOrder = async (req, res, next) => {
       }
 
       if (prod) {
+        const itemTotalBooking =
+          productItem["prod"]["offerPrice"] * productItem["quantity"];
         orderItems.push({
           product: productItem["prod"],
           quantity: productItem["quantity"],
           bookingId: null,
+          itemTotal: itemTotalBooking + productItem["itemTotaltax"],
+          itemTotalTax: productItem["itemTotaltax"],
           bookingDate: productItem["bookDate"],
           bookingTime: productItem["bookTime"],
         });
       } else if (pack) {
+        const itemTotalBooking =
+          productItem["prod"]["offerPrice"] * productItem["quantity"];
         orderItems.push({
           package: productItem["prod"],
           quantity: productItem["quantity"],
           bookingId: null,
+          itemTotal: itemTotalBooking + productItem["itemTotaltax"],
+          itemTotalTax: productItem["itemTotaltax"],
           bookingDate: productItem["bookDate"],
           bookingTime: productItem["bookTime"],
         });
@@ -80,11 +178,11 @@ exports.appOrder = async (req, res, next) => {
     console.log(totalOrderval);
     const order = new Order({
       paymentType: cart["paymentType"],
-      orderValue: totalOrderval,
+      orderValue: cart["totalvalue"] + cart["totalTax"],
       itemTotal: cart["totalvalue"],
       No_of_left_bookings: orderItems.length,
       discount: 0,
-      tax: (cart["totalvalue"] * 18) / 100,
+      tax: cart["totalTax"],
       items: orderItems,
       orderId,
       orderPlatform: "app",
@@ -126,6 +224,8 @@ exports.appOrder = async (req, res, next) => {
           userId: user._id,
           bookingId: bookingId,
           paymentStatus: paymentStatus,
+          itemTotalValue: orderItem.itemTotal,
+          itemTotalTax: orderItem.itemTotalTax,
           userAddress: {
             addressLine: userAddress.addressLine,
             pincode: userAddress.pincode,
@@ -146,6 +246,8 @@ exports.appOrder = async (req, res, next) => {
           orderId: order._id,
           userId: user._id,
           bookingId: bookingId,
+          itemTotalValue: orderItem.itemTotal,
+          itemTotalTax: orderItem.itemTotalTax,
           paymentStatus: paymentStatus,
           userAddress: {
             addressLine: userAddress.addressLine,
@@ -427,13 +529,15 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
     return next(new AppError("User not found.", 404));
   }
   const items = cart.items;
-
+  const chargeRes = await calculateCartCharges(items);
+  if (!chargeRes.res) {
+    return next(new AppError(chargeRes.message, 404));
+  }
   // console.log('inside cod order');
   console.log("items", items);
   // console.log('bookings',bookings)
 
   const orderItems = await generateOrderItems(items, bookings);
-
   console.log("orderItems", orderItems);
 
   if (orderItems) {
@@ -446,10 +550,10 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
       orderPlatform: "website",
       paymentType: "COD",
       No_of_left_bookings: bookings.length,
-      orderValue: Math.floor(total),
+      orderValue: chargeRes.data.totalPayable,
       orderId: orderId,
-      itemTotal,
-      discount,
+      itemTotal: chargeRes.data.totalAmount,
+      itemTotalTax: chargeRes.data.totalTax,
       referalDiscount: referalDis,
       tax,
       items: orderItems,
@@ -467,10 +571,32 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
         },
       },
     });
-
+    let orderItemsWithTax = [];
+    newOrderItem.forEach((ord) => {
+      const res = chargeRes.data.items.forEach((value) => {
+        if (ord.type == "product") {
+          if (value.itemId == ord.productId) {
+            return {
+              itemTotal: value.itemTotal,
+              totalForItem: value.totalForItem,
+              itemTotaltax: value.itemTotaltax,
+            };
+          }
+        } else if (ord.type == "package") {
+          if (value.itemId == ord.packageId._id.toString()) {
+            return {
+              itemTotal: value.itemTotal,
+              totalForItem: value.totalForItem,
+              itemTotaltax: value.itemTotaltax,
+            };
+          }
+        }
+      });
+      orderItemsWithTax.push({ ...ord, ...res });
+    });
     // create and save bookings
     const newOrderItem = await generateBookings(
-      orderItems,
+      orderItemsWithTax,
       user,
       order,
       userAddress,
