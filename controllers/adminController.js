@@ -2630,13 +2630,16 @@ exports.filterUserTickets = catchAsync(async (req, res, next) => {
 });
 
 exports.getAllTickets = catchAsync(async (req, res, next) => {
-  const { page } = req.query;
+  const { page=1,ticketId } = req.query;
   const limit = 10;
   // Calculate skip value for pagination
   const skip = (page - 1) * limit;
-
+  const searchQuery={}
+  if(ticketId){
+    searchQuery.ticketId=ticketId
+  }
   // Fetch paginated tickets
-  const tickets = await HelpCenter.find()
+  const tickets = await HelpCenter.find(searchQuery)
     .populate({
       path: "bookingId",
       model: "Booking",
