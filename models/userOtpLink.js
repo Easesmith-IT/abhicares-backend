@@ -11,7 +11,7 @@ const userOtpLinkSchema = new Schema(
     bookingId: {
       type: mongoose.Types.ObjectId,
       ref: "Booking",
-      required: true,
+      // required: true,
     },
     userId: {
       type: mongoose.Types.ObjectId,
@@ -21,7 +21,7 @@ const userOtpLinkSchema = new Schema(
     sellerId: {
       type: mongoose.Types.ObjectId,
       ref: "Seller",
-      required: true,
+      // required: true,
     },
     otp: {
       type: Number,
