@@ -3,6 +3,9 @@ const Schema = mongoose.Schema;
 
 const sellerCashoutSchema = new Schema(
   {
+    cashoutId: {
+      type: String,
+    },
     sellerWalletId: {
       type: mongoose.ObjectId,
       ref: "SellerWallet",
