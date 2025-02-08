@@ -589,7 +589,11 @@ exports.refreshUserToken = catchAsync(async (req, res, next) => {
     const { userAccessToken, userRefreshToken,adminAccessToken,adminRefreshToken } = req.cookies;
     console.log(req.cookies);
     // console.log(accessToken, refreshToken, "this is line 531");
-    const role=req.originalUrl.startsWith('/api/admin')?"admin":"user"
+    const role = req.originalUrl.startsWith('/api/admin')
+    ? "admin"
+    : req.originalUrl.startsWith('/api/content')
+    ? "admin"
+    : "user";
     console.log(role,'role')
     if(role==='admin'){
         if (!adminAccessToken || !adminRefreshToken) {
