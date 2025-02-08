@@ -74,6 +74,7 @@ exports.verifyBookingOtp = catchAsync(async (req, res, next) => {
   if (!booking) {
     return next(new AppError("Booking not found", 404));
   }
+  booking.status = "completeReq";
   booking.currentLocation.status = "completed";
   booking.save();
   res.status(200).json({

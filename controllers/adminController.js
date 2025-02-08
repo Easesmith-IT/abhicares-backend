@@ -3838,7 +3838,6 @@ exports.updateCategoryData = async (req, res) => {
 
 exports.getSellerCashouts = async (req, res) => {
   try {
-    p
     const cashouts = await SellerCashout.find({)
       .skip((page - 1) * limit)
       .limit(limit * 1)
