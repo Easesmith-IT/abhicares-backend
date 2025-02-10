@@ -676,7 +676,7 @@ router.post(
 
 router.get(
   "/get-seller-cashout",
-  websiteAuth.protect,
+  // websiteAuth.protect,
   adminController.getSellerCashouts
 );
 
