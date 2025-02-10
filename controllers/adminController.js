@@ -3858,12 +3858,62 @@ exports.getSellerCashouts = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate("sellerWalletId")
       .populate("sellerWalletId.sellerId");
+
     res.status(200).json({ status: "true", data: cashouts });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
-      error: "An error occurred while updating seller status",
+      error: "An error occurred while fetching seller cashouts",
       details: error.message,
     });
   }
 };
+
+exports.getSellerCashoutDetails=catchAsync(async(req,res,next)=>{
+  const {cashoutId}=req.query
+  const cashout = await SellerCashout.findById(cashoutId)
+      .populate({
+        path: "sellerWalletId",
+        populate: {
+          path: "sellerId", 
+          model: "Seller",  
+        },
+      });
+
+    if (!cashout) {
+      return res.status(200).json({ 
+        status:false,
+        message: "Cashout not found" });
+    }
+
+    return res.status(200).json({
+      message:"here's the details",
+      status:true,
+      cashout
+    });
+  
+})
+
+exports.updateCashoutStatus = catchAsync(async (req, res) => {
+  const { cashoutId,status } = req.body;
+
+
+  // Valid status options
+  const validStatuses = ["approved", "rejected", "under-processing"];
+
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ message: "Invalid status" });
+  }
+
+  const updatedCashout = await SellerCashout.findByIdAndUpdate(
+    cashoutId,
+    { status },
+    { new: true }
+  );
+
+  if (!updatedCashout) {
+    return res.status(200).json({ message: "Cashout not found" });
+  }
+
+  res.status(200).json({ message: `Cashout ${status} successfully`, updatedCashout });
+});
