@@ -99,12 +99,16 @@ const userSchema = new Schema(
         enum: ["read", "write", "none"],
         required: true,
       },
+      sellerCashout: {
+        type: String,
+        enum: ["read", "write", "none"],
+        required: true,
+      },
     },
-    tokenVersion:{
-      type:Number,
-      default:0
+    tokenVersion: {
+      type: Number,
+      default: 0,
     },
-  
   },
   { timestamps: true }
 );

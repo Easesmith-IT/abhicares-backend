@@ -176,6 +176,8 @@ exports.generateBookingOTP = async (phoneNumber, user, sellerId, bookingId) => {
 
   if (existingOtpDoc) {
     existingOtpDoc.otp = otp;
+    existingOtpDoc.bookingId = bookingId;
+    existingOtpDoc.sellerId = sellerId;
     existingOtpDoc.otpExpiresAt = otpExpiresAt;
     await existingOtpDoc.save();
   } else {
