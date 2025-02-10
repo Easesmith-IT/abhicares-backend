@@ -3855,7 +3855,6 @@ exports.getSellerCashouts = async (req, res) => {
     const cashouts = await SellerCashout.find()
       .skip(skip)
       .limit(limitNumber)
->>>>>>>>> Temporary merge branch 2
       .sort({ createdAt: -1 })
       .populate("sellerWalletId")
       .populate("sellerWalletId.sellerId");
