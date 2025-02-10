@@ -3845,9 +3845,10 @@ exports.getSellerCashouts = async (req, res) => {
     const limitNumber = parseInt(limit, 10);
 
     if (pageNumber <= 0 || limitNumber <= 0) {
-      return next(
-        new AppError("Page and limit must be positive integers", 400)
-      );
+      return res.status(200).json({
+        status:false,
+        message:"Page and limit must be positive integers",
+      })
     }
 
     // Calculate the number of documents to skip
