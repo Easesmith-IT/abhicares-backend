@@ -1,13 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const contentController = require("../controllers/contentController.js");
+const websiteAuth = require("../controllers/websiteAuth");
 const image_middleware = require("../middleware/imageMiddleware.js");
 const { isAdminAuth } = require("../middleware/auth");
 const { authorize } = require("../middleware/authorization.js");
 
 router.post(
   "/upload-banners",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("banners", "write"),
   image_middleware.upload,
   // sharpUpload.sharpUpload,
@@ -16,13 +17,13 @@ router.post(
 
 router.get(
   "/get-seo-by-page",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("settings", "read"),
   contentController.getSeoByPage
 );
 router.patch(
   "/update-seo-by-page",
-  isAdminAuth,
+  websiteAuth.protect,
   authorize("settings", "write"),
   contentController.updateSeo
 );

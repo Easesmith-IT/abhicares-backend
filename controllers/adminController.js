@@ -1601,8 +1601,8 @@ exports.checkAdminAuthStatus = catchAsync(async (req, res, next) => {
 
 exports.logoutAdmin = catchAsync(async (req, res, next) => {
   res.clearCookie("adminAccessToken");
-  res.clearCookie("aminRefreshToken");
-  res.clearCookie("adminInfo");
+  res.clearCookie('adminRefreshToken')
+  res.clearCookie("adminInfo")
   return res.json({ success: true, message: "Logout successful" });
 });
 
@@ -3838,32 +3838,88 @@ exports.updateCategoryData = async (req, res) => {
 
 exports.getSellerCashouts = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query; // Extract search query, page, and limit from request query
+    const { page = 1, limit = 10,cashoutId } = req.query; // Extract search query, page, and limit from request query
 
     // Convert page and limit to integers
+    const query={}
+    if(cashoutId){
+      query.cashoutId=cashoutId
+    }
+
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
 
     if (pageNumber <= 0 || limitNumber <= 0) {
-      return next(
-        new AppError("Page and limit must be positive integers", 400)
-      );
+      return res.status(200).json({
+        status:false,
+        message:"Page and limit must be positive integers",
+      })
     }
 
     // Calculate the number of documents to skip
     const skip = (pageNumber - 1) * limitNumber;
-    const cashouts = await SellerCashout.find()
+    const cashouts = await SellerCashout.find(query)
       .skip(skip)
       .limit(limitNumber)
       .sort({ createdAt: -1 })
       .populate("sellerWalletId")
       .populate("sellerWalletId.sellerId");
+
     res.status(200).json({ status: "true", data: cashouts });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
-      error: "An error occurred while updating seller status",
+      error: "An error occurred while fetching seller cashouts",
       details: error.message,
     });
   }
 };
+
+exports.getSellerCashoutDetails=catchAsync(async(req,res,next)=>{
+  const {cashoutId}=req.query
+  const cashout = await SellerCashout.findById(cashoutId)
+      .populate({
+        path: "sellerWalletId",
+        populate: {
+          path: "sellerId", 
+          model: "Seller",  
+        },
+      });
+
+    if (!cashout) {
+      return res.status(200).json({ 
+        status:false,
+        message: "Cashout not found" });
+    }
+
+    return res.status(200).json({
+      message:"here's the details",
+      status:true,
+      cashout
+    });
+  
+})
+
+exports.updateCashoutStatus = catchAsync(async (req, res) => {
+  const { cashoutId,status } = req.body;
+
+
+  // Valid status options
+  const validStatuses = ["approved", "rejected", "under-processing"];
+
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ message: "Invalid status" });
+  }
+
+  const updatedCashout = await SellerCashout.findByIdAndUpdate(
+    cashoutId,
+    { status },
+    { new: true }
+  );
+
+  if (!updatedCashout) {
+    return res.status(200).json({ message: "Cashout not found" });
+  }
+
+  res.status(200).json({ message: `Cashout ${status} successfully`, updatedCashout });
+});
