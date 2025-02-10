@@ -680,5 +680,17 @@ router.get(
   authorize("sellerCashout", "write"),
   adminController.getSellerCashouts
 );
+router.get(
+  "/get-seller-cashout-detail",
+  websiteAuth.protect,
+  authorize("sellerCashout", "write"),
+  adminController.getSellerCashoutDetails
+);
+router.patch(
+  "/update-seller-cashout-status",
+  websiteAuth.protect,
+  authorize("sellerCashout", "write"),
+  adminController.updateCashoutStatus
+);
 
 module.exports = router;
