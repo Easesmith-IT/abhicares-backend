@@ -3838,17 +3838,24 @@ exports.updateCategoryData = async (req, res) => {
 
 exports.getSellerCashouts = async (req, res) => {
   try {
-    const { page = 1, limit = 10, cashoutId } = req.query; // Extract query params
+    const { page = 1, limit = 10 } = req.query; // Extract search query, page, and limit from request query
 
-    let query = {}; 
+    // Convert page and limit to integers
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
 
-    if (cashoutId) {
-      query.cashoutId = cashoutId; // Search by cashoutId if provided
+    if (pageNumber <= 0 || limitNumber <= 0) {
+      return next(
+        new AppError("Page and limit must be positive integers", 400)
+      );
     }
 
-    const cashouts = await SellerCashout.find(query)
-      .skip((page - 1) * limit)
-      .limit(Number(limit))
+    // Calculate the number of documents to skip
+    const skip = (pageNumber - 1) * limitNumber;
+    const cashouts = await SellerCashout.find()
+      .skip(skip)
+      .limit(limitNumber)
+>>>>>>>>> Temporary merge branch 2
       .sort({ createdAt: -1 })
       .populate("sellerWalletId")
       .populate("sellerWalletId.sellerId");
