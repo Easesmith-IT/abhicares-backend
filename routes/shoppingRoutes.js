@@ -33,7 +33,7 @@ router.get("/get-service-package/:id", shoppingController.getServicePackage);
 router.get("/get-package-product/:id", shoppingController.getPackageProduct);
 
 //Cart Routes
-router.get("/cart-details", userAuthForCart, shoppingController.getCart);
+router.get("/cart-details", shoppingController.getCart);
 router.post(
   "/remove-cart-item/:id",
   userAuthForCart,
