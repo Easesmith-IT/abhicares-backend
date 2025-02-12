@@ -280,39 +280,64 @@ const calculateCartCharges = async (items) => {
 // };
 exports.appOrder = async (req, res, next) => {
   try {
-    const { userId, userAddressId, cart, payId } = req.body;
-    
+    const userId = req.body.userId;
+    const userAddressId = req.body.userAddressId;
     const user = await User.findById(userId);
+    const cart = req.body.cart;
+    const totalOrderval = cart.totalAmount;
+    const coupon = cart.coupon;
+    const discount = cart.discount;
+    const couponId = cart.couponId;
+    const payId = req.body.payId;
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
+    console.log(cart);
+    // Extract cart data from the user's cart
+    const products = cart["items"];
+    // // Create an array to store order items
+    const orderItems = [];
+    for (const productItem of products) {
+      let prod, pack;
+      if (productItem.type == "product") {
+        prod = productItem;
+      } else if (productItem.type == "package") {
+        pack = productItem;
+      }
 
-    const userAddress = await UserAddress.findById(userAddressId);
-    if (!userAddress) {
-      return res.status(404).json({ message: "Address not found." });
+      if (prod) {
+        orderItems.push({
+          product: productItem["prod"],
+          quantity: productItem["quantity"],
+          bookingId: null,
+          itemTotal: productItem.charges.totalForItem,
+          itemTotalTax: productItem.charges.itemTotalTax,
+          bookingDate: productItem["bookDate"],
+          bookingTime: productItem["bookTime"],
+        });
+      } else if (pack) {
+        orderItems.push({
+          package: productItem["prod"],
+          quantity: productItem["quantity"],
+          bookingId: null,
+          itemTotal: productItem.charges.totalForItem,
+          itemTotalTax: productItem.charges.itemTotalTax,
+          bookingDate: productItem["bookDate"],
+          bookingTime: productItem["bookTime"],
+        });
+      }
     }
-
-    // Create order items using pre-calculated values from cart
-    const orderItems = cart.items.map(item => ({
-      [item.type]: item.prod, // either 'product' or 'package'
-      quantity: item.quantity,
-      bookingId: null,
-      itemTotal: item.charges.totalForItem,
-      itemTotalTax: item.charges.itemTotalTax,
-      bookingDate: item.bookDate,
-      bookingTime: item.bookTime,
-    }));
-
     const orderId = await generateOrderId();
 
-    // Create order with pre-calculated values
+    const userAddress = await UserAddress.findById(userAddressId);
+    console.log(totalOrderval);
     const order = new Order({
-      paymentType: cart.paymentType,
-      orderValue: cart.totalPayable,
-      itemTotal: cart.totalAmount,
+      paymentType: cart["paymentType"],
+      orderValue: cart["totalPayable"],
+      itemTotal: cart["totalAmount"],
       No_of_left_bookings: orderItems.length,
-      discount: cart.totalDiscount,
-      tax: cart.totalTax,
+      discount: 0,
+      tax: cart["totalTax"],
       items: orderItems,
       orderId,
       orderPlatform: "app",
@@ -329,68 +354,82 @@ exports.appOrder = async (req, res, next) => {
         },
       },
     });
-
     if (payId) {
       order.payId = payId;
     }
-
-    if (cart.couponId) {
-      order.couponId = cart.couponId;
-      order.discount = cart.totalDiscount;
+    if (coupon) {
+      order.couponId = couponId;
+      order.discount = discount;
     }
-
-    // Set payment status based on payment type
-    const paymentStatus = cart.paymentType === "online" ? "completed" : "pending";
-
-    // Create bookings for each order item
+    // await order.save();
+    var paymentStatus;
+    if (cart["paymentType"] == "online") {
+      paymentStatus = "completed";
+    } else {
+      paymentStatus = "pending";
+    }
+    ///booking creation
     for (const orderItem of orderItems) {
+      // console.log(orderItem);
+      var booking;
       const bookingId = await generateBookingId();
-      
-      const bookingData = {
-        orderId: order._id,
-        userId: user._id,
-        bookingId,
-        paymentStatus,
-        itemTotalValue: orderItem.itemTotal,
-        itemTotalTax: orderItem.itemTotalTax,
-        userAddress: {
-          addressLine: userAddress.addressLine,
-          pincode: userAddress.pincode,
-          landmark: userAddress.landmark,
-          city: userAddress.city,
-          location: userAddress.location,
-        },
-        quantity: orderItem.quantity,
-        bookingDate: orderItem.bookingDate,
-        bookingTime: orderItem.bookingTime,
-        orderValue: orderItem.itemTotal - orderItem.itemTotalTax, // Using pre-calculated values
-      };
-
-      // Add type-specific fields
       if (orderItem.product) {
-        bookingData.product = orderItem.product;
+        booking = new Booking({
+          orderId: order._id,
+          userId: user._id,
+          bookingId: bookingId,
+          paymentStatus: paymentStatus,
+          itemTotalValue: orderItem.itemTotal,
+          itemTotalTax: orderItem.itemTotalTax,
+          userAddress: {
+            addressLine: userAddress.addressLine,
+            pincode: userAddress.pincode,
+            landmark: userAddress.landmark,
+            city: userAddress.city,
+            location: userAddress.location,
+          },
+          product: orderItem.product,
+          quantity: orderItem.quantity,
+          bookingDate: orderItem.bookingDate,
+          bookingTime: orderItem.bookingTime,
+          orderValue: orderItem.itemTotal - orderItem.itemTotalTax, // Using pre-calculated total instead of recalculating
+        });
+        await booking.save();
+        orderItem.bookingId = booking._id;
       } else if (orderItem.package) {
-        bookingData.package = orderItem.package;
+        booking = new Booking({
+          orderId: order._id,
+          userId: user._id,
+          bookingId: bookingId,
+          itemTotalValue: orderItem.itemTotal,
+          itemTotalTax: orderItem.itemTotalTax,
+          paymentStatus: paymentStatus,
+          userAddress: {
+            addressLine: userAddress.addressLine,
+            pincode: userAddress.pincode,
+            landmark: userAddress.landmark,
+            city: userAddress.city,
+            location: userAddress.location,
+          },
+          package: orderItem.package,
+          quantity: orderItem.quantity,
+          bookingDate: orderItem.bookingDate,
+          bookingTime: orderItem.bookingTime,
+          orderValue: orderItem.itemTotal - orderItem.itemTotalTax, // Using pre-calculated total instead of recalculating
+        });
       }
-
-      if (paymentStatus === "completed") {
-        bookingData.paymentType = cart.paymentType;
+      if (paymentStatus == "completed") {
+        booking.paymentType = cart["paymentType"];
       }
-
-      const booking = new Booking(bookingData);
-      await booking.save();
       orderItem.bookingId = booking._id;
+      await booking.save();
     }
-
+    order.items = orderItems;
     await order.save();
     return res.status(200).json(order);
-    
   } catch (err) {
-    console.error("Error creating order:", err);
-    return res.status(500).json({ 
-      message: "Error creating order", 
-      error: err.message 
-    });
+    console.log(err);
+    return { message: "error", error: err };
   }
 };
 
