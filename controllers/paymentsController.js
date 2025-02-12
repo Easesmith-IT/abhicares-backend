@@ -793,31 +793,151 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
   }
 });
 
+// exports.checkout = catchAsync(async (req, res, next) => {
+//   const {
+//     platformType,
+//     itemTotal,
+//     discount,
+//     tax,
+//     total,
+//     userAddressId,
+//     bookings,
+//     referalDiscount,
+//   } = req.body;
+//   const user = req.user;
+//   if (!user) {
+//     return next(new AppError("User not found.", 404));
+//   }
+//   let referalDis = null;
+//   if (referalDiscount) referalDis = referalDiscount;
+
+//   console.log("couponId", req.body.couponId);
+
+//   let couponId = null;
+//   if (req.body.couponId) {
+//     couponId = req.body.couponId;
+//   }
+
+//   const cart = await Cart.findOne({ userId: user._id }).populate({
+//     path: "items",
+//     model: "Cart",
+//     populate: [
+//       {
+//         path: "productId",
+//         model: "Product",
+//       },
+//       {
+//         path: "packageId",
+//         model: "Package",
+//       },
+//     ],
+//   });
+
+//   const items = cart.items;
+
+//   const orderItems = await generateOrderItems(items, bookings);
+
+//   const userAddress = await UserAddress.findById(userAddressId);
+//   const orderId = await generateOrderId();
+//   if (!orderId) {
+//     return next(new AppError("Some issues while generating order id", 400));
+//   }
+//   const order = new TempOrder({
+//     orderPlatform: "website",
+//     paymentType: "Online",
+//     orderValue: total,
+//     No_of_left_bookings: bookings.length,
+//     paymentInfo: {
+//       status: "pending",
+//       paymentId: null,
+//     },
+//     orderId: orderId,
+//     itemTotal,
+//     discount,
+//     referalDiscount: referalDis,
+//     tax,
+//     items: orderItems,
+//     couponId: couponId,
+//     user: {
+//       userId: user._id,
+//       phone: user.phone,
+//       name: user.name,
+//       address: {
+//         addressLine: userAddress.addressLine,
+//         pincode: userAddress.pincode,
+//         landmark: userAddress.landmark,
+//         city: userAddress.city,
+//         location: userAddress.location,
+//       },
+//     },
+//   });
+
+//   await order.save();
+
+//   cart.items = [];
+//   cart.totalPrice = 0;
+//   await cart.save();
+
+//   const options = {
+//     amount: total * 100, // amount in the smallest currency unit
+//     currency: "INR",
+//   };
+//   const createdOrder = await instance.orders.create(options);
+//   // For sending notifications
+//   if (platformType === "android") {
+//     const foundToken = await tokenSchema.findOne({
+//       userId: user._id,
+//     });
+//     if (!foundToken) {
+//       return res.status(400).json({
+//         message: "no user found",
+//       });
+//     }
+//     const token = foundToken.token;
+//     const deviceType = foundToken.deviceType;
+//     const appType = foundToken.appType;
+//     const message = {
+//       notification: {
+//         title: "payment done",
+//         body: "payment done successfully",
+//         // ...(imageUrl && { image: imageUrl }), // Add image if available
+//       },
+//       token: token, // FCM token of the recipient device
+//     };
+//     const tokenResponse = await createSendPushNotification(
+//       deviceType,
+//       token,
+//       message,
+//       appType
+//     );
+//     if (!tokenResponse) {
+//       return res.status(400).json({
+//         message: "No token found",
+//       });
+//     }
+//   }
+//   res.status(200).json({
+//     success: true,
+//     message: "order created",
+//     razorpayOrder: createdOrder,
+//     order: order,
+//   });
+// });
+
 exports.checkout = catchAsync(async (req, res, next) => {
   const {
     platformType,
-    itemTotal,
-    discount,
-    tax,
-    total,
     userAddressId,
     bookings,
     referalDiscount,
   } = req.body;
+
   const user = req.user;
   if (!user) {
     return next(new AppError("User not found.", 404));
   }
-  let referalDis = null;
-  if (referalDiscount) referalDis = referalDiscount;
 
-  console.log("couponId", req.body.couponId);
-
-  let couponId = null;
-  if (req.body.couponId) {
-    couponId = req.body.couponId;
-  }
-
+  // Find cart and populate necessary fields
   const cart = await Cart.findOne({ userId: user._id }).populate({
     path: "items",
     model: "Cart",
@@ -833,15 +953,34 @@ exports.checkout = catchAsync(async (req, res, next) => {
     ],
   });
 
+  if (!cart || !cart.items.length) {
+    return next(new AppError("Cart is empty", 400));
+  }
+
+  // Calculate cart charges
+  const cartCharges = await calculateCartCharges(cart, req.body.couponId, referalDiscount);
+  if (!cartCharges.success) {
+    return next(new AppError(cartCharges.message || "Error calculating cart charges", 400));
+  }
+
+  const { 
+    itemTotal, 
+    discount, 
+    tax, 
+    total, 
+    referalDis,
+    couponId 
+  } = cartCharges;
+
   const items = cart.items;
-
   const orderItems = await generateOrderItems(items, bookings);
-
   const userAddress = await UserAddress.findById(userAddressId);
+  
   const orderId = await generateOrderId();
   if (!orderId) {
     return next(new AppError("Some issues while generating order id", 400));
   }
+
   const order = new TempOrder({
     orderPlatform: "website",
     paymentType: "Online",
@@ -874,48 +1013,56 @@ exports.checkout = catchAsync(async (req, res, next) => {
 
   await order.save();
 
+  // Clear cart
   cart.items = [];
   cart.totalPrice = 0;
   await cart.save();
 
+  // Create Razorpay order
   const options = {
     amount: total * 100, // amount in the smallest currency unit
     currency: "INR",
   };
   const createdOrder = await instance.orders.create(options);
-  // For sending notifications
+
+  // Handle notifications for Android platform
   if (platformType === "android") {
     const foundToken = await tokenSchema.findOne({
       userId: user._id,
     });
+    
     if (!foundToken) {
       return res.status(400).json({
         message: "no user found",
       });
     }
+
     const token = foundToken.token;
     const deviceType = foundToken.deviceType;
     const appType = foundToken.appType;
+    
     const message = {
       notification: {
         title: "payment done",
         body: "payment done successfully",
-        // ...(imageUrl && { image: imageUrl }), // Add image if available
       },
-      token: token, // FCM token of the recipient device
+      token: token,
     };
+
     const tokenResponse = await createSendPushNotification(
       deviceType,
       token,
       message,
       appType
     );
+
     if (!tokenResponse) {
       return res.status(400).json({
         message: "No token found",
       });
     }
   }
+
   res.status(200).json({
     success: true,
     message: "order created",
