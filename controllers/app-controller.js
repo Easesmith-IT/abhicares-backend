@@ -693,7 +693,11 @@ exports.getOrderBooking = async (req, res, next) => {
 
 exports.getBookingDetail = catchAsync(async (req, res, next) => {
   const { bookingId } = req.params;
-  const booking = await BookingModel.findById(bookingId).populate("sellerId");
+  const booking = await BookingModel.findById(bookingId).populate("sellerId")
+  .populate({
+    path:"orderId",
+    model:"Order"
+  });
   // console.log(booking);
   return res.status(200).json({ booking });
 });
