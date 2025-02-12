@@ -554,15 +554,47 @@ exports.postSellerCashout = catchAsync(async (req, res, next) => {
   }
 });
 
+// exports.getSellerCashout = catchAsync(async (req, res, next) => {
+//   const id = req.params.id;
+//   var cashout = await SellerCashOut.find({
+//     sellerWalletId: id,
+//   });
+//   console.log(cashout);
+//   return res
+//     .status(200)
+//     .json({ status: true, cashout: cashout, length: cashout.length });
+// });
+
 exports.getSellerCashout = catchAsync(async (req, res, next) => {
-  const id = req.params.id;
-  var cashout = await SellerCashOut.find({
-    sellerWalletId: id,
-  });
-  console.log(cashout);
+  const { id } = req.params;
+  const { startDate, endDate } = req.query;
+
+  // Validate input
+  if (!id) {
+    return res.status(400).json({
+      status: false,
+      message: "Seller ID is required.",
+    });
+  }
+
+  const query = { sellerWalletId: id };
+
+  // Apply date range filter if startDate and endDate are provided
+  if (startDate && endDate) {
+    query.createdAt = {
+      $gte: new Date(startDate),
+      $lte: new Date(endDate),
+    };
+  }
+
+  // Fetch cashouts, limit to 10 if no date filter is provided
+  const cashouts = await SellerCashOut.find(query)
+    .sort({ createdAt: -1 })
+    .limit(startDate && endDate ? 0 : 10); // 0 means no limit if date range is applied
+
   return res
     .status(200)
-    .json({ status: true, cashout: cashout, length: cashout.length });
+    .json({ status: true, cashouts, length: cashouts.length });
 });
 
 exports.checkSellerStatus = catchAsync(async (req, res, next) => {
