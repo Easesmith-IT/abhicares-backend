@@ -631,235 +631,121 @@ exports.getApiKey = async (req, res, next) => {
   }
 };
 
-// exports.calculateCartCharges = async (req, res, next) => {
-//   try {
-//     const { items, couponId } = req.body;
-//     if (!items || !Array.isArray(items)) {
-//       return res.status(400).json({
-//         message: "Invalid request. Please provide cart with items array.",
-//       });
-//     }
-
-//     const response = {
-//       totalAmount: 0,
-//       totalCommission: 0,
-//       totalTaxOnCommission: 0,
-//       totalConvenience: 0,
-//       totalPayable: 0,
-//       totalDiscount: 0,
-//       items: [],
-//     };
-
-//     let coupon = null;
-//     let applicableCategories = new Set();
-
-//     // If couponId is provided, fetch the coupon details
-//     if (couponId) {
-//       coupon = await offerCoupon.findById(couponId);
-//       if (!coupon) {
-//         return res.status(400).json({ message: "Invalid coupon ID" });
-//       }
-//       applicableCategories = new Set(coupon.categoryType.map((c) => c.toString())); // Store category IDs as strings
-//     }
-
-//     // Calculate charges for each item in cart
-//     for (const item of items) {
-//       const { quantity } = item;
-//       let itemDetails;
-
-//       // Fetch item details based on type
-//       if (item.type === "product") {
-//         itemDetails = await Products.findById(item.prodId);
-//       } else if (item.type === "package") {
-//         itemDetails = await Package.findById(item.prodId);
-//       } else {
-//         return res.status(400).json({ message: "Invalid item type" });
-//       }
-
-//       // Fetch service and category details
-//       const service = await Service.findById(item.serviceId);
-//       if (!service) {
-//         return res.status(404).json({ message: `Service not found for item ${item.prodId}` });
-//       }
-
-//       const category = await Category.findById(service.categoryId);
-//       if (!category) {
-//         return res.status(404).json({ message: `Category not found for item ${item.prodId}` });
-//       }
-
-//       const price = itemDetails.offerPrice || itemDetails.price;
-//       const itemTotal = price * quantity;
-//       const commissionRate = category.commission / 100;
-//       const commissionAmount = itemTotal * commissionRate;
-//       const taxOnCommission = commissionAmount * 0.18;
-//       const convenienceCharge = category.convenience;
-
-//       let discountAmount = 0;
-
-//       // Apply coupon discount if the category matches
-//       if (coupon && applicableCategories.has(category._id.toString())) {
-//         if (coupon.discountType === "fixed") {
-//           discountAmount = Math.min(coupon.couponFixedValue * quantity, coupon.maxDiscount || Infinity);
-//         } else if (coupon.discountType === "percentage") {
-//           discountAmount = Math.min((itemTotal * coupon.offPercentage) / 100, coupon.maxDiscount || Infinity);
-//         }
-//       }
-
-//       // Ensure discount does not exceed item total
-//       discountAmount = Math.min(discountAmount, itemTotal);
-
-//       // Update response object
-//       response.items.push({
-//         itemId: itemDetails._id,
-//         itemName: itemDetails.name,
-//         basePrice: price,
-//         quantity,
-//         charges: {
-//           itemAmount: itemTotal,
-//           itemTotalTax: Math.round(taxOnCommission + convenienceCharge),
-//           discount: discountAmount,
-//           totalForItem: Math.round(itemTotal + taxOnCommission + convenienceCharge - discountAmount),
-//         },
-//       });
-
-//       // Update totals
-//       response.totalAmount += itemTotal;
-//       response.totalTaxOnCommission += Math.round(taxOnCommission);
-//       response.totalConvenience += Math.round(convenienceCharge);
-//       response.totalDiscount += discountAmount;
-//     }
-
-//     // Calculate final total
-//     response.totalPayable = Math.round(
-//       response.totalAmount + response.totalTaxOnCommission + response.totalConvenience - response.totalDiscount
-//     );
-//     response.totalTax = response.totalTaxOnCommission + response.totalConvenience;
-
-//     return res.status(200).json(response);
-//   } catch (err) {
-//     console.error("Error calculating charges:", err);
-//     return res.status(500).json({
-//       message: "Error calculating charges",
-//       error: err.message,
-//     });
-//   }
-// };
-
-exports.appOrder = async (req, res, next) => {
+exports.calculateCartCharges = async (req, res, next) => {
   try {
-    const { userId, userAddressId, cart, payId } = req.body;
-    
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
+    const { items, couponId } = req.body;
+    if (!items || !Array.isArray(items)) {
+      return res.status(400).json({
+        message: "Invalid request. Please provide cart with items array.",
+      });
     }
 
-    const userAddress = await UserAddress.findById(userAddressId);
-    if (!userAddress) {
-      return res.status(404).json({ message: "Address not found." });
+    const response = {
+      totalAmount: 0,
+      totalCommission: 0,
+      totalTaxOnCommission: 0,
+      totalConvenience: 0,
+      totalPayable: 0,
+      totalDiscount: 0,
+      items: [],
+    };
+
+    let coupon = null;
+    let applicableCategories = new Set();
+
+    // If couponId is provided, fetch the coupon details
+    if (couponId) {
+      coupon = await offerCoupon.findById(couponId);
+      if (!coupon) {
+        return res.status(400).json({ message: "Invalid coupon ID" });
+      }
+      applicableCategories = new Set(coupon.categoryType.map((c) => c.toString())); // Store category IDs as strings
     }
 
-    // Create order items using pre-calculated values from cart
-    const orderItems = cart.items.map(item => ({
-      [item.type]: item.prod, // either 'product' or 'package'
-      quantity: item.quantity,
-      bookingId: null,
-      itemTotal: item.charges.totalForItem,
-      itemTotalTax: item.charges.itemTotalTax,
-      bookingDate: item.bookDate,
-      bookingTime: item.bookTime,
-    }));
+    // Calculate charges for each item in cart
+    for (const item of items) {
+      const { quantity } = item;
+      let itemDetails;
 
-    const orderId = await generateOrderId();
-
-    // Create order with pre-calculated values
-    const order = new Order({
-      paymentType: cart.paymentType,
-      orderValue: cart.totalPayable,
-      itemTotal: cart.totalAmount,
-      No_of_left_bookings: orderItems.length,
-      discount: cart.totalDiscount,
-      tax: cart.totalTax,
-      items: orderItems,
-      orderId,
-      orderPlatform: "app",
-      user: {
-        userId: user._id,
-        phone: user.phone,
-        name: user.name,
-        address: {
-          addressLine: userAddress.addressLine,
-          pincode: userAddress.pincode,
-          location: userAddress.location,
-          landmark: userAddress.landmark,
-          city: userAddress.city,
-        },
-      },
-    });
-
-    if (payId) {
-      order.payId = payId;
-    }
-
-    if (cart.couponId) {
-      order.couponId = cart.couponId;
-      order.discount = cart.totalDiscount;
-    }
-
-    // Set payment status based on payment type
-    const paymentStatus = cart.paymentType === "online" ? "completed" : "pending";
-
-    // Create bookings for each order item
-    for (const orderItem of orderItems) {
-      const bookingId = await generateBookingId();
-      
-      const bookingData = {
-        orderId: order._id,
-        userId: user._id,
-        bookingId,
-        paymentStatus,
-        itemTotalValue: orderItem.itemTotal,
-        itemTotalTax: orderItem.itemTotalTax,
-        userAddress: {
-          addressLine: userAddress.addressLine,
-          pincode: userAddress.pincode,
-          landmark: userAddress.landmark,
-          city: userAddress.city,
-          location: userAddress.location,
-        },
-        quantity: orderItem.quantity,
-        bookingDate: orderItem.bookingDate,
-        bookingTime: orderItem.bookingTime,
-        orderValue: orderItem.itemTotal - orderItem.itemTotalTax, // Using pre-calculated values
-      };
-
-      // Add type-specific fields
-      if (orderItem.product) {
-        bookingData.product = orderItem.product;
-      } else if (orderItem.package) {
-        bookingData.package = orderItem.package;
+      // Fetch item details based on type
+      if (item.type === "product") {
+        itemDetails = await Products.findById(item.prodId);
+      } else if (item.type === "package") {
+        itemDetails = await Package.findById(item.prodId);
+      } else {
+        return res.status(400).json({ message: "Invalid item type" });
       }
 
-      if (paymentStatus === "completed") {
-        bookingData.paymentType = cart.paymentType;
+      // Fetch service and category details
+      const service = await Service.findById(item.serviceId);
+      if (!service) {
+        return res.status(404).json({ message: `Service not found for item ${item.prodId}` });
       }
 
-      const booking = new Booking(bookingData);
-      await booking.save();
-      orderItem.bookingId = booking._id;
+      const category = await Category.findById(service.categoryId);
+      if (!category) {
+        return res.status(404).json({ message: `Category not found for item ${item.prodId}` });
+      }
+
+      const price = itemDetails.offerPrice || itemDetails.price;
+      const itemTotal = price * quantity;
+      const commissionRate = category.commission / 100;
+      const commissionAmount = itemTotal * commissionRate;
+      const taxOnCommission = commissionAmount * 0.18;
+      const convenienceCharge = category.convenience;
+
+      let discountAmount = 0;
+
+      // Apply coupon discount if the category matches
+      if (coupon && applicableCategories.has(category._id.toString())) {
+        if (coupon.discountType === "fixed") {
+          discountAmount = Math.min(coupon.couponFixedValue * quantity, coupon.maxDiscount || Infinity);
+        } else if (coupon.discountType === "percentage") {
+          discountAmount = Math.min((itemTotal * coupon.offPercentage) / 100, coupon.maxDiscount || Infinity);
+        }
+      }
+
+      // Ensure discount does not exceed item total
+      discountAmount = Math.min(discountAmount, itemTotal);
+
+      // Update response object
+      response.items.push({
+        itemId: itemDetails._id,
+        itemName: itemDetails.name,
+        basePrice: price,
+        quantity,
+        charges: {
+          itemAmount: itemTotal,
+          itemTotalTax: Math.round(taxOnCommission + convenienceCharge),
+          discount: discountAmount,
+          totalForItem: Math.round(itemTotal + taxOnCommission + convenienceCharge - discountAmount),
+        },
+      });
+
+      // Update totals
+      response.totalAmount += itemTotal;
+      response.totalTaxOnCommission += Math.round(taxOnCommission);
+      response.totalConvenience += Math.round(convenienceCharge);
+      response.totalDiscount += discountAmount;
     }
 
-    await order.save();
-    return res.status(200).json(order);
-    
+    // Calculate final total
+    response.totalPayable = Math.round(
+      response.totalAmount + response.totalTaxOnCommission + response.totalConvenience - response.totalDiscount
+    );
+    response.totalTax = response.totalTaxOnCommission + response.totalConvenience;
+
+    return res.status(200).json(response);
   } catch (err) {
-    console.error("Error creating order:", err);
-    return res.status(500).json({ 
-      message: "Error creating order", 
-      error: err.message 
+    console.error("Error calculating charges:", err);
+    return res.status(500).json({
+      message: "Error calculating charges",
+      error: err.message,
     });
   }
 };
+
+
 /* Example Response:
 {
   "totalAmount": 5000,           // Base amount

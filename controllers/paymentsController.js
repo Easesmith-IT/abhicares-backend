@@ -280,12 +280,8 @@ const calculateCartCharges = async (items) => {
 // };
 exports.appOrder = async (req, res, next) => {
   try {
-    const { userId, userAddressId, payId, cart } = req.body;
-
-    if (!cart || !cart.items || cart.items.length === 0) {
-      return res.status(400).json({ message: "Cart is empty." });
-    }
-
+    const { userId, userAddressId, cart, payId } = req.body;
+    
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -293,34 +289,30 @@ exports.appOrder = async (req, res, next) => {
 
     const userAddress = await UserAddress.findById(userAddressId);
     if (!userAddress) {
-      return res.status(404).json({ message: "User address not found." });
+      return res.status(404).json({ message: "Address not found." });
     }
 
-    const { totalAmount, coupon, discount, couponId, paymentType, totalvalue, totalTax, items } = cart;
-
-    const orderItems = items.map((item) => {
-      const itemTotalBooking = item.prod.offerPrice * item.quantity;
-      return {
-        [item.type === "product" ? "product" : "package"]: item.prod,
-        quantity: item.quantity,
-        bookingId: null,
-        itemTotal: itemTotalBooking + item.itemTotaltax,
-        itemTotalTax: item.itemTotaltax,
-        bookingDate: item.bookDate,
-        bookingTime: item.bookTime,
-      };
-    });
+    // Create order items using pre-calculated values from cart
+    const orderItems = cart.items.map(item => ({
+      [item.type]: item.prod, // either 'product' or 'package'
+      quantity: item.quantity,
+      bookingId: null,
+      itemTotal: item.charges.totalForItem,
+      itemTotalTax: item.charges.itemTotalTax,
+      bookingDate: item.bookDate,
+      bookingTime: item.bookTime,
+    }));
 
     const orderId = await generateOrderId();
-    const paymentStatus = paymentType === "online" ? "completed" : "pending";
 
+    // Create order with pre-calculated values
     const order = new Order({
-      paymentType,
-      orderValue: totalvalue + totalTax,
-      itemTotal: totalvalue,
+      paymentType: cart.paymentType,
+      orderValue: cart.totalPayable,
+      itemTotal: cart.totalAmount,
       No_of_left_bookings: orderItems.length,
-      discount: coupon ? discount : 0,
-      tax: totalTax,
+      discount: cart.totalDiscount,
+      tax: cart.totalTax,
       items: orderItems,
       orderId,
       orderPlatform: "app",
@@ -336,14 +328,24 @@ exports.appOrder = async (req, res, next) => {
           city: userAddress.city,
         },
       },
-      payId: payId || null,
-      couponId: coupon ? couponId : null,
     });
 
-    await order.save();
+    if (payId) {
+      order.payId = payId;
+    }
 
+    if (cart.couponId) {
+      order.couponId = cart.couponId;
+      order.discount = cart.totalDiscount;
+    }
+
+    // Set payment status based on payment type
+    const paymentStatus = cart.paymentType === "online" ? "completed" : "pending";
+
+    // Create bookings for each order item
     for (const orderItem of orderItems) {
       const bookingId = await generateBookingId();
+      
       const bookingData = {
         orderId: order._id,
         userId: user._id,
@@ -361,31 +363,36 @@ exports.appOrder = async (req, res, next) => {
         quantity: orderItem.quantity,
         bookingDate: orderItem.bookingDate,
         bookingTime: orderItem.bookingTime,
-        orderValue: (orderItem.product || orderItem.package).offerPrice * orderItem.quantity,
-        paymentType: paymentStatus === "completed" ? paymentType : undefined,
+        orderValue: orderItem.itemTotal - orderItem.itemTotalTax, // Using pre-calculated values
       };
 
+      // Add type-specific fields
       if (orderItem.product) {
         bookingData.product = orderItem.product;
-      } else {
+      } else if (orderItem.package) {
         bookingData.package = orderItem.package;
+      }
+
+      if (paymentStatus === "completed") {
+        bookingData.paymentType = cart.paymentType;
       }
 
       const booking = new Booking(bookingData);
       await booking.save();
-
       orderItem.bookingId = booking._id;
     }
 
     await order.save();
-
     return res.status(200).json(order);
+    
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Internal Server Error", error: err.message });
+    console.error("Error creating order:", err);
+    return res.status(500).json({ 
+      message: "Error creating order", 
+      error: err.message 
+    });
   }
 };
-
 
 exports.getAllUserOrders = catchAsync(async (req, res, next) => {
   const id = req.query.userId;
