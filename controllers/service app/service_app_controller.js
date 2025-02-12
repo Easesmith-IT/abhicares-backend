@@ -538,7 +538,7 @@ exports.postSellerCashout = catchAsync(async (req, res, next) => {
   const value = req.body.value;
   var wallet = await SellerWallet.findById(id);
   if (value > wallet.balance) {
-    return res.status(200).json({
+    return res.status(400).json({
       status: false,
       message: "money more than in account cannot be cashout",
     });
