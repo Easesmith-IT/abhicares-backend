@@ -119,6 +119,7 @@ const calculateCartCharges = async (items) => {
   }
 };
 
+
 exports.appOrder = async (req, res, next) => {
   try {
     const userId = req.body.userId;
@@ -133,11 +134,26 @@ exports.appOrder = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
+
+    // Calculate charges first
+    const chargesResult = await calculateCartCharges(cart.items);
+    if (!chargesResult.res) {
+      return res.status(400).json({ message: chargesResult.message });
+    }
+    const calculatedCharges = chargesResult.data;
+
     console.log(cart);
     // Extract cart data from the user's cart
     const products = cart["items"];
-    // // Create an array to store order items
+    // Create an array to store order items
     const orderItems = [];
+    
+    // Map calculated charges to products
+    const chargesMap = {};
+    calculatedCharges.items.forEach(item => {
+      chargesMap[item.itemId] = item.charges;
+    });
+
     for (const productItem of products) {
       let prod, pack;
       if (productItem.type == "product") {
@@ -146,27 +162,25 @@ exports.appOrder = async (req, res, next) => {
         pack = productItem;
       }
 
+      const itemCharges = chargesMap[productItem.prod._id];
+
       if (prod) {
-        const itemTotalBooking =
-          productItem["prod"]["offerPrice"] * productItem["quantity"];
         orderItems.push({
           product: productItem["prod"],
           quantity: productItem["quantity"],
           bookingId: null,
-          itemTotal: itemTotalBooking + productItem["itemTotaltax"],
-          itemTotalTax: productItem["itemTotaltax"],
+          itemTotal: itemCharges.totalForItem,
+          itemTotalTax: itemCharges.itemTotaltax,
           bookingDate: productItem["bookDate"],
           bookingTime: productItem["bookTime"],
         });
       } else if (pack) {
-        const itemTotalBooking =
-          productItem["prod"]["offerPrice"] * productItem["quantity"];
         orderItems.push({
           package: productItem["prod"],
           quantity: productItem["quantity"],
           bookingId: null,
-          itemTotal: itemTotalBooking + productItem["itemTotaltax"],
-          itemTotalTax: productItem["itemTotaltax"],
+          itemTotal: itemCharges.totalForItem,
+          itemTotalTax: itemCharges.itemTotaltax,
           bookingDate: productItem["bookDate"],
           bookingTime: productItem["bookTime"],
         });
@@ -178,11 +192,11 @@ exports.appOrder = async (req, res, next) => {
     console.log(totalOrderval);
     const order = new Order({
       paymentType: cart["paymentType"],
-      orderValue: cart["totalvalue"] + cart["totalTax"],
-      itemTotal: cart["totalvalue"],
+      orderValue: calculatedCharges.totalPayable,
+      itemTotal: calculatedCharges.totalAmount,
       No_of_left_bookings: orderItems.length,
       discount: 0,
-      tax: cart["totalTax"],
+      tax: calculatedCharges.totalTax,
       items: orderItems,
       orderId,
       orderPlatform: "app",
@@ -206,16 +220,16 @@ exports.appOrder = async (req, res, next) => {
       order.couponId = couponId;
       order.discount = discount;
     }
-    // await order.save();
+
     var paymentStatus;
     if (cart["paymentType"] == "online") {
       paymentStatus = "completed";
     } else {
       paymentStatus = "pending";
     }
+    
     ///booking creation
     for (const orderItem of orderItems) {
-      // console.log(orderItem);
       var booking;
       const bookingId = await generateBookingId();
       if (orderItem.product) {
@@ -237,7 +251,7 @@ exports.appOrder = async (req, res, next) => {
           quantity: orderItem.quantity,
           bookingDate: orderItem.bookingDate,
           bookingTime: orderItem.bookingTime,
-          orderValue: orderItem.product.offerPrice * orderItem.quantity,
+          orderValue: orderItem.itemTotal - orderItem.itemTotalTax,
         });
         await booking.save();
         orderItem.bookingId = booking._id;
@@ -260,7 +274,7 @@ exports.appOrder = async (req, res, next) => {
           quantity: orderItem.quantity,
           bookingDate: orderItem.bookingDate,
           bookingTime: orderItem.bookingTime,
-          orderValue: orderItem.package.offerPrice * orderItem.quantity,
+          orderValue: orderItem.itemTotal - orderItem.itemTotalTax,
         });
       }
       if (paymentStatus == "completed") {
@@ -277,6 +291,163 @@ exports.appOrder = async (req, res, next) => {
     return { message: "error", error: err };
   }
 };
+
+
+// exports.appOrder = async (req, res, next) => {
+//   try {
+//     const userId = req.body.userId;
+//     const userAddressId = req.body.userAddressId;
+//     const user = await User.findById(userId);
+//     const cart = req.body.cart;
+//     console.log(cart,'cart line 287')
+//     const totalOrderval = cart.totalAmount;
+//     const coupon = cart.coupon;
+//     const discount = cart.discount;
+//     const couponId = cart.couponId;
+//     const payId = req.body.payId;
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found." });
+//     }
+//     console.log(cart);
+//     // Extract cart data from the user's cart
+//     const products = cart["items"];
+//     // // Create an array to store order items
+//     const orderItems = [];
+//     for (const productItem of products) {
+//       let prod, pack;
+//       if (productItem.type == "product") {
+//         prod = productItem;
+//       } else if (productItem.type == "package") {
+//         pack = productItem;
+//       }
+
+//       if (prod) {
+//         orderItems.push({
+//           product: productItem["prod"],
+//           quantity: productItem["quantity"],
+//           bookingId: null,
+//           itemTotal: productItem.charges.totalForItem,
+//           itemTotalTax: productItem.charges.itemTotalTax,
+//           bookingDate: productItem["bookDate"],
+//           bookingTime: productItem["bookTime"],
+//         });
+//       } else if (pack) {
+//         orderItems.push({
+//           package: productItem["prod"],
+//           quantity: productItem["quantity"],
+//           bookingId: null,
+//           itemTotal: productItem.charges.totalForItem,
+//           itemTotalTax: productItem.charges.itemTotalTax,
+//           bookingDate: productItem["bookDate"],
+//           bookingTime: productItem["bookTime"],
+//         });
+//       }
+//     }
+//     const orderId = await generateOrderId();
+
+//     const userAddress = await UserAddress.findById(userAddressId);
+//     console.log(totalOrderval);
+//     const order = new Order({
+//       paymentType: cart["paymentType"],
+//       orderValue: cart["totalPayable"],
+//       itemTotal: cart["totalAmount"],
+//       No_of_left_bookings: orderItems.length,
+//       discount: 0,
+//       tax: cart["totalTax"],
+//       items: orderItems,
+//       orderId,
+//       orderPlatform: "app",
+//       user: {
+//         userId: user._id,
+//         phone: user.phone,
+//         name: user.name,
+//         address: {
+//           addressLine: userAddress.addressLine,
+//           pincode: userAddress.pincode,
+//           location: userAddress.location,
+//           landmark: userAddress.landmark,
+//           city: userAddress.city,
+//         },
+//       },
+//     });
+//     if (payId) {
+//       order.payId = payId;
+//     }
+//     if (coupon) {
+//       order.couponId = couponId;
+//       order.discount = discount;
+//     }
+//     // await order.save();
+//     var paymentStatus;
+//     if (cart["paymentType"] == "online") {
+//       paymentStatus = "completed";
+//     } else {
+//       paymentStatus = "pending";
+//     }
+//     ///booking creation
+//     for (const orderItem of orderItems) {
+//       // console.log(orderItem);
+//       var booking;
+//       const bookingId = await generateBookingId();
+//       if (orderItem.product) {
+//         booking = new Booking({
+//           orderId: order._id,
+//           userId: user._id,
+//           bookingId: bookingId,
+//           paymentStatus: paymentStatus,
+//           itemTotalValue: orderItem.itemTotal,
+//           itemTotalTax: orderItem.itemTotalTax,
+//           userAddress: {
+//             addressLine: userAddress.addressLine,
+//             pincode: userAddress.pincode,
+//             landmark: userAddress.landmark,
+//             city: userAddress.city,
+//             location: userAddress.location,
+//           },
+//           product: orderItem.product,
+//           quantity: orderItem.quantity,
+//           bookingDate: orderItem.bookingDate,
+//           bookingTime: orderItem.bookingTime,
+//           orderValue: orderItem.itemTotal - orderItem.itemTotalTax, // Using pre-calculated total instead of recalculating
+//         });
+//         await booking.save();
+//         orderItem.bookingId = booking._id;
+//       } else if (orderItem.package) {
+//         booking = new Booking({
+//           orderId: order._id,
+//           userId: user._id,
+//           bookingId: bookingId,
+//           itemTotalValue: orderItem.itemTotal,
+//           itemTotalTax: orderItem.itemTotalTax,
+//           paymentStatus: paymentStatus,
+//           userAddress: {
+//             addressLine: userAddress.addressLine,
+//             pincode: userAddress.pincode,
+//             landmark: userAddress.landmark,
+//             city: userAddress.city,
+//             location: userAddress.location,
+//           },
+//           package: orderItem.package,
+//           quantity: orderItem.quantity,
+//           bookingDate: orderItem.bookingDate,
+//           bookingTime: orderItem.bookingTime,
+//           orderValue: orderItem.itemTotal - orderItem.itemTotalTax, // Using pre-calculated total instead of recalculating
+//         });
+//       }
+//       if (paymentStatus == "completed") {
+//         booking.paymentType = cart["paymentType"];
+//       }
+//       orderItem.bookingId = booking._id;
+//       await booking.save();
+//     }
+//     order.items = orderItems;
+//     await order.save();
+//     return res.status(200).json(order);
+//   } catch (err) {
+//     console.log(err);
+//     return { message: "error", error: err };
+//   }
+// };
 
 exports.getAllUserOrders = catchAsync(async (req, res, next) => {
   const id = req.query.userId;
@@ -622,31 +793,151 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
   }
 });
 
+// exports.checkout = catchAsync(async (req, res, next) => {
+//   const {
+//     platformType,
+//     itemTotal,
+//     discount,
+//     tax,
+//     total,
+//     userAddressId,
+//     bookings,
+//     referalDiscount,
+//   } = req.body;
+//   const user = req.user;
+//   if (!user) {
+//     return next(new AppError("User not found.", 404));
+//   }
+//   let referalDis = null;
+//   if (referalDiscount) referalDis = referalDiscount;
+
+//   console.log("couponId", req.body.couponId);
+
+//   let couponId = null;
+//   if (req.body.couponId) {
+//     couponId = req.body.couponId;
+//   }
+
+//   const cart = await Cart.findOne({ userId: user._id }).populate({
+//     path: "items",
+//     model: "Cart",
+//     populate: [
+//       {
+//         path: "productId",
+//         model: "Product",
+//       },
+//       {
+//         path: "packageId",
+//         model: "Package",
+//       },
+//     ],
+//   });
+
+//   const items = cart.items;
+
+//   const orderItems = await generateOrderItems(items, bookings);
+
+//   const userAddress = await UserAddress.findById(userAddressId);
+//   const orderId = await generateOrderId();
+//   if (!orderId) {
+//     return next(new AppError("Some issues while generating order id", 400));
+//   }
+//   const order = new TempOrder({
+//     orderPlatform: "website",
+//     paymentType: "Online",
+//     orderValue: total,
+//     No_of_left_bookings: bookings.length,
+//     paymentInfo: {
+//       status: "pending",
+//       paymentId: null,
+//     },
+//     orderId: orderId,
+//     itemTotal,
+//     discount,
+//     referalDiscount: referalDis,
+//     tax,
+//     items: orderItems,
+//     couponId: couponId,
+//     user: {
+//       userId: user._id,
+//       phone: user.phone,
+//       name: user.name,
+//       address: {
+//         addressLine: userAddress.addressLine,
+//         pincode: userAddress.pincode,
+//         landmark: userAddress.landmark,
+//         city: userAddress.city,
+//         location: userAddress.location,
+//       },
+//     },
+//   });
+
+//   await order.save();
+
+//   cart.items = [];
+//   cart.totalPrice = 0;
+//   await cart.save();
+
+//   const options = {
+//     amount: total * 100, // amount in the smallest currency unit
+//     currency: "INR",
+//   };
+//   const createdOrder = await instance.orders.create(options);
+//   // For sending notifications
+//   if (platformType === "android") {
+//     const foundToken = await tokenSchema.findOne({
+//       userId: user._id,
+//     });
+//     if (!foundToken) {
+//       return res.status(400).json({
+//         message: "no user found",
+//       });
+//     }
+//     const token = foundToken.token;
+//     const deviceType = foundToken.deviceType;
+//     const appType = foundToken.appType;
+//     const message = {
+//       notification: {
+//         title: "payment done",
+//         body: "payment done successfully",
+//         // ...(imageUrl && { image: imageUrl }), // Add image if available
+//       },
+//       token: token, // FCM token of the recipient device
+//     };
+//     const tokenResponse = await createSendPushNotification(
+//       deviceType,
+//       token,
+//       message,
+//       appType
+//     );
+//     if (!tokenResponse) {
+//       return res.status(400).json({
+//         message: "No token found",
+//       });
+//     }
+//   }
+//   res.status(200).json({
+//     success: true,
+//     message: "order created",
+//     razorpayOrder: createdOrder,
+//     order: order,
+//   });
+// });
+
 exports.checkout = catchAsync(async (req, res, next) => {
   const {
     platformType,
-    itemTotal,
-    discount,
-    tax,
-    total,
     userAddressId,
     bookings,
     referalDiscount,
   } = req.body;
+
   const user = req.user;
   if (!user) {
     return next(new AppError("User not found.", 404));
   }
-  let referalDis = null;
-  if (referalDiscount) referalDis = referalDiscount;
 
-  console.log("couponId", req.body.couponId);
-
-  let couponId = null;
-  if (req.body.couponId) {
-    couponId = req.body.couponId;
-  }
-
+  // Find cart and populate necessary fields
   const cart = await Cart.findOne({ userId: user._id }).populate({
     path: "items",
     model: "Cart",
@@ -662,15 +953,34 @@ exports.checkout = catchAsync(async (req, res, next) => {
     ],
   });
 
+  if (!cart || !cart.items.length) {
+    return next(new AppError("Cart is empty", 400));
+  }
+
+  // Calculate cart charges
+  const cartCharges = await calculateCartCharges(cart, req.body.couponId, referalDiscount);
+  if (!cartCharges.success) {
+    return next(new AppError(cartCharges.message || "Error calculating cart charges", 400));
+  }
+
+  const { 
+    itemTotal, 
+    discount, 
+    tax, 
+    total, 
+    referalDis,
+    couponId 
+  } = cartCharges;
+
   const items = cart.items;
-
   const orderItems = await generateOrderItems(items, bookings);
-
   const userAddress = await UserAddress.findById(userAddressId);
+  
   const orderId = await generateOrderId();
   if (!orderId) {
     return next(new AppError("Some issues while generating order id", 400));
   }
+
   const order = new TempOrder({
     orderPlatform: "website",
     paymentType: "Online",
@@ -703,48 +1013,56 @@ exports.checkout = catchAsync(async (req, res, next) => {
 
   await order.save();
 
+  // Clear cart
   cart.items = [];
   cart.totalPrice = 0;
   await cart.save();
 
+  // Create Razorpay order
   const options = {
     amount: total * 100, // amount in the smallest currency unit
     currency: "INR",
   };
   const createdOrder = await instance.orders.create(options);
-  // For sending notifications
+
+  // Handle notifications for Android platform
   if (platformType === "android") {
     const foundToken = await tokenSchema.findOne({
       userId: user._id,
     });
+    
     if (!foundToken) {
       return res.status(400).json({
         message: "no user found",
       });
     }
+
     const token = foundToken.token;
     const deviceType = foundToken.deviceType;
     const appType = foundToken.appType;
+    
     const message = {
       notification: {
         title: "payment done",
         body: "payment done successfully",
-        // ...(imageUrl && { image: imageUrl }), // Add image if available
       },
-      token: token, // FCM token of the recipient device
+      token: token,
     };
+
     const tokenResponse = await createSendPushNotification(
       deviceType,
       token,
       message,
       appType
     );
+
     if (!tokenResponse) {
       return res.status(400).json({
         message: "No token found",
       });
     }
   }
+
   res.status(200).json({
     success: true,
     message: "order created",
