@@ -226,7 +226,7 @@ exports.getPackageProduct = catchAsync(async (req, res, next) => {
 // cart controllers
 
 exports.getCart = catchAsync(async (req, res, next) => {
-  const {userId} = req.body;
+  const {userId} = req.query;
   const foundUser=await user.findById(userId)
   console.log(foundUser,'user')
   console.log(req.cookies,"guest card")
