@@ -284,6 +284,7 @@ exports.appOrder = async (req, res, next) => {
     const userAddressId = req.body.userAddressId;
     const user = await User.findById(userId);
     const cart = req.body.cart;
+    console.log(cart,'cart line 287')
     const totalOrderval = cart.totalAmount;
     const coupon = cart.coupon;
     const discount = cart.discount;
