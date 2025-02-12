@@ -18,6 +18,7 @@ const catchAsync = require("../util/catchAsync");
 const mongoose = require("mongoose");
 const Booking = require("../models/booking");
 const updateServiceRating = require("../util/upateServiceReview");
+const user = require("../models/user");
 /////////////////////////
 
 // const updateServiceRating = async (serviceId, serviceType) => {
@@ -225,10 +226,14 @@ exports.getPackageProduct = catchAsync(async (req, res, next) => {
 // cart controllers
 
 exports.getCart = catchAsync(async (req, res, next) => {
-  const user = req.user;
+  const {userId} = req.body;
+  const foundUser=await user.findById(userId)
+  console.log(foundUser,'user')
+  console.log(req.cookies,"guest card")
+  console.log(req.cookies["guestCart"],'guest cart')
   var cart;
-  if (user) {
-    cart = await Cart.findById(user.cartId).populate([
+  if (foundUser) {
+    cart = await Cart.findById(foundUser.cartId).populate([
       {
         path: "items",
         populate: {
@@ -274,6 +279,7 @@ exports.getCart = catchAsync(async (req, res, next) => {
         },
       },
     ]);
+    console.log(foundUser,'line 277')
   } else if (req.cookies["guestCart"]) {
     cart = JSON.parse(req.cookies["guestCart"]);
     var cartItems = [];
@@ -314,14 +320,14 @@ exports.getCart = catchAsync(async (req, res, next) => {
     }
     cart.items = cartItems;
   } else {
-    res.status(200).json({
+ return res.status(200).json({
       success: false,
       message: "cart is empty",
       data: [],
     });
   }
   if (cart)
-    res.status(200).json({
+   return res.status(200).json({
       success: true,
       message: "cart items",
       data: cart.items,
