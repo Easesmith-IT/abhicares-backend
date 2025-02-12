@@ -226,7 +226,7 @@ exports.getPackageProduct = catchAsync(async (req, res, next) => {
 // cart controllers
 
 exports.getCart = catchAsync(async (req, res, next) => {
-  const {userId} = req.body;
+  const {userId} = req.query;
   const foundUser=await user.findById(userId)
   console.log(foundUser,'user')
   console.log(req.cookies,"guest card")
@@ -338,7 +338,7 @@ exports.getCart = catchAsync(async (req, res, next) => {
 exports.removeItemFromCart = catchAsync(async (req, res, next) => {
   const itemId = req.params.id;
   console.log(itemId,'item id')
-  const { type } = req.query;
+  const { type } = req.body;
   const user = req.user;
   var prod, pack;
   if (type == "product") {
