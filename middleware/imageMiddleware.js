@@ -93,7 +93,10 @@ if (!bucketName || !process.env.PROJECT_ID) {
 }
 
 // Multer Configuration for File Uploads (Memory Storage)
-exports.upload = multer({ storage: multer.memoryStorage() }).array("img", 5);
+exports.upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+}).array("img", 5);
 
 // Upload File to GCS
 exports.uploadFileToGCS = async (fileBuffer, ext) => {
