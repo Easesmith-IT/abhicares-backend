@@ -338,7 +338,7 @@ exports.getCart = catchAsync(async (req, res, next) => {
 exports.removeItemFromCart = catchAsync(async (req, res, next) => {
   const itemId = req.params.id;
   console.log(itemId,'item id')
-  const { type } = req.query;
+  const { type } = req.body;
   const user = req.user;
   var prod, pack;
   if (type == "product") {
