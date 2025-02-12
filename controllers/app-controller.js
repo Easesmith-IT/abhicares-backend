@@ -1423,64 +1423,64 @@ exports.getCouponByName = async (req, res, next) => {
 
 //   res.status(200).json({ success: true, message: "Your coupon", data: result });
 // });
-exports.getCouponByName = catchAsync(async (req, res, next) => {
-  const { name, serviceCategoryType, userId } = req.body; // serviceCategoryType is an array
-  // const userId = req.user._id;
+// exports.getCouponByName = catchAsync(async (req, res, next) => {
+//   const { name, serviceCategoryType, userId } = req.body; // serviceCategoryType is an array
+//   // const userId = req.user._id;
 
-  if (!name || !serviceCategoryType || !Array.isArray(serviceCategoryType)) {
-    return next(
-      new AppError(
-        "All fields are required and serviceCategoryType must be an array",
-        400
-      )
-    );
-  }
+//   if (!name || !serviceCategoryType || !Array.isArray(serviceCategoryType)) {
+//     return next(
+//       new AppError(
+//         "All fields are required and serviceCategoryType must be an array",
+//         400
+//       )
+//     );
+//   }
 
-  const result = await Coupon.find({ name: name });
-  if (result.length === 0) {
-    return next(new AppError("Coupon not found", 400));
-  }
+//   const result = await Coupon.find({ name: name });
+//   if (result.length === 0) {
+//     return next(new AppError("Coupon not found", 400));
+//   }
 
-  // Get the coupon
-  const coupon = result[0];
+//   // Get the coupon
+//   const coupon = result[0];
 
-  // Check if all category IDs in serviceCategoryType match the coupon's categoryType
-  const couponCategoryIds = coupon.categoryType.map((id) => id.toString());
-  const isValidCategoryType = serviceCategoryType.every((id) =>
-    couponCategoryIds.includes(id.toString())
-  );
+//   // Check if all category IDs in serviceCategoryType match the coupon's categoryType
+//   const couponCategoryIds = coupon.categoryType.map((id) => id.toString());
+//   const isValidCategoryType = serviceCategoryType.every((id) =>
+//     couponCategoryIds.includes(id.toString())
+//   );
 
-  if (!isValidCategoryType) {
-    return next(
-      new AppError(
-        "This coupon is not valid for the selected product/service type",
-        400
-      )
-    );
-  }
+//   if (!isValidCategoryType) {
+//     return next(
+//       new AppError(
+//         "This coupon is not valid for the selected product/service type",
+//         400
+//       )
+//     );
+//   }
 
-  // Check if the user has already used this coupon
-  const orders = await Order.find({ "user.userId": userId });
-  const { noOfTimesPerUser } = coupon;
+//   // Check if the user has already used this coupon
+//   const orders = await Order.find({ "user.userId": userId });
+//   const { noOfTimesPerUser } = coupon;
 
-  console.log("noOfTimesPerUser", noOfTimesPerUser);
+//   console.log("noOfTimesPerUser", noOfTimesPerUser);
 
-  let couponUseCount = 0;
+//   let couponUseCount = 0;
 
-  orders.forEach((order) => {
-    if (order.couponId && order.couponId.toString() === coupon._id.toString()) {
-      couponUseCount++;
-    }
-  });
+//   orders.forEach((order) => {
+//     if (order.couponId && order.couponId.toString() === coupon._id.toString()) {
+//       couponUseCount++;
+//     }
+//   });
 
-  console.log("couponUseCount", couponUseCount);
+//   console.log("couponUseCount", couponUseCount);
 
-  if (couponUseCount >= noOfTimesPerUser) {
-    return next(new AppError("You have already used this coupon!", 400));
-  }
+//   if (couponUseCount >= noOfTimesPerUser) {
+//     return next(new AppError("You have already used this coupon!", 400));
+//   }
 
-  res.status(200).json({ success: true, message: "Your coupon", data: coupon });
-});
+//   res.status(200).json({ success: true, message: "Your coupon", data: coupon });
+// });
 
 exports.getAllCoupons = catchAsync(async (req, res, next) => {
   const result = await Coupon.find();
