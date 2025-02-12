@@ -225,13 +225,125 @@ exports.getPackageProduct = catchAsync(async (req, res, next) => {
 
 // cart controllers
 
+// exports.getCart = catchAsync(async (req, res, next) => {
+//   const {userId} = req.query;
+//   const foundUser=await user.findById(userId)
+//   console.log(foundUser,'user')
+//   console.log(req.cookies,"guest card")
+//   console.log(req.cookies["guestCart"],'guest cart')
+//   var cart;
+//   if (foundUser) {
+//     cart = await Cart.findById(foundUser.cartId).populate([
+//       {
+//         path: "items",
+//         populate: {
+//           path: "productId",
+//           model: "Product",
+//           populate: {
+//             path: "serviceId",
+//             model: "Service",
+//             populate: {
+//               path: "categoryId",
+//               model: "Category",
+//             },
+//           },
+//         },
+//       },
+//       {
+//         path: "items",
+//         populate: {
+//           path: "packageId",
+//           populate: {
+//             path: "products",
+//             populate: {
+//               path: "productId",
+//               model: "Product",
+//               populate: {
+//                 path: "serviceId",
+//                 model: "Service",
+//                 populate: {
+//                   path: "categoryId",
+//                   model: "Category",
+//                 },
+//               },
+//             },
+//           },
+//           populate: {
+//             path: "serviceId",
+//             model: "Service",
+//             populate: {
+//               path: "categoryId",
+//               model: "Category",
+//             },
+//           },
+//         },
+//       },
+//     ]);
+//     console.log(foundUser,'line 277')
+//   } else if (req.cookies["guestCart"]) {
+//     cart = JSON.parse(req.cookies["guestCart"]);
+//     var cartItems = [];
+//     for (index in cart.items) {
+//       if (cart.items[index].productId) {
+//         const product = await Product.findById(cart.items[index].productId);
+//         var item = {
+//           productId: product,
+//           type: "product",
+//           quantity: cart.items[index].quantity,
+//         };
+//         cartItems.push(item);
+//       } else if (cart.items[index].packageId) {
+//         const package = await Package.findById(
+//           cart.items[index].packageId
+//         ).populate({
+//           path: "products",
+//           populate: {
+//             path: "productId",
+//             model: "Product",
+//             populate: {
+//               path: "serviceId",
+//               model: "Service",
+//               populate: {
+//                 path: "categoryId",
+//                 model: "Category",
+//               },
+//             },
+//           },
+//         });
+//         var item = {
+//           packageId: package,
+//           type: "package",
+//           quantity: cart.items[index].quantity,
+//         };
+//         cartItems.push(item);
+//       }
+//     }
+//     cart.items = cartItems;
+//   } else {
+//  return res.status(200).json({
+//       success: false,
+//       message: "cart is empty",
+//       data: [],
+//     });
+//   }
+//   if (cart)
+//    return res.status(200).json({
+//       success: true,
+//       message: "cart items",
+//       data: cart.items,
+//       totalOfferPrice: cart.totalPrice,
+//     });
+// });
 exports.getCart = catchAsync(async (req, res, next) => {
-  const {userId} = req.query;
-  const foundUser=await user.findById(userId)
-  console.log(foundUser,'user')
-  console.log(req.cookies,"guest card")
-  console.log(req.cookies["guestCart"],'guest cart')
-  var cart;
+  const { userId } = req.query;
+  const foundUser = await user.findById(userId);
+  console.log(foundUser, 'user');
+  console.log(req.cookies, "guest cart");
+  console.log(req.cookies["guestCart"], 'guest cart');
+
+  let cart;
+  let totalOfferPrice = 0;
+
   if (foundUser) {
     cart = await Cart.findById(foundUser.cartId).populate([
       {
@@ -279,23 +391,32 @@ exports.getCart = catchAsync(async (req, res, next) => {
         },
       },
     ]);
-    console.log(foundUser,'line 277')
+
+    console.log(foundUser, 'line 277');
+
+    // Ensure total price is included
+    if (cart) {
+      totalOfferPrice = cart.totalPrice || cart.items.reduce((acc, item) => {
+        return acc + (item.productId ? item.productId.price * item.quantity : 0);
+      }, 0);
+    }
   } else if (req.cookies["guestCart"]) {
     cart = JSON.parse(req.cookies["guestCart"]);
-    var cartItems = [];
-    for (index in cart.items) {
+    let cartItems = [];
+
+    for (const index in cart.items) {
       if (cart.items[index].productId) {
         const product = await Product.findById(cart.items[index].productId);
-        var item = {
-          productId: product,
-          type: "product",
-          quantity: cart.items[index].quantity,
-        };
-        cartItems.push(item);
+        if (product) {
+          cartItems.push({
+            productId: product,
+            type: "product",
+            quantity: cart.items[index].quantity,
+          });
+          totalOfferPrice += product.price * cart.items[index].quantity;
+        }
       } else if (cart.items[index].packageId) {
-        const package = await Package.findById(
-          cart.items[index].packageId
-        ).populate({
+        const package = await Package.findById(cart.items[index].packageId).populate({
           path: "products",
           populate: {
             path: "productId",
@@ -310,30 +431,38 @@ exports.getCart = catchAsync(async (req, res, next) => {
             },
           },
         });
-        var item = {
-          packageId: package,
-          type: "package",
-          quantity: cart.items[index].quantity,
-        };
-        cartItems.push(item);
+
+        if (package) {
+          cartItems.push({
+            packageId: package,
+            type: "package",
+            quantity: cart.items[index].quantity,
+          });
+
+          package.products.forEach((p) => {
+            totalOfferPrice += p.productId.price * cart.items[index].quantity;
+          });
+        }
       }
     }
     cart.items = cartItems;
   } else {
- return res.status(200).json({
+    return res.status(200).json({
       success: false,
-      message: "cart is empty",
+      message: "Cart is empty",
       data: [],
+      totalOfferPrice: 0,
     });
   }
-  if (cart)
-   return res.status(200).json({
-      success: true,
-      message: "cart items",
-      data: cart.items,
-      totalOfferPrice: cart.totalPrice,
-    });
+
+  return res.status(200).json({
+    success: true,
+    message: "Cart items",
+    data: cart.items,
+    totalOfferPrice,
+  });
 });
+
 
 exports.removeItemFromCart = catchAsync(async (req, res, next) => {
   const itemId = req.params.id;
