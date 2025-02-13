@@ -686,7 +686,7 @@ exports.calculateCartCharges = async (req, res, next) => {
       if (!category) {
         return res.status(404).json({ message: `Category not found for item ${item.prodId}` });
       }
-
+      console.log(itemDetails,'line 689')
       const price = itemDetails.offerPrice || itemDetails.price;
       const itemTotal = price * quantity;
       const commissionRate = category.commission / 100;

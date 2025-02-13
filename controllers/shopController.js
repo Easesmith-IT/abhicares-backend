@@ -342,7 +342,8 @@ exports.getCart = catchAsync(async (req, res, next) => {
   console.log(req.cookies["guestCart"], 'guest cart');
 
   let cart;
-  let totalOfferPrice = 0;
+  let totalOfferPrice = 0; // Sum of all products with discounted prices
+  let cartTotal = 0; // Total price without discounts
 
   if (foundUser) {
     cart = await Cart.findById(foundUser.cartId).populate([
@@ -392,12 +393,23 @@ exports.getCart = catchAsync(async (req, res, next) => {
       },
     ]);
 
-    console.log(foundUser, 'line 277');
-
-    // Ensure total price is included
     if (cart) {
-      totalOfferPrice = cart.totalPrice || cart.items.reduce((acc, item) => {
-        return acc + (item.productId ? item.productId.price * item.quantity : 0);
+      totalOfferPrice = cart.items.reduce((acc, item) => {
+        if (item.productId) {
+          return acc + (item.productId.offerPrice || item.productId.price) * item.quantity;
+        } else if (item.packageId) {
+          return acc + (item.packageId.offerPrice || item.packageId.price) * item.quantity;
+        }
+        return acc;
+      }, 0);
+
+      cartTotal = cart.items.reduce((acc, item) => {
+        if (item.productId) {
+          return acc + item.productId.price * item.quantity;
+        } else if (item.packageId) {
+          return acc + item.packageId.price * item.quantity;
+        }
+        return acc;
       }, 0);
     }
   } else if (req.cookies["guestCart"]) {
@@ -413,7 +425,9 @@ exports.getCart = catchAsync(async (req, res, next) => {
             type: "product",
             quantity: cart.items[index].quantity,
           });
-          totalOfferPrice += product.price * cart.items[index].quantity;
+
+          totalOfferPrice += (product.offerPrice || product.price) * cart.items[index].quantity;
+          cartTotal += product.price * cart.items[index].quantity;
         }
       } else if (cart.items[index].packageId) {
         const package = await Package.findById(cart.items[index].packageId).populate({
@@ -439,9 +453,8 @@ exports.getCart = catchAsync(async (req, res, next) => {
             quantity: cart.items[index].quantity,
           });
 
-          package.products.forEach((p) => {
-            totalOfferPrice += p.productId.price * cart.items[index].quantity;
-          });
+          totalOfferPrice += (package.offerPrice || package.price) * cart.items[index].quantity;
+          cartTotal += package.price * cart.items[index].quantity;
         }
       }
     }
@@ -452,6 +465,7 @@ exports.getCart = catchAsync(async (req, res, next) => {
       message: "Cart is empty",
       data: [],
       totalOfferPrice: 0,
+      cartTotal: 0,
     });
   }
 
@@ -460,8 +474,10 @@ exports.getCart = catchAsync(async (req, res, next) => {
     message: "Cart items",
     data: cart.items,
     totalOfferPrice,
+    cartTotal,
   });
 });
+
 
 
 exports.removeItemFromCart = catchAsync(async (req, res, next) => {
