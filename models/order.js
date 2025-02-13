@@ -34,7 +34,7 @@ const orderSchema = new Schema(
     },
     discount: {
       type: Number,
-      required: true,
+      required: false,
     },
     referalDiscount: {
       type: Number,

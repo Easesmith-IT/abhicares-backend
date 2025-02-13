@@ -2987,7 +2987,7 @@ exports.filterPartner = catchAsync(async (req, res, next) => {
 
   const skip = (pageNumber - 1) * limitNumber;
 
-  const foundPartners = await Seller.find({ status: status.toUpperCase() })
+  const foundPartners = await Seller.find({ status: status.toUpperCase() }).populate("categoryId")
     .skip(skip)
     .limit(limitNumber);
 
