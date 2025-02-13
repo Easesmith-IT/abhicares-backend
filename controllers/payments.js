@@ -633,7 +633,7 @@ exports.getApiKey = async (req, res, next) => {
 
 exports.calculateCartCharges = async (req, res, next) => {
   try {
-    const { items, couponId } = req.body;
+    const { items, couponCode } = req.body;
     if (!items || !Array.isArray(items)) {
       return res.status(400).json({
         message: "Invalid request. Please provide cart with items array.",
@@ -654,8 +654,8 @@ exports.calculateCartCharges = async (req, res, next) => {
     let applicableCategories = new Set();
 
     // If couponId is provided, fetch the coupon details
-    if (couponId) {
-      coupon = await offerCoupon.findById(couponId);
+    if (couponCode) {
+      coupon = await offerCoupon.findOne({name:couponCode});
       if (!coupon) {
         return res.status(400).json({ message: "Invalid coupon ID" });
       }

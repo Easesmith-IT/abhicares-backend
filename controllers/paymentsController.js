@@ -30,6 +30,7 @@ const instance = new Razorpay({
 });
 
 const calculateCartCharges = async (items) => {
+  console.log(items, "items line 33");
   try {
     if (!items || !Array.isArray(items)) {
       return {
@@ -50,18 +51,30 @@ const calculateCartCharges = async (items) => {
     // Calculate charges for each item in cart
     for (const item of items) {
       const { quantity } = item;
+      console.log(item, "line 54");
       let itemDetails;
       // categoryId =
       if (item.type == "product") {
-        itemDetails = await Products.findById(item.prodId);
+        itemDetails = await Products.findById(item.productId._id).populate({
+          path: "serviceId",
+          model: "Service",
+        });
       } else if (item.type == "package") {
-        itemDetails = await Package.findById(item.prodId);
+        itemDetails = await Package.findById(item.packageId._id).populate({
+          path: "serviceId",
+          model: "Service",
+        });
       } else {
         return { res: false, message: "item type is not defiend" };
       }
+      console.log("item details", itemDetails);
       const price = itemDetails.offerPrice || itemDetails.price;
-      const service = await Service.findById(item.serviceId);
-      const category = await Category.findById(service.categoryId);
+      // const service = await Service.findById(item.serviceId);
+      // console.log(service,'line 70')
+      console.log(itemDetails.serviceId.categoryId, "line 71");
+      const category = await Category.findById(
+        itemDetails.serviceId.categoryId
+      );
       console.log(itemDetails, category);
       if (!category) {
         return {
@@ -82,6 +95,7 @@ const calculateCartCharges = async (items) => {
         itemId: itemDetails._id,
         itemName: itemDetails.name,
         basePrice: price,
+        type: item.type,
         quantity: quantity,
         charges: {
           itemAmount: itemTotal,
@@ -119,7 +133,6 @@ const calculateCartCharges = async (items) => {
   }
 };
 
-
 exports.appOrder = async (req, res, next) => {
   try {
     const userId = req.body.userId;
@@ -147,10 +160,10 @@ exports.appOrder = async (req, res, next) => {
     const products = cart["items"];
     // Create an array to store order items
     const orderItems = [];
-    
+
     // Map calculated charges to products
     const chargesMap = {};
-    calculatedCharges.items.forEach(item => {
+    calculatedCharges.items.forEach((item) => {
       chargesMap[item.itemId] = item.charges;
     });
 
@@ -227,7 +240,7 @@ exports.appOrder = async (req, res, next) => {
     } else {
       paymentStatus = "pending";
     }
-    
+
     ///booking creation
     for (const orderItem of orderItems) {
       var booking;
@@ -291,7 +304,6 @@ exports.appOrder = async (req, res, next) => {
     return { message: "error", error: err };
   }
 };
-
 
 // exports.appOrder = async (req, res, next) => {
 //   try {
@@ -554,7 +566,7 @@ const generateOrderItems = async (cartItems, bookings) => {
           return bookItem.productId == prod._id;
         });
 
-        console.log("bookingItem", bookingItem);
+        console.log("bookingItem line 569", bookingItem);
 
         orderItems.push({
           product: prod,
@@ -596,13 +608,13 @@ const generateBookings = async (
     for (const orderItem of orderItems) {
       const customBookingId = await generateBookingId();
       var booking;
-      
+
       if (orderItem.product) {
         booking = new Booking({
           orderId: order._id,
           userId: user._id,
-          customBookingId: customBookingId, // Store generated ID here
-          bookingId: booking._id, // This will be set automatically by MongoDB
+          // customBookingId: , // Store generated ID here
+          bookingId: customBookingId, // This will be set automatically by MongoDB
           paymentStatus: paymentStatus,
           paymentType: paymentType,
           userAddress: {
@@ -627,8 +639,8 @@ const generateBookings = async (
         booking = new Booking({
           orderId: order._id,
           userId: user._id,
-          customBookingId: customBookingId, // Store generated ID here
-          bookingId: booking?._id, // This will be set automatically by MongoDB
+          // customBookingId: customBookingId, // Store generated ID here
+          bookingId: customBookingId, // This will be set automatically by MongoDB
           paymentStatus: paymentStatus,
           paymentType: paymentType,
           userAddress: {
@@ -658,6 +670,140 @@ const generateBookings = async (
   }
 };
 
+// exports.websiteCodOrder = catchAsync(async (req, res, next) => {
+//   const user = req.user;
+
+//   const {
+//     itemTotal,
+//     discount,
+//     tax,
+//     total,
+//     userAddressId,
+//     bookings,
+//     referalDiscount,
+//   } = req.body;
+
+//   let couponId = null;
+//   if (req.body.couponId) {
+//     couponId = req.body.couponId;
+//   }
+
+//   let referalDis = null;
+//   if (referalDiscount) referalDis = referalDiscount;
+
+//   const cart = await Cart.findOne({ userId: user._id }).populate({
+//     path: "items",
+//     model: "Cart",
+//     populate: [
+//       {
+//         path: "productId",
+//         model: "Product",
+//       },
+//       {
+//         path: "packageId",
+//         model: "Package",
+//       },
+//     ],
+//   });
+
+//   console.log("cart", cart);
+
+//   if (!user) {
+//     return next(new AppError("User not found.", 404));
+//   }
+//   const items = cart.items;
+//   const chargeRes = await calculateCartCharges(items);
+//   if (!chargeRes.res) {
+//     return next(new AppError(chargeRes.message, 404));
+//   }
+//   // console.log('inside cod order');
+//   console.log("items", items);
+//   // console.log('bookings',bookings)
+
+//   const orderItems = await generateOrderItems(items, bookings);
+//   console.log("orderItems", orderItems);
+
+//   if (orderItems) {
+//     const userAddress = await UserAddress.findById(userAddressId);
+//     const orderId = await generateOrderId();
+//     if (!orderId) {
+//       return next(new AppError("no response while creating orderId", 400));
+//     }
+//     const order = new Order({
+//       orderPlatform: "website",
+//       paymentType: "COD",
+//       No_of_left_bookings: bookings.length,
+//       orderValue: chargeRes.data.totalPayable,
+//       orderId: orderId,
+//       itemTotal: chargeRes.data.totalAmount,
+//       itemTotalTax: chargeRes.data.totalTax,
+//       referalDiscount: referalDis,
+//       tax,
+//       items: orderItems,
+//       couponId: couponId,
+//       user: {
+//         userId: user._id,
+//         phone: user.phone,
+//         name: user.name,
+//         address: {
+//           addressLine: userAddress.addressLine,
+//           pincode: userAddress.pincode,
+//           landmark: userAddress.landmark,
+//           city: userAddress.city,
+//           location: userAddress.location,
+//         },
+//       },
+//     });
+//     let orderItemsWithTax = [];
+//     newOrderItem.forEach((ord) => {
+//       const res = chargeRes.data.items.forEach((value) => {
+//         if (ord.type == "product") {
+//           if (value.itemId == ord.productId) {
+//             return {
+//               itemTotal: value.itemTotal,
+//               totalForItem: value.totalForItem,
+//               itemTotaltax: value.itemTotaltax,
+//             };
+//           }
+//         } else if (ord.type == "package") {
+//           if (value.itemId == ord.packageId._id.toString()) {
+//             return {
+//               itemTotal: value.itemTotal,
+//               totalForItem: value.totalForItem,
+//               itemTotaltax: value.itemTotaltax,
+//             };
+//           }
+//         }
+//       });
+//       orderItemsWithTax.push({ ...ord, ...res });
+//     });
+//     // create and save bookings
+//     const newOrderItem = await generateBookings(
+//       orderItemsWithTax,
+//       user,
+//       order,
+//       userAddress,
+//       "cash",
+//       "pending"
+//     );
+//     order.items = newOrderItem;
+//     await order.save();
+//     cart.items = [];
+//     cart.totalPrice = 0;
+//     console.log("cart cleared");
+//     await cart.save();
+
+//     if (referalDiscount > 0) {
+//       const userRefDoc = await UserReferalLink.findOne({
+//         userId: req.user._id,
+//       });
+//       userRefDoc.referralCredits = 0;
+//       await userRefDoc.save();
+//     }
+
+//     return res.status(200).json(order);
+//   }
+// });
 exports.websiteCodOrder = catchAsync(async (req, res, next) => {
   const user = req.user;
 
@@ -699,24 +845,25 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError("User not found.", 404));
   }
+
   const items = cart.items;
   const chargeRes = await calculateCartCharges(items);
   if (!chargeRes.res) {
     return next(new AppError(chargeRes.message, 404));
   }
-  // console.log('inside cod order');
+
   console.log("items", items);
-  // console.log('bookings',bookings)
 
   const orderItems = await generateOrderItems(items, bookings);
   console.log("orderItems", orderItems);
-
+  console.log(orderItems, "line 855");
   if (orderItems) {
     const userAddress = await UserAddress.findById(userAddressId);
     const orderId = await generateOrderId();
     if (!orderId) {
       return next(new AppError("no response while creating orderId", 400));
     }
+
     const order = new Order({
       orderPlatform: "website",
       paymentType: "COD",
@@ -742,40 +889,60 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
         },
       },
     });
-    let orderItemsWithTax = [];
-    newOrderItem.forEach((ord) => {
-      const res = chargeRes.data.items.forEach((value) => {
-        if (ord.type == "product") {
-          if (value.itemId == ord.productId) {
-            return {
-              itemTotal: value.itemTotal,
-              totalForItem: value.totalForItem,
-              itemTotaltax: value.itemTotaltax,
-            };
-          }
-        } else if (ord.type == "package") {
-          if (value.itemId == ord.packageId._id.toString()) {
-            return {
-              itemTotal: value.itemTotal,
-              totalForItem: value.totalForItem,
-              itemTotaltax: value.itemTotaltax,
-            };
-          }
-        }
-      });
-      orderItemsWithTax.push({ ...ord, ...res });
-    });
-    // create and save bookings
+
+    // First generate bookings
     const newOrderItem = await generateBookings(
-      orderItemsWithTax,
+      orderItems,
       user,
       order,
       userAddress,
       "cash",
       "pending"
     );
-    order.items = newOrderItem;
+    console.log(newOrderItem, "line 898");
+
+    // Then process tax information
+    let orderItemsWithTax = [];
+    console.log(chargeRes.data.items, "line 906");
+    newOrderItem.forEach((ord) => {
+      console.log(ord, "line 909");
+      const res = chargeRes.data.items.find((value) => {
+        console.log(ord.type, "line 910");
+        const itemType = ord.product
+          ? "product"
+          : ord.package
+          ? "package"
+          : "package";
+        console.log(itemType, "line 913");
+        if (itemType) {
+          console.log(`This is a ${itemType}`);
+          console.log(ord[itemType].name); // Access product/package name dynamically
+        }
+        if (itemType == "product") {
+          console.log(value, "line 919");
+          console.log(value.ItemId, "line 911");
+          console.log(ord.productId, "line 912");
+          return value.itemId.toString() == ord.product._id.toString();
+        } else if (itemType == "package") {
+          return value.itemId.toString() == ord.package._id.toString();
+        }
+        return false;
+      });
+      console.log(res, "res");
+      console.log(ord, "line 917");
+      if (res) {
+        orderItemsWithTax.push({
+          ...ord,
+          itemTotal: res.itemTotal,
+          totalForItem: res.totalForItem,
+          itemTotaltax: res.itemTotaltax,
+        });
+      }
+    });
+    console.log(orderItemsWithTax);
+    order.items = orderItemsWithTax;
     await order.save();
+
     cart.items = [];
     cart.totalPrice = 0;
     console.log("cart cleared");
@@ -925,12 +1092,7 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
 // });
 
 exports.checkout = catchAsync(async (req, res, next) => {
-  const {
-    platformType,
-    userAddressId,
-    bookings,
-    referalDiscount,
-  } = req.body;
+  const { platformType, userAddressId, bookings, referalDiscount } = req.body;
 
   const user = req.user;
   if (!user) {
@@ -958,24 +1120,23 @@ exports.checkout = catchAsync(async (req, res, next) => {
   }
 
   // Calculate cart charges
-  const cartCharges = await calculateCartCharges(cart, req.body.couponId, referalDiscount);
+  const cartCharges = await calculateCartCharges(
+    cart,
+    req.body.couponId,
+    referalDiscount
+  );
   if (!cartCharges.success) {
-    return next(new AppError(cartCharges.message || "Error calculating cart charges", 400));
+    return next(
+      new AppError(cartCharges.message || "Error calculating cart charges", 400)
+    );
   }
 
-  const { 
-    itemTotal, 
-    discount, 
-    tax, 
-    total, 
-    referalDis,
-    couponId 
-  } = cartCharges;
+  const { itemTotal, discount, tax, total, referalDis, couponId } = cartCharges;
 
   const items = cart.items;
   const orderItems = await generateOrderItems(items, bookings);
   const userAddress = await UserAddress.findById(userAddressId);
-  
+
   const orderId = await generateOrderId();
   if (!orderId) {
     return next(new AppError("Some issues while generating order id", 400));
@@ -1030,7 +1191,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
     const foundToken = await tokenSchema.findOne({
       userId: user._id,
     });
-    
+
     if (!foundToken) {
       return res.status(400).json({
         message: "no user found",
@@ -1040,7 +1201,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
     const token = foundToken.token;
     const deviceType = foundToken.deviceType;
     const appType = foundToken.appType;
-    
+
     const message = {
       notification: {
         title: "payment done",
@@ -1091,7 +1252,7 @@ exports.paymentVerification = catchAsync(async (req, res, next) => {
 
   if (isAuthentic) {
     const result = await TempOrder.findOne({ _id: productId });
-    console.log(result,'result line 645')
+    console.log(result, "result line 645");
     const order = new Order({
       orderPlatform: result.orderPlatform,
       paymentType: result.paymentType,
