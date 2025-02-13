@@ -1092,7 +1092,7 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
 // });
 
 exports.checkout = catchAsync(async (req, res, next) => {
-  const { platformType, userAddressId, bookings, referalDiscount } = req.body;
+  const { couponId,platformType,itemTotal,totalTax,totalPayable, userAddressId, bookings, referalDiscount=0,discount } = req.body;
 
   const user = req.user;
   if (!user) {
@@ -1118,21 +1118,6 @@ exports.checkout = catchAsync(async (req, res, next) => {
   if (!cart || !cart.items.length) {
     return next(new AppError("Cart is empty", 400));
   }
-
-  // Calculate cart charges
-  const cartCharges = await calculateCartCharges(
-    cart,
-    req.body.couponId,
-    referalDiscount
-  );
-  if (!cartCharges.success) {
-    return next(
-      new AppError(cartCharges.message || "Error calculating cart charges", 400)
-    );
-  }
-
-  const { itemTotal, discount, tax, total, referalDis, couponId } = cartCharges;
-
   const items = cart.items;
   const orderItems = await generateOrderItems(items, bookings);
   const userAddress = await UserAddress.findById(userAddressId);
@@ -1141,11 +1126,11 @@ exports.checkout = catchAsync(async (req, res, next) => {
   if (!orderId) {
     return next(new AppError("Some issues while generating order id", 400));
   }
-
+   
   const order = new TempOrder({
     orderPlatform: "website",
     paymentType: "Online",
-    orderValue: total,
+    orderValue: totalPayable-referalDiscount,
     No_of_left_bookings: bookings.length,
     paymentInfo: {
       status: "pending",
@@ -1154,10 +1139,10 @@ exports.checkout = catchAsync(async (req, res, next) => {
     orderId: orderId,
     itemTotal,
     discount,
-    referalDiscount: referalDis,
-    tax,
+    referalDiscount,
+    tax:totalTax,
     items: orderItems,
-    couponId: couponId,
+    couponId: couponId|| null,
     user: {
       userId: user._id,
       phone: user.phone,
@@ -1181,7 +1166,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
 
   // Create Razorpay order
   const options = {
-    amount: total * 100, // amount in the smallest currency unit
+    amount: totalPayable, // amount in the smallest currency unit
     currency: "INR",
   };
   const createdOrder = await instance.orders.create(options);

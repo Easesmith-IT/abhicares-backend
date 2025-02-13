@@ -633,7 +633,7 @@ exports.getApiKey = async (req, res, next) => {
 
 exports.calculateCartCharges = async (req, res, next) => {
   try {
-    const { items, couponCode } = req.body;
+    const { items, couponCode,referalDiscount } = req.body;
     if (!items || !Array.isArray(items)) {
       return res.status(400).json({
         message: "Invalid request. Please provide cart with items array.",
