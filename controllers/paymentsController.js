@@ -313,7 +313,6 @@ exports.appOrder = CatchAsync(async (req, res, next) => {
   const cart = req.body.cart;
   const totalOrderval = cart.totalAmount;
   const coupon = cart.coupon;
-  // const discount = cart.discount;
   const couponId = cart.couponId;
   const payId = req.body.payId;
   if (!user) {
@@ -339,7 +338,7 @@ exports.appOrder = CatchAsync(async (req, res, next) => {
         product: productItem["prod"],
         quantity: productItem["quantity"],
         bookingId: null,
-        itemTotal: productItem["offerPrice"] * productItem["quantity"],
+        itemTotal: productItem["prod"]["offerPrice"] * productItem["quantity"],
         itemTotalDiscount: productItem["itemDiscount"],
         itemTotalTax: productItem["itemTotaltax"],
         bookingDate: productItem["bookDate"],
@@ -350,7 +349,7 @@ exports.appOrder = CatchAsync(async (req, res, next) => {
         package: productItem["prod"],
         quantity: productItem["quantity"],
         bookingId: null,
-        itemTotal: productItem["offerPrice"] * productItem["quantity"],
+        itemTotal: productItem["prod"]["offerPrice"] * productItem["quantity"],
         itemTotalDiscount: productItem["itemDiscount"],
         itemTotalTax: productItem["itemTotaltax"],
         bookingDate: productItem["bookDate"],
