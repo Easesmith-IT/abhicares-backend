@@ -950,10 +950,59 @@ exports.addProductReview = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteProductReview = catchAsync(async (req, res, next) => {
-  const id = req.params.id; // review id
+  const reviewId = req.params.id;
 
-  await Review.findByIdAndDelete({ _id: id });
-  res.status(200).json({ success: true, message: "Review deleted successful" });
+  // First find the review to get product/package info before deletion
+  const review = await Review.findById(reviewId);
+
+  if (!review) {
+    return next(new AppError("Review not found", 404));
+  }
+
+  // Determine if it's a product or package review
+  const itemId = review.productId || review.packageId;
+  const itemType = review.productId ? "product" : "package";
+  const rating = review.rating;
+
+  try {
+    // Delete the review
+    await Review.findByIdAndDelete(reviewId);
+
+    // Update totalReviews and rating distribution
+    const updateQuery = {
+      $inc: {
+        totalReviews: -1,
+        [`ratingDistribution.${rating}`]: -1
+      }
+    };
+
+    // Update product or package
+    if (itemType === "product") {
+      await Product.findByIdAndUpdate(
+        itemId,
+        updateQuery,
+        { new: true }
+      );
+    } else {
+      await Package.findByIdAndUpdate(
+        itemId,
+        updateQuery,
+        { new: true }
+      );
+    }
+
+    // Update average rating
+    await updateItemRating(itemId, itemType);
+
+    res.status(200).json({ 
+      success: true, 
+      message: "Review deleted successfully" 
+    });
+
+  } catch (error) {
+    console.error("Error deleting review:", error);
+    return next(new AppError("Error deleting review", 500));
+  }
 });
 
 exports.updateProductReview = catchAsync(async (req, res, next) => {
