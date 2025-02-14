@@ -815,14 +815,16 @@ exports.addProductReview = catchAsync(async (req, res, next) => {
         reviewType: "ON-PRODUCT",
       };
     }
-
+    
     const review = await Review.create(reviewObj);
     if (findedItem.type === "product") {
-      await Product.findByIdAndUpdate(id, { $inc: { totalReviews: 1 } });
+     const updates= await Product.findByIdAndUpdate(id, { $inc: { totalReviews: 1 } },{ new: true }
+     );
+     console.log(updates,'updates line 822')
     }
     
     if (findedItem.type === "package") {
-      await Package.findByIdAndUpdate(id, { $inc: { totalReviews: 1 } });
+      await Package.findByIdAndUpdate(id, { $inc: { totalReviews: 1 } },{ new: true });
     }
     
     await updateItemRating(id, findedItem.type);
