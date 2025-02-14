@@ -727,7 +727,7 @@ exports.calculateCartCharges = async (req, res, next) => {
         charges: {
           itemAmount: itemTotal,
           itemTotalTax: Math.round(taxOnCommission + convenienceCharge),
-          discount: discountAmount,
+          discount: Math.round(discountAmount),
           totalForItem: Math.round(
             itemTotal + taxOnCommission + convenienceCharge - discountAmount
           ),
@@ -738,7 +738,7 @@ exports.calculateCartCharges = async (req, res, next) => {
       response.totalAmount += itemTotal;
       response.totalTaxOnCommission += Math.round(taxOnCommission);
       response.totalConvenience += Math.round(convenienceCharge);
-      response.totalDiscount += discountAmount;
+      response.totalDiscount += Math.round(discountAmount);
     }
 
     // Calculate final total
