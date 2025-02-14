@@ -760,29 +760,36 @@ const calculateRatingStats = async (itemId, itemType) => {
 // Utility function to update item rating
 const updateItemRating = async (itemId, itemType) => {
   try {
+    console.log('Updating rating for:', { itemId, itemType }); // Debug log
+
+    // Get average rating using aggregation
     const aggregateQuery = [
       {
         $match: {
-          [itemType === "product" ? "productId" : "packageId"]: itemId,
+          [itemType === "product" ? "productId" : "packageId"]: new mongoose.Types.ObjectId(itemId),
         },
       },
       {
         $group: {
           _id: null,
           averageRating: { $avg: "$rating" },
-          ratingDistribution: {
-            $push: "$rating",
-          },
+          totalCount: { $sum: 1 },
+          ratings: { $push: "$rating" }
         },
       },
     ];
 
-    const [ratingData] = await Review.aggregate(aggregateQuery);
+    const results = await Review.aggregate(aggregateQuery);
+    console.log('Aggregation results:', results); // Debug log
 
-    if (!ratingData) {
+    if (!results || results.length === 0) {
+      console.log('No rating data found'); // Debug log
       return;
     }
 
+    const ratingData = results[0];
+
+    // Calculate rating distribution
     const ratingDistribution = {
       1: 0,
       2: 0,
@@ -791,23 +798,44 @@ const updateItemRating = async (itemId, itemType) => {
       5: 0,
     };
 
-    ratingData.ratingDistribution.forEach((rating) => {
+    ratingData.ratings.forEach((rating) => {
       ratingDistribution[rating] = (ratingDistribution[rating] || 0) + 1;
     });
 
+    console.log('Rating distribution:', ratingDistribution); // Debug log
+
+    // Create update object with rating as average
     const updateData = {
-      rating: parseFloat(ratingData.averageRating.toFixed(1)),
-      ratingDistribution,
+      $set: {
+        rating: Number(ratingData.averageRating.toFixed(1)),
+        ratingDistribution: ratingDistribution,
+      }
     };
 
+    console.log('Update data:', updateData); // Debug log
+
+    // Update product or package
+    let updatedItem;
     if (itemType === "product") {
-      await Product.findByIdAndUpdate(itemId, updateData);
+      updatedItem = await Product.findByIdAndUpdate(
+        itemId, 
+        updateData,
+        { new: true }
+      );
     } else {
-      await Package.findByIdAndUpdate(itemId, updateData);
+      updatedItem = await Package.findByIdAndUpdate(
+        itemId, 
+        updateData,
+        { new: true }
+      );
     }
+
+    console.log('Updated item:', updatedItem); // Debug log
+    return updatedItem;
+
   } catch (error) {
     console.error("Error updating item rating:", error);
-    throw new AppError("Error updating item rating", 500);
+    throw error;
   }
 };
 
