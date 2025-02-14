@@ -3855,36 +3855,103 @@ exports.updateCategoryData = async (req, res) => {
   }
 };
 
+// exports.getSellerCashouts = async (req, res) => {
+//   try {
+//     const { page = 1, limit = 10, cashoutId } = req.query; // Extract search query, page, and limit from request query
+
+//     // Convert page and limit to integers
+//     const query = {};
+//     if (cashoutId) {
+//       query.cashoutId = cashoutId;
+//     }
+
+//     const pageNumber = parseInt(page, 10);
+//     const limitNumber = parseInt(limit, 10);
+
+//     if (pageNumber <= 0 || limitNumber <= 0) {
+//       return res.status(200).json({
+//         status: false,
+//         message: "Page and limit must be positive integers",
+//       });
+//     }
+
+//     // Calculate the number of documents to skip
+//     const skip = (pageNumber - 1) * limitNumber;
+//     const cashouts = await SellerCashout.find(query)
+//       .skip(skip)
+//       .limit(limitNumber)
+//       .sort({ createdAt: -1 })
+//       .populate("sellerWalletId")
+//       .populate("sellerWalletId.sellerId");
+
+//     res.status(200).json({ status: "true", data: cashouts });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       error: "An error occurred while fetching seller cashouts",
+//       details: error.message,
+//     });
+//   }
+// };
+
 exports.getSellerCashouts = async (req, res) => {
   try {
-    const { page = 1, limit = 10, cashoutId } = req.query; // Extract search query, page, and limit from request query
+    const {
+      page = 1,
+      limit = 10,
+      cashoutId,
+      status,
+      startDate,
+      endDate,
+    } = req.query;
 
-    // Convert page and limit to integers
-    const query = {};
-    if (cashoutId) {
-      query.cashoutId = cashoutId;
-    }
-
+    // Convert to integers
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
 
     if (pageNumber <= 0 || limitNumber <= 0) {
-      return res.status(200).json({
+      return res.status(400).json({
         status: false,
         message: "Page and limit must be positive integers",
       });
     }
 
-    // Calculate the number of documents to skip
-    const skip = (pageNumber - 1) * limitNumber;
+    // Query object
+    const query = {};
+
+    if (cashoutId) {
+      query.cashoutId = cashoutId;
+    }
+
+    if (status) {
+      query.status = status;
+    }
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+
+    // Count total documents
+    const totalRecords = await SellerCashout.countDocuments(query);
+    const pageCount = Math.ceil(totalRecords / limitNumber);
+
+    // Fetch paginated data
     const cashouts = await SellerCashout.find(query)
-      .skip(skip)
+      .skip((pageNumber - 1) * limitNumber)
       .limit(limitNumber)
       .sort({ createdAt: -1 })
       .populate("sellerWalletId")
       .populate("sellerWalletId.sellerId");
 
-    res.status(200).json({ status: "true", data: cashouts });
+    res.status(200).json({
+      status: true,
+      data: cashouts,
+      pageCount,
+      currentPage: pageNumber,
+      totalRecords,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
