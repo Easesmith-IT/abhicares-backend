@@ -20,6 +20,10 @@ const bookingSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    itemTotalDiscount: {
+      type: Number,
+      default: 0,
+    },
     itemTotalTax: {
       type: Number,
       default: 0,

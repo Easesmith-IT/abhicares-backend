@@ -633,7 +633,7 @@ exports.getApiKey = async (req, res, next) => {
 
 exports.calculateCartCharges = async (req, res, next) => {
   try {
-    const { items, couponCode,referalDiscount } = req.body;
+    const { items, couponCode, referalDiscount } = req.body;
     if (!items || !Array.isArray(items)) {
       return res.status(400).json({
         message: "Invalid request. Please provide cart with items array.",
@@ -655,11 +655,14 @@ exports.calculateCartCharges = async (req, res, next) => {
 
     // If couponId is provided, fetch the coupon details
     if (couponCode) {
-      coupon = await offerCoupon.findOne({name:couponCode});
+      coupon = await offerCoupon.findOne({ name: couponCode });
       if (!coupon) {
         return res.status(400).json({ message: "Invalid coupon ID" });
       }
-      applicableCategories = new Set(coupon.categoryType.map((c) => c.toString())); // Store category IDs as strings
+      applicableCategories = new Set(
+        coupon.categoryType.map((c) => c.toString())
+      ); // Store category IDs as strings
+      console.log(applicableCategories);
     }
 
     // Calculate charges for each item in cart
@@ -675,18 +678,22 @@ exports.calculateCartCharges = async (req, res, next) => {
       } else {
         return res.status(400).json({ message: "Invalid item type" });
       }
-
+      // console.log(itemDetails);
       // Fetch service and category details
-      const service = await Service.findById(item.serviceId);
+      const service = await Service.findById(itemDetails.serviceId);
       if (!service) {
-        return res.status(404).json({ message: `Service not found for item ${item.prodId}` });
+        return res
+          .status(404)
+          .json({ message: `Service not found for item ${item.prodId}` });
       }
 
       const category = await Category.findById(service.categoryId);
       if (!category) {
-        return res.status(404).json({ message: `Category not found for item ${item.prodId}` });
+        return res
+          .status(404)
+          .json({ message: `Category not found for item ${item.prodId}` });
       }
-      console.log(itemDetails,'line 689')
+      // console.log(itemDetails, "line 689");
       const price = itemDetails.offerPrice || itemDetails.price;
       const itemTotal = price * quantity;
       const commissionRate = category.commission / 100;
@@ -699,9 +706,12 @@ exports.calculateCartCharges = async (req, res, next) => {
       // Apply coupon discount if the category matches
       if (coupon && applicableCategories.has(category._id.toString())) {
         if (coupon.discountType === "fixed") {
-          discountAmount = Math.min(coupon.couponFixedValue * quantity, coupon.maxDiscount || Infinity);
+          discountAmount = coupon.couponFixedValue;
         } else if (coupon.discountType === "percentage") {
-          discountAmount = Math.min((itemTotal * coupon.offPercentage) / 100, coupon.maxDiscount || Infinity);
+          discountAmount = Math.min(
+            (itemTotal * coupon.offPercentage) / 100,
+            coupon.maxDiscount || Infinity
+          );
         }
       }
 
@@ -718,7 +728,9 @@ exports.calculateCartCharges = async (req, res, next) => {
           itemAmount: itemTotal,
           itemTotalTax: Math.round(taxOnCommission + convenienceCharge),
           discount: discountAmount,
-          totalForItem: Math.round(itemTotal + taxOnCommission + convenienceCharge - discountAmount),
+          totalForItem: Math.round(
+            itemTotal + taxOnCommission + convenienceCharge - discountAmount
+          ),
         },
       });
 
@@ -731,9 +743,13 @@ exports.calculateCartCharges = async (req, res, next) => {
 
     // Calculate final total
     response.totalPayable = Math.round(
-      response.totalAmount + response.totalTaxOnCommission + response.totalConvenience - response.totalDiscount
+      response.totalAmount +
+        response.totalTaxOnCommission +
+        response.totalConvenience -
+        response.totalDiscount
     );
-    response.totalTax = response.totalTaxOnCommission + response.totalConvenience;
+    response.totalTax =
+      response.totalTaxOnCommission + response.totalConvenience;
 
     return res.status(200).json(response);
   } catch (err) {
@@ -744,7 +760,6 @@ exports.calculateCartCharges = async (req, res, next) => {
     });
   }
 };
-
 
 /* Example Response:
 {

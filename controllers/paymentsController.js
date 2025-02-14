@@ -19,6 +19,7 @@ const { autoAssignBooking } = require("../util/autoAssignBooking");
 const AppError = require("../util/appError");
 const { tokenSchema } = require("../models/fcmToken");
 const { createSendPushNotification } = require("./pushNotificationController");
+const CatchAsync = require("../util/catchAsync");
 const {
   generateOrderId,
   generateBookingId,
@@ -133,178 +134,332 @@ const calculateCartCharges = async (items) => {
   }
 };
 
-exports.appOrder = async (req, res, next) => {
-  try {
-    const userId = req.body.userId;
-    const userAddressId = req.body.userAddressId;
-    const user = await User.findById(userId);
-    const cart = req.body.cart;
-    const totalOrderval = cart.totalAmount;
-    const coupon = cart.coupon;
-    const discount = cart.discount;
-    const couponId = cart.couponId;
-    const payId = req.body.payId;
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
+// exports.appOrder = async (req, res, next) => {
+//   try {
+//     const userId = req.body.userId;
+//     const userAddressId = req.body.userAddressId;
+//     const user = await User.findById(userId);
+//     const cart = req.body.cart;
+//     const totalOrderval = cart.totalAmount;
+//     const coupon = cart.coupon;
+//     const discount = cart.discount;
+//     const couponId = cart.couponId;
+//     const payId = req.body.payId;
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found." });
+//     }
+
+//     // Calculate charges first
+//     const chargesResult = await calculateCartCharges(cart.items);
+//     if (!chargesResult.res) {
+//       return res.status(400).json({ message: chargesResult.message });
+//     }
+//     const calculatedCharges = chargesResult.data;
+
+//     console.log(cart);
+//     // Extract cart data from the user's cart
+//     const products = cart["items"];
+//     // Create an array to store order items
+//     const orderItems = [];
+
+//     // Map calculated charges to products
+//     const chargesMap = {};
+//     calculatedCharges.items.forEach((item) => {
+//       chargesMap[item.itemId] = item.charges;
+//     });
+
+//     for (const productItem of products) {
+//       let prod, pack;
+//       if (productItem.type == "product") {
+//         prod = productItem;
+//       } else if (productItem.type == "package") {
+//         pack = productItem;
+//       }
+
+//       const itemCharges = chargesMap[productItem.prod._id];
+
+//       if (prod) {
+//         orderItems.push({
+//           product: productItem["prod"],
+//           quantity: productItem["quantity"],
+//           bookingId: null,
+//           itemTotal: itemCharges.totalForItem,
+//           itemTotalTax: itemCharges.itemTotaltax,
+//           bookingDate: productItem["bookDate"],
+//           bookingTime: productItem["bookTime"],
+//         });
+//       } else if (pack) {
+//         orderItems.push({
+//           package: productItem["prod"],
+//           quantity: productItem["quantity"],
+//           bookingId: null,
+//           itemTotal: itemCharges.totalForItem,
+//           itemTotalTax: itemCharges.itemTotaltax,
+//           bookingDate: productItem["bookDate"],
+//           bookingTime: productItem["bookTime"],
+//         });
+//       }
+//     }
+//     const orderId = await generateOrderId();
+
+//     const userAddress = await UserAddress.findById(userAddressId);
+//     console.log(totalOrderval);
+//     const order = new Order({
+//       paymentType: cart["paymentType"],
+//       orderValue: calculatedCharges.totalPayable,
+//       itemTotal: calculatedCharges.totalAmount,
+//       No_of_left_bookings: orderItems.length,
+//       discount: 0,
+//       tax: calculatedCharges.totalTax,
+//       items: orderItems,
+//       orderId,
+//       orderPlatform: "app",
+//       user: {
+//         userId: user._id,
+//         phone: user.phone,
+//         name: user.name,
+//         address: {
+//           addressLine: userAddress.addressLine,
+//           pincode: userAddress.pincode,
+//           location: userAddress.location,
+//           landmark: userAddress.landmark,
+//           city: userAddress.city,
+//         },
+//       },
+//     });
+//     if (payId) {
+//       order.payId = payId;
+//     }
+//     if (coupon) {
+//       order.couponId = couponId;
+//       order.discount = discount;
+//     }
+
+//     var paymentStatus;
+//     if (cart["paymentType"] == "online") {
+//       paymentStatus = "completed";
+//     } else {
+//       paymentStatus = "pending";
+//     }
+
+//     ///booking creation
+//     for (const orderItem of orderItems) {
+//       var booking;
+//       const bookingId = await generateBookingId();
+//       if (orderItem.product) {
+//         booking = new Booking({
+//           orderId: order._id,
+//           userId: user._id,
+//           bookingId: bookingId,
+//           paymentStatus: paymentStatus,
+//           itemTotalValue: orderItem.itemTotal,
+//           itemTotalTax: orderItem.itemTotalTax,
+//           itemTotalDiscount: orderItem.itemTotalDiscount,
+//           userAddress: {
+//             addressLine: userAddress.addressLine,
+//             pincode: userAddress.pincode,
+//             landmark: userAddress.landmark,
+//             city: userAddress.city,
+//             location: userAddress.location,
+//           },
+//           product: orderItem.product,
+//           quantity: orderItem.quantity,
+//           bookingDate: orderItem.bookingDate,
+//           bookingTime: orderItem.bookingTime,
+//           orderValue: orderItem.itemTotal - orderItem.itemTotalTax,
+//         });
+//         await booking.save();
+//         orderItem.bookingId = booking._id;
+//       } else if (orderItem.package) {
+//         booking = new Booking({
+//           orderId: order._id,
+//           userId: user._id,
+//           bookingId: bookingId,
+//           itemTotalValue: orderItem.itemTotal,
+//           itemTotalTax: orderItem.itemTotalTax,
+//           paymentStatus: paymentStatus,
+//           userAddress: {
+//             addressLine: userAddress.addressLine,
+//             pincode: userAddress.pincode,
+//             landmark: userAddress.landmark,
+//             city: userAddress.city,
+//             location: userAddress.location,
+//           },
+//           package: orderItem.package,
+//           quantity: orderItem.quantity,
+//           bookingDate: orderItem.bookingDate,
+//           bookingTime: orderItem.bookingTime,
+//           orderValue: orderItem.itemTotal - orderItem.itemTotalTax,
+//         });
+//       }
+//       if (paymentStatus == "completed") {
+//         booking.paymentType = cart["paymentType"];
+//       }
+//       orderItem.bookingId = booking._id;
+//       await booking.save();
+//     }
+//     order.items = orderItems;
+//     await order.save();
+//     return res.status(200).json(order);
+//   } catch (err) {
+//     console.log(err);
+//     return { message: "error", error: err };
+//   }
+// };
+exports.appOrder = CatchAsync(async (req, res, next) => {
+  const userId = req.body.userId;
+  const userAddressId = req.body.userAddressId;
+  const user = await User.findById(userId);
+  const cart = req.body.cart;
+  const totalOrderval = cart.totalAmount;
+  const coupon = cart.coupon;
+  const couponId = cart.couponId;
+  const payId = req.body.payId;
+  if (!user) {
+    return res.status(404).json({ message: "User not found." });
+  }
+
+  console.log(cart);
+  // Extract cart data from the user's cart
+  const products = cart["items"];
+  // Create an array to store order items
+  const orderItems = [];
+
+  for (const productItem of products) {
+    let prod, pack;
+    if (productItem.type == "product") {
+      prod = productItem;
+    } else if (productItem.type == "package") {
+      pack = productItem;
     }
 
-    // Calculate charges first
-    const chargesResult = await calculateCartCharges(cart.items);
-    if (!chargesResult.res) {
-      return res.status(400).json({ message: chargesResult.message });
+    if (prod) {
+      orderItems.push({
+        product: productItem["prod"],
+        quantity: productItem["quantity"],
+        bookingId: null,
+        itemTotal: productItem["totalForItem"],
+        itemTotalDiscount: productItem["itemDiscount"],
+        itemTotalTax: productItem["itemTotaltax"],
+        bookingDate: productItem["bookDate"],
+        bookingTime: productItem["bookTime"],
+      });
+    } else if (pack) {
+      orderItems.push({
+        package: productItem["prod"],
+        quantity: productItem["quantity"],
+        bookingId: null,
+        itemTotal: productItem["totalForItem"],
+        itemTotalDiscount: productItem["itemDiscount"],
+        itemTotalTax: productItem["itemTotaltax"],
+        bookingDate: productItem["bookDate"],
+        bookingTime: productItem["bookTime"],
+      });
     }
-    const calculatedCharges = chargesResult.data;
+  }
+  const orderId = await generateOrderId();
 
-    console.log(cart);
-    // Extract cart data from the user's cart
-    const products = cart["items"];
-    // Create an array to store order items
-    const orderItems = [];
+  const userAddress = await UserAddress.findById(userAddressId);
+  console.log(totalOrderval);
+  const order = new Order({
+    paymentType: cart["paymentType"],
+    orderValue: cart["totalAmount"],
+    itemTotal: cart["totalvalue"],
+    No_of_left_bookings: orderItems.length,
+    discount: 0,
+    tax: cart["totalTax"],
+    items: orderItems,
+    orderId,
+    orderPlatform: "app",
+    user: {
+      userId: user._id,
+      phone: user.phone,
+      name: user.name,
+      address: {
+        addressLine: userAddress.addressLine,
+        pincode: userAddress.pincode,
+        location: userAddress.location,
+        landmark: userAddress.landmark,
+        city: userAddress.city,
+      },
+    },
+  });
+  if (payId) {
+    order.payId = payId;
+  }
+  if (coupon) {
+    order.couponId = couponId;
+    order.discount = cart["totalDiscount"];
+  }
 
-    // Map calculated charges to products
-    const chargesMap = {};
-    calculatedCharges.items.forEach((item) => {
-      chargesMap[item.itemId] = item.charges;
-    });
+  let paymentStatus;
+  if (cart["paymentType"] == "online") {
+    paymentStatus = "completed";
+  } else {
+    paymentStatus = "pending";
+  }
 
-    for (const productItem of products) {
-      let prod, pack;
-      if (productItem.type == "product") {
-        prod = productItem;
-      } else if (productItem.type == "package") {
-        pack = productItem;
-      }
-
-      const itemCharges = chargesMap[productItem.prod._id];
-
-      if (prod) {
-        orderItems.push({
-          product: productItem["prod"],
-          quantity: productItem["quantity"],
-          bookingId: null,
-          itemTotal: itemCharges.totalForItem,
-          itemTotalTax: itemCharges.itemTotaltax,
-          bookingDate: productItem["bookDate"],
-          bookingTime: productItem["bookTime"],
-        });
-      } else if (pack) {
-        orderItems.push({
-          package: productItem["prod"],
-          quantity: productItem["quantity"],
-          bookingId: null,
-          itemTotal: itemCharges.totalForItem,
-          itemTotalTax: itemCharges.itemTotaltax,
-          bookingDate: productItem["bookDate"],
-          bookingTime: productItem["bookTime"],
-        });
-      }
-    }
-    const orderId = await generateOrderId();
-
-    const userAddress = await UserAddress.findById(userAddressId);
-    console.log(totalOrderval);
-    const order = new Order({
-      paymentType: cart["paymentType"],
-      orderValue: calculatedCharges.totalPayable,
-      itemTotal: calculatedCharges.totalAmount,
-      No_of_left_bookings: orderItems.length,
-      discount: 0,
-      tax: calculatedCharges.totalTax,
-      items: orderItems,
-      orderId,
-      orderPlatform: "app",
-      user: {
+  ///booking creation
+  for (const orderItem of orderItems) {
+    let booking;
+    const bookingId = await generateBookingId();
+    if (orderItem.product) {
+      console.log(orderItem);
+      booking = new Booking({
+        orderId: order._id,
         userId: user._id,
-        phone: user.phone,
-        name: user.name,
-        address: {
+        bookingId: bookingId,
+        paymentStatus: paymentStatus,
+        itemTotalValue: orderItem.itemTotal,
+        itemTotalTax: orderItem.itemTotalTax,
+        itemTotalDiscount: orderItem.itemTotalDiscount,
+        userAddress: {
           addressLine: userAddress.addressLine,
           pincode: userAddress.pincode,
-          location: userAddress.location,
           landmark: userAddress.landmark,
           city: userAddress.city,
+          location: userAddress.location,
         },
-      },
-    });
-    if (payId) {
-      order.payId = payId;
-    }
-    if (coupon) {
-      order.couponId = couponId;
-      order.discount = discount;
-    }
-
-    var paymentStatus;
-    if (cart["paymentType"] == "online") {
-      paymentStatus = "completed";
-    } else {
-      paymentStatus = "pending";
-    }
-
-    ///booking creation
-    for (const orderItem of orderItems) {
-      var booking;
-      const bookingId = await generateBookingId();
-      if (orderItem.product) {
-        booking = new Booking({
-          orderId: order._id,
-          userId: user._id,
-          bookingId: bookingId,
-          paymentStatus: paymentStatus,
-          itemTotalValue: orderItem.itemTotal,
-          itemTotalTax: orderItem.itemTotalTax,
-          userAddress: {
-            addressLine: userAddress.addressLine,
-            pincode: userAddress.pincode,
-            landmark: userAddress.landmark,
-            city: userAddress.city,
-            location: userAddress.location,
-          },
-          product: orderItem.product,
-          quantity: orderItem.quantity,
-          bookingDate: orderItem.bookingDate,
-          bookingTime: orderItem.bookingTime,
-          orderValue: orderItem.itemTotal - orderItem.itemTotalTax,
-        });
-        await booking.save();
-        orderItem.bookingId = booking._id;
-      } else if (orderItem.package) {
-        booking = new Booking({
-          orderId: order._id,
-          userId: user._id,
-          bookingId: bookingId,
-          itemTotalValue: orderItem.itemTotal,
-          itemTotalTax: orderItem.itemTotalTax,
-          paymentStatus: paymentStatus,
-          userAddress: {
-            addressLine: userAddress.addressLine,
-            pincode: userAddress.pincode,
-            landmark: userAddress.landmark,
-            city: userAddress.city,
-            location: userAddress.location,
-          },
-          package: orderItem.package,
-          quantity: orderItem.quantity,
-          bookingDate: orderItem.bookingDate,
-          bookingTime: orderItem.bookingTime,
-          orderValue: orderItem.itemTotal - orderItem.itemTotalTax,
-        });
-      }
-      if (paymentStatus == "completed") {
-        booking.paymentType = cart["paymentType"];
-      }
-      orderItem.bookingId = booking._id;
+        product: orderItem.product,
+        quantity: orderItem.quantity,
+        bookingDate: orderItem.bookingDate,
+        bookingTime: orderItem.bookingTime,
+        orderValue: orderItem.itemTotal - orderItem.itemTotalTax,
+      });
       await booking.save();
+      orderItem.bookingId = booking._id;
+    } else if (orderItem.package) {
+      booking = new Booking({
+        orderId: order._id,
+        userId: user._id,
+        bookingId: bookingId,
+        itemTotalValue: orderItem.itemTotal,
+        itemTotalTax: orderItem.itemTotalTax,
+        paymentStatus: paymentStatus,
+        userAddress: {
+          addressLine: userAddress.addressLine,
+          pincode: userAddress.pincode,
+          landmark: userAddress.landmark,
+          city: userAddress.city,
+          location: userAddress.location,
+        },
+        package: orderItem.package,
+        quantity: orderItem.quantity,
+        bookingDate: orderItem.bookingDate,
+        bookingTime: orderItem.bookingTime,
+        orderValue: orderItem.itemTotal - orderItem.itemTotalTax,
+      });
     }
-    order.items = orderItems;
-    await order.save();
-    return res.status(200).json(order);
-  } catch (err) {
-    console.log(err);
-    return { message: "error", error: err };
+    if (paymentStatus == "completed") {
+      booking.paymentType = cart["paymentType"];
+    }
+    orderItem.bookingId = booking._id;
+    await booking.save();
   }
-};
-
+  order.items = orderItems;
+  await order.save();
+  return res.status(200).json(order);
+});
 // exports.appOrder = async (req, res, next) => {
 //   try {
 //     const userId = req.body.userId;
@@ -1092,7 +1247,17 @@ exports.websiteCodOrder = catchAsync(async (req, res, next) => {
 // });
 
 exports.checkout = catchAsync(async (req, res, next) => {
-  const { couponId,platformType,itemTotal,totalTax,totalPayable, userAddressId, bookings, referalDiscount=0,discount } = req.body;
+  const {
+    couponId,
+    platformType,
+    itemTotal,
+    totalTax,
+    totalPayable,
+    userAddressId,
+    bookings,
+    referalDiscount = 0,
+    discount,
+  } = req.body;
 
   const user = req.user;
   if (!user) {
@@ -1126,11 +1291,11 @@ exports.checkout = catchAsync(async (req, res, next) => {
   if (!orderId) {
     return next(new AppError("Some issues while generating order id", 400));
   }
-   
+
   const order = new TempOrder({
     orderPlatform: "website",
     paymentType: "Online",
-    orderValue: totalPayable-referalDiscount,
+    orderValue: totalPayable - referalDiscount,
     No_of_left_bookings: bookings.length,
     paymentInfo: {
       status: "pending",
@@ -1140,9 +1305,9 @@ exports.checkout = catchAsync(async (req, res, next) => {
     itemTotal,
     discount,
     referalDiscount,
-    tax:totalTax,
+    tax: totalTax,
     items: orderItems,
-    couponId: couponId|| null,
+    couponId: couponId || null,
     user: {
       userId: user._id,
       phone: user.phone,
