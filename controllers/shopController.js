@@ -734,33 +734,91 @@ const calculateRatingStats = async (itemId, itemType) => {
   };
 };
 
-// Function to update item (product/package) rating
+// // Function to update item (product/package) rating
+// const updateItemRating = async (itemId, itemType) => {
+//   try {
+//     const stats = await calculateRatingStats(itemId, itemType);
+//     const Model = itemType === "product" ? Product : Package;
+
+//     await Model.findByIdAndUpdate(itemId, {
+//       $set: {
+//         rating: stats.rating,
+//         totalReviews: stats.totalReviews,
+//         ratingDistribution: stats.ratingDistribution,
+//       },
+//     });
+
+//     return stats;
+//   } catch (error) {
+//     console.error(`Error updating ${itemType} rating:`, error);
+//     throw error;
+//   }
+// };
+
+
+
+// Utility function to update item rating
 const updateItemRating = async (itemId, itemType) => {
   try {
-    const stats = await calculateRatingStats(itemId, itemType);
-    const Model = itemType === "product" ? Product : Package;
-
-    await Model.findByIdAndUpdate(itemId, {
-      $set: {
-        rating: stats.rating,
-        totalReviews: stats.totalReviews,
-        ratingDistribution: stats.ratingDistribution,
+    const aggregateQuery = [
+      {
+        $match: {
+          [itemType === "product" ? "productId" : "packageId"]: itemId,
+        },
       },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "$rating" },
+          ratingDistribution: {
+            $push: "$rating",
+          },
+        },
+      },
+    ];
+
+    const [ratingData] = await Review.aggregate(aggregateQuery);
+
+    if (!ratingData) {
+      return;
+    }
+
+    const ratingDistribution = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+    };
+
+    ratingData.ratingDistribution.forEach((rating) => {
+      ratingDistribution[rating] = (ratingDistribution[rating] || 0) + 1;
     });
 
-    return stats;
+    const updateData = {
+      rating: parseFloat(ratingData.averageRating.toFixed(1)),
+      ratingDistribution,
+    };
+
+    if (itemType === "product") {
+      await Product.findByIdAndUpdate(itemId, updateData);
+    } else {
+      await Package.findByIdAndUpdate(itemId, updateData);
+    }
   } catch (error) {
-    console.error(`Error updating ${itemType} rating:`, error);
-    throw error;
+    console.error("Error updating item rating:", error);
+    throw new AppError("Error updating item rating", 500);
   }
 };
 
 exports.addProductReview = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is product/package id
   const { title, content, rating } = req.body;
+
   if (!rating) {
-    return next(new AppError(400, "Please provide rating"));
+    return next(new AppError("Please provide rating",400 ));
   }
+
   // Check for existing reviews
   const existingReview = await Review.findOne({
     $or: [
@@ -794,6 +852,7 @@ exports.addProductReview = catchAsync(async (req, res, next) => {
   if (flag) {
     const findedItem = items.find((item) => item._id === id);
     let reviewObj;
+
     if (findedItem.type === "product") {
       reviewObj = {
         title,
@@ -812,29 +871,53 @@ exports.addProductReview = catchAsync(async (req, res, next) => {
         rating,
         userId: req.user._id,
         packageId: id,
-        reviewType: "ON-PRODUCT",
+        reviewType: "ON-PACKAGE", // Fixed reviewType for package
       };
     }
     
     const review = await Review.create(reviewObj);
-    if (findedItem.type === "product") {
-     const updates= await Product.findByIdAndUpdate(id, { $inc: { totalReviews: 1 } },{ new: true }
-     );
-     console.log(updates,'updates line 822')
+
+    try {
+      const itemId=id
+      const updateQuery = {
+        $inc: { 
+          totalReviews: 1,
+          [`ratingDistribution.${rating}`]: 1
+        }
+      };
+
+      if (findedItem.type === "product") {
+        const updates = await Product.findByIdAndUpdate(
+          itemId,
+          updateQuery,
+          { new: true }
+        );
+        console.log('Product updates:', updates);
+      }
+      
+      if (findedItem.type === "package") {
+        const updates = await Package.findByIdAndUpdate(
+          itemId,
+          updateQuery,
+          { new: true }
+        );
+        console.log('Package updates:', updates);
+      }
+      
+      await updateItemRating(id, findedItem.type);
+
+      return res.status(200).json({
+        status: "success",
+        message: "Review added successfully",
+        data: { review },
+      });
+    } catch (error) {
+      console.error("Error updating item:", error);
+      await Review.findByIdAndDelete(review._id);
+      return res.status(500).json({message:"something went wrong"});
     }
-    
-    if (findedItem.type === "package") {
-      await Package.findByIdAndUpdate(id, { $inc: { totalReviews: 1 } },{ new: true });
-    }
-    
-    await updateItemRating(id, findedItem.type);
-    return res.status(200).json({
-      status: "success",
-      message: "Review added successfully",
-      data: { review },
-    });
   } else {
-    return next(new AppError("You can't add this review", 400));
+    return res.status(400).json({message:"You can't add this"});
   }
 });
 
