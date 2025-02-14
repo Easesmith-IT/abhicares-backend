@@ -334,8 +334,6 @@ exports.appOrder = async (req, res, next) => {
         pack = productItem;
       }
 
-      const itemCharges = chargesMap[productItem.prod._id];
-
       if (prod) {
         orderItems.push({
           product: productItem["prod"],
@@ -369,7 +367,7 @@ exports.appOrder = async (req, res, next) => {
       orderValue: cart["totalAmount"],
       itemTotal: cart["totalvalue"],
       No_of_left_bookings: orderItems.length,
-      discount: cart["totalDiscount"] || 0,
+      discount: 0,
       tax: cart["totalTax"],
       items: orderItems,
       orderId,
@@ -392,10 +390,10 @@ exports.appOrder = async (req, res, next) => {
     }
     if (coupon) {
       order.couponId = couponId;
-      order.discount = discount;
+      order.discount = cart["totalDiscount"];
     }
 
-    var paymentStatus;
+    let paymentStatus;
     if (cart["paymentType"] == "online") {
       paymentStatus = "completed";
     } else {
@@ -404,7 +402,7 @@ exports.appOrder = async (req, res, next) => {
 
     ///booking creation
     for (const orderItem of orderItems) {
-      var booking;
+      let booking;
       const bookingId = await generateBookingId();
       if (orderItem.product) {
         booking = new Booking({

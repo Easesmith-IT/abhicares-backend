@@ -831,8 +831,26 @@ exports.getCashoutRequests = catchAsync(async (req, res, next) => {
   const id = req.params.id;
   const page = req.query.page || 1;
   const limit = req.query.limit || 10;
+  const { startDate, endDate } = req.query;
 
-  const cashouts = await SellerCashout.find({ sellerWalletId: id })
+  if (!id) {
+    return res.status(400).json({
+      status: false,
+      message: "Seller ID is required.",
+    });
+  }
+
+  const query = { sellerWalletId: id };
+
+  // Apply date range filter if startDate and endDate are provided
+  if (startDate && endDate) {
+    query.createdAt = {
+      $gte: new Date(startDate),
+      $lte: new Date(endDate),
+    };
+  }
+
+  const cashouts = await SellerCashout.find(query)
     .skip((page - 1) * limit)
     .limit(limit * 1)
     .sort({ createdAt: -1 });
@@ -1601,8 +1619,8 @@ exports.checkAdminAuthStatus = catchAsync(async (req, res, next) => {
 
 exports.logoutAdmin = catchAsync(async (req, res, next) => {
   res.clearCookie("adminAccessToken");
-  res.clearCookie('adminRefreshToken')
-  res.clearCookie("adminInfo")
+  res.clearCookie("adminRefreshToken");
+  res.clearCookie("adminInfo");
   return res.json({ success: true, message: "Logout successful" });
 });
 
@@ -2987,7 +3005,8 @@ exports.filterPartner = catchAsync(async (req, res, next) => {
 
   const skip = (pageNumber - 1) * limitNumber;
 
-  const foundPartners = await Seller.find({ status: status.toUpperCase() }).populate("categoryId")
+  const foundPartners = await Seller.find({ status: status.toUpperCase() })
+    .populate("categoryId")
     .skip(skip)
     .limit(limitNumber);
 
@@ -3838,12 +3857,12 @@ exports.updateCategoryData = async (req, res) => {
 
 exports.getSellerCashouts = async (req, res) => {
   try {
-    const { page = 1, limit = 10,cashoutId } = req.query; // Extract search query, page, and limit from request query
+    const { page = 1, limit = 10, cashoutId } = req.query; // Extract search query, page, and limit from request query
 
     // Convert page and limit to integers
-    const query={}
-    if(cashoutId){
-      query.cashoutId=cashoutId
+    const query = {};
+    if (cashoutId) {
+      query.cashoutId = cashoutId;
     }
 
     const pageNumber = parseInt(page, 10);
@@ -3851,9 +3870,9 @@ exports.getSellerCashouts = async (req, res) => {
 
     if (pageNumber <= 0 || limitNumber <= 0) {
       return res.status(200).json({
-        status:false,
-        message:"Page and limit must be positive integers",
-      })
+        status: false,
+        message: "Page and limit must be positive integers",
+      });
     }
 
     // Calculate the number of documents to skip
@@ -3875,34 +3894,32 @@ exports.getSellerCashouts = async (req, res) => {
   }
 };
 
-exports.getSellerCashoutDetails=catchAsync(async(req,res,next)=>{
-  const {cashoutId}=req.query
-  const cashout = await SellerCashout.findById(cashoutId)
-      .populate({
-        path: "sellerWalletId",
-        populate: {
-          path: "sellerId", 
-          model: "Seller",  
-        },
-      });
+exports.getSellerCashoutDetails = catchAsync(async (req, res, next) => {
+  const { cashoutId } = req.query;
+  const cashout = await SellerCashout.findById(cashoutId).populate({
+    path: "sellerWalletId",
+    populate: {
+      path: "sellerId",
+      model: "Seller",
+    },
+  });
 
-    if (!cashout) {
-      return res.status(200).json({ 
-        status:false,
-        message: "Cashout not found" });
-    }
-
+  if (!cashout) {
     return res.status(200).json({
-      message:"here's the details",
-      status:true,
-      cashout
+      status: false,
+      message: "Cashout not found",
     });
-  
-})
+  }
+
+  return res.status(200).json({
+    message: "here's the details",
+    status: true,
+    cashout,
+  });
+});
 
 exports.updateCashoutStatus = catchAsync(async (req, res) => {
-  const { cashoutId,status } = req.body;
-
+  const { cashoutId, status } = req.body;
 
   // Valid status options
   const validStatuses = ["approved", "rejected", "under-processing"];
@@ -3921,5 +3938,7 @@ exports.updateCashoutStatus = catchAsync(async (req, res) => {
     return res.status(200).json({ message: "Cashout not found" });
   }
 
-  res.status(200).json({ message: `Cashout ${status} successfully`, updatedCashout });
+  res
+    .status(200)
+    .json({ message: `Cashout ${status} successfully`, updatedCashout });
 });
