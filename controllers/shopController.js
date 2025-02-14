@@ -817,6 +817,14 @@ exports.addProductReview = catchAsync(async (req, res, next) => {
     }
 
     const review = await Review.create(reviewObj);
+    if (findedItem.type === "product") {
+      await Product.findByIdAndUpdate(id, { $inc: { totalReviews: 1 } });
+    }
+    
+    if (findedItem.type === "package") {
+      await Package.findByIdAndUpdate(id, { $inc: { totalReviews: 1 } });
+    }
+    
     await updateItemRating(id, findedItem.type);
     return res.status(200).json({
       status: "success",
