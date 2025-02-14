@@ -17,7 +17,7 @@ const reviewSchema = new mongoose.Schema(
     reviewType: {
       type: String,
       required: true,
-      enum: ["ON-PRODUCT", "ON-BOOKING"],
+      enum: ["ON-PRODUCT", "ON-BOOKING",'ON-PACKAGE'],
     },
     productId: {
       type: mongoose.Types.ObjectId,
