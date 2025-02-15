@@ -11,7 +11,7 @@ exports.generateAccessToken = (userId, role, tokenVersion) => {
   return jwt.sign(
     { id: userId, role: role, tokenVersion: tokenVersion },
     process.env.JWT_ACCESS_SECRET,
-    { expiresIn: "15m" } // 30 minutes
+    { expiresIn: "45m" } // 30 minutes
   );
 };
 exports.setTokenCookies = (res, accessToken, refreshToken, user, role) => {

@@ -223,122 +223,12 @@ exports.getPackageProduct = catchAsync(async (req, res, next) => {
     .json({ success: true, message: "products list", data: products });
 });
 
-// cart controllers
-
-// exports.getCart = catchAsync(async (req, res, next) => {
-//   const {userId} = req.query;
-//   const foundUser=await user.findById(userId)
-//   console.log(foundUser,'user')
-//   console.log(req.cookies,"guest card")
-//   console.log(req.cookies["guestCart"],'guest cart')
-//   var cart;
-//   if (foundUser) {
-//     cart = await Cart.findById(foundUser.cartId).populate([
-//       {
-//         path: "items",
-//         populate: {
-//           path: "productId",
-//           model: "Product",
-//           populate: {
-//             path: "serviceId",
-//             model: "Service",
-//             populate: {
-//               path: "categoryId",
-//               model: "Category",
-//             },
-//           },
-//         },
-//       },
-//       {
-//         path: "items",
-//         populate: {
-//           path: "packageId",
-//           populate: {
-//             path: "products",
-//             populate: {
-//               path: "productId",
-//               model: "Product",
-//               populate: {
-//                 path: "serviceId",
-//                 model: "Service",
-//                 populate: {
-//                   path: "categoryId",
-//                   model: "Category",
-//                 },
-//               },
-//             },
-//           },
-//           populate: {
-//             path: "serviceId",
-//             model: "Service",
-//             populate: {
-//               path: "categoryId",
-//               model: "Category",
-//             },
-//           },
-//         },
-//       },
-//     ]);
-//     console.log(foundUser,'line 277')
-//   } else if (req.cookies["guestCart"]) {
-//     cart = JSON.parse(req.cookies["guestCart"]);
-//     var cartItems = [];
-//     for (index in cart.items) {
-//       if (cart.items[index].productId) {
-//         const product = await Product.findById(cart.items[index].productId);
-//         var item = {
-//           productId: product,
-//           type: "product",
-//           quantity: cart.items[index].quantity,
-//         };
-//         cartItems.push(item);
-//       } else if (cart.items[index].packageId) {
-//         const package = await Package.findById(
-//           cart.items[index].packageId
-//         ).populate({
-//           path: "products",
-//           populate: {
-//             path: "productId",
-//             model: "Product",
-//             populate: {
-//               path: "serviceId",
-//               model: "Service",
-//               populate: {
-//                 path: "categoryId",
-//                 model: "Category",
-//               },
-//             },
-//           },
-//         });
-//         var item = {
-//           packageId: package,
-//           type: "package",
-//           quantity: cart.items[index].quantity,
-//         };
-//         cartItems.push(item);
-//       }
-//     }
-//     cart.items = cartItems;
-//   } else {
-//  return res.status(200).json({
-//       success: false,
-//       message: "cart is empty",
-//       data: [],
-//     });
-//   }
-//   if (cart)
-//    return res.status(200).json({
-//       success: true,
-//       message: "cart items",
-//       data: cart.items,
-//       totalOfferPrice: cart.totalPrice,
-//     });
-// });
 exports.getCart = catchAsync(async (req, res, next) => {
   // const { userId } = req.query;
   // const { userId } = req.user._id;
   // const foundUser = await user.findById(userId);
   const foundUser = req.user;
+  console.log(user);
   console.log(foundUser, "user");
   console.log(req.cookies, "guest cart");
   console.log(req.cookies["guestCart"], "guest cart");

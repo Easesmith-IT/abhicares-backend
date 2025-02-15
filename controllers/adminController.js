@@ -41,6 +41,7 @@ const {
   generateOrderId,
   generateBookingId,
   generatePartnerId,
+  sellerCashoutId,
 } = require("../util/generateOrderId");
 const review = require("../models/review");
 const helpCenter = require("../models/helpCenter");
@@ -4019,8 +4020,10 @@ exports.addSellerCashout = catchAsync(async (req, res, next) => {
       message: "money more than in account cannot be cashout",
     });
   } else {
-    var transaction = await SellerCashout.create({
+    const cashoutID = await sellerCashoutId();
+    let transaction = await SellerCashout.create({
       sellerWalletId: sellerWalletId,
+      cashoutId: cashoutID,
       value: value,
       status: "Completed",
       payId: payId,
