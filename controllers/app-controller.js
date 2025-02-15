@@ -283,7 +283,9 @@ exports.getProducts = async (req, res, next) => {
 
 exports.getPackageDetails = catchAsync(async (req, res, next) => {
   const packageId = req.params.packageId;
-  const package = await Package.findById(packageId);
+  const package = await Package.findById(packageId).populate(
+    "products.productId"
+  );
   const serviceFeatures = await Service.findById(package.serviceId).select(
     "features"
   );
