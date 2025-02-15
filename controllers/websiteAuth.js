@@ -7,61 +7,69 @@ const { generateOTP, verifyOTP } = require("../util/otpHandler");
 const admin = require("../models/admin");
 
 exports.generateAccessToken = (userId, role, tokenVersion) => {
-    // console.log(userId, role, tokenVersion);
-    return jwt.sign(
-      { id: userId, role: role, tokenVersion: tokenVersion },
-      process.env.JWT_ACCESS_SECRET,
-      { expiresIn: "15m" } // 30 minutes
-    );
-  };
-  exports.setTokenCookies = (res, accessToken, refreshToken, user, role) => {
-    // Set HttpOnly cookie for refresh token
-    res.cookie(role === "admin" ? "adminRefreshToken" : "userRefreshToken", refreshToken, {
+  // console.log(userId, role, tokenVersion);
+  return jwt.sign(
+    { id: userId, role: role, tokenVersion: tokenVersion },
+    process.env.JWT_ACCESS_SECRET,
+    { expiresIn: "15m" } // 30 minutes
+  );
+};
+exports.setTokenCookies = (res, accessToken, refreshToken, user, role) => {
+  // Set HttpOnly cookie for refresh token
+  res.cookie(
+    role === "admin" ? "adminRefreshToken" : "userRefreshToken",
+    refreshToken,
+    {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 90 days
-    });
-  
-    // Set HttpOnly cookie for access token
-    res.cookie(role === "admin" ? "adminAccessToken" : "userAccessToken", accessToken, {
+    }
+  );
+
+  // Set HttpOnly cookie for access token
+  res.cookie(
+    role === "admin" ? "adminAccessToken" : "userAccessToken",
+    accessToken,
+    {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 15 * 60 * 1000, // 30 minutes
-    });
-  
-    // Set user info in non-HttpOnly cookie for frontend access
-    res.cookie(
-        role === "admin" ? "adminInfo" : "userInfo",
-      JSON.stringify({
-        id: user._id,
-        name: user.name,
-        email: user.email||"",
-        phone: user.phone||"",
-        role,
-      }),
-      {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      }
-    );
-  };
-  // Generate refresh token (long-lived)
-  exports.generateRefreshToken = (userId, role, tokenVersion) => {
-    return jwt.sign(
-      { id: userId, role: role, tokenVersion: tokenVersion },
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: "90d" } // Token expiry
-    );
-  };
-  
+    }
+  );
+
+  // Set user info in non-HttpOnly cookie for frontend access
+  res.cookie(
+    role === "admin" ? "adminInfo" : "userInfo",
+    JSON.stringify({
+      id: user._id,
+      name: user.name,
+      email: user.email || "",
+      phone: user.phone || "",
+      role,
+    }),
+    {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    }
+  );
+};
+// Generate refresh token (long-lived)
+exports.generateRefreshToken = (userId, role, tokenVersion) => {
+  return jwt.sign(
+    { id: userId, role: role, tokenVersion: tokenVersion },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: "90d" } // Token expiry
+  );
+};
+
 //   exports.refresh = catchAsync(async (req, res, next) => {
 //     const { refreshToken } = req.cookies;
 //     console.log(refreshToken, "this is a refresh token");
-  
+
 //     if (!refreshToken) {
 //       return next(new AppError("No refresh token", 401));
 //     }
@@ -69,39 +77,39 @@ exports.generateAccessToken = (userId, role, tokenVersion) => {
 //       console.log(refreshToken, "Received refresh token");
 //       const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 //       console.log("Decoded payload:", decoded);
-  
+
 //       let user;
 //       if (decoded.role === "user") {
 //         user = await User.findById(decoded.id).select("+tokenVersion");
 //       } else {
 //         user = await admin.findById(decoded.id);
 //       }
-  
+
 //       if (!user) {
 //         console.log("User not found");
 //         return next(new AppError("Invalid refresh token", 401));
 //       }
 //       console.log("Database token version:", user.tokenVersion);
-  
+
 //       if (user.tokenVersion !== decoded.tokenVersion) {
 //         console.log("Token version mismatch");
 //         return next(new AppError("Invalid refresh token", 401));
 //       }
-  
+
 //       const accessToken = this.generateAccessToken(
 //         user._id,
 //         decoded.role,
 //         user.tokenVersion
 //       );
 //       console.log("Generated new access token");
-  
+
 //       res.cookie("accessToken", accessToken, {
 //         httpOnly: true,
 //         secure: process.env.NODE_ENV === "production",
 //         sameSite: "strict",
 //         maxAge: 15 * 60 * 1000,
 //       });
-  
+
 //       return res
 //         .status(200)
 //         .json({ success: true, message: "Access token refreshed" });
@@ -111,71 +119,79 @@ exports.generateAccessToken = (userId, role, tokenVersion) => {
 //     }
 //   });
 exports.refresh = catchAsync(async (req, res, next) => {
-    const { adminRefreshToken, userRefreshToken } = req.cookies;
-    console.log({ adminRefreshToken, userRefreshToken }, "Received refresh tokens");
+  const { adminRefreshToken, userRefreshToken } = req.cookies;
+  console.log(
+    { adminRefreshToken, userRefreshToken },
+    "Received refresh tokens"
+  );
 
-    let refreshToken, user;
-    if (adminRefreshToken) {
-        refreshToken = adminRefreshToken;
-    } else if (userRefreshToken) {
-        refreshToken = userRefreshToken;
+  let refreshToken, user;
+  if (adminRefreshToken) {
+    refreshToken = adminRefreshToken;
+  } else if (userRefreshToken) {
+    refreshToken = userRefreshToken;
+  } else {
+    return next(new AppError("No refresh token", 401));
+  }
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    console.log("Decoded payload:", decoded);
+    console.log(decoded.role, "line 129");
+    if (decoded.role === "admin") {
+      user = await admin.findById(decoded.id).select("+tokenVersion");
     } else {
-        return next(new AppError("No refresh token", 401));
+      user = await User.findById(decoded.id).select("+tokenVersion");
     }
 
-    try {
-        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-        console.log("Decoded payload:", decoded);
-          console.log(decoded.role,'line 129')
-        if (decoded.role === "admin") {
-            user = await admin.findById(decoded.id).select("+tokenVersion");
-        } else {
-            user = await User.findById(decoded.id).select("+tokenVersion");
-        }
-
-        if (!user) {
-            console.log("User not found");
-            return next(new AppError("Invalid refresh token", 401));
-        }
-
-        console.log("Database token version:", user.tokenVersion);
-
-        if (user.tokenVersion !== decoded.tokenVersion) {
-            console.log("Token version mismatch");
-            return next(new AppError("Invalid refresh token", 401));
-        }
-
-        const newAccessToken = this.generateAccessToken(user._id, decoded.role, user.tokenVersion);
-        console.log("Generated new access token");
-
-        if (decoded.role === "admin") {
-            res.cookie("adminAccessToken", newAccessToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "strict",
-                maxAge: 15 * 60 * 1000,
-            });
-        } else {
-            res.cookie("userAccessToken", newAccessToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "strict",
-                maxAge: 15 * 60 * 1000,
-            });
-        }
-
-        return res.status(200).json({ success: true, message: "Access token refreshed" });
-    } catch (error) {
-        console.error("Error verifying refresh token:", error.message);
-        return next(new AppError("Invalid refresh token", 401));
+    if (!user) {
+      console.log("User not found");
+      return next(new AppError("Invalid refresh token", 401));
     }
+
+    console.log("Database token version:", user.tokenVersion);
+
+    if (user.tokenVersion !== decoded.tokenVersion) {
+      console.log("Token version mismatch");
+      return next(new AppError("Invalid refresh token", 401));
+    }
+
+    const newAccessToken = this.generateAccessToken(
+      user._id,
+      decoded.role,
+      user.tokenVersion
+    );
+    console.log("Generated new access token");
+
+    if (decoded.role === "admin") {
+      res.cookie("adminAccessToken", newAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 15 * 60 * 1000,
+      });
+    } else {
+      res.cookie("userAccessToken", newAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 15 * 60 * 1000,
+      });
+    }
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Access token refreshed" });
+  } catch (error) {
+    console.error("Error verifying refresh token:", error.message);
+    return next(new AppError("Invalid refresh token", 401));
+  }
 });
 
-  
 //   exports.checkAuthStatus = catchAsync(async (req, res, next) => {
 //     const { userAccessToken, userRefreshToken,adminRefreshToken,adminAccessToken } = req.cookies;
 //     console.log(userAccessToken, userRefreshToken, adminRefreshToken,userRefreshToken,userAccessToken,"checkAuthStatus Auth Controller");
-  
+
 //     // If no tokens, user is not authenticated
 //     if (!refreshToken || refreshToken == "undefined") {
 //       console.log(
@@ -207,8 +223,7 @@ exports.refresh = catchAsync(async (req, res, next) => {
 //         const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
 //         console.log(decoded, "accessToken");
 //         console.log(decoded.role);
-  
-        
+
 //         let user;
 //         if (decoded.role === "admin") {
 //           user = await admin.findById(decoded.id);
@@ -268,7 +283,7 @@ exports.refresh = catchAsync(async (req, res, next) => {
 //         } else {
 //           user = await User.findById(decoded.id).select("+tokenVersion");
 //         }
-  
+
 //         if (user && user.tokenVersion === decoded.tokenVersion) {
 //           // Generate new access token
 //           if (decoded.role == "deliveryPartner") {
@@ -293,7 +308,7 @@ exports.refresh = catchAsync(async (req, res, next) => {
 //                 email: user.email,
 //                 phone: user?.phone||"none",
 //                 role: decoded.role,
-               
+
 //               },
 //             });
 //           }
@@ -306,7 +321,7 @@ exports.refresh = catchAsync(async (req, res, next) => {
 //           });
 //         }
 //       }
-    
+
 //     } catch (error) {
 //       res.status(200).json({
 //         success: false,
@@ -318,542 +333,723 @@ exports.refresh = catchAsync(async (req, res, next) => {
 //   });
 
 exports.checkAuthStatus = catchAsync(async (req, res, next) => {
-    const { userAccessToken, userRefreshToken, adminAccessToken, adminRefreshToken } = req.cookies;
-    
-    console.log(userAccessToken, userRefreshToken, adminAccessToken, adminRefreshToken, "checkAuthStatus Auth Controller");
+  const {
+    userAccessToken,
+    userRefreshToken,
+    adminAccessToken,
+    adminRefreshToken,
+  } = req.cookies;
 
-    let accessToken, refreshToken;
-    
-    if (adminAccessToken || adminRefreshToken) {
-        accessToken = adminAccessToken;
-        refreshToken = adminRefreshToken;
+  console.log(
+    userAccessToken,
+    userRefreshToken,
+    adminAccessToken,
+    adminRefreshToken,
+    "checkAuthStatus Auth Controller"
+  );
+
+  let accessToken, refreshToken;
+
+  if (adminAccessToken || adminRefreshToken) {
+    accessToken = adminAccessToken;
+    refreshToken = adminRefreshToken;
+  } else {
+    accessToken = userAccessToken;
+    refreshToken = userRefreshToken;
+  }
+
+  if (!refreshToken || refreshToken === "undefined") {
+    console.log("Refresh token expired");
+    return res.status(200).json({
+      success: true,
+      isAuthenticated: false,
+      message: "Refresh token expired",
+      shouldLoggOut: true,
+    });
+  }
+
+  if (!accessToken || accessToken === "undefined") {
+    console.log("Access token expired");
+    return res.status(200).json({
+      success: true,
+      isAuthenticated: false,
+      message: "Access token expired",
+      shouldLoggOut: false,
+    });
+  }
+
+  try {
+    let decoded;
+    let user;
+
+    if (accessToken) {
+      decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
+      console.log(decoded, "accessToken");
     } else {
-        accessToken = userAccessToken;
-        refreshToken = userRefreshToken;
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+      console.log(decoded, "refreshToken");
     }
 
-    if (!refreshToken || refreshToken === "undefined") {
-        console.log("Refresh token expired");
-        return res.status(200).json({
-            success: true,
-            isAuthenticated: false,
-            message: "Refresh token expired",
-            shouldLoggOut: true,
-        });
+    if (
+      decoded.role === "admin" ||
+      decoded.role === "superAdmin" ||
+      decoded.role === "subAdmin"
+    ) {
+      user = await admin.findById(decoded.id);
+    } else if (decoded.role === "deliveryPartner") {
+      user = await DeliveryPartner.findById(decoded.id);
+    } else {
+      user = await User.findById(decoded.id);
     }
 
-    if (!accessToken || accessToken === "undefined") {
-        console.log("Access token expired");
-        return res.status(200).json({
-            success: true,
-            isAuthenticated: false,
-            message: "Access token expired",
-            shouldLoggOut: false,
-        });
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        isAuthenticated: false,
+        shouldLoggOut: true,
+        message: "No user found",
+      });
     }
 
-    try {
-        let decoded;
-        let user;
+    const userData = {
+      id: user._id,
+      name: user.name || user.personalInfo?.name,
+      email: user.email || user.personalInfo?.email,
+      phone: user.phone || user.personalInfo?.phone || "none",
+      role: decoded.role,
+      image: user.image || user.personalInfo?.profileImage,
+    };
 
-        if (accessToken) {
-            decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
-            console.log(decoded, "accessToken");
-        } else {
-            decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-            console.log(decoded, "refreshToken");
-        }
-
-        if (decoded.role === "admin" || decoded.role === "superAdmin" || decoded.role === "subAdmin") {
-            user = await admin.findById(decoded.id);
-        } else if (decoded.role === "deliveryPartner") {
-            user = await DeliveryPartner.findById(decoded.id);
-        } else {
-            user = await User.findById(decoded.id);
-        }
-
-        if (!user) {
-            return res.status(200).json({
-                success: true,
-                isAuthenticated: false,
-                shouldLoggOut: true,
-                message: "No user found",
-            });
-        }
-
-        const userData = {
-            id: user._id,
-            name: user.name || user.personalInfo?.name,
-            email: user.email || user.personalInfo?.email,
-            phone: user.phone || user.personalInfo?.phone || "none",
-            role: decoded.role,
-            image: user.image || user.personalInfo?.profileImage,
-        };
-
-        return res.status(200).json({
-            success: true,
-            isAuthenticated: true,
-            data: userData,
-        });
-    } catch (error) {
-        return res.status(200).json({
-            success: false,
-            isAuthenticated: false,
-            message: error.message || "Authentication error",
-            shouldLoggOut: true,
-        });
-    }
+    return res.status(200).json({
+      success: true,
+      isAuthenticated: true,
+      data: userData,
+    });
+  } catch (error) {
+    return res.status(200).json({
+      success: false,
+      isAuthenticated: false,
+      message: error.message || "Authentication error",
+      shouldLoggOut: true,
+    });
+  }
 });
 
 exports.checkUserAuthStatus = catchAsync(async (req, res, next) => {
-    const { userAccessToken, userRefreshToken } = req.cookies;
-    
-    console.log(userAccessToken, userRefreshToken, "checkUserAuthStatus");
+  const { userAccessToken, userRefreshToken } = req.cookies;
 
-    if (!userRefreshToken || userRefreshToken === "undefined") {
-        console.log("User refresh token expired");
-        return res.status(200).json({
-            success: true,
-            isAuthenticated: false,
-            message: "Refresh token expired",
-            shouldLogOut: true,
-        });
+  console.log(userAccessToken, userRefreshToken, "checkUserAuthStatus");
+
+  if (!userRefreshToken || userRefreshToken === "undefined") {
+    console.log("User refresh token expired");
+    return res.status(200).json({
+      success: true,
+      isAuthenticated: false,
+      message: "Refresh token expired",
+      shouldLogOut: true,
+    });
+  }
+
+  if (!userAccessToken || userAccessToken === "undefined") {
+    console.log("User access token expired");
+    return res.status(200).json({
+      success: true,
+      isAuthenticated: false,
+      message: "Access token expired",
+      shouldLogOut: false,
+    });
+  }
+
+  try {
+    let decoded = jwt.verify(userAccessToken, process.env.JWT_ACCESS_SECRET);
+    console.log(decoded, "User accessToken");
+
+    const normalUser = await User.findById(decoded.id);
+
+    if (!normalUser) {
+      return res.status(200).json({
+        success: true,
+        isAuthenticated: false,
+        shouldLogOut: true,
+        message: "No user found",
+      });
     }
 
-    if (!userAccessToken || userAccessToken === "undefined") {
-        console.log("User access token expired");
-        return res.status(200).json({
-            success: true,
-            isAuthenticated: false,
-            message: "Access token expired",
-            shouldLogOut: false,
-        });
-    }
+    const userData = {
+      id: normalUser._id,
+      name: normalUser.personalInfo?.name,
+      email: normalUser.personalInfo?.email,
+      phone: normalUser.personalInfo?.phone || "none",
+      role: decoded.role,
+      image: normalUser.personalInfo?.profileImage,
+    };
 
-    try {
-        let decoded = jwt.verify(userAccessToken, process.env.JWT_ACCESS_SECRET);
-        console.log(decoded, "User accessToken");
-
-        const normalUser = await User.findById(decoded.id);
-
-        if (!normalUser) {
-            return res.status(200).json({
-                success: true,
-                isAuthenticated: false,
-                shouldLogOut: true,
-                message: "No user found",
-            });
-        }
-
-        const userData = {
-            id: normalUser._id,
-            name: normalUser.personalInfo?.name,
-            email: normalUser.personalInfo?.email,
-            phone: normalUser.personalInfo?.phone || "none",
-            role: decoded.role,
-            image: normalUser.personalInfo?.profileImage,
-        };
-
-        return res.status(200).json({
-            success: true,
-            isAuthenticated: true,
-            data: userData,
-        });
-    } catch (error) {
-        return res.status(200).json({
-            success: false,
-            isAuthenticated: false,
-            message: error.message || "Authentication error",
-            shouldLogOut: true,
-        });
-    }
+    return res.status(200).json({
+      success: true,
+      isAuthenticated: true,
+      data: userData,
+    });
+  } catch (error) {
+    return res.status(200).json({
+      success: false,
+      isAuthenticated: false,
+      message: error.message || "Authentication error",
+      shouldLogOut: true,
+    });
+  }
 });
 
 exports.refreshUserToken = catchAsync(async (req, res, next) => {
   const { userRefreshToken } = req.cookies;
 
   if (!userRefreshToken) {
-      return next(new AppError("No user refresh token", 401));
+    return next(new AppError("No user refresh token", 401));
   }
 
   try {
-      const decoded = jwt.verify(userRefreshToken, process.env.JWT_REFRESH_SECRET);
-      console.log("Decoded user payload:", decoded);
+    const decoded = jwt.verify(
+      userRefreshToken,
+      process.env.JWT_REFRESH_SECRET
+    );
+    console.log("Decoded user payload:", decoded);
 
-      const normalUser = await User.findById(decoded.id).select("+tokenVersion");
+    const normalUser = await User.findById(decoded.id).select("+tokenVersion");
 
-      if (!normalUser) {
-          console.log("User not found");
-          return next(new AppError("Invalid user refresh token", 401));
-      }
-
-      if (normalUser.tokenVersion !== decoded.tokenVersion) {
-          console.log("User token version mismatch");
-          return next(new AppError("Invalid user refresh token", 401));
-      }
-
-      const newAccessToken = this.generateAccessToken(normalUser._id, "user", normalUser.tokenVersion);
-      console.log("Generated new user access token");
-
-      res.cookie("userAccessToken", newAccessToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: 15 * 60 * 1000,
-      });
-
-      return res.status(200).json({ success: true, message: "User access token refreshed" });
-  } catch (error) {
-      console.error("Error verifying user refresh token:", error.message);
+    if (!normalUser) {
+      console.log("User not found");
       return next(new AppError("Invalid user refresh token", 401));
+    }
+
+    if (normalUser.tokenVersion !== decoded.tokenVersion) {
+      console.log("User token version mismatch");
+      return next(new AppError("Invalid user refresh token", 401));
+    }
+
+    const newAccessToken = this.generateAccessToken(
+      normalUser._id,
+      "user",
+      normalUser.tokenVersion
+    );
+    console.log("Generated new user access token");
+
+    res.cookie("userAccessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000,
+    });
+
+    return res
+      .status(200)
+      .json({ success: true, message: "User access token refreshed" });
+  } catch (error) {
+    console.error("Error verifying user refresh token:", error.message);
+    return next(new AppError("Invalid user refresh token", 401));
   }
 });
-  exports.refreshAdminToken = catchAsync(async (req, res, next) => {
-    const { adminRefreshToken } = req.cookies;
-  
-    if (!adminRefreshToken) {
-        return next(new AppError("No admin refresh token", 401));
+exports.refreshAdminToken = catchAsync(async (req, res, next) => {
+  const { adminRefreshToken } = req.cookies;
+
+  if (!adminRefreshToken) {
+    return next(new AppError("No admin refresh token", 401));
+  }
+
+  try {
+    const decoded = jwt.verify(
+      adminRefreshToken,
+      process.env.JWT_REFRESH_SECRET
+    );
+    console.log("Decoded admin payload:", decoded);
+
+    const adminUser = await admin.findById(decoded.id).select("+tokenVersion");
+
+    if (!adminUser) {
+      console.log("Admin not found");
+      return next(new AppError("Invalid admin refresh token", 401));
     }
-  
-    try {
-        const decoded = jwt.verify(adminRefreshToken, process.env.JWT_REFRESH_SECRET);
-        console.log("Decoded admin payload:", decoded);
-  
-        const adminUser = await admin.findById(decoded.id).select("+tokenVersion");
-  
-        if (!adminUser) {
-            console.log("Admin not found");
-            return next(new AppError("Invalid admin refresh token", 401));
-        }
-  
-        if (adminUser.tokenVersion !== decoded.tokenVersion) {
-            console.log("Admin token version mismatch");
-            return next(new AppError("Invalid admin refresh token", 401));
-        }
-  
-        const newAccessToken = this.generateAccessToken(adminUser._id, "admin", adminUser.tokenVersion);
-        console.log("Generated new admin access token");
-  
-        res.cookie("adminAccessToken", newAccessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 15 * 60 * 1000,
-        });
-  
-        return res.status(200).json({ success: true, message: "Admin access token refreshed" });
-    } catch (error) {
-        console.error("Error verifying admin refresh token:", error.message);
-        return next(new AppError("Invalid admin refresh token", 401));
+
+    if (adminUser.tokenVersion !== decoded.tokenVersion) {
+      console.log("Admin token version mismatch");
+      return next(new AppError("Invalid admin refresh token", 401));
     }
-  });
-  exports.logoutAll = catchAsync(async (req, res, next) => {
-    const {adminId,phone } = req.query;
-  
-    let user;
-    const role=req.originalUrl.startsWith('/api/admin')?"admin":"user"
-    console.log(role,'role')
-    // Find the user based on the role
-    if (role === "admin") {
-      user = await admin.findOne({ _id: adminId });
-      console.log(user,'user')
-    } else {
-      user = await User.findOne({ phone: phone });
-    }
-  
-    // If user doesn't exist, return an error
-    if (!user) {
-      return res.status(200).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-  
-    // Reset token version to invalidate all refresh tokens
-    user.tokenVersion = 0;
-    await user.save();
-  
-    // Clear cookies
-    res.cookie(role==='admin'?"adminAccessToken":"userAccessToken", "", { maxAge: 0 });
-    res.cookie(role==='admin'?"adminRefreshToken":"userRefreshToken", "", { maxAge: 0 });
-    res.cookie('token','',{maxAge:0})
-    res.cookie("userInfo", "", { maxAge: 0 });
-    res.cookie('adminInfo','',{maxAge:0});
-  
-    res.status(200).json({
-      success: true,
-      message: "Logged out from all devices",
+
+    const newAccessToken = this.generateAccessToken(
+      adminUser._id,
+      "admin",
+      adminUser.tokenVersion
+    );
+    console.log("Generated new admin access token");
+
+    res.cookie("adminAccessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000,
     });
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Admin access token refreshed" });
+  } catch (error) {
+    console.error("Error verifying admin refresh token:", error.message);
+    return next(new AppError("Invalid admin refresh token", 401));
+  }
+});
+exports.logoutAll = catchAsync(async (req, res, next) => {
+  const { adminId, phone } = req.query;
+
+  let user;
+  const role = req.originalUrl.startsWith("/api/admin") ? "admin" : "user";
+  console.log(role, "role");
+  // Find the user based on the role
+  if (role === "admin") {
+    user = await admin.findOne({ _id: adminId });
+    console.log(user, "user");
+  } else {
+    user = await User.findOne({ phone: phone });
+  }
+
+  // If user doesn't exist, return an error
+  if (!user) {
+    return res.status(200).json({
+      success: false,
+      message: "User not found",
+    });
+  }
+
+  // Reset token version to invalidate all refresh tokens
+  user.tokenVersion = 0;
+  await user.save();
+
+  // Clear cookies
+  res.cookie(role === "admin" ? "adminAccessToken" : "userAccessToken", "", {
+    maxAge: 0,
   });
-  exports.protect = catchAsync(async (req, res, next) => {
-    const { userAccessToken, userRefreshToken,adminAccessToken,adminRefreshToken } = req.cookies;
-    console.log(req.cookies);
-    // console.log(accessToken, refreshToken, "this is line 531");
-    const role = req.originalUrl.startsWith('/api/admin')
+  res.cookie(role === "admin" ? "adminRefreshToken" : "userRefreshToken", "", {
+    maxAge: 0,
+  });
+  res.cookie("token", "", { maxAge: 0 });
+  res.cookie("userInfo", "", { maxAge: 0 });
+  res.cookie("adminInfo", "", { maxAge: 0 });
+
+  res.status(200).json({
+    success: true,
+    message: "Logged out from all devices",
+  });
+});
+exports.protect = catchAsync(async (req, res, next) => {
+  const {
+    userAccessToken,
+    userRefreshToken,
+    adminAccessToken,
+    adminRefreshToken,
+  } = req.cookies;
+  console.log(req.cookies);
+  // console.log(accessToken, refreshToken, "this is line 531");
+  const role = req.originalUrl.startsWith("/api/admin")
     ? "admin"
-    : req.originalUrl.startsWith('/api/content')
+    : req.originalUrl.startsWith("/api/content")
     ? "admin"
     : "user";
-    console.log(role,'role')
-    if(role==='admin'){
-        if (!adminAccessToken || !adminRefreshToken) {
-          console.log("accessToken---", adminAccessToken);
-          console.log("refreshToken---", adminRefreshToken);
-          return next(new AppError("Not authorized to access this route", 401));
-        }
-        if (adminAccessToken) {
-            const decoded = jwt.verify(adminAccessToken, process.env.JWT_ACCESS_SECRET);
-            console.log(decoded, "adminAccessToken");
-            // Find user
-              let user;
-              user = await admin.findById(decoded.id);
-            // console.log(user, "----------");
-            if (user) {
-              req.user = user;
-              // console.log(req.user, "user line 551");
-              req.role = decoded.role;
-              req.perm=user.permissions
-              req.id=user._id
-              return next();
-            }
-          }
-         
-          if (adminRefreshToken) {
-            const decoded = jwt.verify(adminRefreshToken, process.env.JWT_REFRESH_SECRET);
-            console.log(decoded);
-            let user;
-          
-              user = await admin.findById(decoded.id).select("+tokenVersion");
-            
-            console.log(user, "user", user.tokenVersion, decoded.tokenVersion);
-            // Verify token version
-            if (!user || user.tokenVersion !== decoded.tokenVersion ) {
-              return next(new AppError("Invalid refresh token", 401));
-            }
-            req.user = user;
-            console.log(req.user, "req.user at 588");
-            req.role = decoded.role;
-            return next();
-          }}
-    else{
-        if (!userAccessToken || !userRefreshToken) {
-            console.log("accessToken---", userAccessToken);
-            console.log("refreshToken---", userRefreshToken);
-            return next(new AppError("Not authorized to access this route", 401));
-          }
-          // First try to verify access token
-          if (userAccessToken) {
-            const decoded = jwt.verify(userAccessToken, process.env.JWT_ACCESS_SECRET);
-            console.log(decoded, "userAccessToken");
-            // Find user
-            let user;
-            if (decoded.role === "user") {
-              user = await User.findById(decoded.id);
-            } else if (decoded.role === "admin") {
-              user = await admin.findById(decoded.id);
-            } else {
-              user = await User.findById(decoded.id);
-            }
-            // console.log(user, "----------");
-            if (user) {
-              req.user = user;
-              // console.log(req.user, "user line 551");
-              req.role = decoded.role;
-              req.perm=user.permissions
-              req.id=user._id
-              return next();
-            }
-          }
-        
-          // If access token is invalid/expired, try refresh token
-          if (userRefreshToken) {
-            const decoded = jwt.verify(userRefreshToken, process.env.JWT_REFRESH_SECRET);
-            console.log(decoded);
-            let user;
-            if (decoded.role === "user") {
-              user = await User.findById(decoded.id).select("+tokenVersion");
-            } else {
-              user = await admin.findById(decoded.id).select("+tokenVersion");
-            }
-            console.log(user, "user", user.tokenVersion, decoded.tokenVersion);
-            // Verify token version
-            if (!user || user.tokenVersion !== decoded.tokenVersion) {
-              return next(new AppError("Invalid refresh token", 401));
-            }
-            req.user = user;
-            console.log(req.user, "req.user at 588");
-            req.role = decoded.role;
-            return next();
-          }
-      
+  console.log(role, "role");
+  if (role === "admin") {
+    if (!adminAccessToken || !adminRefreshToken) {
+      console.log("accessToken---", adminAccessToken);
+      console.log("refreshToken---", adminRefreshToken);
+      return next(new AppError("Not authorized to access this route", 401));
     }
-   
-  });
+    if (adminAccessToken) {
+      const decoded = jwt.verify(
+        adminAccessToken,
+        process.env.JWT_ACCESS_SECRET
+      );
+      console.log(decoded, "adminAccessToken");
+      // Find user
+      let user;
+      user = await admin.findById(decoded.id);
+      // console.log(user, "----------");
+      if (user) {
+        req.user = user;
+        // console.log(req.user, "user line 551");
+        req.role = decoded.role;
+        req.perm = user.permissions;
+        req.id = user._id;
+        return next();
+      }
+    }
 
-  exports.verifyUserOtp = catchAsync(async (req, res, next) => {
-    const { deviceType, fcmToken, appType, enteredOTP, phoneNumber } = req.body;
-    const role=req.originalUrl.startsWith('/admin')?'admin':"user"
-    
-    
-    console.log(role,'role')
-    //  const role='user'
-    const user = await User.findOne({ phone: phoneNumber }).select("-password");
-    if (!user) {
-      return next(new AppError("User does not exist", 404));
+    if (adminRefreshToken) {
+      const decoded = jwt.verify(
+        adminRefreshToken,
+        process.env.JWT_REFRESH_SECRET
+      );
+      console.log(decoded);
+      let user;
+
+      user = await admin.findById(decoded.id).select("+tokenVersion");
+
+      console.log(user, "user", user.tokenVersion, decoded.tokenVersion);
+      // Verify token version
+      if (!user || user.tokenVersion !== decoded.tokenVersion) {
+        return next(new AppError("Invalid refresh token", 401));
+      }
+      req.user = user;
+      console.log(req.user, "req.user at 588");
+      req.role = decoded.role;
+      return next();
     }
-  
-    let otpVerified = false;
-  
-    if (enteredOTP === '000000') {
-      // Bypass OTP verification if enteredOTP is '0000'
-      otpVerified = true;
-    } else {
-      // Call the verifyOTP function for normal OTP verification
-      await verifyOTP(phoneNumber, enteredOTP, user, res);
-      otpVerified = true; // Set as verified if no errors occurred in verifyOTP
+  } else {
+    if (!userAccessToken || !userRefreshToken) {
+      console.log("accessToken---", userAccessToken);
+      console.log("refreshToken---", userRefreshToken);
+      return next(new AppError("Not authorized to access this route", 401));
     }
-  
-    if (!otpVerified) {
-      return res.status(401).json({ message: "OTP verification failed" });
-    }
-  
-    let newToken;
-  
-    if (deviceType === "android" || deviceType === "ios") {
-      const foundUserToken = await tokenSchema.findOne({ userId: user._id });
-  
-      if (foundUserToken) {
-        foundUserToken.token = fcmToken;
-        await foundUserToken.save();
+    // First try to verify access token
+    if (userAccessToken) {
+      const decoded = jwt.verify(
+        userAccessToken,
+        process.env.JWT_ACCESS_SECRET
+      );
+      console.log(decoded, "userAccessToken");
+      // Find user
+      let user;
+      if (decoded.role === "user") {
+        user = await User.findById(decoded.id);
+      } else if (decoded.role === "admin") {
+        user = await admin.findById(decoded.id);
       } else {
-        newToken = await tokenSchema.create({
-          userId: user._id,
-          token: fcmToken,
-          deviceType: deviceType,
-          appType: appType,
-        });
-  
-        if (!newToken) {
-          return res.status(400).json({
-            message: "Something went wrong while saving the FCM token",
-          });
-        }
+        user = await User.findById(decoded.id);
+      }
+      // console.log(user, "----------");
+      if (user) {
+        req.user = user;
+        // console.log(req.user, "user line 551");
+        req.role = decoded.role;
+        req.perm = user.permissions;
+        req.id = user._id;
+        return next();
       }
     }
-    
-    const payload = { id: user._id };
-      const token = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: "2d",
+
+    // If access token is invalid/expired, try refresh token
+    if (userRefreshToken) {
+      const decoded = jwt.verify(
+        userRefreshToken,
+        process.env.JWT_REFRESH_SECRET
+      );
+      console.log(decoded);
+      let user;
+      if (decoded.role === "user") {
+        user = await User.findById(decoded.id).select("+tokenVersion");
+      } else {
+        user = await admin.findById(decoded.id).select("+tokenVersion");
+      }
+      console.log(user, "user", user.tokenVersion, decoded.tokenVersion);
+      // Verify token version
+      if (!user || user.tokenVersion !== decoded.tokenVersion) {
+        return next(new AppError("Invalid refresh token", 401));
+      }
+      req.user = user;
+      console.log(req.user, "req.user at 588");
+      req.role = decoded.role;
+      return next();
+    }
+  }
+});
+
+exports.dualProtect = catchAsync(async (req, res, next) => {
+  const {
+    userAccessToken,
+    userRefreshToken,
+    adminAccessToken,
+    adminRefreshToken,
+  } = req.cookies;
+  console.log(req.cookies);
+  // console.log(accessToken, refreshToken, "this is line 531");
+  const role = req.originalUrl.startsWith("/api/admin")
+    ? "admin"
+    : req.originalUrl.startsWith("/api/content")
+    ? "admin"
+    : "user";
+  console.log(role, "role");
+  if (role === "admin") {
+    if (!adminAccessToken || !adminRefreshToken) {
+      console.log("accessToken---", adminAccessToken);
+      console.log("refreshToken---", adminRefreshToken);
+      return next(new AppError("Not authorized to access this route", 401));
+    }
+    if (adminAccessToken) {
+      const decoded = jwt.verify(
+        adminAccessToken,
+        process.env.JWT_ACCESS_SECRET
+      );
+      console.log(decoded, "adminAccessToken");
+      // Find user
+      let user;
+      user = await admin.findById(decoded.id);
+      // console.log(user, "----------");
+      if (user) {
+        req.user = user;
+        // console.log(req.user, "user line 551");
+        req.role = decoded.role;
+        req.perm = user.permissions;
+        req.id = user._id;
+        return next();
+      }
+    }
+
+    if (adminRefreshToken) {
+      const decoded = jwt.verify(
+        adminRefreshToken,
+        process.env.JWT_REFRESH_SECRET
+      );
+      console.log(decoded);
+      let user;
+
+      user = await admin.findById(decoded.id).select("+tokenVersion");
+
+      console.log(user, "user", user.tokenVersion, decoded.tokenVersion);
+      // Verify token version
+      if (!user || user.tokenVersion !== decoded.tokenVersion) {
+        return next(new AppError("Invalid refresh token", 401));
+      }
+      req.user = user;
+      console.log(req.user, "req.user at 588");
+      req.role = decoded.role;
+      return next();
+    }
+  } else {
+    if (!userAccessToken || !userRefreshToken) {
+      console.log("accessToken---", userAccessToken);
+      console.log("refreshToken---", userRefreshToken);
+      return next();
+    }
+    // First try to verify access token
+    if (userAccessToken) {
+      const decoded = jwt.verify(
+        userAccessToken,
+        process.env.JWT_ACCESS_SECRET
+      );
+      console.log(decoded, "userAccessToken");
+      // Find user
+      let user;
+      if (decoded.role === "user") {
+        user = await User.findById(decoded.id);
+      } else if (decoded.role === "admin") {
+        user = await admin.findById(decoded.id);
+      } else {
+        user = await User.findById(decoded.id);
+      }
+      // console.log(user, "----------");
+      if (user) {
+        req.user = user;
+        // console.log(req.user, "user line 551");
+        req.role = decoded.role;
+        req.perm = user.permissions;
+        req.id = user._id;
+        return next();
+      }
+    }
+
+    // If access token is invalid/expired, try refresh token
+    if (userRefreshToken) {
+      const decoded = jwt.verify(
+        userRefreshToken,
+        process.env.JWT_REFRESH_SECRET
+      );
+      console.log(decoded);
+      let user;
+      if (decoded.role === "user") {
+        user = await User.findById(decoded.id).select("+tokenVersion");
+      } else {
+        user = await admin.findById(decoded.id).select("+tokenVersion");
+      }
+      console.log(user, "user", user.tokenVersion, decoded.tokenVersion);
+      // Verify token version
+      if (!user || user.tokenVersion !== decoded.tokenVersion) {
+        return next(new AppError("Invalid refresh token", 401));
+      }
+      req.user = user;
+      console.log(req.user, "req.user at 588");
+      req.role = decoded.role;
+      return next();
+    }
+  }
+});
+
+exports.verifyUserOtp = catchAsync(async (req, res, next) => {
+  const { deviceType, fcmToken, appType, enteredOTP, phoneNumber } = req.body;
+  const role = req.originalUrl.startsWith("/admin") ? "admin" : "user";
+
+  console.log(role, "role");
+  //  const role='user'
+  const user = await User.findOne({ phone: phoneNumber }).select("-password");
+  if (!user) {
+    return next(new AppError("User does not exist", 404));
+  }
+
+  let otpVerified = false;
+
+  if (enteredOTP === "000000") {
+    // Bypass OTP verification if enteredOTP is '0000'
+    otpVerified = true;
+  } else {
+    // Call the verifyOTP function for normal OTP verification
+    await verifyOTP(phoneNumber, enteredOTP, user, res);
+    otpVerified = true; // Set as verified if no errors occurred in verifyOTP
+  }
+
+  if (!otpVerified) {
+    return res.status(401).json({ message: "OTP verification failed" });
+  }
+
+  let newToken;
+
+  if (deviceType === "android" || deviceType === "ios") {
+    const foundUserToken = await tokenSchema.findOne({ userId: user._id });
+
+    if (foundUserToken) {
+      foundUserToken.token = fcmToken;
+      await foundUserToken.save();
+    } else {
+      newToken = await tokenSchema.create({
+        userId: user._id,
+        token: fcmToken,
+        deviceType: deviceType,
+        appType: appType,
       });
-    const refreshToken=this.generateRefreshToken(
-      user._id,
-      role,
-      user.tokenVersion
-    )
-    const accessToken=this.generateAccessToken(user._id,role,user.tokenVersion)
-    console.log(refreshToken,accessToken ,"this is refresh and access token");
-    
-    await user.save();
-    
-    // const token = jwt.sign(payload, process.env.JWT_SECRET, {
-    //   expiresIn: "2d",
-    // });
-  
-    const userCart = await Cart.findById(user.cartId);
-  
-    if (req.cookies["guestCart"]) {
-      const guestCart = JSON.parse(req.cookies["guestCart"]);
-      const cartItems = guestCart.items;
-  
-      for (const guestCartItem of cartItems) {
-        if (guestCartItem.type === "product") {
-          const existingCartItem = userCart.items.find(
-            (item) => item.productId?.toString() === guestCartItem.productId
-          );
-  
-          if (existingCartItem) {
-            existingCartItem.quantity += guestCartItem.quantity;
-          } else {
-            userCart.items.push(guestCartItem);
-          }
-        } else if (guestCartItem.type === "package") {
-          const existingCartItem = userCart.items.find(
-            (item) => item.packageId?.toString() === guestCartItem.packageId
-          );
-  
-          if (existingCartItem) {
-            existingCartItem.quantity += guestCartItem.quantity;
-          } else {
-            userCart.items.push(guestCartItem);
-          }
+
+      if (!newToken) {
+        return res.status(400).json({
+          message: "Something went wrong while saving the FCM token",
+        });
+      }
+    }
+  }
+
+  const payload = { id: user._id };
+  const token = jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: "2d",
+  });
+  const refreshToken = this.generateRefreshToken(
+    user._id,
+    role,
+    user.tokenVersion
+  );
+  const accessToken = this.generateAccessToken(
+    user._id,
+    role,
+    user.tokenVersion
+  );
+  console.log(refreshToken, accessToken, "this is refresh and access token");
+
+  await user.save();
+
+  // const token = jwt.sign(payload, process.env.JWT_SECRET, {
+  //   expiresIn: "2d",
+  // });
+
+  const userCart = await Cart.findById(user.cartId);
+
+  if (req.cookies["guestCart"]) {
+    const guestCart = JSON.parse(req.cookies["guestCart"]);
+    const cartItems = guestCart.items;
+
+    for (const guestCartItem of cartItems) {
+      if (guestCartItem.type === "product") {
+        const existingCartItem = userCart.items.find(
+          (item) => item.productId?.toString() === guestCartItem.productId
+        );
+
+        if (existingCartItem) {
+          existingCartItem.quantity += guestCartItem.quantity;
+        } else {
+          userCart.items.push(guestCartItem);
+        }
+      } else if (guestCartItem.type === "package") {
+        const existingCartItem = userCart.items.find(
+          (item) => item.packageId?.toString() === guestCartItem.packageId
+        );
+
+        if (existingCartItem) {
+          existingCartItem.quantity += guestCartItem.quantity;
+        } else {
+          userCart.items.push(guestCartItem);
         }
       }
-  
-      userCart.totalPrice += guestCart.totalPrice;
-      await userCart.save();
     }
-  
-    res.clearCookie("guestCart");
-    res.cookie("token", token, { secure: true, httpOnly: true });
-    this.setTokenCookies(res, accessToken, refreshToken, user, role);
-  
-    // res.status(200).json({
-    //   message: "Logged In",
-    //   success: true,
-    //   user: user,
-    //   userName: user.name,
-    //   userPhone: user.phone,
-    // });
-    res.status(200).json({
-      message: "Login successful",
-      id: user._id,
-      success: true,
-      user: user,
-      userName: user.name,
-      userPhone: user.phone,
-      // permissions: user.permis,
-    });
+
+    userCart.totalPrice += guestCart.totalPrice;
+    await userCart.save();
+  }
+
+  res.clearCookie("guestCart");
+  res.cookie("token", token, { secure: true, httpOnly: true });
+  this.setTokenCookies(res, accessToken, refreshToken, user, role);
+
+  // res.status(200).json({
+  //   message: "Logged In",
+  //   success: true,
+  //   user: user,
+  //   userName: user.name,
+  //   userPhone: user.phone,
+  // });
+  res.status(200).json({
+    message: "Login successful",
+    id: user._id,
+    success: true,
+    user: user,
+    userName: user.name,
+    userPhone: user.phone,
+    // permissions: user.permis,
   });
+});
 
-  exports.logoutAllAdmin = catchAsync(async (req, res, next) => {
-    const { adminId } = req.body;
-    if (!adminId) {
-        return res.status(400).json({ success: false, message: "Admin ID is required" });
-    }
+exports.logoutAllAdmin = catchAsync(async (req, res, next) => {
+  const { adminId } = req.body;
+  if (!adminId) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Admin ID is required" });
+  }
 
-    const adminUser = await admin.findById(adminId);
-    if (!adminUser) {
-        return res.status(200).json({ success: false, message: "Admin not found" });
-    }
+  const adminUser = await admin.findById(adminId);
+  if (!adminUser) {
+    return res.status(200).json({ success: false, message: "Admin not found" });
+  }
 
-    adminUser.tokenVersion = 0;
-    await adminUser.save();
+  adminUser.tokenVersion = 0;
+  await adminUser.save();
 
-    res.clearCookie("adminAccessToken");
-    res.clearCookie("adminRefreshToken");
-    res.clearCookie("adminInfo");
+  res.clearCookie("adminAccessToken");
+  res.clearCookie("adminRefreshToken");
+  res.clearCookie("adminInfo");
 
-    res.status(200).json({ success: true, message: "Admin logged out from all devices" });
+  res
+    .status(200)
+    .json({ success: true, message: "Admin logged out from all devices" });
 });
 exports.logoutAllUser = catchAsync(async (req, res, next) => {
-    const { phone } = req.body;
-    if (!phone) {
-        return res.status(400).json({ success: false, message: "Phone number is required" });
-    }
+  const { phone } = req.body;
+  if (!phone) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Phone number is required" });
+  }
 
-    const user = await User.findOne({ phone });
-    if (!user) {
-        return res.status(200).json({ success: false, message: "User not found" });
-    }
+  const user = await User.findOne({ phone });
+  if (!user) {
+    return res.status(200).json({ success: false, message: "User not found" });
+  }
 
-    user.tokenVersion = 0;
-    await user.save();
+  user.tokenVersion = 0;
+  await user.save();
 
-    res.clearCookie("userAccessToken");
-    res.clearCookie("userRefreshToken");
-    res.clearCookie("userInfo");
+  res.clearCookie("userAccessToken");
+  res.clearCookie("userRefreshToken");
+  res.clearCookie("userInfo");
 
-    res.status(200).json({ success: true, message: "User logged out from all devices" });
+  res
+    .status(200)
+    .json({ success: true, message: "User logged out from all devices" });
 });
-
-

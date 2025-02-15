@@ -903,36 +903,36 @@ exports.approveSellerCashout = catchAsync(async (req, res, next) => {
   });
 
   // For sending notification
-  const foundToken = await tokenSchema.findOne({
-    sellerId: wallet.sellerId,
-  });
-  if (!foundToken) {
-    return res.status(400).json({
-      message: "no user found",
-    });
-  }
-  const token = foundToken.token;
-  const deviceType = foundToken.deviceType;
-  const appType = foundToken.appType;
-  const message = {
-    notification: {
-      title: " Payment Received!",
-      body: `A payment of ${wallet.balance} was received`,
-      // ...(imageUrl && { image: imageUrl }), // Add image if available
-    },
-    token: token, // FCM token of the recipient device
-  };
-  const tokenResponse = await createSendPushNotification(
-    appType,
-    deviceType,
-    token,
-    message
-  );
-  if (!tokenResponse) {
-    return res.status(400).json({
-      message: "No token found",
-    });
-  }
+  // const foundToken = await tokenSchema.findOne({
+  //   sellerId: wallet.sellerId,
+  // });
+  // if (!foundToken) {
+  //   return res.status(400).json({
+  //     message: "no user found",
+  //   });
+  // }
+  // const token = foundToken.token;
+  // const deviceType = foundToken.deviceType;
+  // const appType = foundToken.appType;
+  // const message = {
+  //   notification: {
+  //     title: " Payment Received!",
+  //     body: `A payment of ${wallet.balance} was received`,
+  //     // ...(imageUrl && { image: imageUrl }), // Add image if available
+  //   },
+  //   token: token, // FCM token of the recipient device
+  // };
+  // const tokenResponse = await createSendPushNotification(
+  //   appType,
+  //   deviceType,
+  //   token,
+  //   message
+  // );
+  // if (!tokenResponse) {
+  //   return res.status(400).json({
+  //     message: "No token found",
+  //   });
+  // }
   res.status(200).json({
     success: true,
     updatedCashout,
@@ -4008,4 +4008,24 @@ exports.updateCashoutStatus = catchAsync(async (req, res) => {
   res
     .status(200)
     .json({ message: `Cashout ${status} successfully`, updatedCashout });
+});
+
+exports.addSellerCashout = catchAsync(async (req, res, next) => {
+  const { sellerWalletId, value, payId, description } = req.body;
+  var wallet = await SellerWallet.findById(sellerWalletId);
+  if (value > wallet.balance) {
+    return res.status(200).json({
+      status: false,
+      message: "money more than in account cannot be cashout",
+    });
+  } else {
+    var transaction = await SellerCashout.create({
+      sellerWalletId: sellerWalletId,
+      value: value,
+      status: "Completed",
+      payId: payId,
+      description: description,
+    });
+    return res.status(200).json({ status: true, cashout: transaction });
+  }
 });

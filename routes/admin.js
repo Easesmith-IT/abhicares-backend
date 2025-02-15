@@ -692,5 +692,11 @@ router.patch(
   authorize("sellerCashout", "write"),
   adminController.updateCashoutStatus
 );
+router.post(
+  "/add-seller-cashout",
+  websiteAuth.protect,
+  authorize("sellerCashout", "write"),
+  adminController.addSellerCashout
+);
 
 module.exports = router;

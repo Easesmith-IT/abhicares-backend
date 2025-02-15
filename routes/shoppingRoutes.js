@@ -14,8 +14,8 @@ const websiteAuth = require("../controllers/websiteAuth");
 router.post("/caluclate-charge", Payment.calculateCartCharges);
 
 // Authentication Routes
-router.get('/status',websiteAuth.checkUserAuthStatus)
-router.post('/refresh',websiteAuth.refreshUserToken)
+router.get("/status", websiteAuth.checkUserAuthStatus);
+router.post("/refresh", websiteAuth.refreshUserToken);
 
 // Category routes
 router.get("/get-all-category", shoppingController.getAllCategory);
@@ -33,7 +33,11 @@ router.get("/get-service-package/:id", shoppingController.getServicePackage);
 router.get("/get-package-product/:id", shoppingController.getPackageProduct);
 
 //Cart Routes
-router.get("/cart-details", shoppingController.getCart);
+router.get(
+  "/cart-details",
+  websiteAuth.dualProtect,
+  shoppingController.getCart
+);
 router.post(
   "/remove-cart-item/:id",
   userAuthForCart,
@@ -54,7 +58,7 @@ router.post("/generate-otp", authController.generateOtpUser);
 router.post("/verify-otp", websiteAuth.verifyUserOtp);
 router.post("/signup-otp", authController.signupOtp);
 router.post("/verify-signup", authController.createUser);
-router.get("/logout-user",websiteAuth.protect, authController.logoutUser);
+router.get("/logout-user", websiteAuth.protect, authController.logoutUser);
 router.post("/logout-all", websiteAuth.logoutAllUser);
 // special routes
 // router.post("/get-user-by-token", auth_controller.getUserByToken);
