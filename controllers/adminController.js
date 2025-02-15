@@ -1293,7 +1293,8 @@ exports.deleteEnquiry = catchAsync(async (req, res, next) => {
 // package controllers
 
 exports.createPackage = catchAsync(async (req, res, next) => {
-  const { name, price, offerPrice, products, serviceId } = req.body;
+  const { name, description, price, offerPrice, products, serviceId } =
+    req.body;
   let imageUrl = [];
   if (req?.files) {
     for (const file of req.files) {
@@ -1309,6 +1310,7 @@ exports.createPackage = catchAsync(async (req, res, next) => {
     await Package.create({
       name: name,
       price: price,
+      description: description,
       offerPrice: offerPrice,
       imageUrl: imageUrl,
       products: JSON.parse(products),
@@ -1323,7 +1325,7 @@ exports.createPackage = catchAsync(async (req, res, next) => {
 exports.updatePackage = catchAsync(async (req, res, next) => {
   const id = req.params.id; // this is package id
 
-  let { name, price, offerPrice, products, imageUrl } = req.body;
+  let { name, description, price, offerPrice, products, imageUrl } = req.body;
   let newImageUrls = [];
   if (req?.files) {
     for (const file of req.files) {
@@ -1340,6 +1342,7 @@ exports.updatePackage = catchAsync(async (req, res, next) => {
 
     result.name = name;
     result.price = price;
+    result.description = description;
     result.offerPrice = offerPrice;
     // result.products= products
     result.products = JSON.parse(products);
