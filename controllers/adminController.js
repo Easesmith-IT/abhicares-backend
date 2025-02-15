@@ -4032,6 +4032,8 @@ exports.addSellerCashout = catchAsync(async (req, res, next) => {
       payId: payId,
       description: description,
     });
+    wallet.balance = wallet.balance - value;
+    wallet.save();
     return res.status(200).json({ status: true, cashout: transaction });
   }
 });
