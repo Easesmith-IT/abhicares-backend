@@ -20,7 +20,9 @@ const BookingModel = require("../models/booking");
 const authKey = "T1PhA56LPJysMHFZ62B5";
 const authToken = "8S2pMXV8IRpZP6P37p4SWrVErk2N6CzSEa458pt1";
 const credentials = `${authKey}:${authToken}`;
-
+const SellerWallet = require("../models/sellerWallet");
+const Service = require("../models/service");
+const Category = require("../models/category");
 const encodedCredentials = Buffer.from(credentials).toString("base64");
 const config = {
   headers: {
@@ -77,6 +79,18 @@ exports.verifyBookingOtp = catchAsync(async (req, res, next) => {
   booking.status = "completeReq";
   booking.currentLocation.status = "completed";
   booking.save();
+  const serviceId =
+    booking.product != null
+      ? booking.product["serviceId"]
+      : booking.package["serviceId"];
+  const categoryId = await Service.findById(serviceId)["categoryId"];
+  const category = await Category.findById(categoryId);
+  const commission = 100 - category["commission"];
+  const addBalance =
+    (booking["itemTotalValue"] - booking["itemTotalTax"]) * (commission / 100);
+  const wallet = await SellerWallet.findOne({ sellerId: sellerId });
+  wallet.balance = wallet.balance + addBalance;
+  await wallet.save();
   res.status(200).json({
     success: true,
     booking: booking,
