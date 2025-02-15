@@ -284,10 +284,13 @@ exports.getProducts = async (req, res, next) => {
 exports.getPackageDetails = catchAsync(async (req, res, next) => {
   const packageId = req.params.packageId;
   const package = await Package.findById(packageId);
-  const serviceFeatures = await Service.findById(packageId.serviceId).select(
+  const serviceFeatures = await Service.findById(package.serviceId).select(
     "features"
   );
-  res.status(200).json({ packages: package, features: serviceFeatures });
+  console.log(serviceFeatures);
+  res
+    .status(200)
+    .json({ packages: package, features: serviceFeatures["features"] });
 });
 
 exports.getProductDetails = catchAsync(async (req, res, next) => {
@@ -296,7 +299,9 @@ exports.getProductDetails = catchAsync(async (req, res, next) => {
   const serviceFeatures = await Service.findById(product.serviceId).select(
     "features"
   );
-  res.status(200).json({ product: product, features: serviceFeatures });
+  res
+    .status(200)
+    .json({ product: product, features: serviceFeatures["features"] });
 });
 
 exports.getHomePageHeroBanners = catchAsync(async (req, res, next) => {
