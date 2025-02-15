@@ -25,7 +25,7 @@ router.get("/get-services/:categoryId", appController.getServices);
 router.get("/get-service-screen/:serviceId", appController.getServiceScreen);
 router.get("/get-products/:serviceId", appController.getProducts);
 router.get("/get-Package-details/:packageId", appController.getPackageDetails);
-router.get("/get-product-details/:prodId", appController.getPackageDetails);
+router.get("/get-product-details/:prodId", appController.getProductDetails);
 
 // router.get("/get-product/:productId", appController.getProductDetails);
 ///
