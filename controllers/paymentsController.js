@@ -1331,7 +1331,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
 
   // Create Razorpay order
   const options = {
-    amount: totalPayable, // amount in the smallest currency unit
+    amount: totalPayable*100, // amount in the smallest currency unit
     currency: "INR",
   };
   const createdOrder = await instance.orders.create(options);
