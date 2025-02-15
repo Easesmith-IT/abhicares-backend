@@ -335,11 +335,13 @@ exports.getPackageProduct = catchAsync(async (req, res, next) => {
 //     });
 // });
 exports.getCart = catchAsync(async (req, res, next) => {
-  const { userId } = req.query;
-  const foundUser = await user.findById(userId);
-  console.log(foundUser, 'user');
+  // const { userId } = req.query;
+  // const { userId } = req.user._id;
+  // const foundUser = await user.findById(userId);
+  const foundUser = req.user;
+  console.log(foundUser, "user");
   console.log(req.cookies, "guest cart");
-  console.log(req.cookies["guestCart"], 'guest cart');
+  console.log(req.cookies["guestCart"], "guest cart");
 
   let cart;
   let totalOfferPrice = 0; // Sum of all products with discounted prices
@@ -396,9 +398,15 @@ exports.getCart = catchAsync(async (req, res, next) => {
     if (cart) {
       totalOfferPrice = cart.items.reduce((acc, item) => {
         if (item.productId) {
-          return acc + (item.productId.offerPrice || item.productId.price) * item.quantity;
+          return (
+            acc +
+            (item.productId.offerPrice || item.productId.price) * item.quantity
+          );
         } else if (item.packageId) {
-          return acc + (item.packageId.offerPrice || item.packageId.price) * item.quantity;
+          return (
+            acc +
+            (item.packageId.offerPrice || item.packageId.price) * item.quantity
+          );
         }
         return acc;
       }, 0);
@@ -426,11 +434,14 @@ exports.getCart = catchAsync(async (req, res, next) => {
             quantity: cart.items[index].quantity,
           });
 
-          totalOfferPrice += (product.offerPrice || product.price) * cart.items[index].quantity;
+          totalOfferPrice +=
+            (product.offerPrice || product.price) * cart.items[index].quantity;
           cartTotal += product.price * cart.items[index].quantity;
         }
       } else if (cart.items[index].packageId) {
-        const package = await Package.findById(cart.items[index].packageId).populate({
+        const package = await Package.findById(
+          cart.items[index].packageId
+        ).populate({
           path: "products",
           populate: {
             path: "productId",
@@ -453,7 +464,8 @@ exports.getCart = catchAsync(async (req, res, next) => {
             quantity: cart.items[index].quantity,
           });
 
-          totalOfferPrice += (package.offerPrice || package.price) * cart.items[index].quantity;
+          totalOfferPrice +=
+            (package.offerPrice || package.price) * cart.items[index].quantity;
           cartTotal += package.price * cart.items[index].quantity;
         }
       }
@@ -478,11 +490,9 @@ exports.getCart = catchAsync(async (req, res, next) => {
   });
 });
 
-
-
 exports.removeItemFromCart = catchAsync(async (req, res, next) => {
   const itemId = req.params.id;
-  console.log(itemId,'item id')
+  console.log(itemId, "item id");
   const { type } = req.body;
   const user = req.user;
   var prod, pack;
@@ -755,18 +765,17 @@ const calculateRatingStats = async (itemId, itemType) => {
 //   }
 // };
 
-
-
 // Utility function to update item rating
 const updateItemRating = async (itemId, itemType) => {
   try {
-    console.log('Updating rating for:', { itemId, itemType }); // Debug log
+    console.log("Updating rating for:", { itemId, itemType }); // Debug log
 
     // Get average rating using aggregation
     const aggregateQuery = [
       {
         $match: {
-          [itemType === "product" ? "productId" : "packageId"]: new mongoose.Types.ObjectId(itemId),
+          [itemType === "product" ? "productId" : "packageId"]:
+            new mongoose.Types.ObjectId(itemId),
         },
       },
       {
@@ -774,16 +783,16 @@ const updateItemRating = async (itemId, itemType) => {
           _id: null,
           averageRating: { $avg: "$rating" },
           totalCount: { $sum: 1 },
-          ratings: { $push: "$rating" }
+          ratings: { $push: "$rating" },
         },
       },
     ];
 
     const results = await Review.aggregate(aggregateQuery);
-    console.log('Aggregation results:', results); // Debug log
+    console.log("Aggregation results:", results); // Debug log
 
     if (!results || results.length === 0) {
-      console.log('No rating data found'); // Debug log
+      console.log("No rating data found"); // Debug log
       return;
     }
 
@@ -802,37 +811,32 @@ const updateItemRating = async (itemId, itemType) => {
       ratingDistribution[rating] = (ratingDistribution[rating] || 0) + 1;
     });
 
-    console.log('Rating distribution:', ratingDistribution); // Debug log
+    console.log("Rating distribution:", ratingDistribution); // Debug log
 
     // Create update object with rating as average
     const updateData = {
       $set: {
         rating: Number(ratingData.averageRating.toFixed(1)),
         ratingDistribution: ratingDistribution,
-      }
+      },
     };
 
-    console.log('Update data:', updateData); // Debug log
+    console.log("Update data:", updateData); // Debug log
 
     // Update product or package
     let updatedItem;
     if (itemType === "product") {
-      updatedItem = await Product.findByIdAndUpdate(
-        itemId, 
-        updateData,
-        { new: true }
-      );
+      updatedItem = await Product.findByIdAndUpdate(itemId, updateData, {
+        new: true,
+      });
     } else {
-      updatedItem = await Package.findByIdAndUpdate(
-        itemId, 
-        updateData,
-        { new: true }
-      );
+      updatedItem = await Package.findByIdAndUpdate(itemId, updateData, {
+        new: true,
+      });
     }
 
-    console.log('Updated item:', updatedItem); // Debug log
+    console.log("Updated item:", updatedItem); // Debug log
     return updatedItem;
-
   } catch (error) {
     console.error("Error updating item rating:", error);
     throw error;
@@ -844,7 +848,7 @@ exports.addProductReview = catchAsync(async (req, res, next) => {
   const { title, content, rating } = req.body;
 
   if (!rating) {
-    return next(new AppError("Please provide rating",400 ));
+    return next(new AppError("Please provide rating", 400));
   }
 
   // Check for existing reviews
@@ -902,36 +906,32 @@ exports.addProductReview = catchAsync(async (req, res, next) => {
         reviewType: "ON-PACKAGE", // Fixed reviewType for package
       };
     }
-    
+
     const review = await Review.create(reviewObj);
 
     try {
-      const itemId=id
+      const itemId = id;
       const updateQuery = {
-        $inc: { 
+        $inc: {
           totalReviews: 1,
-          [`ratingDistribution.${rating}`]: 1
-        }
+          [`ratingDistribution.${rating}`]: 1,
+        },
       };
 
       if (findedItem.type === "product") {
-        const updates = await Product.findByIdAndUpdate(
-          itemId,
-          updateQuery,
-          { new: true }
-        );
-        console.log('Product updates:', updates);
+        const updates = await Product.findByIdAndUpdate(itemId, updateQuery, {
+          new: true,
+        });
+        console.log("Product updates:", updates);
       }
-      
+
       if (findedItem.type === "package") {
-        const updates = await Package.findByIdAndUpdate(
-          itemId,
-          updateQuery,
-          { new: true }
-        );
-        console.log('Package updates:', updates);
+        const updates = await Package.findByIdAndUpdate(itemId, updateQuery, {
+          new: true,
+        });
+        console.log("Package updates:", updates);
       }
-      
+
       await updateItemRating(id, findedItem.type);
 
       return res.status(200).json({
@@ -942,10 +942,10 @@ exports.addProductReview = catchAsync(async (req, res, next) => {
     } catch (error) {
       console.error("Error updating item:", error);
       await Review.findByIdAndDelete(review._id);
-      return res.status(500).json({message:"something went wrong"});
+      return res.status(500).json({ message: "something went wrong" });
     }
   } else {
-    return res.status(400).json({message:"You can't add this"});
+    return res.status(400).json({ message: "You can't add this" });
   }
 });
 
@@ -972,33 +972,24 @@ exports.deleteProductReview = catchAsync(async (req, res, next) => {
     const updateQuery = {
       $inc: {
         totalReviews: -1,
-        [`ratingDistribution.${rating}`]: -1
-      }
+        [`ratingDistribution.${rating}`]: -1,
+      },
     };
 
     // Update product or package
     if (itemType === "product") {
-      await Product.findByIdAndUpdate(
-        itemId,
-        updateQuery,
-        { new: true }
-      );
+      await Product.findByIdAndUpdate(itemId, updateQuery, { new: true });
     } else {
-      await Package.findByIdAndUpdate(
-        itemId,
-        updateQuery,
-        { new: true }
-      );
+      await Package.findByIdAndUpdate(itemId, updateQuery, { new: true });
     }
 
     // Update average rating
     await updateItemRating(itemId, itemType);
 
-    res.status(200).json({ 
-      success: true, 
-      message: "Review deleted successfully" 
+    res.status(200).json({
+      success: true,
+      message: "Review deleted successfully",
     });
-
   } catch (error) {
     console.error("Error deleting review:", error);
     return next(new AppError("Error deleting review", 500));
