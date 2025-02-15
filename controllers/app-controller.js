@@ -281,13 +281,23 @@ exports.getProducts = async (req, res, next) => {
   } catch (error) {}
 };
 
-exports.getPackageDetails = async (req, res, next) => {
-  try {
-    const packageId = req.params.packageId;
-    const package = await Package.findById(packageId);
-    res.status(200).json({ packages: package });
-  } catch (error) {}
-};
+exports.getPackageDetails = catchAsync(async (req, res, next) => {
+  const packageId = req.params.packageId;
+  const package = await Package.findById(packageId);
+  const serviceFeatures = await Service.findById(packageId.serviceId).select(
+    "features"
+  );
+  res.status(200).json({ packages: package, features: serviceFeatures });
+});
+
+exports.getProductDetails = catchAsync(async (req, res, next) => {
+  const prodId = req.params.prodId;
+  const product = await Product.findById(prodId);
+  const serviceFeatures = await Service.findById(product.serviceId).select(
+    "features"
+  );
+  res.status(200).json({ product: product, features: serviceFeatures });
+});
 
 exports.getHomePageHeroBanners = catchAsync(async (req, res, next) => {
   const contents = await Content.find({
@@ -693,13 +703,14 @@ exports.getOrderBooking = async (req, res, next) => {
 
 exports.getBookingDetail = catchAsync(async (req, res, next) => {
   const { bookingId } = req.params;
-  console.log(bookingId)
-  const booking = await BookingModel.findById(bookingId).populate("sellerId")
-  .populate({
-    path:"orderId",
-    model:"Order"
-  });
-  console.log(booking,'booking')
+  console.log(bookingId);
+  const booking = await BookingModel.findById(bookingId)
+    .populate("sellerId")
+    .populate({
+      path: "orderId",
+      model: "Order",
+    });
+  console.log(booking, "booking");
   // console.log(booking);
   return res.status(200).json({ booking });
 });

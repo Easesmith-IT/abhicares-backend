@@ -11,7 +11,7 @@ exports.generateAccessToken = (userId, role, tokenVersion) => {
   return jwt.sign(
     { id: userId, role: role, tokenVersion: tokenVersion },
     process.env.JWT_ACCESS_SECRET,
-    { expiresIn: "15m" } // 30 minutes
+    { expiresIn: "45m" } // 30 minutes
   );
 };
 exports.setTokenCookies = (res, accessToken, refreshToken, user, role) => {
@@ -637,6 +637,152 @@ exports.logoutAll = catchAsync(async (req, res, next) => {
     message: "Logged out from all devices",
   });
 });
+// exports.protect = catchAsync(async (req, res, next) => {
+//   const {
+//     userAccessToken,
+//     userRefreshToken,
+//     adminAccessToken,
+//     adminRefreshToken,
+//   } = req.cookies;
+//   console.log(req.cookies);
+//   const role = req.originalUrl.startsWith("/api/admin")
+//     ? "admin"
+//     : req.originalUrl.startsWith("/api/content")
+//     ? "admin"
+//     : "user";
+//   console.log(role, "role");
+//   if (role === "admin") {
+//     if (!adminRefreshToken) {
+//       return next(new AppError("Not authorized to access this route", 401));
+//     }
+
+//     // First try access token if it exists
+//     if (adminAccessToken) {
+//       try {
+//         const decoded = jwt.verify(
+//           adminAccessToken,
+//           process.env.JWT_ACCESS_SECRET
+//         );
+        
+//         const user = await admin.findById(decoded.id);
+        
+//         if (user) {
+//           req.user = user;
+//           req.role = decoded.role;
+//           req.perm = user.permissions;
+//           req.id = user._id;
+//           return next();
+//         }
+//       } catch (error) {
+//         // Access token invalid/expired - continue to refresh token logic
+//       }
+//     }
+
+//     // If access token failed or doesn't exist, try refresh token
+//     try {
+//       const decoded = jwt.verify(
+//         adminRefreshToken,
+//         process.env.JWT_REFRESH_SECRET
+//       );
+
+//       const user = await admin.findById(decoded.id).select("+tokenVersion");
+
+//       // Verify token version
+//       if (!user || user.tokenVersion !== decoded.tokenVersion) {
+//         return next(new AppError("Invalid refresh token", 401));
+//       }
+
+//       req.user = user;
+//       req.role = decoded.role;
+
+//       const newAccessToken = this.generateAccessToken(
+//         user._id,
+//         "admin",
+//         user.tokenVersion
+//       );
+
+//       res.cookie("adminAccessToken", newAccessToken, {
+//         httpOnly: true,
+//         secure: process.env.NODE_ENV === "production",
+//         sameSite: "strict",
+//         maxAge: 15 * 60 * 1000,
+//       });
+
+//       return next();
+//     } catch (error) {
+//       return next(new AppError("Invalid refresh token", 401));
+//     }
+// } else {
+//     if (!userRefreshToken) {
+//       console.log("refreshToken---", userRefreshToken);
+//       return next(new AppError("Not authorized to access this route", 401));
+//     }
+//     // First try to verify access token
+//     if (userAccessToken) {
+//       const decoded = jwt.verify(
+//         userAccessToken,
+//         process.env.JWT_ACCESS_SECRET
+//       );
+//       console.log(decoded, "userAccessToken");
+//       // Find user
+//       let user;
+//       if (decoded.role === "user") {
+//         user = await User.findById(decoded.id);
+//       } else if (decoded.role === "admin") {
+//         user = await admin.findById(decoded.id);
+//       } else {
+//         user = await User.findById(decoded.id);
+//       }
+//       // console.log(user, "----------");
+//       if (user) {
+//         req.user = user;
+//         // console.log(req.user, "user line 551");
+//         req.role = decoded.role;
+//         req.perm = user.permissions;
+//         req.id = user._id;
+//         return next();
+//       }
+//     }
+
+//     // If access token is invalid/expired, try refresh token
+//     if (userRefreshToken) {
+//       const decoded = jwt.verify(
+//         userRefreshToken,
+//         process.env.JWT_REFRESH_SECRET
+//       );
+//       console.log(decoded);
+//       let user;
+//       if (decoded.role === "user") {
+//         user = await User.findById(decoded.id).select("+tokenVersion");
+//       } else {
+//         user = await admin.findById(decoded.id).select("+tokenVersion");
+//       }
+//       console.log(user, "user", user.tokenVersion, decoded.tokenVersion);
+//       // Verify token version
+//       if (!user || user.tokenVersion !== decoded.tokenVersion) {
+//         return next(new AppError("Invalid refresh token", 401));
+//       }
+//       req.user = user;
+//       console.log(req.user, "req.user at 588");
+//       req.role = decoded.role;
+
+//       const newAccessToken = this.generateAccessToken(
+//         user._id,
+//         "user",
+//         user.tokenVersion
+//       );
+//       console.log("Generated new user access token");
+  
+//       res.cookie("userAccessToken", newAccessToken, {
+//         httpOnly: true,
+//         secure: process.env.NODE_ENV === "production",
+//         sameSite: "strict",
+//         maxAge: 15 * 60 * 1000,
+//       });
+//       return next();
+//     }
+//   }
+// });
 exports.protect = catchAsync(async (req, res, next) => {
   const {
     userAccessToken,
@@ -644,117 +790,165 @@ exports.protect = catchAsync(async (req, res, next) => {
     adminAccessToken,
     adminRefreshToken,
   } = req.cookies;
-  console.log(req.cookies);
-  // console.log(accessToken, refreshToken, "this is line 531");
-  const role = req.originalUrl.startsWith("/api/admin")
-    ? "admin"
-    : req.originalUrl.startsWith("/api/content")
+
+  const role = req.originalUrl.startsWith("/api/admin") || 
+               req.originalUrl.startsWith("/api/content")
     ? "admin"
     : "user";
-  console.log(role, "role");
+
+  let tokenProcessed = false;
+
   if (role === "admin") {
-    if (!adminAccessToken || !adminRefreshToken) {
-      console.log("accessToken---", adminAccessToken);
-      console.log("refreshToken---", adminRefreshToken);
+    if (!adminRefreshToken) {
       return next(new AppError("Not authorized to access this route", 401));
     }
+
+    // First try access token if it exists
     if (adminAccessToken) {
-      const decoded = jwt.verify(
-        adminAccessToken,
-        process.env.JWT_ACCESS_SECRET
-      );
-      console.log(decoded, "adminAccessToken");
-      // Find user
-      let user;
-      user = await admin.findById(decoded.id);
-      // console.log(user, "----------");
-      if (user) {
+      try {
+        const decoded = jwt.verify(
+          adminAccessToken,
+          process.env.JWT_ACCESS_SECRET
+        );
+        
+        const user = await admin.findById(decoded.id);
+        
+        if (user) {
+          req.user = user;
+          req.role = decoded.role;
+          req.perm = user.permissions;
+          req.id = user._id;
+          tokenProcessed = true;
+          return next();
+        }
+      } catch (error) {
+        // Access token invalid/expired - continue to refresh token logic
+      }
+    }
+
+    // If access token failed or doesn't exist, try refresh token
+    if (!tokenProcessed) {
+      try {
+        const decoded = jwt.verify(
+          adminRefreshToken,
+          process.env.JWT_REFRESH_SECRET
+        );
+
+        const user = await admin.findById(decoded.id).select("+tokenVersion");
+
+        // Verify token version
+        if (!user || user.tokenVersion !== decoded.tokenVersion) {
+          return next(new AppError("Invalid refresh token", 401));
+        }
+
         req.user = user;
-        // console.log(req.user, "user line 551");
         req.role = decoded.role;
         req.perm = user.permissions;
         req.id = user._id;
+
+        const newAccessToken = this.generateAccessToken(
+          user._id,
+          "admin",
+          user.tokenVersion
+        );
+
+        res.cookie("adminAccessToken", newAccessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 15 * 60 * 1000,
+        });
+
         return next();
-      }
-    }
-
-    if (adminRefreshToken) {
-      const decoded = jwt.verify(
-        adminRefreshToken,
-        process.env.JWT_REFRESH_SECRET
-      );
-      console.log(decoded);
-      let user;
-
-      user = await admin.findById(decoded.id).select("+tokenVersion");
-
-      console.log(user, "user", user.tokenVersion, decoded.tokenVersion);
-      // Verify token version
-      if (!user || user.tokenVersion !== decoded.tokenVersion) {
+      } catch (error) {
         return next(new AppError("Invalid refresh token", 401));
       }
-      req.user = user;
-      console.log(req.user, "req.user at 588");
-      req.role = decoded.role;
-      return next();
     }
   } else {
-    if (!userAccessToken || !userRefreshToken) {
-      console.log("accessToken---", userAccessToken);
-      console.log("refreshToken---", userRefreshToken);
+    // User role logic
+    if (!userRefreshToken) {
       return next(new AppError("Not authorized to access this route", 401));
     }
-    // First try to verify access token
+
+    let tokenProcessed = false;
+
+    // First try to verify access token if it exists
     if (userAccessToken) {
-      const decoded = jwt.verify(
-        userAccessToken,
-        process.env.JWT_ACCESS_SECRET
-      );
-      console.log(decoded, "userAccessToken");
-      // Find user
-      let user;
-      if (decoded.role === "user") {
-        user = await User.findById(decoded.id);
-      } else if (decoded.role === "admin") {
-        user = await admin.findById(decoded.id);
-      } else {
-        user = await User.findById(decoded.id);
-      }
-      // console.log(user, "----------");
-      if (user) {
-        req.user = user;
-        // console.log(req.user, "user line 551");
-        req.role = decoded.role;
-        req.perm = user.permissions;
-        req.id = user._id;
-        return next();
+      try {
+        const decoded = jwt.verify(
+          userAccessToken,
+          process.env.JWT_ACCESS_SECRET
+        );
+
+        let user;
+        if (decoded.role === "user") {
+          user = await User.findById(decoded.id);
+        } else if (decoded.role === "admin") {
+          user = await admin.findById(decoded.id);
+        } else {
+          user = await User.findById(decoded.id);
+        }
+
+        if (user) {
+          req.user = user;
+          req.role = decoded.role;
+          req.perm = user.permissions;
+          req.id = user._id;
+          tokenProcessed = true;
+          return next();
+        }
+      } catch (error) {
+        // Access token invalid/expired - continue to refresh token logic
       }
     }
 
-    // If access token is invalid/expired, try refresh token
-    if (userRefreshToken) {
-      const decoded = jwt.verify(
-        userRefreshToken,
-        process.env.JWT_REFRESH_SECRET
-      );
-      console.log(decoded);
-      let user;
-      if (decoded.role === "user") {
-        user = await User.findById(decoded.id).select("+tokenVersion");
-      } else {
-        user = await admin.findById(decoded.id).select("+tokenVersion");
-      }
-      console.log(user, "user", user.tokenVersion, decoded.tokenVersion);
-      // Verify token version
-      if (!user || user.tokenVersion !== decoded.tokenVersion) {
+    // If access token failed or doesn't exist, try refresh token
+    if (!tokenProcessed) {
+      try {
+        const decoded = jwt.verify(
+          userRefreshToken,
+          process.env.JWT_REFRESH_SECRET
+        );
+
+        let user;
+        if (decoded.role === "user") {
+          user = await User.findById(decoded.id).select("+tokenVersion");
+        } else {
+          user = await admin.findById(decoded.id).select("+tokenVersion");
+        }
+
+        // Verify token version
+        if (!user || user.tokenVersion !== decoded.tokenVersion) {
+          return next(new AppError("Invalid refresh token", 401));
+        }
+
+        req.user = user;
+        req.role = decoded.role;
+        req.perm = user.permissions;
+        req.id = user._id;
+
+        const newAccessToken = this.generateAccessToken(
+          user._id,
+          "user",
+          user.tokenVersion
+        );
+
+        res.cookie("userAccessToken", newAccessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 15 * 60 * 1000,
+        });
+
+        return next();
+      } catch (error) {
         return next(new AppError("Invalid refresh token", 401));
       }
-      req.user = user;
-      console.log(req.user, "req.user at 588");
-      req.role = decoded.role;
-      return next();
     }
   }
+
+  // If we reach here without returning next(), authentication failed
+  return next(new AppError("Authentication failed", 401));
 });
 
 exports.dualProtect = catchAsync(async (req, res, next) => {
@@ -872,6 +1066,20 @@ exports.dualProtect = catchAsync(async (req, res, next) => {
       req.user = user;
       console.log(req.user, "req.user at 588");
       req.role = decoded.role;
+
+      const newAccessToken = this.generateAccessToken(
+        user._id,
+        "user",
+        user.tokenVersion
+      );
+      console.log("Generated new user access token");
+  
+      res.cookie("userAccessToken", newAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 15 * 60 * 1000,
+      });
       return next();
     }
   }
