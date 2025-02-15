@@ -40,17 +40,20 @@ router.get(
 );
 router.post(
   "/remove-cart-item/:id",
-  userAuthForCart,
+  websiteAuth.dualProtect,
+  // userAuthForCart,
   shoppingController.removeItemFromCart
 ); //product id
 router.post(
   "/add-item-cart",
-  userAuthForCart,
+  websiteAuth.dualProtect,
+  // userAuthForCart,
   shoppingController.addItemToCart
 );
 router.post(
   "/update-item-quantity/:id",
-  userAuthForCart,
+  websiteAuth.dualProtect,
+  // userAuthForCart,
   shoppingController.updateItemQuantity
 ); //product id
 // User Routes
