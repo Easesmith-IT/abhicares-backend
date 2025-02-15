@@ -28,7 +28,6 @@ const Review = require("../models/review");
 const { serve } = require("swagger-ui-express");
 const category = require("../models/category");
 const { toObjectId } = require("../util/toMongodbId");
-const catchAsync = require("../util/catchAsync");
 const { generateTicketId } = require("../util/generateOrderId");
 // const catchAsync = require("../util/catchAsync");
 const updateServiceRating = require("../util/upateServiceReview");
