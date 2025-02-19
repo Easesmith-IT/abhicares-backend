@@ -1186,7 +1186,8 @@ exports.raiseTicket = async (req, res, next) => {
 };
 
 exports.cancelOrder = catchAsync(async (req, res, next) => {
-  const { userId } = req.query;
+  const userId = req.user._id;
+  // const { userId } = req.query;
   console.log(userId);
   const id = req.params.id; // order id
   const status = req.body.status;
