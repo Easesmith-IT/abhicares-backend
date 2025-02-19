@@ -1064,17 +1064,17 @@ exports.getReferralCredits = catchAsync(async (req, res, next) => {
   const userId = req.user._id;
 
   const userRefDoc = await UserReferalLink.findOne({ userId });
-
-  let credits = userRefDoc.referralCredits || 0;
+  let credits = 0;
   let creditsAvailable = false;
-
-  if (credits > 0) creditsAvailable = true;
-
+  if (userRefDoc) {
+    credits = userRefDoc.referralCredits || 0;
+    if (credits > 0) creditsAvailable = true;
+  }
   res.status(200).json({
     success: true,
     credits,
     creditsAvailable,
-    noOfUsersAppliedCoupon: userRefDoc.noOfUsersAppliedCoupon,
+    noOfUsersAppliedCoupon: userRefDoc ? userRefDoc.noOfUsersAppliedCoupon : 0,
   });
 });
 
