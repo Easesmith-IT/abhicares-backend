@@ -997,11 +997,6 @@ exports.checkout = catchAsync(async (req, res, next) => {
 
   await order.save();
 
-  // Clear cart
-  cart.items = [];
-  cart.totalPrice = 0;
-  await cart.save();
-
   // Create Razorpay order
   const options = {
     amount: totalPayable * 100, // amount in the smallest currency unit
@@ -1107,7 +1102,11 @@ exports.paymentVerification = catchAsync(async (req, res, next) => {
       "online",
       "completed"
     );
-
+    const cart = await Cart.findOne({ userId: result.user.userId });
+    // Clear cart
+    cart.items = [];
+    cart.totalPrice = 0;
+    await cart.save();
     await TempOrder.findByIdAndDelete({ _id: productId });
 
     //payment creation
