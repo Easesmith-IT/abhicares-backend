@@ -100,6 +100,7 @@ exports.verifyBookingOtp = catchAsync(async (req, res, next) => {
 
 exports.verifyUserOtp = catchAsync(async (req, res, next) => {
   const { deviceType, fcmToken, appType, enteredOTP, phoneNumber } = req.body;
+  console.log(req.body);
 
   const user = await User.findOne({ phone: phoneNumber }).select("-password");
   if (!user) {
@@ -302,7 +303,9 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
 });
 
 exports.appCreateUser = catchAsync(async (req, res, next) => {
-  const { enteredOTP, phone, tempVerf } = req.body;
+  const { deviceType, fcmToken, appType, enteredOTP, phone, tempVerf } =
+    req.body;
+  console.log(req.body);
   if (!tempVerf) {
     res.status(400).json({
       success: false,
