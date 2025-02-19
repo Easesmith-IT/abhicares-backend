@@ -1184,3 +1184,23 @@ exports.raiseTicket = async (req, res, next) => {
     return next(err);
   }
 };
+
+exports.cancelOrder = catchAsync(async (req, res, next) => {
+  const { userId } = req.query;
+  console.log(userId);
+  const id = req.params.id; // order id
+  const status = req.body.status;
+  const result = await Order.findOne({ _id: id, "user.userId": userId });
+  if (!result) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+  if (result.status == "Completed") {
+    return res.status(400).json({ message: "Order is already completed" });
+  } else {
+    result.status = status;
+    await result.save();
+  }
+  res
+    .status(200)
+    .json({ success: true, message: "Order status changed successfull" });
+});
