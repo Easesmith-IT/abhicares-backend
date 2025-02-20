@@ -20,7 +20,9 @@ const BookingModel = require("../models/booking");
 const authKey = "T1PhA56LPJysMHFZ62B5";
 const authToken = "8S2pMXV8IRpZP6P37p4SWrVErk2N6CzSEa458pt1";
 const credentials = `${authKey}:${authToken}`;
-
+const SellerWallet = require("../models/sellerWallet");
+const Service = require("../models/service");
+const Category = require("../models/category");
 const encodedCredentials = Buffer.from(credentials).toString("base64");
 const config = {
   headers: {
@@ -77,6 +79,18 @@ exports.verifyBookingOtp = catchAsync(async (req, res, next) => {
   booking.status = "completeReq";
   booking.currentLocation.status = "completed";
   booking.save();
+  const serviceId =
+    booking.product != null
+      ? booking.product["serviceId"]
+      : booking.package["serviceId"];
+  const categoryId = await Service.findById(serviceId)["categoryId"];
+  const category = await Category.findById(categoryId);
+  const commission = 100 - category["commission"];
+  const addBalance =
+    (booking["itemTotalValue"] - booking["itemTotalTax"]) * (commission / 100);
+  const wallet = await SellerWallet.findOne({ sellerId: sellerId });
+  wallet.balance = wallet.balance + addBalance;
+  await wallet.save();
   res.status(200).json({
     success: true,
     booking: booking,
@@ -84,92 +98,9 @@ exports.verifyBookingOtp = catchAsync(async (req, res, next) => {
   });
 });
 
-// exports.verifyUserOtp = catchAsync(async (req, res, next) => {
-//   const {deviceType,fcmToken,appType, enteredOTP, phoneNumber } = req.body;
-//   const user = await User.findOne({ phone: phoneNumber }).select("-password");
-//   if (!user) {
-//     return next(new AppError("User does not exist", 404));
-//   }
-//   let newToken;
-//   console.log(enteredOTP,'entered otp')
-//   await verifyOTP(phoneNumber, enteredOTP, user, res);
-//   if(deviceType==="android" || deviceType==='ios'){
-
-//     const foundUserToken=await tokenSchema.findOne({userId:user._id})
-//       if(foundUserToken){
-//         foundUserToken.token=fcmToken;
-//         await foundUserToken.save();
-//       }
-
-//      if(!foundUserToken){
-//       newToken=await tokenSchema.create({
-//         userId:user._id,
-//         token:fcmToken,
-//         deviceType:deviceType,
-//         appType:appType,
-//       })
-//       if(!newToken){
-//         return res.status(400).json({
-//           message:'something went wrong while saving the fcm token',
-
-//         })
-
-//       }
-//      }
-//   }
-
-//   const payload = { id: user._id };
-//   const token = jwt.sign(payload, process.env.JWT_SECRET, {
-//     expiresIn: "2d",
-//   });
-//   const userCart = await Cart.findById(user.cartId);
-//   if (req.cookies["guestCart"]) {
-//     const guestCart = JSON.parse(req.cookies["guestCart"]);
-//     const carItems = guestCart.items;
-
-//     for (const guestCartItem of carItems) {
-//       console.log("guestCartItem", guestCartItem);
-//       if (guestCartItem.type == "product") {
-//         const existingCartItem = userCart.items.find(
-//           (item) => item.productId?.toString() === guestCartItem.productId
-//         );
-
-//         if (existingCartItem) {
-//           existingCartItem.quantity += guestCartItem.quantity;
-//         } else {
-//           console.log("pushing the cart item");
-//           userCart.items.push(guestCartItem);
-//         }
-//       } else if (guestCartItem.type == "package") {
-//         const existingCartItem = userCart.items.find(
-//           (item) => item.packageId?.toString() === guestCartItem.packageId
-//         );
-//         console.log("existingCartItem", existingCartItem);
-//         if (existingCartItem) {
-//           existingCartItem.quantity += guestCartItem.quantity;
-//         } else {
-//           userCart.items.push(guestCartItem);
-//         }
-//       }
-//     }
-
-//     userCart.totalPrice += guestCart.totalPrice;
-//     console.log("cart", userCart);
-//     await userCart.save();
-//   }
-//   res.clearCookie("guestCart");
-//   res.cookie("token", token, { secure: true, httpOnly: true });
-//   res.status(200).json({
-//     message: "Logged In",
-//     success: true,
-//     user: user,
-//     userName: user.name,
-//     userPhone: user.phone,
-//   });
-// });
-
 exports.verifyUserOtp = catchAsync(async (req, res, next) => {
   const { deviceType, fcmToken, appType, enteredOTP, phoneNumber } = req.body;
+  console.log(req.body);
 
   const user = await User.findOne({ phone: phoneNumber }).select("-password");
   if (!user) {
@@ -372,7 +303,9 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
 });
 
 exports.appCreateUser = catchAsync(async (req, res, next) => {
+
   const { enteredOTP, phone, tempVerf, fcmToken, deviceType, appType } = req.body;
+  console.log(req.body);
 
   if (!tempVerf) {
     return res.status(400).json({
