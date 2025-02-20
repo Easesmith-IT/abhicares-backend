@@ -125,7 +125,8 @@ router.post(
 router.get(
   "/get-user-orders",
   websiteAuth.protect,
-  paymentController.getAllUserOrders
+  // paymentController.getAllUserOrders
+  shoppingController.getAllUserOrders
 );
 router.post(
   "/raise-ticket",

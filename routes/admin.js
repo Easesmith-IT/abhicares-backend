@@ -698,5 +698,11 @@ router.post(
   authorize("sellerCashout", "write"),
   adminController.addSellerCashout
 );
+router.post(
+  "/delete-seller",
+  websiteAuth.protect,
+  authorize("partners", "write"),
+  adminController.deleteInReviewSeller
+);
 
 module.exports = router;

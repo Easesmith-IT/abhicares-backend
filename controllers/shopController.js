@@ -1122,3 +1122,56 @@ exports.cancelOrder = catchAsync(async (req, res, next) => {
     .status(200)
     .json({ success: true, message: "Order status changed successfull" });
 });
+
+exports.getAllUserOrders = catchAsync(async (req, res, next) => {
+  const id = req.query.userId;
+  const page = parseInt(req.query.page) || 1; // Default to page 1
+  const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page
+  const skip = (page - 1) * limit;
+
+  const result = await Order.find({ "user.userId": id })
+    .sort({ createdAt: -1 }) // Sort by latest orders first
+    .skip(skip)
+    .limit(limit)
+    .populate({
+      path: "items",
+      populate: {
+        path: "package",
+        populate: {
+          path: "products",
+          populate: [
+            { path: "productId", model: "Product" },
+            { path: "serviceId", model: "Service" },
+          ],
+        },
+        populate: { path: "serviceId", model: "Service" },
+      },
+    })
+    .populate({
+      path: "items.product",
+      populate: [
+        { path: "productId", model: "Product" },
+        { path: "serviceId", model: "Service" },
+      ],
+    })
+    .populate({
+      path: "items.bookingId",
+      populate: { path: "sellerId", model: "Seller" },
+    })
+    .populate({ path: "couponId", model: "Coupon" })
+    .populate({ path: "bookingId", model: "Booking" });
+
+  const totalOrders = await Order.countDocuments({ "user.userId": id });
+  const totalPages = Math.ceil(totalOrders / limit);
+
+  res.status(200).json({
+    success: true,
+    message: "Your all orders",
+    data: result,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalOrders,
+    },
+  });
+});
