@@ -269,7 +269,7 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
         const foundUserToken = await tokenSchema.findOne({
           userId: resultData._id,
         });
-
+        
         if (foundUserToken) {
           foundUserToken.token = fcmToken;
           await foundUserToken.save();
@@ -280,7 +280,7 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
             deviceType: deviceType,
             appType: appType,
           });
-
+          console.log(newToken,'new token')
           if (!newToken) {
             return res.status(400).json({
               message: "Something went wrong while saving the FCM token",
@@ -303,64 +303,98 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
 });
 
 exports.appCreateUser = catchAsync(async (req, res, next) => {
-  const { deviceType, fcmToken, appType, enteredOTP, phone, tempVerf } =
-    req.body;
+
+  const { enteredOTP, phone, tempVerf, fcmToken, deviceType, appType } = req.body;
   console.log(req.body);
+
   if (!tempVerf) {
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       message: "No signup request available",
     });
-  } else if (!enteredOTP || !phone) {
-    res
-      .status(400)
-      .json({ success: false, message: "All the fields are required" });
-  } else {
-    const decoded = jwt.verify(tempVerf, process.env.JWT_SECRET);
-    console.log(decoded.otp == enteredOTP, decoded.phone == phone);
-    if (decoded.otp == enteredOTP && decoded.phone == phone) {
-      const referralCode = nanoid(8);
-      const psw = "password";
-      var user = await User({
-        name: decoded.name,
-        phone: phone,
-        password: psw,
-        gender: "notDefined",
-        referralCode,
-      });
+  }
 
-      await user.save();
-      var userCart = await Cart({ userId: user._id });
-      await userCart.save();
-      user.cartId = userCart._id;
-      const referralUser = await User.findOne({
-        referralCode: decoded.referralCode,
-        status: true,
-      });
+  if (!enteredOTP || !phone) {
+    return res.status(400).json({ success: false, message: "All the fields are required" });
+  }
 
-      if (referralUser) {
-        const userRefDoc = await UserReferalLink.findOne({
-          userId: referralUser._id,
+  const decoded = jwt.verify(tempVerf, process.env.JWT_SECRET);
+  console.log(decoded.otp == enteredOTP, decoded.phone == phone);
+
+  if (decoded.otp == enteredOTP && decoded.phone == phone) {
+    const referralCode = nanoid(8);
+    const psw = "password";
+    
+    const user = new User({
+      name: decoded.name,
+      phone: phone,
+      password: psw,
+      gender: "notDefined",
+      referralCode,
+    });
+
+    await user.save();
+
+    const userCart = new Cart({ userId: user._id });
+    await userCart.save();
+
+    user.cartId = userCart._id;
+    await user.save();
+
+    const referralUser = await User.findOne({
+      referralCode: decoded.referralCode,
+      status: true,
+    });
+
+    // ✅ Check if FCM Token exists before trying to save
+    if (fcmToken && (deviceType === "android" || deviceType === "ios")) {
+      const foundUserToken = await tokenSchema.findOne({ userId: user._id });
+
+      if (foundUserToken) {
+        foundUserToken.token = fcmToken;
+        foundUserToken.deviceType = deviceType;
+        foundUserToken.appType = appType;
+        await foundUserToken.save();
+      } else {
+        const newToken = await tokenSchema.create({
+          userId: user._id,
+          token: fcmToken,
+          deviceType: deviceType,
+          appType: appType,
         });
 
-        const referralAmt = await ReferAndEarn.findOne();
-        userRefDoc.referralCredits =
-          userRefDoc.referralCredits + referralAmt.amount;
-        userRefDoc.noOfUsersAppliedCoupon++;
+        console.log("New FCM Token Saved:", newToken);
 
+        if (!newToken) {
+          return res.status(400).json({
+            message: "Something went wrong while saving the FCM token",
+          });
+        }
+      }
+    }
+
+    // Handle Referral
+    if (referralUser) {
+      const userRefDoc = await UserReferalLink.findOne({ userId: referralUser._id });
+
+      if (userRefDoc) {
+        const referralAmt = await ReferAndEarn.findOne();
+        userRefDoc.referralCredits += referralAmt ? referralAmt.amount : 0;
+        userRefDoc.noOfUsersAppliedCoupon++;
         await userRefDoc.save();
       }
-      await user.save();
-      return res.status(200).json({
-        message: "Logged In",
-        success: true,
-        user: user,
-      });
-    } else {
-      return res.status(400).json({ message: "OTP in Invalid" });
     }
+
+    return res.status(200).json({
+      message: "Logged In",
+      success: true,
+      user: user,
+    });
+  } else {
+    return res.status(400).json({ message: "OTP is Invalid" });
   }
 });
+
 
 exports.createUser = catchAsync(async (req, res, next) => {
   const { enteredOTP, phone } = req.body;

@@ -734,6 +734,7 @@ exports.checkout = catchAsync(async (req, res, next) => {
 
   // Create Razorpay order
   const options = {
+
     amount: totalPayable * 100, // amount in the smallest currency unit
     currency: "INR",
   };
