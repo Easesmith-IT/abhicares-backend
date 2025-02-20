@@ -3474,154 +3474,250 @@ exports.updateReferAndEarnAmt = catchAsync(async (req, res, next) => {
 //     }
 // };
 
+// exports.sendNotificationToAll = async (req, res, next) => {
+//   const { description, date, time, title } = req.body;
+//   console.log("req.body", req.body);
+
+//   if (!description || !title) {
+//     return next(new AppError("Please provide title and description", 400));
+//   }
+
+//   // Image handling (currently commented)
+//   // let imageUrl = null;
+//   // if (req.files && req.files[0]) {
+//   //     const file = req.files[0];
+//   //     const ext = file.originalname.split(".").pop(); // Get file extension
+//   //     try {
+//   //         const ret = await uploadFileToGCS(file.buffer, ext); // Upload file to GCS
+//   //         imageUrl = ret; // GCS returns the full URL of the uploaded file
+//   //     } catch (error) {
+//   //         console.error("GCS Upload Error:", error);
+//   //         return next(new AppError("Error while uploading the file to GCS", 500));
+//   //     }
+//   // }
+
+//   try {
+//     // Retrieve FCM tokens and their corresponding appTypes from tokenSchema
+//     console.log("description", description);
+//     const pipeline = [];
+
+//     if (req.body.appType && req.body.appType !== "all") {
+//       pipeline.push({ $match: { appType: req.body.appType } });
+//     }
+
+//     pipeline.push({
+//       $group: {
+//         _id: {
+//           deviceType: "$deviceType",
+//           ...(req.body.appType &&
+//             req.body.appType !== "all" && { appType: "$appType" }),
+//         },
+//         tokens: {
+//           $push: {
+//             token: "$token",
+//             appType: "$appType",
+//             deviceType: "$deviceType",
+//           },
+//         },
+//       },
+//     });
+
+//     const tokensByDeviceType = await tokenSchema.aggregate(pipeline);
+
+//     if (!tokensByDeviceType || tokensByDeviceType.length === 0) {
+//       return res.status(200).json({
+//         message: "No users found",
+//         status: false,
+//       });
+//     }
+//     for (let i = 0; i < tokensByDeviceType.length; i++) {
+//       console.log(tokensByDeviceType[i]);
+//     }
+//     // Prepare the notification message
+//     const message = {
+//       notification: {
+//         title: title,
+//         body: description,
+//         // ...(imageUrl && { image: imageUrl }), // Add image if available
+//       },
+//     };
+
+//     // Check if notification should be scheduled
+//     if (date && time) {
+//       const scheduledDate = new Date(`${date}T${time}`);
+//       if (isNaN(scheduledDate)) {
+//         return next(new AppError("Invalid schedule date or time", 400));
+//       }
+
+//       if (scheduledDate <= new Date()) {
+//         return next(new AppError("Scheduled time must be in the future", 400));
+//       }
+
+//       // Save the scheduled notification in the database
+//       const notificationData = {
+//         description,
+//         title,
+//         scheduleTiming: { date, time },
+//         // image: imageUrl, // Save image URL if provided
+//         status: "scheduled",
+//       };
+
+//       const savedNotification = await notificationSchema.create(
+//         notificationData
+//       );
+
+//       // Schedule the notification for all tokens by appType
+//       schedule.scheduleJob(scheduledDate, async () => {
+//         try {
+//           for (const { _id: appType, tokens } of tokensByAppType) {
+//             for (const token of tokens) {
+//               await sendPushNotification(appType, token, { ...message, token });
+//             }
+//           }
+//           console.log("Scheduled notification sent to all users successfully");
+
+//           // Update the notification status
+//           await notificationSchema.findOneAndUpdate(
+//             { _id: savedNotification._id },
+//             { status: "sent" }
+//           );
+//         } catch (error) {
+//           console.error("Error sending scheduled notification to all:", error);
+//         }
+//       });
+
+//       return res.status(200).json({
+//         success: true,
+//         message: "Notification scheduled for all users successfully",
+//       });
+//     }
+
+//     // Send notifications to all tokens by appType immediately
+//     for (const { _id: deviceType, tokens } of tokensByDeviceType) {
+//       // Log to verify deviceType and tokens
+//       console.log("DeviceType:", deviceType, "Tokens:", tokens);
+
+//       for (const { token, appType, deviceType } of tokens) {
+//         // Log to verify token and appType
+//         console.log(
+//           "Sending notification to token:",
+//           token,
+//           "with appType:",
+//           appType
+//         );
+
+//         // Send the notification, passing appType as a separate argument
+//         await sendPushNotification(deviceType, appType, token, {
+//           ...message,
+//           token,
+//         });
+//       }
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Notification sent to all users successfully",
+//     });
+//   } catch (error) {
+//     console.log(error);
+//   }
+// };
 exports.sendNotificationToAll = async (req, res, next) => {
-  const { description, date, time, title } = req.body;
-  console.log("req.body", req.body);
+  const { description, date, time, title, appType } = req.body;
+  console.log("Received request:", req.body);
 
   if (!description || !title) {
     return next(new AppError("Please provide title and description", 400));
   }
 
-  // Image handling (currently commented)
-  // let imageUrl = null;
-  // if (req.files && req.files[0]) {
-  //     const file = req.files[0];
-  //     const ext = file.originalname.split(".").pop(); // Get file extension
-  //     try {
-  //         const ret = await uploadFileToGCS(file.buffer, ext); // Upload file to GCS
-  //         imageUrl = ret; // GCS returns the full URL of the uploaded file
-  //     } catch (error) {
-  //         console.error("GCS Upload Error:", error);
-  //         return next(new AppError("Error while uploading the file to GCS", 500));
-  //     }
-  // }
-
   try {
-    // Retrieve FCM tokens and their corresponding appTypes from tokenSchema
-    console.log("description", description);
-    const pipeline = [];
+    console.log("Fetching FCM tokens...");
 
-    if (req.body.appType && req.body.appType !== "all") {
-      pipeline.push({ $match: { appType: req.body.appType } });
+    // Create pipeline for filtering tokens
+    const pipeline = [];
+    if (appType && appType !== "all") {
+      pipeline.push({ $match: { appType } });
     }
 
     pipeline.push({
       $group: {
-        _id: {
-          deviceType: "$deviceType",
-          ...(req.body.appType &&
-            req.body.appType !== "all" && { appType: "$appType" }),
-        },
-        tokens: {
-          $push: {
-            token: "$token",
-            appType: "$appType",
-            deviceType: "$deviceType",
-          },
-        },
+        _id: { deviceType: "$deviceType" }, // ✅ Ensure `deviceType` is correctly structured
+        tokens: { $push: { token: "$token", appType: "$appType", deviceType: "$deviceType" } },
       },
     });
 
+    // Fetch tokens from MongoDB
     const tokensByDeviceType = await tokenSchema.aggregate(pipeline);
+    console.log("Retrieved tokens:", JSON.stringify(tokensByDeviceType, null, 2));
 
     if (!tokensByDeviceType || tokensByDeviceType.length === 0) {
-      return res.status(200).json({
-        message: "No users found",
-        status: false,
-      });
+      return res.status(200).json({ message: "No users found", status: false });
     }
-    for (let i = 0; i < tokensByDeviceType.length; i++) {
-      console.log(tokensByDeviceType[i]);
-    }
-    // Prepare the notification message
+
+    // Prepare the notification payload
     const message = {
       notification: {
-        title: title,
+        title,
         body: description,
-        // ...(imageUrl && { image: imageUrl }), // Add image if available
       },
     };
 
-    // Check if notification should be scheduled
+    // 📌 **Handle Scheduled Notifications**
     if (date && time) {
       const scheduledDate = new Date(`${date}T${time}`);
       if (isNaN(scheduledDate)) {
         return next(new AppError("Invalid schedule date or time", 400));
       }
-
       if (scheduledDate <= new Date()) {
         return next(new AppError("Scheduled time must be in the future", 400));
       }
 
-      // Save the scheduled notification in the database
-      const notificationData = {
+      const savedNotification = await notificationSchema.create({
         description,
         title,
         scheduleTiming: { date, time },
-        // image: imageUrl, // Save image URL if provided
         status: "scheduled",
-      };
+      });
 
-      const savedNotification = await notificationSchema.create(
-        notificationData
-      );
-
-      // Schedule the notification for all tokens by appType
       schedule.scheduleJob(scheduledDate, async () => {
         try {
-          for (const { _id: appType, tokens } of tokensByAppType) {
-            for (const token of tokens) {
-              await sendPushNotification(appType, token, { ...message, token });
+          for (const { _id, tokens } of tokensByDeviceType) {
+            const deviceType = _id.deviceType; // ✅ Extract actual value
+            console.log(`Scheduled notification for ${deviceType}`);
+
+            for (const { token, appType } of tokens) {
+              await sendPushNotification(deviceType, appType, token, { ...message, token });
             }
           }
-          console.log("Scheduled notification sent to all users successfully");
 
-          // Update the notification status
-          await notificationSchema.findOneAndUpdate(
-            { _id: savedNotification._id },
-            { status: "sent" }
-          );
+          console.log("Scheduled notification sent successfully.");
+          await notificationSchema.findByIdAndUpdate(savedNotification._id, { status: "sent" });
         } catch (error) {
-          console.error("Error sending scheduled notification to all:", error);
+          console.error("Error sending scheduled notification:", error);
         }
       });
 
-      return res.status(200).json({
-        success: true,
-        message: "Notification scheduled for all users successfully",
-      });
+      return res.status(200).json({ success: true, message: "Notification scheduled successfully" });
     }
 
-    // Send notifications to all tokens by appType immediately
-    for (const { _id: deviceType, tokens } of tokensByDeviceType) {
-      // Log to verify deviceType and tokens
-      console.log("DeviceType:", deviceType, "Tokens:", tokens);
+    // 📌 **Send Immediate Notifications**
+    for (const { _id, tokens } of tokensByDeviceType) {
+      const deviceType = _id.deviceType; // ✅ Extract correct deviceType
+      console.log(`Sending notification to ${deviceType}: ${tokens.length} devices`);
 
-      for (const { token, appType, deviceType } of tokens) {
-        // Log to verify token and appType
-        console.log(
-          "Sending notification to token:",
-          token,
-          "with appType:",
-          appType
-        );
-
-        // Send the notification, passing appType as a separate argument
-        await sendPushNotification(deviceType, appType, token, {
-          ...message,
-          token,
-        });
+      for (const { token, appType } of tokens) {
+        console.log(`Sending to: ${token}, AppType: ${appType}`);
+        await sendPushNotification(deviceType, appType, token, { ...message, token });
       }
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Notification sent to all users successfully",
-    });
+    return res.status(200).json({ success: true, message: "Notification sent successfully" });
   } catch (error) {
-    console.log(error);
+    console.error("Error in sendNotificationToAll:", error);
+    return next(new AppError("Internal Server Error", 500));
   }
 };
+
 
 exports.getAllNotifications = catchAsync(async (req, res, next) => {
   const { page = 1, limit = 10 } = req.query; // Default to page 1 and 10 items per page
