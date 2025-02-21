@@ -3,79 +3,159 @@ const admin = require("firebase-admin");
 const schedule = require('node-schedule');
 const AppError=require('../util/appError')
 
+// function initializeFirebase(deviceType, appType) {
+//     let serviceAccount;
+//     console.log(appType,deviceType,'line 60')
+//     console.log(`Device Type: ${deviceType}, App Type: ${appType}`);
+
+//     switch (appType) {
+//         case 'mainApp':
+//             switch (deviceType) {
+//                 case 'web':
+//                     serviceAccount = require("../config/serviceApp/web.json");
+//                     break;
+//                 case 'android':
+//                     serviceAccount = require("../config/androidApp.json");
+//                     break;
+//                 case 'ios':
+//                     serviceAccount = require("../config/serviceApp/ios.json");
+//                     break;
+//                 default:
+//                     throw new Error("Invalid device type for serviceApp");
+//             }
+//             break;
+
+//         case 'partnerApp':
+//             switch (deviceType) {
+//                 case 'web':
+//                     serviceAccount = require("../config/userApp/web.json");
+//                     break;
+//                 case 'android':
+//                     serviceAccount = require("../config/service_partner.json");
+//                     break;
+//                 case 'ios':
+//                     serviceAccount = require("../config/userApp/ios.json");
+//                     break;
+//                 default:
+//                     throw new Error("Invalid device type for userApp");
+//             }
+//             break;
+
+//         default:
+//             throw new Error("Invalid app type");
+//     }
+
+//     const appName = `firebase-${appType}-${deviceType}`;
+//     if (!admin.apps.find(app => app.name === appName)) {
+//         admin.initializeApp({
+//             credential: admin.credential.cert(serviceAccount)
+//         }, appName);
+//     }
+
+//     return admin.app(appName);
+// }
+// async function sendPushNotification(deviceType,appType, token, message) {
+//     console.log(appType,'line number 87')
+//     console.log(deviceType,'line number 88')
+//     try {
+//         const firebaseApp = initializeFirebase(deviceType,appType);
+
+//         // Set the token for the message
+//         message.token = token;
+
+//         // Send the notification immediately
+//         const response = await firebaseApp.messaging().send(message);
+//         console.log("Notification sent:", response);
+
+//         return response;
+//     } catch (error) {
+//         console.error("Firebase Error:", error);
+//         throw new AppError(
+//             error.message || "Notification failed",
+//             error.code === 'messaging/invalid-argument' ? 400 : 500
+//         );
+//     }
+// }
+
+// 🔥 Initialize Firebase App
 function initializeFirebase(deviceType, appType) {
-    let serviceAccount;
-    console.log(appType,deviceType,'line 60')
-    console.log(`Device Type: ${deviceType}, App Type: ${appType}`);
+  let serviceAccount;
+  console.log(`Initializing Firebase for AppType: ${appType}, DeviceType: "${deviceType}"`);
 
-    switch (appType) {
-        case 'mainApp':
-            switch (deviceType) {
-                case 'web':
-                    serviceAccount = require("../config/serviceApp/web.json");
-                    break;
-                case 'android':
-                    serviceAccount = require("../config/androidApp.json");
-                    break;
-                case 'ios':
-                    serviceAccount = require("../config/serviceApp/ios.json");
-                    break;
-                default:
-                    throw new Error("Invalid device type for serviceApp");
-            }
-            break;
+  switch (appType) {
+    case 'mainApp':
+      serviceAccount = require(`../config/androidApp.json`);
+      break;
+    case 'partnerApp':
+      serviceAccount = require(`../config/service_partner.json`);
+      break;
+    default:
+      throw new Error("Invalid app type");
+  }
 
-        case 'partnerApp':
-            switch (deviceType) {
-                case 'web':
-                    serviceAccount = require("../config/userApp/web.json");
-                    break;
-                case 'android':
-                    serviceAccount = require("../config/service_partner.json");
-                    break;
-                case 'ios':
-                    serviceAccount = require("../config/userApp/ios.json");
-                    break;
-                default:
-                    throw new Error("Invalid device type for userApp");
-            }
-            break;
+  const appName = `firebase-${appType}-${deviceType}`;
+  if (!admin.apps.some(app => app.name === appName)) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    }, appName);
+  }
 
-        default:
-            throw new Error("Invalid app type");
-    }
-
-    const appName = `firebase-${appType}-${deviceType}`;
-    if (!admin.apps.find(app => app.name === appName)) {
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount)
-        }, appName);
-    }
-
-    return admin.app(appName);
+  return admin.app(appName);
 }
-async function sendPushNotification(deviceType,appType='android', token, message) {
-    console.log(appType,'line number 87')
-    console.log(deviceType,'line number 88')
+
+// 🔥 Send Push Notification
+async function sendPushNotification(deviceType, appType, token, message) {
+    console.log(`Sending notification to Token: ${token}, AppType: ${appType}, DeviceType: ${deviceType}`);
+  
     try {
-        const firebaseApp = initializeFirebase(deviceType,appType);
-
-        // Set the token for the message
-        message.token = token;
-
-        // Send the notification immediately
-        const response = await firebaseApp.messaging().send(message);
-        console.log("Notification sent:", response);
-
-        return response;
+      // Ensure Firebase is initialized correctly
+      const firebaseApp = initializeFirebase(deviceType, appType);
+      if (!firebaseApp) {
+        throw new Error("Firebase app initialization failed.");
+      }
+  
+      // Ensure message structure is correct
+      const notificationPayload = {
+        token: token,
+        notification: {
+          title: message.notification?.title || "No Title",
+          body: message.notification?.body || "No Body",
+        },
+        android: {
+          priority: "high",
+          notification: {
+            sound: "default",
+            channel_id: "high_importance_channel", // Ensure this exists in frontend
+          },
+        },
+        apns: {
+          payload: {
+            aps: {
+              sound: "default",
+            },
+          },
+        },
+        data: message.data || {}, // Include any extra data
+      };
+  
+      console.log("Final FCM Message Payload:", JSON.stringify(notificationPayload, null, 2));
+  
+      // Send notification
+      const response = await firebaseApp.messaging().send(notificationPayload);
+      console.log("FCM Response:", response);
+      return response;
     } catch (error) {
-        console.error("Firebase Error:", error);
-        throw new AppError(
-            error.message || "Notification failed",
-            error.code === 'messaging/invalid-argument' ? 400 : 500
-        );
+      console.error("Firebase Notification Error:", error);
+  
+      // Return detailed error response for debugging
+      throw new AppError(
+        error.message || "Notification failed",
+        error.code === "messaging/invalid-argument" ? 400 : 500
+      );
     }
-}
+  }
+  
+
 
 async function sendNotificationToAllUsers(deviceType, message) {
     console.log(deviceType,'line number 109')

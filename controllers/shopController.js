@@ -21,64 +21,6 @@ const updateServiceRating = require("../util/upateServiceReview");
 const user = require("../models/user");
 /////////////////////////
 
-// const updateServiceRating = async (serviceId, serviceType) => {
-//   try {
-//     const Model = serviceType === "product" ? Product : Package;
-
-//     const stats = await Review.aggregate([
-//       {
-//         $match: {
-//           [serviceType === "product" ? "productId" : "packageId"]:
-//             new mongoose.Types.ObjectId(serviceId),
-//           reviewType: "ON-BOOKING",
-//           status: "APPROVED",
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: null,
-//           averageRating: { $avg: "$rating" },
-//           totalReviews: { $sum: 1 },
-//           ratingCounts: { $push: "$rating" },
-//         },
-//       },
-//     ]);
-
-//     const ratingData =
-//       stats.length > 0
-//         ? {
-//             rating: parseFloat(stats[0].averageRating.toFixed(1)),
-//             totalReviews: stats[0].totalReviews,
-//             ratingDistribution: {
-//               5: stats[0].ratingCounts.filter((r) => r === 5).length,
-//               4: stats[0].ratingCounts.filter((r) => r === 4).length,
-//               3: stats[0].ratingCounts.filter((r) => r === 3).length,
-//               2: stats[0].ratingCounts.filter((r) => r === 2).length,
-//               1: stats[0].ratingCounts.filter((r) => r === 1).length,
-//             },
-//           }
-//         : {
-//             rating: 0,
-//             totalReviews: 0,
-//             ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
-//           };
-
-//     await Model.findByIdAndUpdate(serviceId, {
-//       $set: {
-//         rating: ratingData.rating,
-//         totalReviews: ratingData.totalReviews,
-//         ratingDistribution: ratingData.ratingDistribution,
-//       },
-//     });
-
-//     return ratingData;
-//   } catch (error) {
-//     console.error("Error updating service rating:", error);
-//     throw error;
-//   }
-// };
-
-/////////////////////////
 exports.getAllCategory = catchAsync(async (req, res, next) => {
   const result = await Category.find();
   res.status(200).json({
@@ -634,27 +576,6 @@ const calculateRatingStats = async (itemId, itemType) => {
   };
 };
 
-// // Function to update item (product/package) rating
-// const updateItemRating = async (itemId, itemType) => {
-//   try {
-//     const stats = await calculateRatingStats(itemId, itemType);
-//     const Model = itemType === "product" ? Product : Package;
-
-//     await Model.findByIdAndUpdate(itemId, {
-//       $set: {
-//         rating: stats.rating,
-//         totalReviews: stats.totalReviews,
-//         ratingDistribution: stats.ratingDistribution,
-//       },
-//     });
-
-//     return stats;
-//   } catch (error) {
-//     console.error(`Error updating ${itemType} rating:`, error);
-//     throw error;
-//   }
-// };
-
 // Utility function to update item rating
 const updateItemRating = async (itemId, itemType) => {
   try {
@@ -854,36 +775,31 @@ exports.deleteProductReview = catchAsync(async (req, res, next) => {
   const itemType = review.productId ? "product" : "package";
   const rating = review.rating;
 
-  try {
-    // Delete the review
-    await Review.findByIdAndDelete(reviewId);
+  // Delete the review
+  await Review.findByIdAndDelete(reviewId);
 
-    // Update totalReviews and rating distribution
-    const updateQuery = {
-      $inc: {
-        totalReviews: -1,
-        [`ratingDistribution.${rating}`]: -1,
-      },
-    };
+  // Update totalReviews and rating distribution
+  const updateQuery = {
+    $inc: {
+      totalReviews: -1,
+      [`ratingDistribution.${rating}`]: -1,
+    },
+  };
 
-    // Update product or package
-    if (itemType === "product") {
-      await Product.findByIdAndUpdate(itemId, updateQuery, { new: true });
-    } else {
-      await Package.findByIdAndUpdate(itemId, updateQuery, { new: true });
-    }
-
-    // Update average rating
-    await updateItemRating(itemId, itemType);
-
-    res.status(200).json({
-      success: true,
-      message: "Review deleted successfully",
-    });
-  } catch (error) {
-    console.error("Error deleting review:", error);
-    return next(new AppError("Error deleting review", 500));
+  // Update product or package
+  if (itemType === "product") {
+    await Product.findByIdAndUpdate(itemId, updateQuery, { new: true });
+  } else {
+    await Package.findByIdAndUpdate(itemId, updateQuery, { new: true });
   }
+
+  // Update average rating
+  await updateItemRating(itemId, itemType);
+
+  res.status(200).json({
+    success: true,
+    message: "Review deleted successfully",
+  });
 });
 
 exports.updateProductReview = catchAsync(async (req, res, next) => {
@@ -975,6 +891,13 @@ exports.createHelpCenter = catchAsync(async (req, res, next) => {
       description: description,
       issue: issue,
       others: others,
+      ticketHistory: [
+        {
+          date: Date.now(),
+          status: "raised",
+          resolution: "",
+        },
+      ],
     });
     res
       .status(201)
@@ -1064,17 +987,17 @@ exports.getReferralCredits = catchAsync(async (req, res, next) => {
   const userId = req.user._id;
 
   const userRefDoc = await UserReferalLink.findOne({ userId });
-
-  let credits = userRefDoc.referralCredits || 0;
+  let credits = 0;
   let creditsAvailable = false;
-
-  if (credits > 0) creditsAvailable = true;
-
+  if (userRefDoc) {
+    credits = userRefDoc.referralCredits || 0;
+    if (credits > 0) creditsAvailable = true;
+  }
   res.status(200).json({
     success: true,
     credits,
     creditsAvailable,
-    noOfUsersAppliedCoupon: userRefDoc.noOfUsersAppliedCoupon,
+    noOfUsersAppliedCoupon: userRefDoc ? userRefDoc.noOfUsersAppliedCoupon : 0,
   });
 });
 
@@ -1138,49 +1061,117 @@ exports.addBookingReview = catchAsync(async (req, res, next) => {
     message: "Review added successfully",
   });
 });
-exports.raiseTicket = async (req, res, next) => {
-  try {
-    const {
-      serviceId,
-      date,
-      issue,
-      description,
-      userId,
-      sellerId,
-      raisedBy,
-      bookingId,
-      serviceType,
-      ticketType,
-    } = req.body;
-    const ticketId = await generateTicketId();
-    var ticket = await HelpCenter({
-      ticketId: ticketId,
-      issue: issue,
-      description: description,
-      userId: userId,
-      sellerId: sellerId ? sellerId : null,
-      raisedBy: raisedBy,
-      ticketType,
-      serviceType: serviceType ? serviceType : null,
-      serviceId: serviceId ? serviceId : null,
-      bookingId: bookingId ? bookingId : null,
-      date,
-      ticketHistory: [
-        {
-          date: date,
-          status: "raised",
-          resolution: "",
-        },
-      ],
-    });
+exports.raiseTicket = catchAsync(async (req, res, next) => {
+  const {
+    serviceId,
+    date,
+    issue,
+    description,
+    userId,
+    sellerId,
+    raisedBy,
+    bookingId,
+    serviceType,
+    ticketType,
+  } = req.body;
+  const ticketId = await generateTicketId();
+  var ticket = await HelpCenter({
+    ticketId: ticketId,
+    issue: issue,
+    description: description,
+    userId: userId,
+    sellerId: sellerId ? sellerId : null,
+    raisedBy: raisedBy,
+    ticketType,
+    serviceType: serviceType ? serviceType : null,
+    serviceId: serviceId ? serviceId : null,
+    bookingId: bookingId ? bookingId : null,
+    date,
+    ticketHistory: [
+      {
+        date: date,
+        status: "raised",
+        resolution: "",
+      },
+    ],
+  });
 
-    ticket.save();
-    console.log(ticket);
+  ticket.save();
+  console.log(ticket);
 
-    return res.status(200).json({ ticket });
-  } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(err);
+  return res.status(200).json({ ticket });
+});
+
+exports.cancelOrder = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+  // const { userId } = req.query;
+  console.log(userId);
+  const id = req.params.id; // order id
+  const status = req.body.status;
+  const result = await Order.findOne({ _id: id, "user.userId": userId });
+  if (!result) {
+    return res.status(404).json({ message: "Order not found" });
   }
-};
+  if (result.status == "Completed") {
+    return res.status(400).json({ message: "Order is already completed" });
+  } else {
+    result.status = status;
+    await result.save();
+  }
+  res
+    .status(200)
+    .json({ success: true, message: "Order status changed successfull" });
+});
+
+exports.getAllUserOrders = catchAsync(async (req, res, next) => {
+  const id = req.query.userId;
+  const page = parseInt(req.query.page) || 1; // Default to page 1
+  const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page
+  const skip = (page - 1) * limit;
+
+  const result = await Order.find({ "user.userId": id })
+    .sort({ createdAt: -1 }) // Sort by latest orders first
+    .skip(skip)
+    .limit(limit)
+    .populate({
+      path: "items",
+      populate: {
+        path: "package",
+        populate: {
+          path: "products",
+          populate: [
+            { path: "productId", model: "Product" },
+            { path: "serviceId", model: "Service" },
+          ],
+        },
+        populate: { path: "serviceId", model: "Service" },
+      },
+    })
+    .populate({
+      path: "items.product",
+      populate: [
+        { path: "productId", model: "Product" },
+        { path: "serviceId", model: "Service" },
+      ],
+    })
+    .populate({
+      path: "items.bookingId",
+      populate: { path: "sellerId", model: "Seller" },
+    })
+    .populate({ path: "couponId", model: "Coupon" })
+    .populate({ path: "bookingId", model: "Booking" });
+
+  const totalOrders = await Order.countDocuments({ "user.userId": id });
+  const totalPages = Math.ceil(totalOrders / limit);
+
+  res.status(200).json({
+    success: true,
+    message: "Your all orders",
+    data: result,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalOrders,
+    },
+  });
+});

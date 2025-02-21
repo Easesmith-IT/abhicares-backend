@@ -125,7 +125,8 @@ router.post(
 router.get(
   "/get-user-orders",
   websiteAuth.protect,
-  paymentController.getAllUserOrders
+  // paymentController.getAllUserOrders
+  shoppingController.getAllUserOrders
 );
 router.post(
   "/raise-ticket",
@@ -140,7 +141,8 @@ router.get(
 router.post(
   "/change-order-status/:id",
   websiteAuth.protect,
-  paymentController.updateOrderStatus
+  shoppingController.cancelOrder
+  // paymentController.updateOrderStatus
 ); // passing order id
 router.post(
   "/create-online-order",
