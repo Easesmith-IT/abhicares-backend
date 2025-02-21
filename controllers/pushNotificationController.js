@@ -115,28 +115,57 @@ async function sendPushNotification(deviceType, appType, token, message) {
       }
   
       // Ensure message structure is correct
-      const notificationPayload = {
+    //   const notificationPayload = {
+    //     token: token,
+    //     notification: {
+    //       title: message.notification?.title || "No Title",
+    //       body: message.notification?.body || "No Body",
+    //     },
+    //     android: {
+    //       priority: "high",
+    //       notification: {
+    //         sound: "default",
+    //         channel_id: "high_importance_channel", // Ensure this exists in frontend
+    //       },
+    //     },
+    //     apns: {
+    //       payload: {
+    //         aps: {
+    //           sound: "default",
+    //         },
+    //       },
+    //     },
+    //     data: message.data || {}, // Include any extra data
+    //   };
+    const notificationPayload = {
         token: token,
         notification: {
           title: message.notification?.title || "No Title",
           body: message.notification?.body || "No Body",
+          ...(message.notification?.image && { image: message.notification.image }), // ✅ Add image if available
         },
         android: {
           priority: "high",
           notification: {
             sound: "default",
             channel_id: "high_importance_channel", // Ensure this exists in frontend
+            ...(message.notification?.image && { image: message.notification.image }), // ✅ Add image for Android
           },
         },
         apns: {
           payload: {
             aps: {
               sound: "default",
+              ...(message.notification?.image && { "mutable-content": 1 }), // ✅ Required for iOS images
             },
+          },
+          fcm_options: {
+            ...(message.notification?.image && { image: message.notification.image }), // ✅ Add image for iOS
           },
         },
         data: message.data || {}, // Include any extra data
       };
+      
   
       console.log("Final FCM Message Payload:", JSON.stringify(notificationPayload, null, 2));
   
