@@ -37,6 +37,10 @@ const offerCouponSchema=new mongoose.Schema({
         type:String,
        default:"active"
      },
+   expiryDate: {
+      type: Date,
+      required:true
+     },
      noOfTimesPerUser:{
       type:Number,
       default:1

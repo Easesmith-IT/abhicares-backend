@@ -3260,10 +3260,17 @@ exports.createCoupon = catchAsync(async (req, res, next) => {
     description,
     noOfTimesPerUser,
     couponFixedValue,
+    expiryDate,
   } = req.body;
 
   // Validate required fields
-  if (!name || !description || !categoryType || categoryType.length === 0) {
+  if (
+    !name ||
+    !description ||
+    !categoryType ||
+    categoryType.length === 0 ||
+    !expiryDate
+  ) {
     return next(
       new AppError(
         400,
@@ -3288,6 +3295,7 @@ exports.createCoupon = catchAsync(async (req, res, next) => {
     description,
     noOfTimesPerUser,
     couponFixedValue: couponFixedValue ? couponFixedValue : "",
+    expiryDate: expiryDate,
   });
 
   res.status(201).json({
@@ -4472,6 +4480,31 @@ exports.getSellersFulfillingBookings = catchAsync(async (req, res, next) => {
       count: totalSellers,
       currentPage: parseInt(page),
       totalPages: Math.ceil(totalSellers / limit),
+    },
+  });
+});
+
+exports.getcustomerBookings = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = 10 } = req.query;
+  const { userId } = req.params;
+  const query = { userId: userId };
+  const bookings = await Booking.find(query)
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit));
+
+  const result = await Seller.find(query)
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit));
+
+  const totalBookings = await Booking.countDocuments(query);
+
+  res.status(200).json({
+    success: true,
+    fulfillingSellers: result,
+    pagination: {
+      count: totalBookings,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalBookings / limit),
     },
   });
 });

@@ -717,5 +717,10 @@ router.get(
   authorize("partners", "read"),
   adminController.getSellersFulfillingBookings
 );
+router.get(
+  "/get-customer-bookings",
+  websiteAuth.protect,
+  adminController.getcustomerBookings
+);
 
 module.exports = router;
