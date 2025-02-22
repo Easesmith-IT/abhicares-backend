@@ -17,7 +17,7 @@ const ReferAndEarn = require("../models/referAndEarn");
 const UserReferalLink = require("../models/userReferealLink");
 const { tokenSchema } = require("../models/fcmToken");
 const BookingModel = require("../models/booking");
-const { generateRefreshToken, generateAccessToken } = require("./websiteAuth");
+const { generateRefreshToken, generateAccessToken, setTokenCookies } = require("./websiteAuth");
 const authKey = "T1PhA56LPJysMHFZ62B5";
 const authToken = "8S2pMXV8IRpZP6P37p4SWrVErk2N6CzSEa458pt1";
 const credentials = `${authKey}:${authToken}`;
@@ -307,7 +307,6 @@ exports.appCreateUser = catchAsync(async (req, res, next) => {
 
   const { enteredOTP, phone, tempVerf, fcmToken, deviceType, appType } = req.body;
   console.log(req.body);
-
   if (!tempVerf) {
     return res.status(400).json({
       success: false,
@@ -448,6 +447,7 @@ exports.createUser = catchAsync(async (req, res, next) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "2d",
     });
+    const role='user'
     const refreshToken = generateRefreshToken(
       user._id,
       role,
