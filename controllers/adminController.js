@@ -4492,15 +4492,11 @@ exports.getcustomerBookings = catchAsync(async (req, res, next) => {
     .skip((page - 1) * limit)
     .limit(parseInt(limit));
 
-  const result = await Seller.find(query)
-    .skip((page - 1) * limit)
-    .limit(parseInt(limit));
-
   const totalBookings = await Booking.countDocuments(query);
 
   res.status(200).json({
     success: true,
-    fulfillingSellers: result,
+    data: bookings,
     pagination: {
       count: totalBookings,
       currentPage: parseInt(page),
