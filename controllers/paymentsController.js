@@ -20,6 +20,8 @@ const AppError = require("../util/appError");
 const { tokenSchema } = require("../models/fcmToken");
 const { createSendPushNotification } = require("./pushNotificationController");
 const CatchAsync = require("../util/catchAsync");
+const offerCoupon = require("../models/offerCoupon");
+
 const {
   generateOrderId,
   generateBookingId,
@@ -30,7 +32,7 @@ const instance = new Razorpay({
   key_secret: process.env.RAZORPAY_API_SECRET,
 });
 
-const calculateCartCharges = async (items) => {
+const calculateCartCharges = async (items, couponCode, referalDiscount) => {
   console.log(items, "items line 33");
   try {
     if (!items || !Array.isArray(items)) {
@@ -46,8 +48,23 @@ const calculateCartCharges = async (items) => {
       totalTaxOnCommission: 0,
       totalConvenience: 0,
       totalPayable: 0,
+      totalDiscount: 0,
       items: [],
     };
+    let coupon = null;
+    let applicableCategories = new Set();
+
+    // If couponId is provided, fetch the coupon details
+    if (couponCode) {
+      coupon = await offerCoupon.findOne({ name: couponCode });
+      if (!coupon) {
+        return { res: false, message: "Invalid coupon ID" };
+      }
+      applicableCategories = new Set(
+        coupon.categoryType.map((c) => c.toString())
+      ); // Store category IDs as strings
+      console.log(applicableCategories);
+    }
 
     // Calculate charges for each item in cart
     for (const item of items) {
@@ -91,6 +108,22 @@ const calculateCartCharges = async (items) => {
       const taxOnCommission = commissionAmount * 0.18;
       const convenienceCharge = category.convenience;
 
+      let discountAmount = 0;
+
+      // Apply coupon discount if the category matches
+      if (coupon && applicableCategories.has(category._id.toString())) {
+        if (coupon.discountType === "fixed") {
+          discountAmount = coupon.couponFixedValue;
+        } else if (coupon.discountType === "percentage") {
+          discountAmount = Math.min(
+            (itemTotal * coupon.offPercentage) / 100,
+            coupon.maxDiscount || Infinity
+          );
+        }
+      }
+
+      // Ensure discount does not exceed item total
+      discountAmount = Math.min(discountAmount, itemTotal);
       // Add item details to response
       response.items.push({
         itemId: itemDetails._id,
@@ -101,6 +134,7 @@ const calculateCartCharges = async (items) => {
         charges: {
           itemAmount: itemTotal,
           itemTotaltax: Math.round(taxOnCommission + convenienceCharge),
+          discount: Math.round(discountAmount),
           totalForItem: Math.round(
             itemTotal + taxOnCommission + convenienceCharge
           ),
@@ -109,9 +143,9 @@ const calculateCartCharges = async (items) => {
 
       // Update totals
       response.totalAmount += itemTotal;
-      // response.totalTax += taxOnCommission + convenienceCharge;
       response.totalTaxOnCommission += Math.round(taxOnCommission);
       response.totalConvenience += Math.round(convenienceCharge);
+      response.totalDiscount += Math.round(discountAmount);
     }
 
     // Calculate final total
@@ -734,7 +768,6 @@ exports.checkout = catchAsync(async (req, res, next) => {
 
   // Create Razorpay order
   const options = {
-
     amount: totalPayable * 100, // amount in the smallest currency unit
     currency: "INR",
   };

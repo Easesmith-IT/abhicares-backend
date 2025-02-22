@@ -270,7 +270,7 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
         const foundUserToken = await tokenSchema.findOne({
           userId: resultData._id,
         });
-        
+
         if (foundUserToken) {
           foundUserToken.token = fcmToken;
           await foundUserToken.save();
@@ -281,7 +281,7 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
             deviceType: deviceType,
             appType: appType,
           });
-          console.log(newToken,'new token')
+          console.log(newToken, "new token");
           if (!newToken) {
             return res.status(400).json({
               message: "Something went wrong while saving the FCM token",
@@ -304,8 +304,8 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
 });
 
 exports.appCreateUser = catchAsync(async (req, res, next) => {
-
-  const { enteredOTP, phone, tempVerf, fcmToken, deviceType, appType } = req.body;
+  const { enteredOTP, phone, tempVerf, fcmToken, deviceType, appType } =
+    req.body;
   console.log(req.body);
 
   if (!tempVerf) {
@@ -316,7 +316,9 @@ exports.appCreateUser = catchAsync(async (req, res, next) => {
   }
 
   if (!enteredOTP || !phone) {
-    return res.status(400).json({ success: false, message: "All the fields are required" });
+    return res
+      .status(400)
+      .json({ success: false, message: "All the fields are required" });
   }
 
   const decoded = jwt.verify(tempVerf, process.env.JWT_SECRET);
@@ -325,7 +327,7 @@ exports.appCreateUser = catchAsync(async (req, res, next) => {
   if (decoded.otp == enteredOTP && decoded.phone == phone) {
     const referralCode = nanoid(8);
     const psw = "password";
-    
+
     const user = new User({
       name: decoded.name,
       phone: phone,
@@ -341,6 +343,9 @@ exports.appCreateUser = catchAsync(async (req, res, next) => {
 
     user.cartId = userCart._id;
     await user.save();
+
+    const userRefDoc = new UserReferalLink({ userId: user._id });
+    await userRefDoc.save();
 
     const referralUser = await User.findOne({
       referralCode: decoded.referralCode,
@@ -376,7 +381,9 @@ exports.appCreateUser = catchAsync(async (req, res, next) => {
 
     // Handle Referral
     if (referralUser) {
-      const userRefDoc = await UserReferalLink.findOne({ userId: referralUser._id });
+      const userRefDoc = await UserReferalLink.findOne({
+        userId: referralUser._id,
+      });
 
       if (userRefDoc) {
         const referralAmt = await ReferAndEarn.findOne();
@@ -395,7 +402,6 @@ exports.appCreateUser = catchAsync(async (req, res, next) => {
     return res.status(400).json({ message: "OTP is Invalid" });
   }
 });
-
 
 exports.createUser = catchAsync(async (req, res, next) => {
   const { enteredOTP, phone } = req.body;
