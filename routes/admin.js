@@ -699,7 +699,7 @@ router.post(
   adminController.addSellerCashout
 );
 router.post(
-  "/delete-seller",
+  "/delete-seller/:id",
   websiteAuth.protect,
   authorize("partners", "write"),
   adminController.deleteInReviewSeller
