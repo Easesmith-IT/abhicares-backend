@@ -704,5 +704,18 @@ router.post(
   authorize("partners", "write"),
   adminController.deleteInReviewSeller
 );
+router.get(
+  "/get-online-seller",
+  websiteAuth.protect,
+  authorize("partners", "read"),
+  adminController.getOnlineSellers
+);
+
+router.get(
+  "/get-current-fullfiling-seller",
+  websiteAuth.protect,
+  authorize("partners", "read"),
+  adminController.getSellersFulfillingBookings
+);
 
 module.exports = router;

@@ -2918,9 +2918,45 @@ exports.getSellerDetails = catchAsync(async (req, res, next) => {
     data: foundSeller,
   });
 });
+// exports.getSellerOrder = catchAsync(async (req, res, next) => {
+//   const id = req.params.id; // seller id
+//   const result = await Booking.find({ sellerId: id })
+//     .populate({
+//       path: "package",
+//       populate: {
+//         path: "products",
+//         populate: {
+//           path: "productId",
+//           model: "Product",
+//         },
+//       },
+//     })
+//     .populate({
+//       path: "userId",
+//       model: "User",
+//     });
+
+//   res.status(200).json({
+//     success: true,
+//     sellerOrders: result,
+//   });
+// });
+
 exports.getSellerOrder = catchAsync(async (req, res, next) => {
-  const id = req.params.id; // seller id
-  const result = await Booking.find({ sellerId: id })
+  const id = req.params.id; // seller ID
+  const { page = 1, limit = 10, startDate, endDate } = req.query;
+
+  const query = { sellerId: id };
+
+  // Apply date filter on bookingDate if provided
+  if (startDate && endDate) {
+    query.bookingDate = {
+      $gte: new Date(startDate),
+      $lte: new Date(endDate),
+    };
+  }
+
+  const result = await Booking.find(query)
     .populate({
       path: "package",
       populate: {
@@ -2934,11 +2970,21 @@ exports.getSellerOrder = catchAsync(async (req, res, next) => {
     .populate({
       path: "userId",
       model: "User",
-    });
+    })
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit))
+    .sort({ bookingDate: -1 });
+
+  const totalOrders = await Booking.countDocuments(query);
 
   res.status(200).json({
     success: true,
     sellerOrders: result,
+    pagination: {
+      totalOrders,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalOrders / limit),
+    },
   });
 });
 
@@ -4356,5 +4402,53 @@ exports.deleteInReviewSeller = catchAsync(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "In-review seller deleted successfully",
+  });
+});
+
+exports.getOnlineSellers = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = 10 } = req.query;
+
+  const query = { online: true };
+
+  const result = await Seller.find(query)
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit));
+
+  const totalSellers = await Seller.countDocuments(query);
+
+  res.status(200).json({
+    success: true,
+    onlineSellers: result,
+    pagination: {
+      totalSellers,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalSellers / limit),
+    },
+  });
+});
+
+exports.getSellersFulfillingBookings = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = 10 } = req.query;
+
+  const sellersWithBookings = await Booking.distinct("sellerId", {
+    status: { $in: ["started", "completeReq", "out-of-delivery", "reached"] },
+  });
+
+  const query = { _id: { $in: sellersWithBookings } };
+
+  const result = await Seller.find(query)
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit));
+
+  const totalSellers = await Seller.countDocuments(query);
+
+  res.status(200).json({
+    success: true,
+    fulfillingSellers: result,
+    pagination: {
+      totalSellers,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalSellers / limit),
+    },
   });
 });

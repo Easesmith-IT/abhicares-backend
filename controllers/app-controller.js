@@ -1525,7 +1525,7 @@ exports.getReferralCredits = catchAsync(async (req, res, next) => {
     success: true,
     credits,
     creditsAvailable,
-    noOfUsersAppliedCoupon: userRefDoc.noOfUsersAppliedCoupon,
+    noOfUsersAppliedCoupon: userRefDoc.noOfUsersAppliedCoupon || 0,
   });
 });
 
