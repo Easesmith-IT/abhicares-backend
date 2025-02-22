@@ -3895,27 +3895,27 @@ exports.sendNotificationToAll = async (req, res, next) => {
     // Handle image upload if provided
     let imageUrl = null;
     if (req.files && req.files[0]) {
-        const file = req.files[0];
-        const ext = file.originalname.split(".").pop(); // Get file extension
-        try {
-            const ret = await uploadFileToGCS(file.buffer, ext); // Upload file to GCS
-            imageUrl = ret.startsWith("gs://") 
-                ? ret.replace("gs://", "https://storage.googleapis.com/") 
-                : ret; // Convert gs:// URL to a public URL
-        } catch (error) {
-            console.error("GCS Upload Error:", error);
-            return next(new AppError("Error while uploading the file to GCS", 500));
-        }
+      const file = req.files[0];
+      const ext = file.originalname.split(".").pop(); // Get file extension
+      try {
+        const ret = await uploadFileToGCS(file.buffer, ext); // Upload file to GCS
+        imageUrl = ret.startsWith("gs://")
+          ? ret.replace("gs://", "https://storage.googleapis.com/")
+          : ret; // Convert gs:// URL to a public URL
+      } catch (error) {
+        console.error("GCS Upload Error:", error);
+        return next(new AppError("Error while uploading the file to GCS", 500));
+      }
     }
-  // Prepare the notification message
-  const message = {
+    // Prepare the notification message
+    const message = {
       notification: {
-          title,
-          body: description,
-          ...(imageUrl && { image: imageUrl }), // Add image if available
+        title,
+        body: description,
+        ...(imageUrl && { image: imageUrl }), // Add image if available
       },
       // FCM token of the recipient device
-  };
+    };
     // Prepare the notification payload
     // const message = {
     //   notification: {
@@ -4443,7 +4443,7 @@ exports.getOnlineSellers = catchAsync(async (req, res, next) => {
     success: true,
     onlineSellers: result,
     pagination: {
-      totalSellers,
+      count: totalSellers,
       currentPage: parseInt(page),
       totalPages: Math.ceil(totalSellers / limit),
     },
@@ -4469,7 +4469,7 @@ exports.getSellersFulfillingBookings = catchAsync(async (req, res, next) => {
     success: true,
     fulfillingSellers: result,
     pagination: {
-      totalSellers,
+      count: totalSellers,
       currentPage: parseInt(page),
       totalPages: Math.ceil(totalSellers / limit),
     },
