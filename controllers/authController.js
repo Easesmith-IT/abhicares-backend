@@ -17,6 +17,7 @@ const ReferAndEarn = require("../models/referAndEarn");
 const UserReferalLink = require("../models/userReferealLink");
 const { tokenSchema } = require("../models/fcmToken");
 const BookingModel = require("../models/booking");
+const { generateRefreshToken, generateAccessToken } = require("./websiteAuth");
 const authKey = "T1PhA56LPJysMHFZ62B5";
 const authToken = "8S2pMXV8IRpZP6P37p4SWrVErk2N6CzSEa458pt1";
 const credentials = `${authKey}:${authToken}`;
@@ -453,6 +454,16 @@ exports.createUser = catchAsync(async (req, res, next) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "2d",
     });
+    const refreshToken = generateRefreshToken(
+      user._id,
+      role,
+      user.tokenVersion
+    );
+    const accessToken = generateAccessToken(
+      user._id,
+      role,
+      user.tokenVersion
+    );
     if (req.cookies["guestCart"]) {
       const guestCart = JSON.parse(req.cookies["guestCart"]);
       const carItems = guestCart.items;
@@ -480,6 +491,7 @@ exports.createUser = catchAsync(async (req, res, next) => {
       userCart.totalPrice += guestCart.totalPrice;
       await userCart.save();
     }
+    setTokenCookies(res, accessToken, refreshToken, user, role);
     res.clearCookie("guestCart");
     res.clearCookie("tempVerf");
     res.cookie("token", token, { secure: true, httpOnly: true });

@@ -3892,14 +3892,37 @@ exports.sendNotificationToAll = async (req, res, next) => {
     if (!tokensByDeviceType || tokensByDeviceType.length === 0) {
       return res.status(200).json({ message: "No users found", status: false });
     }
-
-    // Prepare the notification payload
-    const message = {
+    // Handle image upload if provided
+    let imageUrl = null;
+    if (req.files && req.files[0]) {
+        const file = req.files[0];
+        const ext = file.originalname.split(".").pop(); // Get file extension
+        try {
+            const ret = await uploadFileToGCS(file.buffer, ext); // Upload file to GCS
+            imageUrl = ret.startsWith("gs://") 
+                ? ret.replace("gs://", "https://storage.googleapis.com/") 
+                : ret; // Convert gs:// URL to a public URL
+        } catch (error) {
+            console.error("GCS Upload Error:", error);
+            return next(new AppError("Error while uploading the file to GCS", 500));
+        }
+    }
+  // Prepare the notification message
+  const message = {
       notification: {
-        title,
-        body: description,
+          title,
+          body: description,
+          ...(imageUrl && { image: imageUrl }), // Add image if available
       },
-    };
+      // FCM token of the recipient device
+  };
+    // Prepare the notification payload
+    // const message = {
+    //   notification: {
+    //     title,
+    //     body: description,
+    //   },
+    // };
 
     // 📌 **Handle Scheduled Notifications**
     if (date && time) {
