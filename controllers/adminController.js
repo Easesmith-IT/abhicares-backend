@@ -2026,7 +2026,6 @@ exports.getRecentOrders = catchAsync(async (req, res, next) => {
 exports.getOrderById = catchAsync(async (req, res, next) => {
   const orderId = req.query.orderId;
   const order = await Order.findOne({ orderId: orderId });
-
   if (!order) {
     res.status(404).json({
       message: "No order found!",
@@ -2646,12 +2645,14 @@ exports.getsingleOrder = catchAsync(async (req, res, next) => {
   const foundOrder = await Order.findOne({
     _id: orderId,
   });
-  if (!orderId) {
+  if (!foundOrder) {
     return next(new AppError("no orders found", 400));
   }
+  const bookings = await Booking.find({ orderId: orderId });
   return res.status(200).json({
     message: "here's your order details",
     data: foundOrder,
+    bookings: bookings,
     status: true,
   });
 });
