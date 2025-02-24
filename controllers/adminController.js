@@ -4522,7 +4522,7 @@ exports.getMolthlyBooking = catchAsync(async (req, res, next) => {
       $gte: startDate,
       $lte: endDate,
     },
-  });
+  }).populate("userId");
 
   // Populate conditionally
   // if (populateFields) {

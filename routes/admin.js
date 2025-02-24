@@ -718,7 +718,7 @@ router.get(
   adminController.getSellersFulfillingBookings
 );
 router.get(
-  "/get-customer-bookings",
+  "/get-customer-bookings/:userId",
   websiteAuth.protect,
   adminController.getcustomerBookings
 );
