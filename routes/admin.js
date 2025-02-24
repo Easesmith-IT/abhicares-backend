@@ -723,4 +723,11 @@ router.get(
   adminController.getcustomerBookings
 );
 
+router.post(
+  "/get-monthly-bookings",
+  // websiteAuth.protect,
+  // authorize("orders", "read"),
+  adminController.getMolthlyBooking
+);
+
 module.exports = router;

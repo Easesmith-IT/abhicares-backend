@@ -4504,3 +4504,50 @@ exports.getcustomerBookings = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+exports.getMolthlyBooking = catchAsync(async (req, res, next) => {
+  const { month, year, populateFields } = req.body;
+
+  if (!month || !year) {
+    return next(new AppError(400, "Month and year are required"));
+  }
+
+  const startDate = new Date(year, month - 1, 1); // Month is zero-based
+  const endDate = new Date(year, month, 0, 23, 59, 59);
+
+  // Find the bookings first
+  const bookings = await Booking.find({
+    createdAt: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+  });
+
+  // Populate conditionally
+  // if (populateFields) {
+  // if (populateFields.includes("items")) {
+  //   await Booking.populate(orders, {
+  //     path: "items",
+  //     populate: {
+  //       path: "package",
+  //       populate: {
+  //         path: "products",
+  //         populate: {
+  //           path: "productId",
+  //           model: "Product",
+  //         },
+  //       },
+  //     },
+  //   });
+  // }
+
+  //   if (populateFields.includes("couponId")) {
+  //     await Booking.populate(bookings, { path: "couponId" });
+  //   }
+  // }
+
+  // Send the response
+  res
+    .status(200)
+    .json({ success: true, message: "bookings list", data: bookings });
+});
