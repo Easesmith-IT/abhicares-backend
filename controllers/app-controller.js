@@ -698,7 +698,14 @@ exports.getOrderBooking = async (req, res, next) => {
     const orderId = req.params.id;
     var bookings = await BookingModel.find({
       orderId: orderId,
-    });
+    }).select([
+      "status",
+      "itemTotalValue",
+      "_id",
+      "product",
+      "package",
+      "bookingId",
+    ]);
     console.log(bookings);
     return res.status(200).json({ bookings });
   } catch (err) {
