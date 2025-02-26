@@ -99,7 +99,7 @@ exports.updateUserProfile = async (req, res, next) => {
     const userId = req.params.userId;
     const { name, phone, email, dateOfBirth, Gender } = req.body;
     const errors = [];
-
+    console.log(req.body);
     // Find user first
     const user = await User.findById(userId);
     if (!user) {
@@ -114,7 +114,7 @@ exports.updateUserProfile = async (req, res, next) => {
     const updates = {};
 
     // Name validation
-    if (name !== undefined) {
+    if (name !== undefined && name !== null) {
       if (typeof name !== "string" || name.trim().length < 2) {
         errors.push("Name must be at least 2 characters long");
       } else {
@@ -123,7 +123,7 @@ exports.updateUserProfile = async (req, res, next) => {
     }
 
     // Phone validation
-    if (phone !== undefined) {
+    if (phone !== undefined && phone !== null) {
       const phoneRegex = /^\+?[\d\s-]{10,}$/;
       if (!phoneRegex.test(phone)) {
         errors.push("Invalid phone number format");
@@ -142,7 +142,7 @@ exports.updateUserProfile = async (req, res, next) => {
     }
 
     // Email validation
-    if (email !== undefined) {
+    if (email !== undefined && email !== null) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         errors.push("Invalid email format");
@@ -152,7 +152,7 @@ exports.updateUserProfile = async (req, res, next) => {
     }
 
     // Date of birth validation
-    if (dateOfBirth !== undefined) {
+    if (dateOfBirth !== undefined && dateOfBirth !== null) {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!dateRegex.test(dateOfBirth)) {
         errors.push("Invalid date format. Use YYYY-MM-DD");
@@ -162,7 +162,7 @@ exports.updateUserProfile = async (req, res, next) => {
     }
 
     // Gender validation
-    if (Gender !== undefined) {
+    if (Gender !== undefined && Gender !== null) {
       if (!["MALE", "FEMALE"].includes(Gender)) {
         errors.push("Gender must be either MALE or FEMALE");
       } else {
