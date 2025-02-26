@@ -31,6 +31,7 @@ const { toObjectId } = require("../util/toMongodbId");
 const { generateTicketId } = require("../util/generateOrderId");
 // const catchAsync = require("../util/catchAsync");
 const updateServiceRating = require("../util/upateServiceReview");
+const Faq = require("../models/faq");
 
 ////////////////////////////////////////////////////////
 // const updateServiceRating = async (serviceId, serviceType) => {
@@ -2261,3 +2262,10 @@ exports.deleteAddress = async (req, res) => {
 //   });
 //   res.status(200).json({ ty: "true" });
 // };
+
+exports.getAllFaq = catchAsync(async (req, res, next) => {
+  const result = await Faq.find();
+  res
+    .status(201)
+    .json({ success: true, message: "list of all faq", data: result });
+});
