@@ -702,8 +702,10 @@ exports.getOrderBooking = async (req, res, next) => {
       "status",
       "itemTotalValue",
       "_id",
-      "product",
-      "package",
+      "product.name",
+      "product.imageUrl",
+      "package.imageUrl",
+      "package.name",
       "bookingId",
     ]);
     console.log(bookings);
