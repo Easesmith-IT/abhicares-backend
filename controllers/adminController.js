@@ -4044,7 +4044,7 @@ exports.sendNotificationToAll = async (req, res, next) => {
         body: description,
         ...(imageUrl && { image: imageUrl }), // Add image if available
       },
-
+    }
     // 📌 **Handle Scheduled Notifications**
     if (date && time) {
       const scheduledDate = new Date(`${date}T${time}`);
