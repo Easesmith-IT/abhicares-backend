@@ -78,6 +78,14 @@ exports.test = async (req, res, next) => {
   }
 };
 
+const applyPagination = (query, page, limit) => {
+  const pageNumber = parseInt(page, 10) || 1;
+  const limitNumber = parseInt(limit, 10) || 10;
+  const skip = (pageNumber - 1) * limitNumber;
+
+  return query.skip(skip).limit(limitNumber);
+};
+
 exports.postCreateCategory = catchAsync(async (req, res, next) => {
   const { name } = req.body;
   if (!name) {
@@ -689,22 +697,54 @@ exports.deleteSeller = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, message: "Seller deleted successful" });
 });
 
-exports.searchSeller = catchAsync(async (req, res, next) => {
-  var search = "";
-  var page = 1;
-  if (req.query.search) {
-    search = req.query.search;
-    page = req.query.page;
-  }
+// exports.searchSeller = catchAsync(async (req, res, next) => {
+//   const { search = "", page = 1, limit = 10 } = req.query;
+//   const allSeller = await Seller.count();
+//   var num = allSeller / limit;
+//   var fixedNum = num.toFixed();
+//   var totalPage = fixedNum;
+//   if (num > fixedNum) {
+//     totalPage++;
+//   }
 
-  var limit = 20;
-  const allSeller = await Seller.count();
-  var num = allSeller / limit;
-  var fixedNum = num.toFixed();
-  var totalPage = fixedNum;
-  if (num > fixedNum) {
-    totalPage++;
-  }
+//   const userData = await Seller.find({
+//     $or: [
+//       { "address.city": { $regex: ".*" + search + ".*", $options: "i" } },
+//       { name: { $regex: ".*" + search + ".*", $options: "i" } },
+//     ],
+//   })
+//     .populate("categoryId")
+//     .populate({
+//       path: "services",
+//       populate: {
+//         path: "serviceId",
+//         model: "Service",
+//       },
+//     })
+//     .limit(limit * 1)
+//     .skip((page - 1) * limit)
+//     .exec();
+
+//   res.status(200).json({
+//     success: true,
+//     message: "Seller data",
+//     data: userData,
+//     totalPage: totalPage,
+//   });
+// });
+
+exports.searchSeller = catchAsync(async (req, res, next) => {
+  const { search = "", page = 1, limit = 10 } = req.query;
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const totalSellers = await Seller.countDocuments({
+    $or: [
+      { "address.city": { $regex: ".*" + search + ".*", $options: "i" } },
+      { name: { $regex: ".*" + search + ".*", $options: "i" } },
+    ],
+  });
 
   const userData = await Seller.find({
     $or: [
@@ -720,15 +760,18 @@ exports.searchSeller = catchAsync(async (req, res, next) => {
         model: "Service",
       },
     })
-    .limit(limit * 1)
-    .skip((page - 1) * limit)
-    .exec();
+    .skip(skip)
+    .limit(limitNumber);
 
   res.status(200).json({
     success: true,
     message: "Seller data",
     data: userData,
-    totalPage: totalPage,
+    pagination: {
+      total: totalSellers,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalSellers / limitNumber),
+    },
   });
 });
 
@@ -757,15 +800,48 @@ exports.changeSellerStatus = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getInReviewSeller = catchAsync(async (req, res, next) => {
-  const results = await Seller.find({ status: "IN-REVIEW" })
-    .populate({ path: "categoryId", model: "Category" }) // Populate categoryId
-    .populate({
-      path: "services.serviceId", // Populate the serviceId within the services array
-      model: "Service",
-    });
+// exports.getInReviewSeller = catchAsync(async (req, res, next) => {
+//   const results = await Seller.find({ status: "IN-REVIEW" })
+//     .populate({ path: "categoryId", model: "Category" }) // Populate categoryId
+//     .populate({
+//       path: "services.serviceId", // Populate the serviceId within the services array
+//       model: "Service",
+//     });
 
-  // Map the results to format the response
+//   // Map the results to format the response
+//   const sellers = results.map((seller) => ({
+//     _id: seller._id,
+//     name: seller.name,
+//     phone: seller.phone,
+//     status: seller.status,
+//     category: seller?.categoryId?.name,
+//     services: seller?.services.map((service) => ({
+//       _id: service?.serviceId?._id, // Get the populated serviceId details
+//       name: service?.serviceId?.name,
+//     })),
+//   }));
+
+//   res.status(200).json({
+//     success: true,
+//     message: "In-review seller list",
+//     data: sellers,
+//   });
+// });
+
+exports.getInReviewSeller = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = 10 } = req.query;
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const results = await Seller.find({ status: "IN-REVIEW" })
+    .populate({ path: "categoryId", model: "Category" })
+    .populate({ path: "services.serviceId", model: "Service" })
+    .skip(skip)
+    .limit(limitNumber);
+
+  const total = await Seller.countDocuments({ status: "IN-REVIEW" });
+
   const sellers = results.map((seller) => ({
     _id: seller._id,
     name: seller.name,
@@ -773,7 +849,7 @@ exports.getInReviewSeller = catchAsync(async (req, res, next) => {
     status: seller.status,
     category: seller?.categoryId?.name,
     services: seller?.services.map((service) => ({
-      _id: service?.serviceId?._id, // Get the populated serviceId details
+      _id: service?.serviceId?._id,
       name: service?.serviceId?.name,
     })),
   }));
@@ -782,6 +858,11 @@ exports.getInReviewSeller = catchAsync(async (req, res, next) => {
     success: true,
     message: "In-review seller list",
     data: sellers,
+    pagination: {
+      total,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(total / limitNumber),
+    },
   });
 });
 
@@ -1044,21 +1125,17 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
 });
 
 exports.searchUser = catchAsync(async (req, res, next) => {
-  var search = "";
-  var page = 1;
-  if (req.query.search) {
-    search = req.query.search;
-    page = req.query.page;
-  }
+  const { search = "", page = 1, limit = 10 } = req.query;
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+  const skip = (pageNumber - 1) * limitNumber;
 
-  var limit = 20;
-  const allUser = await User.count();
-  var num = allUser / limit;
-  var fixedNum = num.toFixed();
-  var totalPage = fixedNum;
-  if (num > fixedNum) {
-    totalPage++;
-  }
+  const totalUsers = await User.countDocuments({
+    $or: [
+      { phone: { $regex: ".*" + search + ".*", $options: "i" } },
+      { name: { $regex: ".*" + search + ".*", $options: "i" } },
+    ],
+  });
 
   const userData = await User.find({
     $or: [
@@ -1066,15 +1143,18 @@ exports.searchUser = catchAsync(async (req, res, next) => {
       { name: { $regex: ".*" + search + ".*", $options: "i" } },
     ],
   })
-    .limit(limit * 1)
-    .skip((page - 1) * limit)
-    .exec();
+    .skip(skip)
+    .limit(limitNumber);
 
   res.status(200).json({
     success: true,
-    message: "user data",
+    message: "User data",
     data: userData,
-    totalPage: totalPage,
+    pagination: {
+      total: totalUsers,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalUsers / limitNumber),
+    },
   });
 });
 
@@ -1500,11 +1580,22 @@ exports.updateAdminUser = catchAsync(async (req, res, next) => {
 });
 
 exports.getSubAdmins = catchAsync(async (req, res, next) => {
-  const admins = await Admin.find();
+  const { page = 1, limit = 10 } = req.query;
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const admins = await Admin.find().skip(skip).limit(limitNumber);
+  const total = await Admin.countDocuments();
 
   return res.status(200).json({
     success: true,
     admins,
+    pagination: {
+      total,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(total / limitNumber),
+    },
   });
 });
 
@@ -1935,7 +2026,6 @@ exports.getRecentOrders = catchAsync(async (req, res, next) => {
 exports.getOrderById = catchAsync(async (req, res, next) => {
   const orderId = req.query.orderId;
   const order = await Order.findOne({ orderId: orderId });
-
   if (!order) {
     res.status(404).json({
       message: "No order found!",
@@ -2203,11 +2293,23 @@ exports.updateAvailableCities = catchAsync(async (req, res, next) => {
 });
 
 exports.getAvailableCities = catchAsync(async (req, res, next) => {
-  const result = await AvailableCity.find();
+  const { page = 1, limit = 10 } = req.query;
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const result = await AvailableCity.find().skip(skip).limit(limitNumber);
+  const total = await AvailableCity.countDocuments();
+
   res.status(200).json({
     success: true,
     message: "List of all available cities",
     data: result,
+    pagination: {
+      total,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(total / limitNumber),
+    },
   });
 });
 
@@ -2543,12 +2645,14 @@ exports.getsingleOrder = catchAsync(async (req, res, next) => {
   const foundOrder = await Order.findOne({
     _id: orderId,
   });
-  if (!orderId) {
+  if (!foundOrder) {
     return next(new AppError("no orders found", 400));
   }
+  const bookings = await Booking.find({ orderId: orderId });
   return res.status(200).json({
     message: "here's your order details",
     data: foundOrder,
+    bookings: bookings,
     status: true,
   });
 });
@@ -2815,9 +2919,45 @@ exports.getSellerDetails = catchAsync(async (req, res, next) => {
     data: foundSeller,
   });
 });
+// exports.getSellerOrder = catchAsync(async (req, res, next) => {
+//   const id = req.params.id; // seller id
+//   const result = await Booking.find({ sellerId: id })
+//     .populate({
+//       path: "package",
+//       populate: {
+//         path: "products",
+//         populate: {
+//           path: "productId",
+//           model: "Product",
+//         },
+//       },
+//     })
+//     .populate({
+//       path: "userId",
+//       model: "User",
+//     });
+
+//   res.status(200).json({
+//     success: true,
+//     sellerOrders: result,
+//   });
+// });
+
 exports.getSellerOrder = catchAsync(async (req, res, next) => {
-  const id = req.params.id; // seller id
-  const result = await Booking.find({ sellerId: id })
+  const id = req.params.id; // seller ID
+  const { page = 1, limit = 10, startDate, endDate } = req.query;
+
+  const query = { sellerId: id };
+
+  // Apply date filter on bookingDate if provided
+  if (startDate && endDate) {
+    query.bookingDate = {
+      $gte: new Date(startDate),
+      $lte: new Date(endDate),
+    };
+  }
+
+  const result = await Booking.find(query)
     .populate({
       path: "package",
       populate: {
@@ -2831,11 +2971,21 @@ exports.getSellerOrder = catchAsync(async (req, res, next) => {
     .populate({
       path: "userId",
       model: "User",
-    });
+    })
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit))
+    .sort({ bookingDate: -1 });
+
+  const totalOrders = await Booking.countDocuments(query);
 
   res.status(200).json({
     success: true,
     sellerOrders: result,
+    pagination: {
+      totalOrders,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalOrders / limit),
+    },
   });
 });
 
@@ -2892,82 +3042,147 @@ exports.getBookingDetails = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getAllBooking = catchAsync(async (req, res, next) => {
-  const result = await Booking.find()
-    // .populate({
-    //   path: "package",
-    //   populate: {
-    //     path: "products",
-    //     populate: {
-    //       path: "productId",
-    //       model: "Product",
-    //     },
-    //   },
-    // })
-    .populate("orderId")
-    // .populate({ path: "sellerId", model: "Seller" })
-    .sort({ createdAt: -1 });
-  res.status(200).json({
-    success: true,
-    message: "All booking list",
-    data: result,
-  });
-});
+// exports.getAllBooking = catchAsync(async (req, res, next) => {
+//   const result = await Booking.find()
+//     .populate("orderId")
+//     .sort({ createdAt: -1 });
+//   res.status(200).json({
+//     success: true,
+//     message: "All booking list",
+//     data: result,
+//   });
+// });
+
+// exports.searchBookingWithFilters = catchAsync(async (req, res, next) => {
+//   const { bookingId, status, paymentStatus, bookingDate } = req.query;
+
+//   // Build filter object
+//   const filter = {};
+
+//   // Add bookingId filter if provided
+//   if (bookingId) {
+//     filter.bookingId = new RegExp(bookingId, "i");
+//   }
+
+//   // Add status filter if provided
+//   if (status) {
+//     filter.status = status;
+//   }
+
+//   // Add payment status filter if provided
+//   if (paymentStatus) {
+//     filter.paymentStatus = paymentStatus;
+//   }
+
+//   // Add date range filter if provided
+//   if (bookingDate) {
+//     const startOfDay = new Date(bookingDate);
+//     startOfDay.setUTCHours(0, 0, 0, 0);
+
+//     const endOfDay = new Date(bookingDate);
+//     endOfDay.setUTCHours(23, 59, 59, 999);
+
+//     filter.bookingDate = {
+//       $gte: startOfDay,
+//       $lte: endOfDay,
+//     };
+//   }
+
+//   const bookings = await Booking.find(filter)
+//     .populate("userId", "name email phone")
+//     .populate("sellerId", "name email phone")
+//     .populate("orderId", "orderId orderValue status")
+//     .sort({ createdAt: -1 })
+//     .lean();
+
+//   // Format response
+//   res.status(200).json({
+//     success: true,
+//     message: "Bookings retrieved successfully",
+//     count: bookings.length,
+//     data: bookings,
+//     filters: {
+//       appliedFilters: {
+//         bookingId: bookingId || null,
+//         status: status || null,
+//         paymentStatus: paymentStatus || null,
+//       },
+//     },
+//   });
+// });
 
 exports.searchBookingWithFilters = catchAsync(async (req, res, next) => {
-  const { bookingId, status, paymentStatus, bookingDate } = req.query;
+  const {
+    bookingId,
+    status,
+    paymentStatus,
+    bookingDate,
+    page = 1,
+    limit = 10,
+  } = req.query;
 
-  // Build filter object
   const filter = {};
-
-  // Add bookingId filter if provided
-  if (bookingId) {
-    filter.bookingId = new RegExp(bookingId, "i");
-  }
-
-  // Add status filter if provided
-  if (status) {
-    filter.status = status;
-  }
-
-  // Add payment status filter if provided
-  if (paymentStatus) {
-    filter.paymentStatus = paymentStatus;
-  }
-
-  // Add date range filter if provided
+  if (bookingId) filter.bookingId = new RegExp(bookingId, "i");
+  if (status) filter.status = status;
+  if (paymentStatus) filter.paymentStatus = paymentStatus;
   if (bookingDate) {
     const startOfDay = new Date(bookingDate);
     startOfDay.setUTCHours(0, 0, 0, 0);
-
     const endOfDay = new Date(bookingDate);
     endOfDay.setUTCHours(23, 59, 59, 999);
-
-    filter.bookingDate = {
-      $gte: startOfDay,
-      $lte: endOfDay,
-    };
+    filter.bookingDate = { $gte: startOfDay, $lte: endOfDay };
   }
+
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+  const skip = (pageNumber - 1) * limitNumber;
 
   const bookings = await Booking.find(filter)
     .populate("userId", "name email phone")
     .populate("sellerId", "name email phone")
     .populate("orderId", "orderId orderValue status")
     .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limitNumber)
     .lean();
 
-  // Format response
+  const totalBookings = await Booking.countDocuments(filter);
+
   res.status(200).json({
     success: true,
     message: "Bookings retrieved successfully",
     count: bookings.length,
     data: bookings,
-    filters: {
-      appliedFilters: {
-        bookingId: bookingId || null,
-        status: status || null,
-        paymentStatus: paymentStatus || null,
-      },
+    pagination: {
+      total: totalBookings,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalBookings / limitNumber),
+    },
+  });
+});
+
+exports.getAllBooking = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = 10 } = req.query;
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const result = await Booking.find()
+    .populate("orderId")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limitNumber);
+
+  const totalBookings = await Booking.countDocuments();
+
+  res.status(200).json({
+    success: true,
+    message: "All booking list",
+    data: result,
+    pagination: {
+      total: totalBookings,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalBookings / limitNumber),
     },
   });
 });
@@ -3046,10 +3261,17 @@ exports.createCoupon = catchAsync(async (req, res, next) => {
     description,
     noOfTimesPerUser,
     couponFixedValue,
+    expiryDate,
   } = req.body;
 
   // Validate required fields
-  if (!name || !description || !categoryType || categoryType.length === 0) {
+  if (
+    !name ||
+    !description ||
+    !categoryType ||
+    categoryType.length === 0 ||
+    !expiryDate
+  ) {
     return next(
       new AppError(
         400,
@@ -3074,6 +3296,7 @@ exports.createCoupon = catchAsync(async (req, res, next) => {
     description,
     noOfTimesPerUser,
     couponFixedValue: couponFixedValue ? couponFixedValue : "",
+    expiryDate: expiryDate,
   });
 
   res.status(201).json({
@@ -3134,11 +3357,23 @@ exports.updateCoupon = catchAsync(async (req, res, next) => {
 });
 
 exports.getAllCoupons = catchAsync(async (req, res, next) => {
-  const result = await Coupon.find();
+  const { page = 1, limit = 10 } = req.query;
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const result = await Coupon.find().skip(skip).limit(limitNumber);
+  const total = await Coupon.countDocuments();
+
   res.status(200).json({
     success: true,
     message: "List of all coupons",
     data: result,
+    pagination: {
+      total,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(total / limitNumber),
+    },
   });
 });
 
@@ -3766,13 +4001,22 @@ exports.sendNotificationToAll = async (req, res, next) => {
     pipeline.push({
       $group: {
         _id: { deviceType: "$deviceType" }, // ✅ Ensure `deviceType` is correctly structured
-        tokens: { $push: { token: "$token", appType: "$appType", deviceType: "$deviceType" } },
+        tokens: {
+          $push: {
+            token: "$token",
+            appType: "$appType",
+            deviceType: "$deviceType",
+          },
+        },
       },
     });
 
     // Fetch tokens from MongoDB
     const tokensByDeviceType = await tokenSchema.aggregate(pipeline);
-    console.log("Retrieved tokens:", JSON.stringify(tokensByDeviceType, null, 2));
+    console.log(
+      "Retrieved tokens:",
+      JSON.stringify(tokensByDeviceType, null, 2)
+    );
 
     if (!tokensByDeviceType || tokensByDeviceType.length === 0) {
       return res.status(200).json({ message: "No users found", status: false });
@@ -3793,7 +4037,6 @@ exports.sendNotificationToAll = async (req, res, next) => {
         return next(new AppError("Error while uploading the file to GCS", 500));
       }
     }
-
     // Prepare the notification message
     const message = {
       notification: {
@@ -3801,7 +4044,6 @@ exports.sendNotificationToAll = async (req, res, next) => {
         body: description,
         ...(imageUrl && { image: imageUrl }), // Add image if available
       },
-    };
 
     // 📌 **Handle Scheduled Notifications**
     if (date && time) {
@@ -3828,18 +4070,26 @@ exports.sendNotificationToAll = async (req, res, next) => {
             console.log(`Scheduled notification for ${deviceType}`);
 
             for (const { token, appType } of tokens) {
-              await sendPushNotification(deviceType, appType, token, { ...message, token });
+              await sendPushNotification(deviceType, appType, token, {
+                ...message,
+                token,
+              });
             }
           }
 
           console.log("Scheduled notification sent successfully.");
-          await notificationSchema.findByIdAndUpdate(savedNotification._id, { status: "sent" });
+          await notificationSchema.findByIdAndUpdate(savedNotification._id, {
+            status: "sent",
+          });
         } catch (error) {
           console.error("Error sending scheduled notification:", error);
         }
       });
 
-      return res.status(200).json({ success: true, message: "Notification scheduled successfully" });
+      return res.status(200).json({
+        success: true,
+        message: "Notification scheduled successfully",
+      });
     }
 
     // 📌 **Send Immediate Notifications**
@@ -3847,19 +4097,24 @@ exports.sendNotificationToAll = async (req, res, next) => {
       const deviceType = _id.deviceType;
       console.log(`Sending notification to ${deviceType}: ${tokens.length} devices`);
 
+
       for (const { token, appType } of tokens) {
         console.log(`Sending to: ${token}, AppType: ${appType}`);
-        await sendPushNotification(deviceType, appType, token, { ...message, token });
+        await sendPushNotification(deviceType, appType, token, {
+          ...message,
+          token,
+        });
       }
     }
 
-    return res.status(200).json({ success: true, message: "Notification sent successfully" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Notification sent successfully" });
   } catch (error) {
     console.error("Error in sendNotificationToAll:", error);
     return next(new AppError("Internal Server Error", 500));
   }
 };
-
 
 exports.getAllNotifications = catchAsync(async (req, res, next) => {
   const { page = 1, limit = 10 } = req.query; // Default to page 1 and 10 items per page
@@ -3900,34 +4155,38 @@ exports.getAllNotifications = catchAsync(async (req, res, next) => {
 });
 
 exports.filterNotification = catchAsync(async (req, res, next) => {
-  const { date } = req.query;
+  const { date, page = 1, limit = 10 } = req.query;
 
-  // Validate the date
   if (!date) {
     return next(
       new AppError("Please provide a date to filter notifications.", 400)
     );
   }
 
-  // Find notifications with the matching date in the `scheduleTiming.date` field
-  const notifications = await notificationSchema.find({
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const notifications = await notificationSchema
+    .find({
+      "scheduleTiming.date": date,
+    })
+    .skip(skip)
+    .limit(limitNumber);
+
+  const total = await notificationSchema.countDocuments({
     "scheduleTiming.date": date,
   });
 
-  // Check if notifications are found
-  if (!notifications || notifications.length === 0) {
-    return res.status(200).json({
-      success: false,
-      message: "No notifications found for the given date.",
-      data: [],
-    });
-  }
-
-  // Respond with the filtered notifications
   res.status(200).json({
-    success: true,
+    success: notifications.length > 0,
     count: notifications.length,
     data: notifications,
+    pagination: {
+      total,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(total / limitNumber),
+    },
   });
 });
 
@@ -4270,4 +4529,138 @@ exports.addSellerCashout = catchAsync(async (req, res, next) => {
     wallet.save();
     return res.status(200).json({ status: true, cashout: transaction });
   }
+});
+
+exports.deleteInReviewSeller = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  const seller = await Seller.findOneAndDelete({
+    _id: id,
+    status: "IN-REVIEW",
+  });
+
+  if (!seller) {
+    return next(new AppError("Seller not found or not in review status", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "In-review seller deleted successfully",
+  });
+});
+
+exports.getOnlineSellers = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = 10 } = req.query;
+
+  const query = { online: true };
+
+  const result = await Seller.find(query)
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit));
+
+  const totalSellers = await Seller.countDocuments(query);
+
+  res.status(200).json({
+    success: true,
+    onlineSellers: result,
+    pagination: {
+      count: totalSellers,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalSellers / limit),
+    },
+  });
+});
+
+exports.getSellersFulfillingBookings = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = 10 } = req.query;
+
+  const sellersWithBookings = await Booking.distinct("sellerId", {
+    status: { $in: ["started", "completeReq", "out-of-delivery", "reached"] },
+  });
+
+  const query = { _id: { $in: sellersWithBookings } };
+
+  const result = await Seller.find(query)
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit));
+
+  const totalSellers = await Seller.countDocuments(query);
+
+  res.status(200).json({
+    success: true,
+    fulfillingSellers: result,
+    pagination: {
+      count: totalSellers,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalSellers / limit),
+    },
+  });
+});
+
+exports.getcustomerBookings = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = 10 } = req.query;
+  const { userId } = req.params;
+  const query = { userId: userId };
+  const bookings = await Booking.find(query)
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit));
+
+  const totalBookings = await Booking.countDocuments(query);
+
+  res.status(200).json({
+    success: true,
+    data: bookings,
+    pagination: {
+      count: totalBookings,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalBookings / limit),
+    },
+  });
+});
+
+exports.getMolthlyBooking = catchAsync(async (req, res, next) => {
+  const { month, year, populateFields } = req.body;
+
+  if (!month || !year) {
+    return next(new AppError(400, "Month and year are required"));
+  }
+
+  const startDate = new Date(year, month - 1, 1); // Month is zero-based
+  const endDate = new Date(year, month, 0, 23, 59, 59);
+
+  // Find the bookings first
+  const bookings = await Booking.find({
+    createdAt: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+  }).populate("userId");
+
+  // Populate conditionally
+  // if (populateFields) {
+  // if (populateFields.includes("items")) {
+  //   await Booking.populate(orders, {
+  //     path: "items",
+  //     populate: {
+  //       path: "package",
+  //       populate: {
+  //         path: "products",
+  //         populate: {
+  //           path: "productId",
+  //           model: "Product",
+  //         },
+  //       },
+  //     },
+  //   });
+  // }
+
+  //   if (populateFields.includes("couponId")) {
+  //     await Booking.populate(bookings, { path: "couponId" });
+  //   }
+  // }
+
+  // Send the response
+  res
+    .status(200)
+    .json({ success: true, message: "bookings list", data: bookings });
 });

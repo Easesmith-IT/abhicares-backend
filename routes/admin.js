@@ -698,5 +698,36 @@ router.post(
   authorize("sellerCashout", "write"),
   adminController.addSellerCashout
 );
+router.post(
+  "/delete-seller/:id",
+  websiteAuth.protect,
+  authorize("partners", "write"),
+  adminController.deleteInReviewSeller
+);
+router.get(
+  "/get-online-seller",
+  websiteAuth.protect,
+  authorize("partners", "read"),
+  adminController.getOnlineSellers
+);
+
+router.get(
+  "/get-current-fullfiling-seller",
+  websiteAuth.protect,
+  authorize("partners", "read"),
+  adminController.getSellersFulfillingBookings
+);
+router.get(
+  "/get-customer-bookings/:userId",
+  websiteAuth.protect,
+  adminController.getcustomerBookings
+);
+
+router.post(
+  "/get-monthly-bookings",
+  // websiteAuth.protect,
+  // authorize("orders", "read"),
+  adminController.getMolthlyBooking
+);
 
 module.exports = router;

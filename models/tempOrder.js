@@ -1,6 +1,6 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
-const Schema = mongoose.Schema
+const Schema = mongoose.Schema;
 
 const tempOrderSchema = new Schema(
   {
@@ -59,9 +59,22 @@ const tempOrderSchema = new Schema(
           type: String,
           required: true,
         },
+
         bookingTime: {
           type: String,
           required: true,
+        },
+        itemTotalValue: {
+          type: Number,
+          default: 0,
+        },
+        itemTotalDiscount: {
+          type: Number,
+          default: 0,
+        },
+        itemTotalTax: {
+          type: Number,
+          default: 0,
         },
       },
     ],
@@ -128,12 +141,12 @@ const tempOrderSchema = new Schema(
       type: Number,
       required: true,
     },
-    orderId:{
-      type:String,
-      required:true
-    }
+    orderId: {
+      type: String,
+      required: true,
+    },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model('tempOrder', tempOrderSchema)
+module.exports = mongoose.model("tempOrder", tempOrderSchema);
