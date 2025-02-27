@@ -1,7 +1,8 @@
 
 const admin = require("firebase-admin");
 const schedule = require('node-schedule');
-const AppError=require('../util/appError')
+const AppError=require('../util/appError');
+const { tokenSchema } = require("../models/fcmToken");
 
 // function initializeFirebase(deviceType, appType) {
 //     let serviceAccount;
@@ -103,87 +104,166 @@ function initializeFirebase(deviceType, appType) {
   return admin.app(appName);
 }
 
-// 🔥 Send Push Notification
-async function sendPushNotification(deviceType, appType, token, message) {
-    console.log(`Sending notification to Token: ${token}, AppType: ${appType}, DeviceType: ${deviceType}`);
+// // 🔥 Send Push Notification
+// async function sendPushNotification(deviceType, appType, token, message) {
+//     console.log(`Sending notification to Token: ${token}, AppType: ${appType}, DeviceType: ${deviceType}`);
   
-    try {
-      // Ensure Firebase is initialized correctly
-      const firebaseApp = initializeFirebase(deviceType, appType);
-      if (!firebaseApp) {
-        throw new Error("Firebase app initialization failed.");
-      }
+//     try {
+//       // Ensure Firebase is initialized correctly
+//       const firebaseApp = initializeFirebase(deviceType, appType);
+//       if (!firebaseApp) {
+//         throw new Error("Firebase app initialization failed.");
+//       }
   
-      // Ensure message structure is correct
-    //   const notificationPayload = {
-    //     token: token,
-    //     notification: {
-    //       title: message.notification?.title || "No Title",
-    //       body: message.notification?.body || "No Body",
-    //     },
-    //     android: {
-    //       priority: "high",
-    //       notification: {
-    //         sound: "default",
-    //         channel_id: "high_importance_channel", // Ensure this exists in frontend
-    //       },
-    //     },
-    //     apns: {
-    //       payload: {
-    //         aps: {
-    //           sound: "default",
-    //         },
-    //       },
-    //     },
-    //     data: message.data || {}, // Include any extra data
-    //   };
-    const notificationPayload = {
-        token: token,
-        notification: {
-          title: message.notification?.title || "No Title",
-          body: message.notification?.body || "No Body",
-          ...(message.notification?.image && { image: message.notification.image }), // ✅ Add image if available
-        },
-        android: {
-          priority: "high",
-          notification: {
-            sound: "default",
-            channel_id: "high_importance_channel", // Ensure this exists in frontend
-            ...(message.notification?.image && { image: message.notification.image }), // ✅ Add image for Android
-          },
-        },
-        apns: {
-          payload: {
-            aps: {
-              sound: "default",
-              ...(message.notification?.image && { "mutable-content": 1 }), // ✅ Required for iOS images
-            },
-          },
-          fcm_options: {
-            ...(message.notification?.image && { image: message.notification.image }), // ✅ Add image for iOS
-          },
-        },
-        data: message.data || {}, // Include any extra data
-      };
+//       // Ensure message structure is correct
+//     //   const notificationPayload = {
+//     //     token: token,
+//     //     notification: {
+//     //       title: message.notification?.title || "No Title",
+//     //       body: message.notification?.body || "No Body",
+//     //     },
+//     //     android: {
+//     //       priority: "high",
+//     //       notification: {
+//     //         sound: "default",
+//     //         channel_id: "high_importance_channel", // Ensure this exists in frontend
+//     //       },
+//     //     },
+//     //     apns: {
+//     //       payload: {
+//     //         aps: {
+//     //           sound: "default",
+//     //         },
+//     //       },
+//     //     },
+//     //     data: message.data || {}, // Include any extra data
+//     //   };
+//     const notificationPayload = {
+//         token: token,
+//         notification: {
+//           title: message.notification?.title || "No Title",
+//           body: message.notification?.body || "No Body",
+//           ...(message.notification?.image && { image: message.notification.image }), // ✅ Add image if available
+//         },
+//         android: {
+//           priority: "high",
+//           notification: {
+//             sound: "default",
+//             channel_id: "high_importance_channel", // Ensure this exists in frontend
+//             ...(message.notification?.image && { image: message.notification.image }), // ✅ Add image for Android
+//           },
+//         },
+//         apns: {
+//           payload: {
+//             aps: {
+//               sound: "default",
+//               ...(message.notification?.image && { "mutable-content": 1 }), // ✅ Required for iOS images
+//             },
+//           },
+//           fcm_options: {
+//             ...(message.notification?.image && { image: message.notification.image }), // ✅ Add image for iOS
+//           },
+//         },
+//         data: message.data || {}, // Include any extra data
+//       };
       
   
-      console.log("Final FCM Message Payload:", JSON.stringify(notificationPayload, null, 2));
+//       console.log("Final FCM Message Payload:", JSON.stringify(notificationPayload, null, 2));
   
-      // Send notification
-      const response = await firebaseApp.messaging().send(notificationPayload);
-      console.log("FCM Response:", response);
-      return response;
-    } catch (error) {
-      console.error("Firebase Notification Error:", error);
+//       // Send notification
+//       const response = await firebaseApp.messaging().send(notificationPayload);
+//       console.log("FCM Response:", response);
+//       return response;
+//     } catch (error) {
+//       console.error("Firebase Notification Error:", error);
   
-      // Return detailed error response for debugging
-      throw new AppError(
-        error.message || "Notification failed",
-        error.code === "messaging/invalid-argument" ? 400 : 500
-      );
+//       // Return detailed error response for debugging
+//       throw new AppError(
+//         error.message || "Notification failed",
+//         error.code === "messaging/invalid-argument" ? 400 : 500
+//       );
+//     }
+//   }
+  
+async function sendPushNotification(deviceType, appType, token, message) {
+  console.log(`Sending notification to Token: ${token}, AppType: ${appType}, DeviceType: ${deviceType}`);
+
+  try {
+    // Ensure Firebase is initialized correctly
+    const firebaseApp = initializeFirebase(deviceType, appType);
+    if (!firebaseApp) {
+      throw new Error("Firebase app initialization failed.");
     }
+
+    // Construct the notification payload
+    const notificationPayload = {
+      token: token,
+      notification: {
+        title: message.notification?.title || "No Title",
+        body: message.notification?.body || "No Body",
+        ...(message.notification?.image && { image: message.notification.image }),
+      },
+      android: {
+        priority: "high",
+        notification: {
+          sound: "default",
+          channel_id: "high_importance_channel",
+          ...(message.notification?.image && { image: message.notification.image }),
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: "default",
+            ...(message.notification?.image && { "mutable-content": 1 }),
+          },
+        },
+        fcm_options: {
+          ...(message.notification?.image && { image: message.notification.image }),
+        },
+      },
+      data: message.data || {},
+    };
+
+    console.log("Final FCM Message Payload:", JSON.stringify(notificationPayload, null, 2));
+
+    // Send the notification
+    const response = await firebaseApp.messaging().send(notificationPayload);
+    console.log("FCM Response:", response);
+    return response;
+
+  } catch (error) {
+    console.error(`Firebase Notification Error for Token: ${token}`, error);
+
+    // 📌 **Check for Invalid/Expired Token Errors**
+    if (
+      error.code === "messaging/registration-token-not-registered" || // Token is unregistered
+      error.code === "messaging/invalid-registration-token" || // Token is invalid
+      error.code === "messaging/invalid-argument" // Token is malformed
+    ) {
+      console.log(`⚠️ Removing expired/invalid FCM token: ${token}`);
+      await removeInvalidFCMToken(token);
+    }
+
+    // Return detailed error response
+    throw new AppError(
+      error.message || "Notification failed",
+      error.code === "messaging/invalid-argument" ? 400 : 500
+    );
   }
-  
+}
+
+// ✅ Function to Remove Invalid Tokens from DB
+
+async function removeInvalidFCMToken(token) {
+  try {
+    await tokenSchema.deleteOne({ token });
+    console.log(`✅ Token removed successfully: ${token}`);
+  } catch (error) {
+    console.error(`❌ Error removing token ${token}:`, error);
+  }
+}
+
 
 
 async function sendNotificationToAllUsers(deviceType, message) {
