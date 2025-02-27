@@ -84,8 +84,11 @@ exports.verifyBookingOtp = catchAsync(async (req, res, next) => {
     booking.product != null
       ? booking.product["serviceId"]
       : booking.package["serviceId"];
-  const categoryId = await Service.findById(serviceId)["categoryId"];
+      console.log(serviceId,'line 86')
+      const service = await Service.findById(serviceId);
+      const categoryId = service?.categoryId;
   const category = await Category.findById(categoryId);
+  console.log(category,'line 89')
   const commission = 100 - category["commission"];
   const addBalance =
     (booking["itemTotalValue"] - booking["itemTotalTax"]) * (commission / 100);
