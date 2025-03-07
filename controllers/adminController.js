@@ -2644,7 +2644,8 @@ exports.getsingleOrder = catchAsync(async (req, res, next) => {
 
   const foundOrder = await Order.findOne({
     _id: orderId,
-  });
+  })
+    .populate("items.bookingId");
   if (!foundOrder) {
     return next(new AppError("no orders found", 400));
   }
