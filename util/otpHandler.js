@@ -123,6 +123,48 @@ exports.generateOTP = async (phoneNumber, user) => {
   }
 };
 
+exports.sendBookingConfirmMessage = async (phoneNumber, name) => {
+  const text = `Dear ${"raju"}, Your service booking has been successfully confirmed. Our service partner will visit you as per the scheduled time. You can track your booking, check service updates through the AbhiCares App. For any queries or assistance contact our support team. Team AbhiCares - Azadkart Private Limited`;
+
+  try {
+    const response = await axios.post(
+      `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
+      {
+        Text: text,
+        Number: "8925687688",
+        SenderId: "AZKART",
+        DRNotifyUrl: "https://www.domainname.com/notifyurl",
+        DRNotifyHttpMethod: "POST",
+        Tool: "API",
+      },
+      config
+    );
+
+    console.log("SMS API Response:", response.data);
+
+    // Check if the SMS was queued successfully
+    if (response.data) {
+      const messageUUID = response.data.MessageUUID;
+      console.log(messageUUID, "lne 82");
+      if (messageUUID) {
+        // Call the delivery report function
+        console.log("inside report function");
+        const reports = await fetchDeliveryReport(messageUUID);
+        console.log(reports, "Delivery Report:");
+        console.log("booking confirmation message queued successfully.");
+      } else {
+        console.log("MessageUUID not returned in response.");
+      }
+    } else {
+      console.log("Failed to queue the booking confirmation message:");
+      return; // Optionally, exit if the message was not queued
+    }
+  } catch (error) {
+    console.error("Error while sending OTP:");
+    throw new Error("Failed to send OTP. Please try again later.");
+  }
+};
+
 exports.generateBookingOTP = async (phoneNumber, user, sellerId, bookingId) => {
   const otp = Math.floor(Math.random() * 900000) + 100000;
   const text = `${otp} is your OTP of AbhiCares, OTP is only valid for 10 mins, do not share it with anyone. - Azadkart private limited`;
