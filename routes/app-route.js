@@ -87,5 +87,6 @@ router.get("/get-services-app-homepage", appController.getAppHomePageServices);
 router.get("/check-city-serviceability", appController.checkServiceability);
 // router.get("/test-com", appController.setCommision);
 router.post("/caluclate-charge", Payment.calculateCartCharges);
+router.get("/get-all-faq", appController.getAllFaq);
 
 module.exports = router;
