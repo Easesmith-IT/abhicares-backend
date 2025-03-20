@@ -124,14 +124,14 @@ exports.generateOTP = async (phoneNumber, user) => {
 };
 
 exports.sendBookingConfirmMessage = async (phoneNumber, name) => {
-  const text = `Dear ${"raju"}, Your service booking has been successfully confirmed. Our service partner will visit you as per the scheduled time. You can track your booking, check service updates through the AbhiCares App. For any queries or assistance contact our support team. Team AbhiCares - Azadkart Private Limited`;
+  const text = `Dear ${name}, Your service booking has been successfully confirmed. Our service partner will visit you as per the scheduled time. You can track your booking, check service updates through the AbhiCares App. For any queries or assistance contact our support team. Team AbhiCares - Azadkart Private Limited`;
 
   try {
     const response = await axios.post(
       `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
       {
         Text: text,
-        Number: "8925687688",
+        Number: phoneNumber,
         SenderId: "AZKART",
         DRNotifyUrl: "https://www.domainname.com/notifyurl",
         DRNotifyHttpMethod: "POST",
