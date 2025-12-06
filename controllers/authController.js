@@ -214,18 +214,18 @@ exports.signupOtp = catchAsync(async (req, res, next) => {
 
   const otp = Math.floor(Math.random() * 900000) + 100000;
   const text = `${otp} is your OTP of AbhiCares, OTP is only valid for 10 mins, do not share it with anyone. - Azadkart private limited`;
-  await axios.post(
-    `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
-    {
-      Text: text,
-      Number: phone,
-      SenderId: "AZKART",
-      DRNotifyUrl: "https://www.domainname.com/notifyurl",
-      DRNotifyHttpMethod: "POST",
-      Tool: "API",
-    },
-    config
-  );
+  // await axios.post(
+  //   `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
+  //   {
+  //     Text: text,
+  //     Number: phone,
+  //     SenderId: "AZKART",
+  //     DRNotifyUrl: "https://www.domainname.com/notifyurl",
+  //     DRNotifyHttpMethod: "POST",
+  //     Tool: "API",
+  //   },
+  //   config
+  // );
 
   var payload = {
     phone: phone,
@@ -237,7 +237,8 @@ exports.signupOtp = catchAsync(async (req, res, next) => {
   res
     .status(200)
     .cookie("tempVerf", token, { httpOnly: true })
-    .json({ message: "otp sent successfully" });
+    // .json({ message: "otp sent successfully" });
+    .json({ message: text });
 });
 
 exports.appSignupOtp = catchAsync(async (req, res, next) => {
