@@ -238,7 +238,7 @@ exports.signupOtp = catchAsync(async (req, res, next) => {
     .status(200)
     .cookie("tempVerf", token, { httpOnly: true })
     // .json({ message: "otp sent successfully" });
-    .json({ message: text });
+    .json({ message: "otp sent successfully" });
 });
 
 exports.appSignupOtp = catchAsync(async (req, res, next) => {
