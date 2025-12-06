@@ -58,45 +58,48 @@ const config = {
 
 exports.generateOTP = async (phoneNumber, user) => {
   const otp = Math.floor(Math.random() * 900000) + 100000;
+  console.log("otp-log",otp);
+  
   const text = `${otp} is your OTP of AbhiCares, OTP is only valid for 10 mins, do not share it with anyone. - Azadkart private limited`;
+  
 
-  try {
-    const response = await axios.post(
-      `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
-      {
-        Text: text,
-        Number: phoneNumber,
-        SenderId: "AZKART",
-        DRNotifyUrl: "https://www.domainname.com/notifyurl",
-        DRNotifyHttpMethod: "POST",
-        Tool: "API",
-      },
-      config
-    );
+  // try {
+  //   const response = await axios.post(
+  //     `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
+  //     {
+  //       Text: text,
+  //       Number: phoneNumber,
+  //       SenderId: "AZKART",
+  //       DRNotifyUrl: "https://www.domainname.com/notifyurl",
+  //       DRNotifyHttpMethod: "POST",
+  //       Tool: "API",
+  //     },
+  //     config
+  //   );
 
-    console.log("SMS API Response:", response.data);
+  //   console.log("SMS API Response:", response.data);
 
-    // Check if the SMS was queued successfully
-    if (response.data) {
-      const messageUUID = response.data.MessageUUID;
-      console.log(messageUUID, "lne 82");
-      if (messageUUID) {
-        // Call the delivery report function
-        console.log("inside report function");
-        const reports = await fetchDeliveryReport(messageUUID);
-        console.log(reports, "Delivery Report:");
-        console.log("OTP message queued successfully.");
-      } else {
-        console.log("MessageUUID not returned in response.");
-      }
-    } else {
-      console.log("Failed to queue the OTP message:");
-      return; // Optionally, exit if the message was not queued
-    }
-  } catch (error) {
-    console.error("Error while sending OTP:");
-    throw new Error("Failed to send OTP. Please try again later.");
-  }
+  //   // Check if the SMS was queued successfully
+  //   if (response.data) {
+  //     const messageUUID = response.data.MessageUUID;
+  //     console.log(messageUUID, "lne 82");
+  //     if (messageUUID) {
+  //       // Call the delivery report function
+  //       console.log("inside report function");
+  //       const reports = await fetchDeliveryReport(messageUUID);
+  //       console.log(reports, "Delivery Report:");
+  //       console.log("OTP message queued successfully.");
+  //     } else {
+  //       console.log("MessageUUID not returned in response.");
+  //     }
+  //   } else {
+  //     console.log("Failed to queue the OTP message:");
+  //     return; // Optionally, exit if the message was not queued
+  //   }
+  // } catch (error) {
+  //   console.error("Error while sending OTP:", error);
+  //   throw new Error("Failed to send OTP. Please try again later.");
+  // }
 
   // OTP expiration logic
   const expirationTimeframe = 5 * 60 * 1000; // 5 minutes in milliseconds
