@@ -56,6 +56,8 @@ const {
   setTokenCookies,
 } = require("./websiteAuth");
 
+const { sendBookingConfirmMessage } = require("../util/otpHandler");
+
 // category routes
 exports.genOrderId = catchAsync(async (req, res, next) => {
   const orderId = await generateOrderId();
@@ -2591,13 +2593,18 @@ exports.allotSeller = catchAsync(async (req, res, next) => {
   if (!bookingId) {
     return next(new AppError(400, "All the fields are required"));
   }
-  var bookingData = await Booking.findOne({ _id: bookingId }).populate({
-    path: "sellerId",
-    model: "Seller",
-  });
+  var bookingData = await Booking.findOne({ _id: bookingId })
+    .populate({
+      path: "sellerId",
+      model: "Seller",
+    })
+    .populate("userId");
+  let user = bookingData.userId;
   bookingData.sellerId = id;
   bookingData.status = "alloted";
   await bookingData.save();
+
+  await sendBookingConfirmMessage(user.phone, user.name);
 
   // const foundToken = await tokenSchema.findOne({
   //   userId: bookingData.userId,

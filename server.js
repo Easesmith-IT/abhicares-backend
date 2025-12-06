@@ -61,7 +61,6 @@ app.use(express.static(path.join(__dirname, "admin")));
 app.use(cookieParser());
 app.use(morgan("dev"));
 
-
 const mongoose_url = process.env.TEST_MONGO_CONNECTION;
 
 mongoose
@@ -74,7 +73,6 @@ mongoose
   });
 
 const port = process.env.PORT || 5000;
-
 
 server.listen(port, function () {
   console.log(`Server is running on port http://localhost:${port}`);
