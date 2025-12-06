@@ -257,24 +257,24 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
     } else {
       const otp = Math.floor(Math.random() * 900000) + 100000;
       const text = `${otp} is your OTP of AbhiCares, OTP is only valid for 10 mins, do not share it with anyone. - Azadkart private limited`;
-      await axios.post(
-        `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
-        {
-          Text: text,
-          Number: phone,
-          SenderId: "AZKART",
-          DRNotifyUrl: "https://www.domainname.com/notifyurl",
-          DRNotifyHttpMethod: "POST",
-          Tool: "API",
-        },
-        config
-      );
+      // await axios.post(
+      //   `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
+      //   {
+      //     Text: text,
+      //     Number: phone,
+      //     SenderId: "AZKART",
+      //     DRNotifyUrl: "https://www.domainname.com/notifyurl",
+      //     DRNotifyHttpMethod: "POST",
+      //     Tool: "API",
+      //   },
+      //   config
+      // );
       // For saving FCM token
+      let newToken;
       if (deviceType === "android" || deviceType === "ios") {
         const foundUserToken = await tokenSchema.findOne({
           userId: resultData._id,
         });
-
         if (foundUserToken) {
           foundUserToken.token = fcmToken;
           await foundUserToken.save();
