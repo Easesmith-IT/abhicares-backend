@@ -257,6 +257,7 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
     } else {
       const otp = Math.floor(Math.random() * 900000) + 100000;
       const text = `${otp} is your OTP of AbhiCares, OTP is only valid for 10 mins, do not share it with anyone. - Azadkart private limited`;
+      
       // await axios.post(
       //   `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
       //   {
@@ -302,7 +303,7 @@ exports.appSignupOtp = catchAsync(async (req, res, next) => {
       var token = jwt.sign(payload, process.env.JWT_SECRET);
       res
         .status(200)
-        .json({ message: "otp sent successfully", tempVerf: token });
+        .json({ message: "otp sent successfully", tempVerf: token,otp });
     }
   }
 });
