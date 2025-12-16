@@ -284,18 +284,20 @@ exports.verifyOTP = async (phoneNumber, enteredOTP, user, res) => {
 exports.sellerGenerateOTP = async (phoneNumber, seller) => {
   const otp = Math.floor(Math.random() * 900000) + 100000;
   const text = `${otp} is your OTP of AbhiCares, OTP is only valid for 10 mins, do not share it with anyone. - Azadkart private limited`;
-  await axios.post(
-    `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
-    {
-      Text: text,
-      Number: phoneNumber,
-      SenderId: "AZKART",
-      DRNotifyUrl: "https://www.domainname.com/notifyurl",
-      DRNotifyHttpMethod: "POST",
-      Tool: "API",
-    },
-    config
-  );
+  
+  // await axios.post(
+  //   `https://restapi.smscountry.com/v0.1/Accounts/${authKey}/SMSes/`,
+  //   {
+  //     Text: text,
+  //     Number: phoneNumber,
+  //     SenderId: "AZKART",
+  //     DRNotifyUrl: "https://www.domainname.com/notifyurl",
+  //     DRNotifyHttpMethod: "POST",
+  //     Tool: "API",
+  //   },
+  //   config
+  // );
+  console.log("text-log", text);
 
   const expirationTimeframe = 5 * 60 * 1000; // 5 minutes in milliseconds
   const currentTime = new Date(); // Current time
