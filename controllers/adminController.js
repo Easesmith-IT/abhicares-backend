@@ -959,7 +959,7 @@ exports.getRecentCashoutRequests = catchAsync(async (req, res, next) => {
 });
 
 exports.approveSellerCashout = catchAsync(async (req, res, next) => {
-  console.log(req.body);
+  console.log("req.body",req.body);
   const id = req.params.id;
   const { status, description, date, paymentId } = req.body;
 
