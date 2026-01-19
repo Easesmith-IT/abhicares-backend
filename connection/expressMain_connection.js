@@ -12,7 +12,7 @@ const serviceAppRoute = require("../routes/service-app-route");
 
 const { app } = require("../server");
 
-const NoLocation = require("../models/models/noLocationSchema");
+const NoLocation = require("../models/noLocationSchema");
 
 
 // app.use("/uploads", express.static(path.join(__dirname, "uploads")));
