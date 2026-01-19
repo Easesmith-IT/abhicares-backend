@@ -12,8 +12,36 @@ const serviceAppRoute = require("../routes/service-app-route");
 
 const { app } = require("../server");
 
+const NoLocation = require("../models/models/noLocationSchema");
+
+
 // app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // app.use("/newUpload", express.static(path.join(__dirname, "newUpload")));
+
+app.post("/api/testLoc", async (req, res) => {
+    try {
+        const { lat, lng } = req.body;
+
+        // Create a new entry using the Model
+        const newLocation = new NoLocation({
+            latitude: lat,
+            longitude: lng
+        });
+
+        await newLocation.save();
+
+        res.status(201).json({
+            success: true,
+            message: "Location stored in MongoDB successfully."
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Server Error: Could not save location.",
+            error: error.message
+        });
+    }
+});
 
 app.use("/api/admin", adminRoute);
 app.use("/api/app", appRoute);
