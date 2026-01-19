@@ -51,7 +51,7 @@ app.use(
   cors({
     
    // origin: process.env.FrontEnd_URL,
-    origin: 'http://lightpink-mantis-922925.hostingersite.com',
+    origin: 'https://lightpink-mantis-922925.hostingersite.com/',
     credentials: true,
   })
 );
